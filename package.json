@@ -1,0 +1,18 @@
+{
+  "name": "paidinyellow-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PaidInYellow Paycheck Payoff Planner (offline PWA).",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:reference": "python engine/engine_reference.py engine/fixtures.json",
+    "fixtures:parity": "python engine/make_parity_fixtures.py",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

@@ -1,0 +1,3414 @@
+[
+ {
+  "name": "zero_percent_debt",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Medical",
+     "type": "",
+     "balance": 1150,
+     "apr": 0,
+     "min": 50,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Medical"
+   ],
+   "debt_free_date": "2027-02-12",
+   "paydays_to_debt_free": 9,
+   "total_interest": 0.0,
+   "paid_off_dates": {
+    "Medical": "2027-02-12"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 23,
+    "total_interest": 0.0
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 23.08,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 173.08,
+     "debt_left": 1126.92
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 23.08,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 173.08,
+     "debt_left": 1103.85
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 23.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Medical",
+     "total_to_set_aside": 173.08,
+     "debt_left": 930.77
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 23.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Medical",
+     "total_to_set_aside": 173.08,
+     "debt_left": 757.69
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 23.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Medical",
+     "total_to_set_aside": 173.08,
+     "debt_left": 584.62
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 23.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Medical",
+     "total_to_set_aside": 173.08,
+     "debt_left": 411.54
+    }
+   ]
+  }
+ },
+ {
+  "name": "zero_minimum_with_interest",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Card",
+     "type": "",
+     "balance": 900,
+     "apr": 19.9,
+     "min": 0,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Loan",
+     "type": "",
+     "balance": 400,
+     "apr": 5,
+     "min": 40,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Card",
+    "Loan"
+   ],
+   "debt_free_date": "2027-02-26",
+   "paydays_to_debt_free": 10,
+   "total_interest": 45.45,
+   "paid_off_dates": {
+    "Card": "2027-02-12",
+    "Loan": "2027-02-26"
+   },
+   "minimums_only": {
+    "never_ends": true,
+    "months": null,
+    "total_interest": null
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 18.46,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 168.46,
+     "debt_left": 1289.2
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 18.46,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 168.46,
+     "debt_left": 1278.41
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 18.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 168.46,
+     "debt_left": 1117.64
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 18.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 168.46,
+     "debt_left": 955.75
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 18.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 168.46,
+     "debt_left": 792.72
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 18.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 168.46,
+     "debt_left": 628.54
+    }
+   ]
+  }
+ },
+ {
+  "name": "zero_minimum_zero_interest",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Mom",
+     "type": "",
+     "balance": 600,
+     "apr": 0,
+     "min": 0,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Card",
+     "type": "",
+     "balance": 300,
+     "apr": 24,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Mom",
+    "Card"
+   ],
+   "debt_free_date": "2027-01-29",
+   "paydays_to_debt_free": 8,
+   "total_interest": 18.46,
+   "paid_off_dates": {
+    "Mom": "2027-01-01",
+    "Card": "2027-01-29"
+   },
+   "minimums_only": {
+    "never_ends": true,
+    "months": null,
+    "total_interest": null
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 11.54,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 161.54,
+     "debt_left": 891.23
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 11.54,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 161.54,
+     "debt_left": 882.38
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 11.54,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Mom",
+     "total_to_set_aside": 161.54,
+     "debt_left": 723.45
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 11.54,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Mom",
+     "total_to_set_aside": 161.54,
+     "debt_left": 564.43
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 11.54,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Mom",
+     "total_to_set_aside": 161.54,
+     "debt_left": 405.34
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 11.54,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Mom",
+     "total_to_set_aside": 161.54,
+     "debt_left": 246.16
+    }
+   ]
+  }
+ },
+ {
+  "name": "minimum_below_interest",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Old card",
+     "type": "",
+     "balance": 5000,
+     "apr": 29.99,
+     "min": 100,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Phone",
+     "type": "",
+     "balance": 300,
+     "apr": 0,
+     "min": 30,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Old card",
+    "Phone"
+   ],
+   "debt_free_date": "2027-12-31",
+   "paydays_to_debt_free": 32,
+   "total_interest": 1071.38,
+   "paid_off_dates": {
+    "Phone": "2027-08-13",
+    "Old card": "2027-12-31"
+   },
+   "minimums_only": {
+    "never_ends": true,
+    "months": null,
+    "total_interest": null
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.0,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 210.0,
+     "debt_left": 5297.67
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.0,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 210.0,
+     "debt_left": 5295.48
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Old card",
+     "total_to_set_aside": 210.0,
+     "debt_left": 5143.42
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Old card",
+     "total_to_set_aside": 210.0,
+     "debt_left": 4989.77
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 60.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Old card",
+     "total_to_set_aside": 210.0,
+     "debt_left": 4834.5
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 60.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Old card",
+     "total_to_set_aside": 210.0,
+     "debt_left": 4677.6
+    }
+   ]
+  }
+ },
+ {
+  "name": "negative_adjustment_bigger_than_extra",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {
+    "1": -500,
+    "2": -150,
+    "4": -20
+   },
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-09-10",
+   "paydays_to_debt_free": 24,
+   "total_interest": 488.92,
+   "paid_off_dates": {
+    "Store card": "2027-01-29",
+    "Visa": "2027-09-10"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3814.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3788.49
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3762.38
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 130.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 190.46,
+     "debt_left": 3736.01
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 60.46,
+     "to_buffer": 20.0,
+     "to_yearly_bills": 0.0,
+     "extra": 130.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3579.4
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3401.19
+    }
+   ]
+  }
+ },
+ {
+  "name": "buffer_already_above_goal",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 900,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-07-16",
+   "paydays_to_debt_free": 20,
+   "total_interest": 367.55,
+   "paid_off_dates": {
+    "Store card": "2026-12-04",
+    "Visa": "2027-07-16"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3664.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3486.94
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3307.69
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3126.61
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 44.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 166.15,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 210.46,
+     "debt_left": 2943.68
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 44.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 166.15,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 210.46,
+     "debt_left": 2759.15
+    }
+   ]
+  }
+ },
+ {
+  "name": "buffer_goal_zero",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 0,
+   "buffer_goal": 0,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-07-16",
+   "paydays_to_debt_free": 20,
+   "total_interest": 367.55,
+   "paid_off_dates": {
+    "Store card": "2026-12-04",
+    "Visa": "2027-07-16"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3664.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3486.94
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3307.69
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3126.61
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 44.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 166.15,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 210.46,
+     "debt_left": 2943.68
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 44.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 166.15,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 210.46,
+     "debt_left": 2759.15
+    }
+   ]
+  }
+ },
+ {
+  "name": "extra_zero",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 0,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2030-05-31",
+   "paydays_to_debt_free": 95,
+   "total_interest": 1866.98,
+   "paid_off_dates": {
+    "Store card": "2028-10-06",
+    "Visa": "2030-05-31"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3814.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3788.49
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3762.38
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3736.01
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3709.4
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 60.46,
+     "debt_left": 3682.54
+    }
+   ]
+  }
+ },
+ {
+  "name": "monthly_on_jan_31",
+  "input": {
+   "freq": "Every month",
+   "next_payday": [
+    2027,
+    1,
+    31
+   ],
+   "extra": 300,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-11-30",
+   "paydays_to_debt_free": 11,
+   "total_interest": 477.03,
+   "paid_off_dates": {
+    "Store card": "2027-03-31",
+    "Visa": "2027-11-30"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2027-01-31",
+     "minimums": 131.0,
+     "to_buffer": 300,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3784.46
+    },
+    {
+     "payday": 2,
+     "date": "2027-02-28",
+     "minimums": 131.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 300.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3427.79
+    },
+    {
+     "payday": 3,
+     "date": "2027-03-31",
+     "minimums": 131.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 300.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3063.22
+    },
+    {
+     "payday": 4,
+     "date": "2027-04-30",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 2690.68
+    },
+    {
+     "payday": 5,
+     "date": "2027-05-31",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 2311.03
+    },
+    {
+     "payday": 6,
+     "date": "2027-06-30",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 1924.13
+    }
+   ]
+  }
+ },
+ {
+  "name": "monthly_on_jan_29_leap_year",
+  "input": {
+   "freq": "Every month",
+   "next_payday": [
+    2028,
+    1,
+    29
+   ],
+   "extra": 300,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2028-11-29",
+   "paydays_to_debt_free": 11,
+   "total_interest": 477.03,
+   "paid_off_dates": {
+    "Store card": "2028-03-29",
+    "Visa": "2028-11-29"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2028-01-29",
+     "minimums": 131.0,
+     "to_buffer": 300,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3784.46
+    },
+    {
+     "payday": 2,
+     "date": "2028-02-29",
+     "minimums": 131.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 300.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3427.79
+    },
+    {
+     "payday": 3,
+     "date": "2028-03-29",
+     "minimums": 131.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 300.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3063.22
+    },
+    {
+     "payday": 4,
+     "date": "2028-04-29",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 2690.68
+    },
+    {
+     "payday": 5,
+     "date": "2028-05-29",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 2311.03
+    },
+    {
+     "payday": 6,
+     "date": "2028-06-29",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 1924.13
+    }
+   ]
+  }
+ },
+ {
+  "name": "monthly_on_feb_28",
+  "input": {
+   "freq": "Every month",
+   "next_payday": [
+    2027,
+    2,
+    28
+   ],
+   "extra": 300,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-12-28",
+   "paydays_to_debt_free": 11,
+   "total_interest": 477.03,
+   "paid_off_dates": {
+    "Store card": "2027-04-28",
+    "Visa": "2027-12-28"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2027-02-28",
+     "minimums": 131.0,
+     "to_buffer": 300,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3784.46
+    },
+    {
+     "payday": 2,
+     "date": "2027-03-28",
+     "minimums": 131.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 300.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3427.79
+    },
+    {
+     "payday": 3,
+     "date": "2027-04-28",
+     "minimums": 131.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 300.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 431.0,
+     "debt_left": 3063.22
+    },
+    {
+     "payday": 4,
+     "date": "2027-05-28",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 2690.68
+    },
+    {
+     "payday": 5,
+     "date": "2027-06-28",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 2311.03
+    },
+    {
+     "payday": 6,
+     "date": "2027-07-28",
+     "minimums": 96.0,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 335.0,
+     "extra_goes_to": "Visa",
+     "total_to_set_aside": 431.0,
+     "debt_left": 1924.13
+    }
+   ]
+  }
+ },
+ {
+  "name": "twice_a_month_from_1st",
+  "input": {
+   "freq": "Twice a month",
+   "next_payday": [
+    2026,
+    11,
+    1
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-09-16",
+   "paydays_to_debt_free": 22,
+   "total_interest": 455.75,
+   "paid_off_dates": {
+    "Store card": "2027-01-16",
+    "Visa": "2027-09-16"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-11-01",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3812.23
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-16",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3784.18
+    },
+    {
+     "payday": 3,
+     "date": "2026-12-01",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3605.84
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-16",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3425.53
+    },
+    {
+     "payday": 5,
+     "date": "2027-01-01",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3243.22
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-16",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3058.89
+    }
+   ]
+  }
+ },
+ {
+  "name": "twice_a_month_from_15th",
+  "input": {
+   "freq": "Twice a month",
+   "next_payday": [
+    2027,
+    1,
+    15
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-11-30",
+   "paydays_to_debt_free": 22,
+   "total_interest": 455.75,
+   "paid_off_dates": {
+    "Store card": "2027-03-30",
+    "Visa": "2027-11-30"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2027-01-15",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3812.23
+    },
+    {
+     "payday": 2,
+     "date": "2027-01-30",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3784.18
+    },
+    {
+     "payday": 3,
+     "date": "2027-02-15",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3605.84
+    },
+    {
+     "payday": 4,
+     "date": "2027-02-28",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3425.53
+    },
+    {
+     "payday": 5,
+     "date": "2027-03-15",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3243.22
+    },
+    {
+     "payday": 6,
+     "date": "2027-03-30",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3058.89
+    }
+   ]
+  }
+ },
+ {
+  "name": "twice_a_month_from_16th",
+  "input": {
+   "freq": "Twice a month",
+   "next_payday": [
+    2027,
+    1,
+    16
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-11-30",
+   "paydays_to_debt_free": 22,
+   "total_interest": 455.75,
+   "paid_off_dates": {
+    "Store card": "2027-03-31",
+    "Visa": "2027-11-30"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2027-01-16",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3812.23
+    },
+    {
+     "payday": 2,
+     "date": "2027-01-31",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3784.18
+    },
+    {
+     "payday": 3,
+     "date": "2027-02-16",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3605.84
+    },
+    {
+     "payday": 4,
+     "date": "2027-02-28",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3425.53
+    },
+    {
+     "payday": 5,
+     "date": "2027-03-16",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3243.22
+    },
+    {
+     "payday": 6,
+     "date": "2027-03-31",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3058.89
+    }
+   ]
+  }
+ },
+ {
+  "name": "twice_a_month_from_31st",
+  "input": {
+   "freq": "Twice a month",
+   "next_payday": [
+    2027,
+    1,
+    31
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-11-30",
+   "paydays_to_debt_free": 22,
+   "total_interest": 455.75,
+   "paid_off_dates": {
+    "Store card": "2027-03-31",
+    "Visa": "2027-11-30"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2027-01-31",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3812.23
+    },
+    {
+     "payday": 2,
+     "date": "2027-01-31",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3784.18
+    },
+    {
+     "payday": 3,
+     "date": "2027-02-28",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3605.84
+    },
+    {
+     "payday": 4,
+     "date": "2027-02-28",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3425.53
+    },
+    {
+     "payday": 5,
+     "date": "2027-03-31",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3243.22
+    },
+    {
+     "payday": 6,
+     "date": "2027-03-31",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3058.89
+    }
+   ]
+  }
+ },
+ {
+  "name": "twice_a_month_from_feb_14_leap",
+  "input": {
+   "freq": "Twice a month",
+   "next_payday": [
+    2028,
+    2,
+    14
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2028-12-29",
+   "paydays_to_debt_free": 22,
+   "total_interest": 455.75,
+   "paid_off_dates": {
+    "Store card": "2028-04-29",
+    "Visa": "2028-12-29"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2028-02-14",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3812.23
+    },
+    {
+     "payday": 2,
+     "date": "2028-02-29",
+     "minimums": 65.5,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3784.18
+    },
+    {
+     "payday": 3,
+     "date": "2028-03-14",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3605.84
+    },
+    {
+     "payday": 4,
+     "date": "2028-03-29",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3425.53
+    },
+    {
+     "payday": 5,
+     "date": "2028-04-14",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3243.22
+    },
+    {
+     "payday": 6,
+     "date": "2028-04-29",
+     "minimums": 65.5,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 215.5,
+     "debt_left": 3058.89
+    }
+   ]
+  }
+ },
+ {
+  "name": "weekly_over_feb_29",
+  "input": {
+   "freq": "Every week",
+   "next_payday": [
+    2028,
+    2,
+    25
+   ],
+   "extra": 60,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2029-02-16",
+   "paydays_to_debt_free": 52,
+   "total_interest": 496.21,
+   "paid_off_dates": {
+    "Store card": "2028-06-02",
+    "Visa": "2029-02-16"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2028-02-25",
+     "minimums": 30.23,
+     "to_buffer": 60.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 90.23,
+     "debt_left": 3827.18
+    },
+    {
+     "payday": 2,
+     "date": "2028-03-03",
+     "minimums": 30.23,
+     "to_buffer": 60.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 90.23,
+     "debt_left": 3814.31
+    },
+    {
+     "payday": 3,
+     "date": "2028-03-10",
+     "minimums": 30.23,
+     "to_buffer": 60.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 90.23,
+     "debt_left": 3801.37
+    },
+    {
+     "payday": 4,
+     "date": "2028-03-17",
+     "minimums": 30.23,
+     "to_buffer": 60.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 90.23,
+     "debt_left": 3788.37
+    },
+    {
+     "payday": 5,
+     "date": "2028-03-24",
+     "minimums": 30.23,
+     "to_buffer": 60.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 90.23,
+     "debt_left": 3775.31
+    },
+    {
+     "payday": 6,
+     "date": "2028-03-31",
+     "minimums": 30.23,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 60.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 90.23,
+     "debt_left": 3702.19
+    }
+   ]
+  }
+ },
+ {
+  "name": "never_ends_over_520",
+  "input": {
+   "freq": "Every week",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 0,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Card",
+     "type": "",
+     "balance": 20000,
+     "apr": 29.99,
+     "min": 200,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Card"
+   ],
+   "debt_free_date": null,
+   "paydays_to_debt_free": null,
+   "total_interest": 250669.69,
+   "paid_off_dates": {},
+   "minimums_only": {
+    "never_ends": true,
+    "months": null,
+    "total_interest": null
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 46.15,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 46.15,
+     "debt_left": 20069.19
+    },
+    {
+     "payday": 2,
+     "date": "2026-10-30",
+     "minimums": 46.15,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 46.15,
+     "debt_left": 20138.78
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-06",
+     "minimums": 46.15,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 46.15,
+     "debt_left": 20208.78
+    },
+    {
+     "payday": 4,
+     "date": "2026-11-13",
+     "minimums": 46.15,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 46.15,
+     "debt_left": 20279.17
+    },
+    {
+     "payday": 5,
+     "date": "2026-11-20",
+     "minimums": 46.15,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 46.15,
+     "debt_left": 20349.98
+    },
+    {
+     "payday": 6,
+     "date": "2026-11-27",
+     "minimums": 46.15,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 46.15,
+     "debt_left": 20421.19
+    }
+   ]
+  }
+ },
+ {
+  "name": "charge_on_buffer_first_payday",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 0,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {
+    "1": 75,
+    "3": 40
+   }
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-09-10",
+   "paydays_to_debt_free": 24,
+   "total_interest": 491.5,
+   "paid_off_dates": {
+    "Store card": "2027-01-29",
+    "Visa": "2027-09-10"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3889.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3864.27
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3878.94
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 50.0,
+     "to_yearly_bills": 0.0,
+     "extra": 100.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3753.79
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3577.36
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3399.13
+    }
+   ]
+  }
+ },
+ {
+  "name": "charges_after_buffer",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 500,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {
+    "2": 300,
+    "5": 25.5
+   }
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2027-08-13",
+   "paydays_to_debt_free": 22,
+   "total_interest": 429.23,
+   "paid_off_dates": {
+    "Store card": "2027-01-01",
+    "Visa": "2027-08-13"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3664.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3786.94
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3610.8
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3432.87
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3278.61
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Store card",
+     "total_to_set_aside": 210.46,
+     "debt_left": 3097.28
+    }
+   ]
+  }
+ },
+ {
+  "name": "my_own_order_blanks_and_ties",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "My own order",
+   "debts": [
+    {
+     "name": "A",
+     "type": "",
+     "balance": 900,
+     "apr": 10,
+     "min": 30,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "B",
+     "type": "",
+     "balance": 400,
+     "apr": 20,
+     "min": 20,
+     "due_day": 1,
+     "my_order": 2
+    },
+    {
+     "name": "C",
+     "type": "",
+     "balance": 700,
+     "apr": 15,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "D",
+     "type": "",
+     "balance": 300,
+     "apr": 5,
+     "min": 20,
+     "due_day": 1,
+     "my_order": 1
+    },
+    {
+     "name": "E",
+     "type": "",
+     "balance": 500,
+     "apr": 25,
+     "min": 20,
+     "due_day": 1,
+     "my_order": 2
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "D",
+    "B",
+    "E",
+    "A",
+    "C"
+   ],
+   "debt_free_date": "2027-05-21",
+   "paydays_to_debt_free": 16,
+   "total_interest": 147.95,
+   "paid_off_dates": {
+    "D": "2026-12-04",
+    "B": "2027-01-15",
+    "E": "2027-02-12",
+    "A": "2027-04-23",
+    "C": "2027-05-21"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 36,
+    "total_interest": 621.55
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 53.08,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 203.08,
+     "debt_left": 2762.88
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 53.08,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 203.08,
+     "debt_left": 2725.58
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 53.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "D",
+     "total_to_set_aside": 203.08,
+     "debt_left": 2538.08
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 53.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "D",
+     "total_to_set_aside": 203.08,
+     "debt_left": 2350.11
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 43.85,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 159.23,
+     "extra_goes_to": "B",
+     "total_to_set_aside": 203.08,
+     "debt_left": 2161.45
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 43.85,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 159.23,
+     "extra_goes_to": "B",
+     "total_to_set_aside": 203.08,
+     "debt_left": 1971.38
+    }
+   ]
+  }
+ },
+ {
+  "name": "paidinyellow_ties_keep_entry_order",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "First",
+     "type": "",
+     "balance": 500,
+     "apr": 20,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Second",
+     "type": "",
+     "balance": 500,
+     "apr": 20,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Third",
+     "type": "",
+     "balance": 500,
+     "apr": 18,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "First",
+    "Second",
+    "Third"
+   ],
+   "debt_free_date": "2027-03-12",
+   "paydays_to_debt_free": 11,
+   "total_interest": 71.1,
+   "paid_off_dates": {
+    "First": "2027-01-01",
+    "Second": "2027-01-29",
+    "Third": "2027-03-12"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 25,
+    "total_interest": 325.41
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 34.62,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 184.62,
+     "debt_left": 1476.54
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 34.62,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 184.62,
+     "debt_left": 1452.9
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 34.62,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "First",
+     "total_to_set_aside": 184.62,
+     "debt_left": 1279.09
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 34.62,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "First",
+     "total_to_set_aside": 184.62,
+     "debt_left": 1103.95
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 34.62,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "First",
+     "total_to_set_aside": 184.62,
+     "debt_left": 927.47
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 30.61,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 154.01,
+     "extra_goes_to": "Second",
+     "total_to_set_aside": 184.62,
+     "debt_left": 749.63
+    }
+   ]
+  }
+ },
+ {
+  "name": "biggest_interest_ties_smaller_balance",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "Biggest interest first",
+   "debts": [
+    {
+     "name": "Big",
+     "type": "",
+     "balance": 900,
+     "apr": 24,
+     "min": 30,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Small",
+     "type": "",
+     "balance": 300,
+     "apr": 24,
+     "min": 20,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Low",
+     "type": "",
+     "balance": 200,
+     "apr": 9,
+     "min": 20,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Small",
+    "Big",
+    "Low"
+   ],
+   "debt_free_date": "2027-02-26",
+   "paydays_to_debt_free": 10,
+   "total_interest": 71.75,
+   "paid_off_dates": {
+    "Small": "2026-12-04",
+    "Big": "2027-02-26",
+    "Low": "2027-02-26"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 47,
+    "total_interest": 557.04
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 32.31,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 182.31,
+     "debt_left": 1379.46
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 32.31,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 182.31,
+     "debt_left": 1358.78
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 32.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Small",
+     "total_to_set_aside": 182.31,
+     "debt_left": 1187.96
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 32.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 150.0,
+     "extra_goes_to": "Small",
+     "total_to_set_aside": 182.31,
+     "debt_left": 1015.62
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 23.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 159.23,
+     "extra_goes_to": "Big",
+     "total_to_set_aside": 182.31,
+     "debt_left": 841.73
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 23.08,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 159.23,
+     "extra_goes_to": "Big",
+     "total_to_set_aside": 182.31,
+     "debt_left": 666.28
+    }
+   ]
+  }
+ },
+ {
+  "name": "zero_balance_debt",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 150,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Done",
+     "type": "",
+     "balance": 0,
+     "apr": 20,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Card",
+     "type": "",
+     "balance": 800,
+     "apr": 20,
+     "min": 30,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Done",
+    "Card"
+   ],
+   "debt_free_date": "2027-01-15",
+   "paydays_to_debt_free": 7,
+   "total_interest": 28.3,
+   "paid_off_dates": {
+    "Done": "2026-10-23",
+    "Card": "2027-01-15"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 36,
+    "total_interest": 266.81
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 13.85,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 11.54,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 175.38,
+     "debt_left": 780.77
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 13.85,
+     "to_buffer": 150.0,
+     "to_yearly_bills": 0.0,
+     "extra": 11.54,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 175.38,
+     "debt_left": 761.39
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 13.85,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 161.54,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 175.38,
+     "debt_left": 591.86
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 13.85,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 161.54,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 175.38,
+     "debt_left": 421.03
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 13.85,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 161.54,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 175.38,
+     "debt_left": 248.89
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 13.85,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 161.54,
+     "extra_goes_to": "Card",
+     "total_to_set_aside": 175.38,
+     "debt_left": 75.41
+    }
+   ]
+  }
+ },
+ {
+  "name": "two_growing_debts_highest_apr_first",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 250,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "G1",
+     "type": "",
+     "balance": 4000,
+     "apr": 24,
+     "min": 60,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "G2",
+     "type": "",
+     "balance": 3000,
+     "apr": 29,
+     "min": 50,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Ok",
+     "type": "",
+     "balance": 200,
+     "apr": 10,
+     "min": 25,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "G2",
+    "G1",
+    "Ok"
+   ],
+   "debt_free_date": "2027-11-05",
+   "paydays_to_debt_free": 28,
+   "total_interest": 1056.98,
+   "paid_off_dates": {
+    "G2": "2027-04-23",
+    "Ok": "2027-06-18",
+    "G1": "2027-11-05"
+   },
+   "minimums_only": {
+    "never_ends": true,
+    "months": null,
+    "total_interest": null
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 62.31,
+     "to_buffer": 250.0,
+     "to_yearly_bills": 0.0,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 312.31,
+     "debt_left": 7208.85
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 62.31,
+     "to_buffer": 50.0,
+     "to_yearly_bills": 0.0,
+     "extra": 200.0,
+     "extra_goes_to": "G2",
+     "total_to_set_aside": 312.31,
+     "debt_left": 7017.85
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 62.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 250.0,
+     "extra_goes_to": "G2",
+     "total_to_set_aside": 312.31,
+     "debt_left": 6774.79
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 62.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 250.0,
+     "extra_goes_to": "G2",
+     "total_to_set_aside": 312.31,
+     "debt_left": 6529.08
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 62.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 250.0,
+     "extra_goes_to": "G2",
+     "total_to_set_aside": 312.31,
+     "debt_left": 6280.68
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 62.31,
+     "to_buffer": 0,
+     "to_yearly_bills": 0.0,
+     "extra": 250.0,
+     "extra_goes_to": "G2",
+     "total_to_set_aside": 312.31,
+     "debt_left": 6029.58
+    }
+   ]
+  }
+ },
+ {
+  "name": "yearly_bills_bigger_than_extra",
+  "input": {
+   "freq": "Every 2 weeks",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 20,
+   "buffer_now": 200,
+   "buffer_goal": 500,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Visa",
+     "type": "",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store card",
+     "type": "",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [
+    {
+     "name": "Car",
+     "per_year": 1300,
+     "month": "Any time"
+    }
+   ],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free_date": "2030-05-31",
+   "paydays_to_debt_free": 95,
+   "total_interest": 1866.98,
+   "paid_off_dates": {
+    "Store card": "2028-10-06",
+    "Visa": "2030-05-31"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 54,
+    "total_interest": 2127.48
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 20,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 80.46,
+     "debt_left": 3814.37
+    },
+    {
+     "payday": 2,
+     "date": "2026-11-06",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 20,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 80.46,
+     "debt_left": 3788.49
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-20",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 20,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 80.46,
+     "debt_left": 3762.38
+    },
+    {
+     "payday": 4,
+     "date": "2026-12-04",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 20,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 80.46,
+     "debt_left": 3736.01
+    },
+    {
+     "payday": 5,
+     "date": "2026-12-18",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 20,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 80.46,
+     "debt_left": 3709.4
+    },
+    {
+     "payday": 6,
+     "date": "2027-01-01",
+     "minimums": 60.46,
+     "to_buffer": 0,
+     "to_yearly_bills": 20,
+     "extra": 0,
+     "extra_goes_to": "",
+     "total_to_set_aside": 80.46,
+     "debt_left": 3682.54
+    }
+   ]
+  }
+ },
+ {
+  "name": "fractional_inputs",
+  "input": {
+   "freq": "Every week",
+   "next_payday": [
+    2026,
+    10,
+    23
+   ],
+   "extra": 33.33,
+   "buffer_now": 12.34,
+   "buffer_goal": 250.5,
+   "method": "PaidInYellow order",
+   "debts": [
+    {
+     "name": "Card",
+     "type": "",
+     "balance": 1234.56,
+     "apr": 21.49,
+     "min": 41.17,
+     "due_day": 1,
+     "my_order": null
+    },
+    {
+     "name": "Store",
+     "type": "",
+     "balance": 98.76,
+     "apr": 27.24,
+     "min": 15.5,
+     "due_day": 1,
+     "my_order": null
+    }
+   ],
+   "yearly": [
+    {
+     "name": "Gifts",
+     "per_year": 410.25,
+     "month": "December"
+    }
+   ],
+   "adj": {},
+   "charges": {}
+  },
+  "expected": {
+   "payoff_order": [
+    "Store",
+    "Card"
+   ],
+   "debt_free_date": "2027-08-27",
+   "paydays_to_debt_free": 45,
+   "total_interest": 148.26,
+   "paid_off_dates": {
+    "Store": "2027-01-08",
+    "Card": "2027-08-27"
+   },
+   "minimums_only": {
+    "never_ends": false,
+    "months": 44,
+    "total_interest": 560.68
+   },
+   "first_paydays": [
+    {
+     "payday": 1,
+     "date": "2026-10-23",
+     "minimums": 13.08,
+     "to_buffer": 25.44,
+     "to_yearly_bills": 7.89,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 46.41,
+     "debt_left": 1325.86
+    },
+    {
+     "payday": 2,
+     "date": "2026-10-30",
+     "minimums": 13.08,
+     "to_buffer": 25.44,
+     "to_yearly_bills": 7.89,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 46.41,
+     "debt_left": 1318.37
+    },
+    {
+     "payday": 3,
+     "date": "2026-11-06",
+     "minimums": 13.08,
+     "to_buffer": 25.44,
+     "to_yearly_bills": 7.89,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 46.41,
+     "debt_left": 1310.84
+    },
+    {
+     "payday": 4,
+     "date": "2026-11-13",
+     "minimums": 13.08,
+     "to_buffer": 25.44,
+     "to_yearly_bills": 7.89,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 46.41,
+     "debt_left": 1303.28
+    },
+    {
+     "payday": 5,
+     "date": "2026-11-20",
+     "minimums": 13.08,
+     "to_buffer": 25.44,
+     "to_yearly_bills": 7.89,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 46.41,
+     "debt_left": 1295.68
+    },
+    {
+     "payday": 6,
+     "date": "2026-11-27",
+     "minimums": 13.08,
+     "to_buffer": 25.44,
+     "to_yearly_bills": 7.89,
+     "extra": 0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 46.41,
+     "debt_left": 1288.05
+    }
+   ]
+  }
+ }
+]
