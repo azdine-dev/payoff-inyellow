@@ -1,5 +1,6 @@
 /** IndexedDB storage. Data lives only on this device. */
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { payoffOrderIds } from '../engine';
 import type {
   AppData,
   BufferRecord,
@@ -96,8 +97,17 @@ export async function loadAll(db: PiyDB): Promise<AppData | null> {
     db.get('findMoney', 'findMoney'),
   ]);
   // Fields added after v1 get their defaults
+  // Older plans have no stored payoff order yet: make it once, from the debts as they are
+  const counted = debts.filter((d) => d.status !== 'archived').sort((a, b) => a.position - b.position);
   const settings: Settings = {
     ...stored,
+    otherPayday: stored.otherPayday ?? null,
+    payoffOrder:
+      stored.payoffOrder ??
+      payoffOrderIds(
+        counted.map((d) => ({ id: d.id, name: d.name, balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, myOrder: d.myOrder })),
+        stored.method,
+      ),
     oneOffs: stored.oneOffs ?? [],
     baseline: stored.baseline ?? null,
     numberOffset: stored.numberOffset ?? 0,

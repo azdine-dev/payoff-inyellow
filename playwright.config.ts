@@ -9,6 +9,7 @@ export default defineConfig({
   testDir: 'e2e',
   timeout: 60_000,
   use: {
+    actionTimeout: 15_000, // a wrong selector fails in 15 seconds, it never waits forever
     ...devices['iPhone 13'],
     browserName: 'chromium',
     baseURL: 'http://localhost:5174',

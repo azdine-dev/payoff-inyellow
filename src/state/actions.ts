@@ -4,7 +4,7 @@
  */
 import {
   paydayNumberOnOrAfter,
-  payoffOrder,
+  payoffOrderIds,
   preparePlan,
   stepPayday,
   ZERO,
@@ -31,6 +31,8 @@ export interface SetupValues {
   currency: Currency;
   frequency: Frequency;
   nextPayday: string;
+  /** Twice a month only: the second pay day of the month (31 = last day) */
+  otherPayday?: number | null;
   paycheckAmount: number | null;
   debts: {
     name: string;
@@ -52,9 +54,9 @@ export interface SetupValues {
 }
 
 /** Paydays before the plan starts ("on the 1st of next month") are counted as already passed. */
-export function startIndex(v: Pick<SetupValues, 'frequency' | 'nextPayday' | 'startMode'>, today: string): number {
+export function startIndex(v: Pick<SetupValues, 'frequency' | 'nextPayday' | 'startMode' | 'otherPayday'>, today: string): number {
   if (v.startMode === 'this-payday') return 0;
-  const n = paydayNumberOnOrAfter(v.nextPayday, v.frequency, firstOfNextMonth(today));
+  const n = paydayNumberOnOrAfter(v.nextPayday, v.frequency, firstOfNextMonth(today), 520, v.otherPayday);
   return n === null ? 0 : n - 1;
 }
 
@@ -74,6 +76,8 @@ export async function completeSetup(
     currency: v.currency,
     frequency: v.frequency,
     anchorPayday: v.nextPayday,
+    otherPayday: v.frequency === 'twice-monthly' ? (v.otherPayday ?? null) : null,
+    payoffOrder: [],
     paydayIndex: startIndex(v, today),
     paycheckAmount: v.paycheckAmount,
     extraPerPayday: v.extraPerPayday,
@@ -106,6 +110,8 @@ export async function completeSetup(
   };
   const funds: Fund[] = v.funds.map((f, i) => ({ id: newId(), updatedAt: now, ...f, saved: 0, position: i }));
 
+  // The payoff order is made once, here, and kept (see Settings.payoffOrder)
+  settings.payoffOrder = payoffOrderIds(debts.map(toDebtInput), v.method);
   const fresh: AppData = { settings, debts, buffer, funds, payments: [], charges: [], paydays: [], milestones: [], findMoney: null };
   settings.baseline = baselineFor(fresh, today);
   const milestone: Milestone = { id: 'plan-made', updatedAt: now, reachedOn: today };
@@ -153,12 +159,14 @@ export async function didPayday(
   const plannedTotal = planMoney === usual ? step.totalToSetAside : stepPayday(plan, state, usual, 0, number, date).totalToSetAside;
 
   const newlyPaid: string[] = [];
-  const changedDebts = step.debts.map((d) => {
-    const debt = byId.get(d.id)!;
-    const paid = d.balanceAfter <= ZERO;
-    if (paid) newlyPaid.push(d.id);
-    return { ...debt, balance: paid ? 0 : d.balanceAfter, status: paid ? 'paid' : debt.status, updatedAt: now } as Debt;
-  });
+  const changedDebts = step.debts
+    .filter((d) => byId.get(d.id)!.status !== 'paid') // paid debts stay in the plan at 0, nothing to save
+    .map((d) => {
+      const debt = byId.get(d.id)!;
+      const paid = d.balanceAfter <= ZERO;
+      if (paid) newlyPaid.push(d.id);
+      return { ...debt, balance: paid ? 0 : d.balanceAfter, status: paid ? 'paid' : debt.status, updatedAt: now } as Debt;
+    });
   const changedById = new Map(changedDebts.map((d) => [d.id, d]));
 
   // Yearly bills: each fund gets its share (perYear / ppy), scaled down if money was short
@@ -192,7 +200,7 @@ export async function didPayday(
     }
   }
 
-  const log: PaydayLog = { id: newId(), updatedAt: now, number, date, status: 'done', planMoney, total: step.totalToSetAside, plannedTotal };
+  const log: PaydayLog = { id: newId(), updatedAt: now, number, date, status: 'done', planMoney, total: step.totalToSetAside, plannedTotal, debtLeft: step.debtLeft };
   // One-off money planned for this payday is used now
   const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1);
   const settings: Settings = { ...s, oneOffs, paydayIndex: s.paydayIndex + 1, updatedAt: now };
@@ -258,7 +266,8 @@ export async function extraPayment(
   now = Date.now(),
 ): Promise<{ data: AppData; newlyPaid: string[] }> {
   const debts = activeDebts(data);
-  const order = payoffOrder(debts.map(toDebtInput), data.settings.method).map((i) => debts[i]!);
+  const rank = new Map(data.settings.payoffOrder.map((id, i) => [id, i]));
+  const order = [...debts].sort((a, b) => (rank.get(a.id) ?? 1e6) - (rank.get(b.id) ?? 1e6) || a.position - b.position);
   let left = amount;
   const changed: Debt[] = [];
   const payments: Payment[] = [];

@@ -2,6 +2,7 @@
 import { ZERO } from '../engine';
 import { commit, newId, type PiyDB } from '../data/db';
 import type { AppData, Charge, ChargeTag, Debt } from '../data/types';
+import { orderFor } from './planInput';
 
 export interface DebtFields {
   name: string;
@@ -27,7 +28,9 @@ export async function addDebt(db: PiyDB, data: AppData, f: DebtFields, now = Dat
     status: f.balance > ZERO ? 'active' : 'paid',
     position,
   };
-  return commit(db, data, { debts: [debt] });
+  // A new debt changes the order: make it again
+  const withNew: AppData = { ...data, debts: [...data.debts, debt] };
+  return commit(db, data, { debts: [debt], settings: { ...data.settings, payoffOrder: orderFor(withNew), updatedAt: now } });
 }
 
 /**
@@ -70,10 +73,14 @@ export async function logCharge(
 
 export async function archiveDebt(db: PiyDB, data: AppData, id: string, now = Date.now()): Promise<AppData> {
   const debt = data.debts.find((d) => d.id === id)!;
-  return commit(db, data, { debts: [{ ...debt, status: 'archived', updatedAt: now }] });
+  const archived = { ...debt, status: 'archived' as const, updatedAt: now };
+  const after: AppData = { ...data, debts: data.debts.map((d) => (d.id === id ? archived : d)) };
+  return commit(db, data, { debts: [archived], settings: { ...data.settings, payoffOrder: orderFor(after), updatedAt: now } });
 }
 
 export async function restoreDebt(db: PiyDB, data: AppData, id: string, now = Date.now()): Promise<AppData> {
   const debt = data.debts.find((d) => d.id === id)!;
-  return commit(db, data, { debts: [{ ...debt, status: debt.balance <= ZERO ? 'paid' : 'active', updatedAt: now }] });
+  const back = { ...debt, status: debt.balance <= ZERO ? ('paid' as const) : ('active' as const), updatedAt: now };
+  const after: AppData = { ...data, debts: data.debts.map((d) => (d.id === id ? back : d)) };
+  return commit(db, data, { debts: [back], settings: { ...data.settings, payoffOrder: orderFor(after), updatedAt: now } });
 }

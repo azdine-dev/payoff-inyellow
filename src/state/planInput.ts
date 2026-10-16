@@ -2,7 +2,7 @@
  * Stored state → engine input. The plan is always simulated from the current state and the
  * next payday, so it never drifts (CLAUDE.md §6).
  */
-import { paydayISO, paydayNumberOnOrAfter, simulatePlan, type DebtInput, type PlanInput } from '../engine';
+import { paydayISO, paydayNumberOnOrAfter, payoffOrderIds, simulatePlan, type DebtInput, type PlanInput } from '../engine';
 import type { AppData, Baseline, Debt, Settings } from '../data/types';
 
 export function activeDebts(data: AppData): Debt[] {
@@ -24,12 +24,12 @@ export function nextPaydayNumber(s: Settings): number {
 }
 
 export function nextPaydayISO(s: Settings): string {
-  return paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + 1);
+  return paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + 1, s.otherPayday);
 }
 
 /** Payday (relative: 1 = next payday) a one-off on this date goes into. Past dates go into the next payday. */
 export function oneOffPayday(s: Settings, date: string): number {
-  const abs = paydayNumberOnOrAfter(s.anchorPayday, s.frequency, date, s.paydayIndex + 600);
+  const abs = paydayNumberOnOrAfter(s.anchorPayday, s.frequency, date, s.paydayIndex + 600, s.otherPayday);
   return Math.max(1, (abs ?? s.paydayIndex + 1) - s.paydayIndex);
 }
 
@@ -64,10 +64,18 @@ export function toPlanInput(data: AppData, planMoneyThisPayday?: number | null):
     bufferNow: data.buffer.amount,
     bufferGoal: s.bufferGoal,
     method: s.method,
-    debts: activeDebts(data).map(toDebtInput),
+    otherPayday: s.otherPayday,
+    // Paid debts stay in with balance 0, so their minimum keeps rolling into the extra
+    debts: countedDebts(data).map(toDebtInput),
+    order: s.payoffOrder,
     yearlyBills: data.funds.map((f) => ({ perYear: f.perYear })),
     adjustments,
   };
+}
+
+/** The payoff order for the debts as they are now (active and paid, not archived). */
+export function orderFor(data: AppData, method = data.settings.method): string[] {
+  return payoffOrderIds(countedDebts(data).map(toDebtInput), method);
 }
 
 /** Snapshot of the plan right now. Saved at setup for Progress. */

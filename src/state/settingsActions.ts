@@ -13,6 +13,7 @@ export async function changeSchedule(
   data: AppData,
   frequency: Frequency,
   nextPayday: string,
+  otherPayday: number | null = null,
   now = Date.now(),
 ): Promise<AppData> {
   const s = data.settings;
@@ -21,6 +22,7 @@ export async function changeSchedule(
       ...s,
       frequency,
       anchorPayday: nextPayday,
+      otherPayday: frequency === 'twice-monthly' ? otherPayday : null,
       numberOffset: s.numberOffset + s.paydayIndex,
       paydayIndex: 0,
       updatedAt: now,

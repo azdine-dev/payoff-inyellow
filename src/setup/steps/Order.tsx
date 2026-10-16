@@ -13,6 +13,7 @@ function draftPlanInput(draft: Draft): Omit<PlanInput, 'method'> {
   return {
     frequency: v.frequency,
     nextPayday: v.nextPayday,
+    otherPayday: v.otherPayday,
     extraPerPayday: v.extraPerPayday,
     bufferNow: v.bufferNow,
     bufferGoal: v.bufferGoal,
@@ -83,8 +84,9 @@ export function OrderStep({ draft, set }: StepProps) {
 
 export function FreshStartStep({ draft, set, today }: StepProps) {
   const freq = draft.frequency || 'biweekly';
-  const nextMonthIndex = startIndex({ frequency: freq, nextPayday: draft.nextPayday, startMode: 'next-month' }, today);
-  const nextMonthDate = paydayISO(draft.nextPayday, freq, nextMonthIndex + 1);
+  const other = toSetupValues(draft).otherPayday;
+  const nextMonthIndex = startIndex({ frequency: freq, nextPayday: draft.nextPayday, startMode: 'next-month', otherPayday: other }, today);
+  const nextMonthDate = paydayISO(draft.nextPayday, freq, nextMonthIndex + 1, other);
   const day = ifThenDefault(draft);
   return (
     <div class="stack">

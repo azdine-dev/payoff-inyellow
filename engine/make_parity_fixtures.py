@@ -46,6 +46,16 @@ EDGE = [
     ('twice_a_month_from_15th', sc(freq='Twice a month', next_payday=[2027, 1, 15], debts=TWO)),
     ('twice_a_month_from_16th', sc(freq='Twice a month', next_payday=[2027, 1, 16], debts=TWO)),
     ('twice_a_month_from_31st', sc(freq='Twice a month', next_payday=[2027, 1, 31], debts=TWO)),
+    ('twice_15th_and_last_day_from_31st', sc(freq='Twice a month', next_payday=[2026, 10, 31], other_payday=15, debts=TWO)),
+    ('twice_15th_and_last_day_from_15th', sc(freq='Twice a month', next_payday=[2026, 11, 15], other_payday=31, debts=TWO)),
+    ('twice_1st_and_15th', sc(freq='Twice a month', next_payday=[2026, 11, 1], other_payday=15, debts=TWO)),
+    ('twice_1st_and_15th_from_15th', sc(freq='Twice a month', next_payday=[2026, 11, 15], other_payday=1, debts=TWO)),
+    ('twice_custom_10_and_25', sc(freq='Twice a month', next_payday=[2026, 11, 10], other_payday=25, debts=TWO)),
+    ('twice_custom_from_the_later_day', sc(freq='Twice a month', next_payday=[2026, 11, 25], other_payday=10, debts=TWO)),
+    ('twice_other_same_as_first_falls_back', sc(freq='Twice a month', next_payday=[2026, 11, 20], other_payday=20, debts=TWO)),
+    ('twice_last_day_of_february', sc(freq='Twice a month', next_payday=[2027, 2, 28], other_payday=15, debts=TWO)),
+    ('twice_30_and_last_day_in_february', sc(freq='Twice a month', next_payday=[2027, 1, 30], other_payday=31, debts=TWO)),
+    ('zero_percent_zero_minimum_is_never_first', sc(debts=[debt('Mom', 600, 0, 0), debt('Card', 900, 19.9, 0), debt('Small', 100, 5, 40)])),
     ('twice_a_month_from_feb_14_leap', sc(freq='Twice a month', next_payday=[2028, 2, 14], debts=TWO)),
     ('weekly_over_feb_29', sc(freq='Every week', next_payday=[2028, 2, 25], debts=TWO, extra=60)),
     ('never_ends_over_520', sc(freq='Every week', debts=[debt('Card', 20000, 29.99, 200)], extra=0)),
@@ -89,6 +99,8 @@ def random_scenario(rng, k):
     s = sc(freq=rng.choice(FREQS), next_payday=[y, m, d], method=rng.choice(METHODS), debts=debts,
            extra=rng.choice([0, money(rng, 5, 600)]), buffer_now=money(rng, 0, 1500), buffer_goal=rng.choice([0, 500, 1000, money(rng, 0, 2000)]),
            yearly=[dict(name='Y%d' % i, per_year=money(rng, 50, 2000), month='Any time') for i in range(rng.randint(0, 3))])
+    if s['freq'] == 'Twice a month' and rng.random() < 0.7:
+        s['other_payday'] = rng.choice([1, 5, 10, 15, 20, 25, 28, 30, 31, rng.randint(1, 31)])
     s['adj'] = {str(rng.randint(1, 40)): money(rng, -400, 600) for _ in range(rng.randint(0, 4))}
     s['charges'] = {str(rng.randint(1, 40)): money(rng, 5, 800) for _ in range(rng.randint(0, 3))}
     return ('random_%03d' % k, s)

@@ -3,7 +3,8 @@ import { useState } from 'preact/hooks';
 import { buildBackup, backupFilename } from '../data/backup';
 import { eraseEverything } from '../data/erase';
 import type { TextSize, Theme } from '../data/types';
-import { FREQUENCIES } from '../setup/draft';
+import { FREQUENCIES, otherPaydayFrom, twiceDays, twiceFromSchedule, twiceNotes, type TwicePair } from '../setup/draft';
+import { TwicePicker } from '../setup/TwicePicker';
 import { downloadText } from '../lib/csv';
 import { buildIcs } from '../lib/ics';
 import { COPY } from '../lib/copy';
@@ -36,6 +37,7 @@ export function Settings() {
   const [text, setText] = useState('');
   const [freq, setFreq] = useState(s.frequency);
   const [date, setDate] = useState('');
+  const [twice, setTwice] = useState<{ pair: TwicePair; a: string; b: string }>({ pair: '', a: '', b: '' });
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState('');
   const [codeMsg, setCodeMsg] = useState('');
@@ -59,6 +61,7 @@ export function Settings() {
     if (which === 'schedule') {
       setFreq(s.frequency);
       setDate(nextPaydayISO(s));
+      setTwice(s.frequency === 'twice-monthly' ? twiceFromSchedule(nextPaydayISO(s), s.otherPayday) : { pair: '', a: '', b: '' });
     }
     if (which === 'currency') {
       setCurrencyCode(cur.code ?? '');
@@ -81,7 +84,10 @@ export function Settings() {
       await act((db, x) => setPaycheck(db, x, text.trim() ? amount : null));
     } else if (edit === 'schedule') {
       if (!date || date < today.value) return setMsg('Pick your next payday: today or a day after today.');
-      await act((db, x) => changeSchedule(db, x, freq, date));
+      const notes = twiceNotes(freq, date, twice.pair, twice.a, twice.b);
+      if (notes.length) return setMsg(notes[0]!);
+      const other = freq === 'twice-monthly' ? otherPaydayFrom(date, twiceDays(twice.pair, twice.a, twice.b)) : null;
+      await act((db, x) => changeSchedule(db, x, freq, date, other));
     } else if (edit === 'currency') {
       const c = currencyCode ? currencyFromCode(currencyCode) : { symbol: text.trim() };
       if (!c.symbol) return setMsg('Type the symbol you use for money, like $ or €.');
@@ -351,6 +357,14 @@ export function Settings() {
             <Choice key={f.value} checked={freq === f.value} onSelect={() => setFreq(f.value)} title={f.label} />
           ))}
         </div>
+        {freq === 'twice-monthly' && (
+          <TwicePicker
+            pair={twice.pair}
+            a={twice.a}
+            b={twice.b}
+            onChange={(p) => setTwice({ pair: p.twicePair ?? twice.pair, a: p.twiceA ?? twice.a, b: p.twiceB ?? twice.b })}
+          />
+        )}
         <Field label="Your next payday" hint="Your history stays. Planned one-off money keeps its dates.">
           <input type="date" min={today.value} value={date} onInput={(e) => setDate((e.target as HTMLInputElement).value)} />
         </Field>

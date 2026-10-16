@@ -83,7 +83,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
 
   // Result: same date as the Sheet (2028-10-06)
   await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028');
-  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): move $107.69 to your buffer');
+  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $365.08');
   await shot(page, '06-result');
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();

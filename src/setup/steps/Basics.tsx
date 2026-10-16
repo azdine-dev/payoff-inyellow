@@ -5,6 +5,7 @@ import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
 import { shortDate } from '../../lib/today';
 import { Choice, Field, NumberInput, Wordmark } from '../../ui/controls';
 import { FREQUENCIES } from '../draft';
+import { TwicePicker } from '../TwicePicker';
 import type { StepProps } from '../Wizard';
 
 export function Welcome() {
@@ -69,10 +70,10 @@ export function PayStep({ draft, set, today }: StepProps) {
           <Choice key={f.value} checked={draft.frequency === f.value} onSelect={() => set({ frequency: f.value, ifThenDay: '' })} title={f.label} />
         ))}
       </div>
-      <Field
-        label="Your next payday"
-        hint={draft.frequency === 'twice-monthly' ? 'Pick the first of your two paydays in the month, like the 1st or the 15th.' : undefined}
-      >
+      {draft.frequency === 'twice-monthly' && (
+        <TwicePicker pair={draft.twicePair} a={draft.twiceA} b={draft.twiceB} onChange={(p) => set({ ...p, ifThenDay: '' })} />
+      )}
+      <Field label="Your next payday" hint={draft.frequency === 'twice-monthly' ? 'It should be one of your two pay days.' : undefined}>
         <input type="date" min={today} value={draft.nextPayday} onInput={(e) => set({ nextPayday: (e.target as HTMLInputElement).value, ifThenDay: '' })} />
       </Field>
       {draft.nextPayday && draft.nextPayday >= today && <p class="muted small">That's {shortDate(draft.nextPayday)}.</p>}

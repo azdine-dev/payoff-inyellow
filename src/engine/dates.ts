@@ -73,14 +73,26 @@ export function compareYmd(a: Ymd, b: Ymd): number {
 }
 
 /**
- * Date of payday n (n = 1 is the next payday).
+ * The two pay days of the month for "twice a month": [first, second, day of the first payday].
+ * 31 means the last day of the month. Ported from twice_a_month_days() in the reference.
+ * Without `other`: a day up to the 15th pairs with day + 15, the last day of a month pairs with
+ * the 15th, any other day after the 15th pairs with day - 15.
+ */
+export function twiceAMonthDays(first: Ymd, other?: number | null): [number, number, number] {
+  const d = first.d === daysInMonth(first.y, first.m) ? 31 : first.d;
+  let o = other ?? 0;
+  if (!o || o === d) o = d <= 15 ? d + 15 : d === 31 ? 15 : d - 15;
+  return [Math.min(d, o), Math.max(d, o), d];
+}
+
+/**
+ * Date of payday n (n = 1 is the first payday of the schedule).
  * - weekly / every 2 weeks: +7 / +14 days
  * - monthly: the same day each month, clamped to the month's end
- * - twice a month: the given day, then 15 days later capped at that month's end, alternating.
- *   Note: matches the Sheet exactly, including a start on the 31st giving two paydays on the
- *   same date (open question for Azeddin, see engine tests).
+ * - twice a month: two fixed days of the month (`other` is the second one, 31 = last day),
+ *   capped at the month's end, alternating
  */
-export function paydayDate(first: Ymd, frequency: Frequency, n: number): Ymd {
+export function paydayDate(first: Ymd, frequency: Frequency, n: number, other?: number | null): Ymd {
   switch (frequency) {
     case 'weekly':
       return addDays(first, 7 * (n - 1));
@@ -89,33 +101,33 @@ export function paydayDate(first: Ymd, frequency: Frequency, n: number): Ymd {
     case 'monthly':
       return addMonths(first, n - 1);
     case 'twice-monthly': {
-      if (n % 2 === 1) return addMonths(first, (n - 1) / 2);
-      const a = addMonths(first, (n - 2) / 2);
-      const later = addDays(a, 15);
-      const monthEnd = { y: a.y, m: a.m, d: daysInMonth(a.y, a.m) };
-      return compareYmd(later, monthEnd) <= 0 ? later : monthEnd;
+      const [lo, hi, d] = twiceAMonthDays(first, other);
+      const idx = n - 1 + (d === lo ? 0 : 1);
+      const month = addMonths({ y: first.y, m: first.m, d: 1 }, Math.floor(idx / 2));
+      return { y: month.y, m: month.m, d: Math.min(idx % 2 === 0 ? lo : hi, daysInMonth(month.y, month.m)) };
     }
   }
 }
 
-export function paydayISO(firstISO: string, frequency: Frequency, n: number): string {
-  return toISO(paydayDate(parseISO(firstISO), frequency, n));
+export function paydayISO(firstISO: string, frequency: Frequency, n: number, other?: number | null): string {
+  return toISO(paydayDate(parseISO(firstISO), frequency, n, other));
 }
 
 /**
  * The first payday number whose date is on or after `dateISO` (1 if the date is before
- * the next payday). Used for "one-off money on a date" in the what-if.
+ * the first payday). Used for "one-off money on a date" in the what-if.
  */
 export function paydayNumberOnOrAfter(
   firstISO: string,
   frequency: Frequency,
   dateISO: string,
   maxPaydays = 520,
+  other?: number | null,
 ): number | null {
   const first = parseISO(firstISO);
   const target = parseISO(dateISO);
   for (let n = 1; n <= maxPaydays; n++) {
-    if (compareYmd(paydayDate(first, frequency, n), target) >= 0) return n;
+    if (compareYmd(paydayDate(first, frequency, n, other), target) >= 0) return n;
   }
   return null;
 }

@@ -103,9 +103,9 @@ export function Today() {
 
   return (
     <main class="screen with-tabs">
-      <header class="row">
+      <header class="row" style={{ flexWrap: 'wrap' }}>
         <Wordmark />
-        <div class="row" style={{ gap: 4 }}>
+        <div class="row" style={{ gap: 4, flexWrap: 'wrap', marginLeft: 'auto' }}>
           <span class="pill" data-testid="debt-free-pill">
             {pill}
           </span>
@@ -208,6 +208,11 @@ export function Today() {
                   </div>
                 ))}
               </div>
+              {row.bufferFirst && (
+                <p class="muted small" data-testid="buffer-first" style={{ margin: '0 0 8px 34px' }}>
+                  Extra: Buffer first. {COPY.buffer}
+                </p>
+              )}
               {override !== null && (
                 <p class="muted small" style={{ margin: '4px 0 8px' }}>
                   This payday uses {formatMoneyAuto(override, cur)} for the plan instead of {formatMoneyAuto(s.extraPerPayday, cur)}.{' '}

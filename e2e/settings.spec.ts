@@ -91,7 +91,8 @@ test('dark mode and a larger text size apply at once and stay after a reload', a
   await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
   await shot(page, '15-dark-today');
   // No sideways scrolling at the largest text size
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= Math.min(window.screen.width, window.innerWidth))).toBe(true);
+  expect(await page.evaluate(() => window.innerWidth <= window.screen.width)).toBe(true); // the page did not grow wider than the phone
 });
 
 test('changing the pay schedule keeps history and moves the next payday', async ({ page }) => {

@@ -57,6 +57,16 @@ export interface PlanInput {
   nextPayday: string;
   /** Paydays already done or skipped since nextPayday. Row n's date is payday offset + n. */
   paydayOffset?: number;
+  /** Twice a month only: the second pay day of the month (31 = last day). */
+  otherPayday?: number | null;
+  /**
+   * The payoff order, as debt ids, kept from when the plan was made. Recompute it only when the
+   * payoff method changes or a debt is added or removed. Re-sorting by current balances every
+   * payday makes the focus debt jump and moves the debt-free date. Without it the order comes
+   * from `method`. Paid debts stay in `debts` with balance 0, so their minimum keeps rolling
+   * into the extra.
+   */
+  order?: string[];
   /** Money for the plan each payday, on top of the minimums */
   extraPerPayday: number;
   bufferNow: number;
@@ -130,9 +140,9 @@ export interface PlanResult {
   minimumsOnly: MinimumsOnly;
 }
 
-/** Monthly interest on a debt, as the reference computes it for the order check. */
-function minimumCoversInterest(d: Pick<DebtInput, 'balance' | 'apr' | 'minMonthly'>): boolean {
-  return !(d.minMonthly <= (d.balance * d.apr) / 1200);
+/** A debt that charges interest and whose minimum doesn't cover it. A 0% debt never grows, even with a $0 minimum. */
+export function isGrowing(d: Pick<DebtInput, 'balance' | 'apr' | 'minMonthly'>): boolean {
+  return d.apr > 0 && d.minMonthly <= (d.balance * d.apr) / 1200;
 }
 
 type SortKey = number[];
@@ -155,12 +165,25 @@ export function payoffOrder(debts: readonly DebtInput[], method: PayoffMethod): 
   const key = (i: number): SortKey => {
     const d = debts[i]!;
     if (method === 'paidinyellow') {
-      return minimumCoversInterest(d) ? [1, d.balance, i] : [0, -d.apr, i];
+      return isGrowing(d) ? [0, -d.apr, i] : [1, d.balance, i];
     }
     if (method === 'biggest-interest') return [-d.apr, d.balance, i];
     return [d.myOrder ?? 1e6, i];
   };
   return debts.map((_, i) => i).sort((a, b) => compareKeys(key(a), key(b)));
+}
+
+/** The payoff order as debt ids, for storing with the plan. */
+export function payoffOrderIds(debts: readonly DebtInput[], method: PayoffMethod): string[] {
+  return payoffOrder(debts, method).map((i) => debts[i]!.id);
+}
+
+/** Indexes into `debts` for a stored order. Debts missing from it follow, in the order entered. */
+function orderFromIds(debts: readonly DebtInput[], ids: readonly string[]): number[] {
+  const byId = new Map(debts.map((d, i) => [d.id, i]));
+  const picked = ids.filter((id) => byId.has(id)).map((id) => byId.get(id)!);
+  const seen = new Set(picked);
+  return [...picked, ...debts.map((_, i) => i).filter((i) => !seen.has(i))];
 }
 
 /** Months and interest if only the monthly minimum is paid (NPER). null = never ends. */
@@ -202,10 +225,10 @@ export interface PreparedPlan {
 }
 
 export function preparePlan(
-  input: Pick<PlanInput, 'frequency' | 'method' | 'debts' | 'yearlyBills'>,
+  input: Pick<PlanInput, 'frequency' | 'method' | 'debts' | 'yearlyBills' | 'order'>,
 ): PreparedPlan {
   const ppy = PAYDAYS_PER_YEAR[input.frequency];
-  const order = payoffOrder(input.debts, input.method);
+  const order = input.order ? orderFromIds(input.debts, input.order) : payoffOrder(input.debts, input.method);
   const ordered = order.map((i) => input.debts[i]!);
   return {
     frequency: input.frequency,
@@ -293,12 +316,12 @@ export function stepPayday(
 /** The whole plan, payday by payday, from the current state. */
 export function simulatePlan(input: PlanInput): PlanResult {
   const plan = preparePlan(input);
-  const order = payoffOrder(input.debts, input.method);
+  const byId = new Map(input.debts.map((d) => [d.id, d]));
   const maxPaydays = input.maxPaydays ?? MAX_PAYDAYS;
   const adj = input.adjustments ?? {};
   const chg = input.charges ?? {};
 
-  let balances = order.map((i) => input.debts[i]!.balance);
+  let balances = plan.ids.map((id) => byId.get(id)!.balance);
   let buffer = input.bufferNow;
   let totalInterest = 0;
   const rows: PaydayStep[] = [];
@@ -306,7 +329,7 @@ export function simulatePlan(input: PlanInput): PlanResult {
 
   for (let n = 1; n <= maxPaydays; n++) {
     if (pySum(balances) <= ZERO) break;
-    const date = paydayISO(input.nextPayday, input.frequency, (input.paydayOffset ?? 0) + n);
+    const date = paydayISO(input.nextPayday, input.frequency, (input.paydayOffset ?? 0) + n, input.otherPayday);
     const row = stepPayday(
       plan,
       { balances, buffer, bufferGoal: input.bufferGoal },
@@ -362,9 +385,7 @@ export function minimumsPerPayday(
  * order, but it doesn't grow, so it isn't listed here.
  */
 export function growingDebts(debts: readonly DebtInput[]): string[] {
-  return debts
-    .filter((d) => d.balance > ZERO && d.apr > 0 && !minimumCoversInterest(d))
-    .map((d) => d.id);
+  return debts.filter((d) => d.balance > ZERO && isGrowing(d)).map((d) => d.id);
 }
 
 export interface MethodComparison {
@@ -384,8 +405,10 @@ export interface MethodComparison {
  * Otherwise recommend PaidInYellow order.
  */
 export function compareMethods(input: Omit<PlanInput, 'method'>): MethodComparison {
-  const piy = simulatePlan({ ...input, method: 'paidinyellow' });
-  const big = simulatePlan({ ...input, method: 'biggest-interest' });
+  // Each method makes its own order. A stored order would make both runs the same plan.
+  const fresh = { ...input, order: undefined };
+  const piy = simulatePlan({ ...fresh, method: 'paidinyellow' });
+  const big = simulatePlan({ ...fresh, method: 'biggest-interest' });
   const interestSaved = piy.totalInterest - big.totalInterest;
   const bothEnd = piy.debtFreeDate !== null && big.debtFreeDate !== null;
   let suggest: boolean;

@@ -12,8 +12,8 @@ import {
 } from './dates';
 
 const iso = (s: string) => parseISO(s);
-const dates = (first: string, f: Parameters<typeof paydayISO>[1], count: number) =>
-  Array.from({ length: count }, (_, i) => paydayISO(first, f, i + 1));
+const dates = (first: string, f: Parameters<typeof paydayISO>[1], count: number, other?: number) =>
+  Array.from({ length: count }, (_, i) => paydayISO(first, f, i + 1, other));
 
 describe('calendar basics', () => {
   it('knows month lengths and leap years', () => {
@@ -67,10 +67,28 @@ describe('payday dates', () => {
 
   it('twice a month: the second payday is capped at the month end (Feb 28)', () => {
     expect(dates('2027-01-15', 'twice-monthly', 4)).toEqual(['2027-01-15', '2027-01-30', '2027-02-15', '2027-02-28']);
+    expect(dates('2027-01-15', 'twice-monthly', 4, 31)).toEqual(['2027-01-15', '2027-01-31', '2027-02-15', '2027-02-28']);
   });
 
-  it('twice a month from the 31st gives two paydays on one date (matches the Sheet, open question)', () => {
-    expect(dates('2026-10-31', 'twice-monthly', 4)).toEqual(['2026-10-31', '2026-10-31', '2026-11-30', '2026-11-30']);
+  it('twice a month from the 31st pairs with the 15th and never repeats a date', () => {
+    expect(dates('2026-10-31', 'twice-monthly', 6)).toEqual(['2026-10-31', '2026-11-15', '2026-11-30', '2026-12-15', '2026-12-31', '2027-01-15']);
+  });
+
+  it('twice a month: day 16 to 30 pairs with day - 15, and the last day of a month counts as 31', () => {
+    expect(dates('2027-01-16', 'twice-monthly', 4)).toEqual(['2027-01-16', '2027-02-01', '2027-02-16', '2027-03-01']);
+    expect(dates('2027-02-28', 'twice-monthly', 3)).toEqual(['2027-02-28', '2027-03-15', '2027-03-31']);
+  });
+
+  it('twice a month with two chosen days (31 = last day)', () => {
+    expect(dates('2026-10-31', 'twice-monthly', 6, 15)).toEqual(['2026-10-31', '2026-11-15', '2026-11-30', '2026-12-15', '2026-12-31', '2027-01-15']);
+    expect(dates('2026-11-15', 'twice-monthly', 4, 31)).toEqual(['2026-11-15', '2026-11-30', '2026-12-15', '2026-12-31']);
+    expect(dates('2026-11-01', 'twice-monthly', 4, 15)).toEqual(['2026-11-01', '2026-11-15', '2026-12-01', '2026-12-15']);
+    expect(dates('2026-11-25', 'twice-monthly', 4, 10)).toEqual(['2026-11-25', '2026-12-10', '2026-12-25', '2027-01-10']);
+    expect(dates('2027-01-30', 'twice-monthly', 4, 31)).toEqual(['2027-01-30', '2027-01-31', '2027-02-28', '2027-02-28']);
+  });
+
+  it('twice a month: the same day twice falls back to the default pair', () => {
+    expect(dates('2026-11-20', 'twice-monthly', 3, 20)).toEqual(dates('2026-11-20', 'twice-monthly', 3));
   });
 
   it('finds the payday on or after a date', () => {

@@ -88,7 +88,7 @@ export function buildIcs(data: AppData, today: string, opts: IcsOptions = {}): s
 
   // Paydays and the payday check (from the next payday on)
   for (let i = 1; i <= 600; i++) {
-    const date = paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + i);
+    const date = paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + i, s.otherPayday);
     if (date > end) break;
     if (date < today) continue;
     events.push(...vevent({ uid: `payday-${date}`, summary: 'Payday', date }, now));

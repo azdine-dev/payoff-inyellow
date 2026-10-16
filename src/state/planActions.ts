@@ -2,6 +2,7 @@
 import { commit, newId, type PiyDB } from '../data/db';
 import type { AppData, Debt } from '../data/types';
 import type { PayoffMethod } from '../engine';
+import { orderFor } from './planInput';
 
 export async function setMethod(db: PiyDB, data: AppData, method: PayoffMethod, now = Date.now()): Promise<AppData> {
   // "My own order" starts from the order the debts are in now
@@ -9,7 +10,9 @@ export async function setMethod(db: PiyDB, data: AppData, method: PayoffMethod, 
     method === 'my-order' && data.debts.every((d) => d.myOrder === null)
       ? data.debts.map((d) => ({ ...d, myOrder: d.position + 1, updatedAt: now }))
       : [];
-  return commit(db, data, { settings: { ...data.settings, method, updatedAt: now }, debts });
+  // Picking a payoff order again is when the order is made again
+  const next: AppData = { ...data, debts: debts.length ? data.debts.map((d) => debts.find((x) => x.id === d.id) ?? d) : data.debts };
+  return commit(db, data, { settings: { ...data.settings, method, payoffOrder: orderFor(next, method), updatedAt: now }, debts });
 }
 
 /** "Use this in my plan": the slider amount joins the usual money, one-off money is kept with its date. */

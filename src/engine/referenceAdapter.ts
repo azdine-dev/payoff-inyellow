@@ -27,6 +27,7 @@ export interface RefInput {
   yearly?: { name: string; per_year: number; month: string }[];
   adj?: Record<string, number>;
   charges?: Record<string, number>;
+  other_payday?: number | null;
 }
 
 export interface RefRow {
@@ -97,6 +98,7 @@ export function fromReferenceInput(ref: RefInput): PlanInput {
     yearlyBills: (ref.yearly ?? []).map((b) => ({ perYear: b.per_year })),
     adjustments: byPayday(ref.adj),
     charges: byPayday(ref.charges),
+    otherPayday: ref.other_payday ?? null,
   };
 }
 

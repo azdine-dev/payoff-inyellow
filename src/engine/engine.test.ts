@@ -134,6 +134,21 @@ describe('compareMethods', () => {
   });
 });
 
+describe('compareMethods ignores a stored order', () => {
+  it('gives each method its own order, so the two plans can differ', () => {
+    const debts: DebtInput[] = [
+      { id: 'small', name: 'Low rate', balance: 9000, apr: 3, minMonthly: 120 },
+      { id: 'big', name: 'High rate', balance: 15000, apr: 29.99, minMonthly: 400 },
+    ];
+    const input = { ...base, extraPerPayday: 300, bufferNow: 500, yearlyBills: [], debts };
+    const fresh = compareMethods(input);
+    // Passing the order the PaidInYellow method made must not turn the comparison into a tie
+    const stored = compareMethods({ ...input, order: fresh.paidinyellow.order });
+    expect(stored.interestSaved).toBeCloseTo(fresh.interestSaved, 9);
+    expect(stored.interestSaved).toBeGreaterThan(500);
+  });
+});
+
 describe('screen helpers', () => {
   it('daily interest cost: sum(balance x APR) / 365', () => {
     expect(pyRound(dailyInterestCost([visa, store]), 2)).toBe(pyRound((3200 * 0.229 + 640 * 0.2699) / 365, 2));

@@ -38,6 +38,13 @@ export interface Settings extends Meta {
   setupDoneAt: number;
   /** Planned one-off money (a tax refund...). It goes into the payday on or after its date. */
   oneOffs: OneOff[];
+  /** Twice a month only: the second pay day of the month (31 = last day). */
+  otherPayday: number | null;
+  /**
+   * Payoff order as debt ids, set when the plan is made. Changed only when the payoff method
+   * changes or a debt is added, removed or brought back. Never re-sorted by balance each payday.
+   */
+  payoffOrder: string[];
   /** Payday log numbers continue across schedule changes: number = numberOffset + paydayIndex + 1 */
   numberOffset: number;
   /** ms since epoch of the last exported backup, null = never */
@@ -131,6 +138,8 @@ export interface PaydayLog extends Meta {
   total: number;
   /** What the plan asked for that payday with the usual money (planned vs actual) */
   plannedTotal?: number;
+  /** Total debt left after this payday */
+  debtLeft?: number;
 }
 
 export type MilestoneKey =

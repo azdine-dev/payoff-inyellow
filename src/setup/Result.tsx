@@ -91,13 +91,21 @@ export function Result() {
               <>
                 pay your minimums, <span class="hl">{formatMoneyAuto(first.amount, cur)}</span>
               </>
+            ) : first.kind === 'buffer' ? (
+              <>
+                set aside <span class="hl">{formatMoneyAuto(first.amount, cur)}</span>
+              </>
             ) : (
               <>
-                {first.kind === 'buffer' ? 'move ' : 'pay '}
-                <span class="hl">{formatMoneyAuto(first.amount, cur)}</span> to {first.target}
+                pay <span class="hl">{formatMoneyAuto(first.amount, cur)}</span> to {first.target}
               </>
             )}
           </p>
+          {first.kind === 'buffer' && r.rows[0] && (
+            <p class="small num" data-testid="first-step-parts">
+              Minimums {formatMoneyAuto(r.rows[0].minimums, cur)}, yearly bills {formatMoneyAuto(r.rows[0].toYearlyBills, cur)}, buffer {formatMoneyAuto(r.rows[0].toBuffer, cur)}.
+            </p>
+          )}
           <p class="muted small">{first.kind === 'buffer' ? COPY.buffer : methodReason(s.method)}</p>
         </section>
       )}

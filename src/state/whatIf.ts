@@ -18,6 +18,8 @@ export function whatIfPlan(data: AppData, addPerPayday: number, oneOff: { amount
 export interface WhatIfSummary {
   newDate: string | null;
   monthsSaved: number | null;
+  /** Paydays sooner, when both plans end */
+  paydaysSooner: number | null;
   interestSaved: number;
   /** The change gets a plan that never ended within 20 years to end */
   nowEnds: boolean;
@@ -28,6 +30,7 @@ export function whatIfSummary(base: PlanResult, next: PlanResult): WhatIfSummary
   return {
     newDate: next.debtFreeDate,
     monthsSaved: both ? monthsBetween(next.debtFreeDate!, base.debtFreeDate!) : null,
+    paydaysSooner: both ? base.paydaysToDebtFree! - next.paydaysToDebtFree! : null,
     interestSaved: base.totalInterest - next.totalInterest,
     nowEnds: base.debtFreeDate === null && next.debtFreeDate !== null,
   };

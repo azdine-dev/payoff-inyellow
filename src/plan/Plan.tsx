@@ -113,6 +113,7 @@ export function Plan() {
                     : sum.monthsSaved !== null && sum.monthsSaved > 0
                       ? `${sum.monthsSaved} month${sum.monthsSaved === 1 ? '' : 's'} sooner`
                       : 'The same month'}
+                  {sum.paydaysSooner !== null && sum.paydaysSooner > 0 ? ` · ${sum.paydaysSooner} payday${sum.paydaysSooner === 1 ? '' : 's'} sooner` : ''}
                   {sum.interestSaved >= 1 ? ` · ${formatMoney(sum.interestSaved, cur, { whole: true })} less interest` : ''}
                 </p>
               </>
@@ -220,7 +221,7 @@ export function Plan() {
               <span>Total</span>
               <span class="num">{formatMoney(opened.totalToSetAside, cur)}</span>
             </div>
-            <p class="muted small num">Debt left after: {formatMoney(opened.debtLeft, cur, { whole: true })}</p>
+            <p class="muted small num" data-testid="debt-left-after">Debt left after: {formatMoney(opened.debtLeft, cur)}</p>
           </div>
         )}
         {openedLog && (
@@ -229,18 +230,29 @@ export function Plan() {
               <p>{COPY.missed}</p>
             ) : (
               <>
-                {openedPayments.map((p) => (
-                  <div key={p.id} class="row">
-                    <span>
-                      {p.kind === 'minimum' ? `${nameOf(p.debtId!)} minimum` : p.kind === 'extra' ? `Extra to ${nameOf(p.debtId!)}` : p.kind === 'buffer' ? 'Buffer' : 'Yearly bills'}
-                    </span>
-                    <span class="num">{formatMoney(p.amount, cur)}</span>
+                {openedPayments
+                  .filter((p) => p.kind !== 'fund')
+                  .map((p) => (
+                    <div key={p.id} class="row">
+                      <span>
+                        {p.kind === 'minimum' ? `${nameOf(p.debtId!)} minimum` : p.kind === 'extra' ? `Extra to ${nameOf(p.debtId!)}` : 'Buffer'}
+                      </span>
+                      <span class="num">{formatMoney(p.amount, cur)}</span>
+                    </div>
+                  ))}
+                {openedPayments.some((p) => p.kind === 'fund') && (
+                  <div class="row">
+                    <span>Yearly bills</span>
+                    <span class="num">{formatMoney(openedPayments.filter((p) => p.kind === 'fund').reduce((sum, p) => sum + p.amount, 0), cur)}</span>
                   </div>
-                ))}
+                )}
                 <div class="row" style={{ borderTop: '1px solid var(--ink)', paddingTop: 6, fontWeight: 600 }}>
                   <span>Total</span>
                   <span class="num">{formatMoney(openedLog.total, cur)}</span>
                 </div>
+                {openedLog.debtLeft !== undefined && (
+                  <p class="muted small num" data-testid="debt-left-after">Debt left after: {formatMoney(openedLog.debtLeft, cur)}</p>
+                )}
               </>
             )}
           </div>

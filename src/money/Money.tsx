@@ -97,7 +97,7 @@ export function Money() {
         <div class="row">
           <h2 id="buffer-title">Buffer</h2>
           <span class="num" style={{ fontWeight: 600 }}>
-            {formatMoney(d.buffer.amount, cur, { whole: true })} of {formatMoney(s.bufferGoal, cur, { whole: true })}
+            {money(d.buffer.amount, cur)} of {formatMoney(s.bufferGoal, cur, { whole: true })}
           </span>
         </div>
         <Bar pct={bufferPct} label="Buffer" />

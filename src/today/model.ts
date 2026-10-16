@@ -1,5 +1,5 @@
 /** What Today and the result screen show, worked out from the data and the plan. */
-import type { PaydayStep, PlanResult } from '../engine';
+import { ZERO, type PaydayStep, type PlanResult } from '../engine';
 import type { AppData, Debt } from '../data/types';
 import { formatMoney, toCents } from '../lib/money';
 import { diffDays, nextDueDate, shortDate } from '../lib/today';
@@ -27,7 +27,7 @@ export function paydayLines(row: PaydayStep, data: AppData): { lines: PaydayLine
     lines.push({
       key: 'minimums',
       label: `Minimums due (${mins.length})`,
-      amount: mins.reduce((s, d) => s + toCents(d.minimum), 0),
+      amount: toCents(row.minimums),
       details: mins.map((d) => ({ name: debts.get(d.id)?.name ?? '', amount: toCents(d.minimum) })),
     });
   }
@@ -39,7 +39,7 @@ export function paydayLines(row: PaydayStep, data: AppData): { lines: PaydayLine
   for (const d of row.debts) {
     if (toCents(d.extra) > 0) lines.push({ key: `extra-${d.id}`, label: 'Extra →', highlight: debts.get(d.id)?.name ?? '', amount: toCents(d.extra) });
   }
-  const total = toCents(lines.reduce((s, l) => s + l.amount, 0));
+  const total = toCents(row.totalToSetAside);
   return { lines, total };
 }
 
@@ -57,7 +57,7 @@ export function firstStep(row: PaydayStep, data: AppData): FirstStep {
     const extra = row.debts.find((d) => d.id === row.extraGoesTo)!.extra;
     return { date: row.date, kind: 'debt', amount: extra, target: debts.get(row.extraGoesTo)?.name ?? '' };
   }
-  if (row.bufferFirst) return { date: row.date, kind: 'buffer', amount: row.toBuffer, target: 'your buffer' };
+  if (row.bufferFirst) return { date: row.date, kind: 'buffer', amount: row.totalToSetAside, target: '' };
   return { date: row.date, kind: 'minimums', amount: row.minimums, target: 'your minimums' };
 }
 
@@ -76,8 +76,10 @@ export interface FocusInfo {
 
 /** The one debt getting the extra (else the first in order). */
 export function focusDebt(data: AppData, result: PlanResult): FocusInfo | null {
-  const id = result.rows[0]?.extraGoesTo ?? result.order[0];
-  const debt = id ? debtMap(data).get(id) : undefined;
+  const debts = debtMap(data);
+  // Paid debts stay in the plan at 0, so skip them
+  const id = result.rows[0]?.extraGoesTo ?? result.order.find((x) => (debts.get(x)?.balance ?? 0) > ZERO);
+  const debt = id ? debts.get(id) : undefined;
   if (!debt) return null;
   const pctGone = debt.startBalance > 0 ? Math.max(0, Math.min(100, (1 - debt.balance / debt.startBalance) * 100)) : 0;
   return { debt, pctGone, left: debt.balance, goneBy: result.paidOff[debt.id] ?? null };

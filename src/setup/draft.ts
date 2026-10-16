@@ -2,7 +2,7 @@
  * The wizard keeps what people type as text (so "1,2" mid-typing isn't lost), autosaves it,
  * and turns it into numbers when a step is done.
  */
-import { parseISO, type DebtInput, type Frequency, type PayoffMethod } from '../engine';
+import { daysInMonth, parseISO, twiceAMonthDays, type DebtInput, type Frequency, type PayoffMethod } from '../engine';
 import type { StartMode } from '../data/types';
 import { currencyFromCode, detectCurrency, parseAmount } from '../lib/money';
 import { addDaysISO, weekdayName } from '../lib/today';
@@ -28,12 +28,19 @@ export interface DraftFund {
   month: string;
 }
 
+/** The two pay days of "twice a month": the 1st and 15th, the 15th and last day, or two chosen days. */
+export type TwicePair = '' | '1-15' | '15-31' | 'custom';
+
 export interface Draft {
   /** ISO code, or '' for "Other" (symbol typed by hand) */
   currencyCode: string;
   currencySymbol: string;
   frequency: Frequency | '';
   nextPayday: string;
+  twicePair: TwicePair;
+  /** The two chosen days when twicePair is 'custom' (31 = last day) */
+  twiceA: string;
+  twiceB: string;
   paycheck: string;
   debts: DraftDebt[];
   bufferNow: string;
@@ -62,6 +69,9 @@ export function newDraft(): Draft {
     currencySymbol: c.symbol,
     frequency: '',
     nextPayday: '',
+    twicePair: '',
+    twiceA: '',
+    twiceB: '',
     paycheck: '',
     debts: [emptyDebt()],
     bufferNow: '',
@@ -84,6 +94,50 @@ export const FREQUENCIES: { value: Frequency; label: string }[] = [
 ];
 
 export const MONTH_CHOICES = ['Any time', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** The two pay days as [a, b] (31 = last day), or null when not chosen or not usable. */
+export function twiceDays(pair: TwicePair, a: string, b: string): [number, number] | null {
+  if (pair === '1-15') return [1, 15];
+  if (pair === '15-31') return [15, 31];
+  if (pair !== 'custom') return null;
+  const x = Number(a);
+  const y = Number(b);
+  const ok = (n: number) => Number.isInteger(n) && n >= 1 && n <= 31;
+  return ok(x) && ok(y) && x !== y ? [x, y] : null;
+}
+
+/** The day a payday date counts as for the schedule: 31 when it is the last day of its month. */
+function scheduleDay(iso: string): number {
+  const d = parseISO(iso);
+  return d.d === daysInMonth(d.y, d.m) ? 31 : d.d;
+}
+
+/** The second pay day, given the next payday and the chosen pair. null = the next payday isn't one of the two days. */
+export function otherPaydayFrom(nextPayday: string, days: [number, number] | null): number | null {
+  if (!days || !nextPayday) return null;
+  const d = scheduleDay(nextPayday);
+  if (d === days[0]) return days[1];
+  if (d === days[1]) return days[0];
+  return null;
+}
+
+/** Calm notes for the pay schedule choices (shared by setup and Settings). */
+export function twiceNotes(frequency: Frequency | '', nextPayday: string, pair: TwicePair, a: string, b: string): string[] {
+  if (frequency !== 'twice-monthly') return [];
+  if (!pair) return ['Choose your two pay days.'];
+  const days = twiceDays(pair, a, b);
+  if (!days) return ['Type two different days of the month, from 1 to 31.'];
+  if (nextPayday && otherPaydayFrom(nextPayday, days) === null) return ['Your next payday should be on one of your two pay days.'];
+  return [];
+}
+
+/** The pair that matches a saved schedule, for editing. */
+export function twiceFromSchedule(nextPayday: string, other: number | null): { pair: TwicePair; a: string; b: string } {
+  const [lo, hi] = twiceAMonthDays(parseISO(nextPayday), other);
+  if (lo === 1 && hi === 15) return { pair: '1-15', a: '', b: '' };
+  if (lo === 15 && hi === 31) return { pair: '15-31', a: '', b: '' };
+  return { pair: 'custom', a: String(lo), b: String(hi) };
+}
 
 export const STEP_COUNT = 8; // after the welcome screen
 
@@ -122,6 +176,7 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
       if (!draft.nextPayday || !validDate(draft.nextPayday)) notes.push('Pick the date of your next payday.');
       else if (draft.nextPayday < today) notes.push('Pick your next payday: today or a day after today.');
       else if (draft.nextPayday > addDaysISO(today, 62)) notes.push('Pick your next payday. It looks more than 2 months away.');
+      notes.push(...twiceNotes(draft.frequency, draft.nextPayday, draft.twicePair, draft.twiceA, draft.twiceB));
       if (draft.paycheck.trim() && (amount(draft.paycheck) ?? -1) < 0) notes.push('The paycheck amount should be a number, like 1400.');
       break;
     case 3: {
@@ -193,6 +248,8 @@ export function toSetupValues(draft: Draft): SetupValues {
     currency: draft.currencyCode ? currencyFromCode(draft.currencyCode) : { symbol: draft.currencySymbol.trim() },
     frequency: draft.frequency as Frequency,
     nextPayday: draft.nextPayday,
+    otherPayday:
+      draft.frequency === 'twice-monthly' ? otherPaydayFrom(draft.nextPayday, twiceDays(draft.twicePair, draft.twiceA, draft.twiceB)) : null,
     paycheckAmount: draft.paycheck.trim() ? parseAmount(draft.paycheck) : null,
     debts: debts.map((d, i) => ({
       name: inputs[i]!.name,
@@ -233,6 +290,9 @@ export function draftFromData(d: AppData): Draft {
     currencySymbol: s.currency.symbol,
     frequency: s.frequency,
     nextPayday: nextPaydayISO(s),
+    ...(s.frequency === 'twice-monthly'
+      ? (({ pair, a, b }) => ({ twicePair: pair, twiceA: a, twiceB: b }))(twiceFromSchedule(nextPaydayISO(s), s.otherPayday))
+      : { twicePair: '' as TwicePair, twiceA: '', twiceB: '' }),
     paycheck: s.paycheckAmount ? num(s.paycheckAmount) : '',
     debts: debts.map((x) => ({
       key: keyOf.get(x.id)!,

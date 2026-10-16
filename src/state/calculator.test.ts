@@ -38,7 +38,7 @@ beforeEach(async () => {
 describe('"Change my numbers" starts from the current answers', () => {
   it('turns saved data back into the same setup values', () => {
     const back = toSetupValues(draftFromData(data));
-    expect(back).toEqual({ ...setup, paycheckAmount: 1400 });
+    expect(back).toEqual({ ...setup, otherPayday: null, paycheckAmount: 1400 });
   });
 
   it('gives the same plan when nothing is changed', async () => {
