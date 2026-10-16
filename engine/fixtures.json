@@ -324,7 +324,7 @@
  },
  {
   "name": "twice_a_month_debt_that_grows",
-  "note": "Matches the Google Sheet exactly.",
+  "note": "Paid on the 15th and the last day of the month (other_payday 15). Checked against the Google Sheet.",
   "input": {
    "freq": "Twice a month",
    "next_payday": [
@@ -387,21 +387,22 @@
     }
    ],
    "adj": {},
-   "charges": {}
+   "charges": {},
+   "other_payday": 15
   },
   "expected": {
    "payoff_order": [
     "Old card",
-    "Mom",
     "Phone plan",
+    "Mom",
     "Student loan"
    ],
    "debt_free_date": "2032-03-31",
    "paydays_to_debt_free": 131,
    "total_interest": 6438.61,
    "paid_off_dates": {
-    "Phone plan": "2027-07-31",
-    "Old card": "2029-07-31",
+    "Phone plan": "2027-08-15",
+    "Old card": "2029-08-15",
     "Mom": "2029-11-30",
     "Student loan": "2032-03-31"
    },
@@ -424,7 +425,7 @@
     },
     {
      "payday": 2,
-     "date": "2026-10-31",
+     "date": "2026-11-15",
      "minimums": 170.0,
      "to_buffer": 74.17,
      "to_yearly_bills": 45.83,
@@ -446,7 +447,7 @@
     },
     {
      "payday": 4,
-     "date": "2026-11-30",
+     "date": "2026-12-15",
      "minimums": 170.0,
      "to_buffer": 74.17,
      "to_yearly_bills": 45.83,
@@ -468,7 +469,7 @@
     },
     {
      "payday": 6,
-     "date": "2026-12-31",
+     "date": "2027-01-15",
      "minimums": 170.0,
      "to_buffer": 74.17,
      "to_yearly_bills": 45.83,

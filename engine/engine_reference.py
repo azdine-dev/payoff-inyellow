@@ -16,7 +16,7 @@ Model (one step per payday):
   New charges on a payday are added to the focus debt (the debt that got the most extra,
   else the first debt in order).
   Payoff orders:
-    PaidInYellow order: a debt whose monthly minimum <= its monthly interest goes first
+    PaidInYellow order: a debt with interest whose monthly minimum <= its monthly interest goes first
                         (highest APR among those first); then smallest balance first.
     Biggest interest first: highest APR first (ties: smaller balance).
     My own order: the user's numbers; blank = last.
@@ -30,21 +30,31 @@ def add_months(d, m):
     y, mo = divmod(d.month - 1 + m, 12); y += d.year; mo += 1
     return datetime.date(y, mo, min(d.day, calendar.monthrange(y, mo)[1]))
 
-def payday_date(first, freq, n):
-    """n = 1 for the first payday."""
+def twice_a_month_days(first, other=None):
+    """The two pay days of the month. 31 means the last day of the month.
+    If the other payday is not given: day <= 15 pairs with day + 15; the last day of a
+    month pairs with the 15th; any other day after the 15th pairs with day - 15."""
+    d = 31 if first.day == calendar.monthrange(first.year, first.month)[1] else first.day
+    if not other or other == d:
+        other = d + 15 if d <= 15 else (15 if d == 31 else d - 15)
+    return min(d, other), max(d, other), d
+
+def payday_date(first, freq, n, other=None):
+    """n = 1 for the first payday. other = the second pay day of the month (twice a month only)."""
     if freq == 'Every week': return first + datetime.timedelta(7 * (n - 1))
     if freq == 'Every 2 weeks': return first + datetime.timedelta(14 * (n - 1))
     if freq == 'Every month': return add_months(first, n - 1)
-    # twice a month: the given day, and 15 days later (capped at month end)
-    if n % 2: return add_months(first, (n - 1) // 2)
-    a = add_months(first, (n - 2) // 2)
-    return min(a + datetime.timedelta(15), datetime.date(a.year, a.month, calendar.monthrange(a.year, a.month)[1]))
+    # twice a month: two fixed days of the month (capped at the month's end), alternating
+    lo, hi, d = twice_a_month_days(first, other)
+    idx = n - 1 + (0 if d == lo else 1)
+    y, mo = divmod(first.month - 1 + idx // 2, 12); y += first.year; mo += 1
+    return datetime.date(y, mo, min(lo if idx % 2 == 0 else hi, calendar.monthrange(y, mo)[1]))
 
 def payoff_order(debts, method):
     def key(i):
         d = debts[i]; B, apr, mn = d['balance'], d['apr'], d['min']
         if method == 'PaidInYellow order':
-            return (0, -apr, i) if mn <= B * apr / 1200 else (1, B, i)
+            return (0, -apr, i) if apr > 0 and mn <= B * apr / 1200 else (1, B, i)
         if method == 'Biggest interest first':
             return (-apr, B, i)
         return (d.get('my_order') if d.get('my_order') is not None else 1e6, i)
@@ -88,7 +98,7 @@ def simulate(sc, max_paydays=520):
         focus = xs.index(max(xs)) if max(xs) > 0 else 0
         bal = [max(0, g - m - x) for g, m, x in zip(grown, mins, xs)]
         bal[focus] += c
-        date = payday_date(first, freq, n)
+        date = payday_date(first, freq, n, sc.get('other_payday'))
         for k, b in enumerate(bal):
             if b <= 0.005 and names[k] not in paid_off: paid_off[names[k]] = date.isoformat()
         rows.append(dict(payday=n, date=date.isoformat(), minimums=round(sum(mins), 2), to_buffer=round(to_buf, 2),

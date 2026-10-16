@@ -15,6 +15,7 @@ Everything here comes from the research and design work done in the PaidInYellow
 | `CLAUDE.md` | This brief. |
 | `engine/engine_reference.py` | Reference payoff engine in Python. It's the exact model used by the Google Sheet. The app engine is a port of it. |
 | `engine/fixtures.json` | 6 test scenarios with the correct outputs. 4 were checked cell by cell against the Google Sheet. 2 are the classic "$8,000 at 24%" checks (56 months / $5,315 interest and 17 months / $1,500). Run `python3 engine/engine_reference.py engine/fixtures.json` and all 6 should pass. |
+| `docs/app-test-scenario-darija.docx` | Azeddin's hands-on test of the finished app (Darija): one story with the exact numbers each screen must show. Use it as the Playwright end-to-end script too. |
 | `brand/` | Logo files (SVG + PNG): wordmark for light backgrounds, wordmark for dark backgrounds, transparent wordmark, pay-stub icon, "p" icon, lockup, logo board, palette image. |
 | `mockups/01-core-app-screens.png` | Approved look for 3 app screens: setup result, Today, Progress. Match this style. |
 | `mockups/00-pack1-board.png` | The whole Pack 1 at a glance. |
@@ -148,7 +149,7 @@ Each feature exists for a reason, so keep the reason when you build it. Details 
 **Setup wizard** (about 15 minutes, 8 short steps, progress dots, back button):
 1. **Welcome.** "You pay every month, but the balance never goes down. Let's fix that, one paycheck at a time." Second line: "You're not bad at math. The math was hidden from you." Link: "Watch the 3-minute video".
 2. **Currency.** Auto-detected from the phone's region; editable. Any symbol works.
-3. **Pay schedule.** How often you get paid (Every week / Every 2 weeks / Twice a month / Every month) and your next payday. Optional: usual paycheck amount.
+3. **Pay schedule.** How often you get paid (Every week / Every 2 weeks / Twice a month / Every month) and your next payday. Twice a month also asks for the two pay days: "1st and 15th", "15th and last day", or two custom days (one date can't tell the schedule apart). Optional: usual paycheck amount.
 4. **Debts.** Quick add: name, balance, interest rate %, monthly minimum, due day; the type is optional. Show an "Add another" button. Allow unlimited debts.
 5. **Buffer.** "How much do you have set aside for surprises?" plus the goal (default $500).
 6. **Money for the plan.** "How much can you put toward the plan each payday, on top of your minimums?" Hint: "Even $20 matters. You can change it any time."
@@ -237,7 +238,7 @@ The model, in one step per payday:
   - weekly: +7 days
   - every 2 weeks: +14 days
   - monthly: the same day each month, clamped to the month's end
-  - twice a month: the given day, then 15 days later (capped at the month's end), alternating
+  - twice a month: two fixed days of the month (`other_payday`; 31 means the last day), capped at the month's end, alternating. Without `other_payday`: a day up to the 15th pairs with day + 15, the last day of a month pairs with the 15th, any other day after the 15th pairs with day - 15. See `twice_a_month_days()` in the reference.
 - **Interest each payday:** `balance × APR / ppy`.
 - **Minimum set aside each payday:** `monthly minimum × 12 / ppy`, capped at what the debt owes.
 - **The order money goes each payday.** Available money is `money for the plan` plus any "+/- this payday".
@@ -246,7 +247,7 @@ The model, in one step per payday:
   3. Extra to debts: what's left, plus the minimums freed by paid-off debts (the rollover). It goes to debts in payoff order. The focus debt gets all of it, and any overflow goes to the next debt.
 - **New charges:** added to the focus debt of that payday. The focus debt is the debt with the most extra that payday; if no debt got extra, it's the first debt in order.
 - **Payoff orders.** Ties always keep the order the debts were entered.
-  - PaidInYellow order: debts whose monthly minimum is at or below their monthly interest go first (highest APR first among them), then the smallest balance first.
+  - PaidInYellow order: debts that charge interest and whose monthly minimum is at or below their monthly interest go first (highest APR first among them), then the smallest balance first. A 0% debt never counts as growing, even with a $0 minimum.
   - Biggest interest first: highest APR first (ties: smaller balance).
   - My own order: the user's numbers; debts without a number go last.
 - **Minimums-only baseline (per debt):** `NPER(APR/12, -minimum, balance)` months, and interest = `minimum × NPER − balance`. If the minimum ≤ the monthly interest, it never ends: show "Never ends" and "Your plan ends it" instead of a number.
@@ -258,17 +259,21 @@ The model, in one step per payday:
 - The stored state is: current balances, buffer, yearly-bill savings, settings, and the logs (payments, charges, buffer uses).
 - The plan is always simulated **from the current state and the next payday**, so it never drifts.
 - "I did it" applies one engine step with the real numbers (including "+/- this payday" and new charges), saves the resulting balances and buffer, logs the payments, and advances the next payday.
+- Three rules keep the step-by-step app equal to one full simulation (checked with the reference; breaking any of them changes the debt-free date):
+  1. **Paid debts stay in the simulation with balance 0**, so their minimum keeps rolling into the extra. Never drop them. After the first debt is gone, the payday total must stay the same and the extra must grow by that debt's minimum.
+  2. **Store the payoff order** when the plan is made and keep it. Recompute it only when the user picks a payoff order again or adds or removes a debt. Re-sorting by current balances every payday makes the focus debt jump (it moved the debt-free date by 2 paydays in the twice-a-month fixture).
+  3. **Payday dates come from the schedule** (the first payday of the plan plus a payday counter, and the two pay days for twice a month), never from "last payday + step". Twice a month breaks otherwise.
 - "Update from statement" overwrites a balance. "I used the buffer" lowers the buffer. Then the plan re-simulates.
 - A skipped payday: the next payday moves forward, nothing is applied, and the date updates calmly.
 
-**Tests.** Unit tests on the engine with all 6 fixtures (dates must match exactly; amounts to the cent). Add edge cases: zero debts, a 0% debt, a debt with a 0 minimum, a minimum that doesn't cover interest, a negative "+/-", a buffer already above the goal, Feb 28/29 and the 31st for monthly and twice-a-month dates.
+**Tests.** A test that applies "I did it" step by step to the end must give the same debt-free date and interest as one full simulation, for every fixture without +/- or charges. Unit tests on the engine with all 6 fixtures (dates must match exactly; amounts to the cent). Add edge cases: zero debts, a 0% debt, a debt with a 0 minimum, a minimum that doesn't cover interest, a negative "+/-", a buffer already above the goal, Feb 28/29 and the 31st for monthly and twice-a-month dates.
 
 ---
 
 ## 7. Data, offline, unlock
 
 - **Storage:** IndexedDB. Every record has an `id` and an `updatedAt` timestamp (this keeps the Pack 2 sync possible later).
-  - Settings: currency, frequency, nextPayday, paycheckAmount?, extraPerPayday, bufferGoal, method, theme, textSize, ifThen {day, time}, startMode
+  - Settings: currency, frequency, nextPayday, scheduleStart, paydayCounter, otherPayday (twice a month), payoffOrder (stored list of debt ids), paycheckAmount?, extraPerPayday, bufferGoal, method, theme, textSize, ifThen {day, time}, startMode
   - Debts: id, name, type, balance, apr, minMonthly, dueDay, myOrder, startBalance, status (active / paid / archived)
   - Payments: id, date, debtId, amount, kind (minimum / extra / buffer / fund), planned (bool)
   - Charges: id, date, debtId, amount, tag (everyday / emergency / one-off), note
