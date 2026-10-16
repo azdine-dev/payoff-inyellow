@@ -49,8 +49,14 @@ export interface YearlyBillInput {
 
 export interface PlanInput {
   frequency: Frequency;
-  /** ISO date of payday 1 */
+  /**
+   * ISO date the payday dates count from. With paydayOffset 0 (the Sheet and the fixtures)
+   * this is payday 1. The app keeps the payday from setup here, so twice-a-month dates keep
+   * alternating correctly after paydays are done.
+   */
   nextPayday: string;
+  /** Paydays already done or skipped since nextPayday. Row n's date is payday offset + n. */
+  paydayOffset?: number;
   /** Money for the plan each payday, on top of the minimums */
   extraPerPayday: number;
   bufferNow: number;
@@ -300,7 +306,7 @@ export function simulatePlan(input: PlanInput): PlanResult {
 
   for (let n = 1; n <= maxPaydays; n++) {
     if (pySum(balances) <= ZERO) break;
-    const date = paydayISO(input.nextPayday, input.frequency, n);
+    const date = paydayISO(input.nextPayday, input.frequency, (input.paydayOffset ?? 0) + n);
     const row = stepPayday(
       plan,
       { balances, buffer, bufferGoal: input.bufferGoal },

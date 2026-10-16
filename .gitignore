@@ -3,3 +3,8 @@ dist/
 coverage/
 __pycache__/
 *.log
+test-results/
+playwright-report/
+.keys/
+dist-single/
+dist-free/

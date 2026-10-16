@@ -1,0 +1,50 @@
+/* "Pay Stub & Highlighter" palette (CLAUDE.md §3). No red anywhere. */
+:root {
+  --paper: #f4f0e6;
+  --card: #fbf9f3;
+  --ink: #1f2a44;
+  --yellow: #ffe14d; /* ONLY paid / done / the one key word. Never a text color. */
+  --yellow-soft: #fff6c2;
+  --gray: #5c5a55;
+  --line: #e2dccd;
+  --on-ink: #f4f0e6; /* text on ink buttons */
+  --on-yellow: #1f2a44; /* text sitting on a yellow swipe */
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --tap: 44px;
+  --gutter: 20px;
+
+  --font-head: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-hand: 'Caveat', cursive;
+
+  --text-scale: 1;
+  color-scheme: light;
+}
+
+/* Dark mode: ink background, paper text, yellow keeps its "paid" meaning. */
+:root[data-theme='dark'] {
+  --paper: #1f2a44;
+  --card: #273352;
+  --ink: #f4f0e6;
+  --yellow-soft: #4a4528;
+  --gray: #c9c4b8;
+  --line: #3a4766;
+  --on-ink: #1f2a44;
+  color-scheme: dark;
+}
+
+/* "Match my phone": the same colors when the phone is set to dark and no choice is made */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --paper: #1f2a44;
+    --card: #273352;
+    --ink: #f4f0e6;
+    --yellow-soft: #4a4528;
+    --gray: #c9c4b8;
+    --line: #3a4766;
+    --on-ink: #1f2a44;
+    color-scheme: dark;
+  }
+}

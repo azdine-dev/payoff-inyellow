@@ -75,6 +75,17 @@ describe('simulatePlan', () => {
   });
 });
 
+describe('paydayOffset', () => {
+  it('keeps twice-a-month dates alternating after paydays are done', () => {
+    const input: PlanInput = { ...base, frequency: 'twice-monthly', nextPayday: '2026-11-01' };
+    const full = simulatePlan(input);
+    const later = simulatePlan({ ...input, paydayOffset: 3 });
+    expect(later.rows.slice(0, 3).map((r) => r.date)).toEqual(full.rows.slice(3, 6).map((r) => r.date));
+    expect(later.rows[0]!.date).toBe('2026-12-16');
+    expect(later.rows[1]!.date).toBe('2027-01-01');
+  });
+});
+
 describe('stepPayday', () => {
   it('gives the same row as the simulation (used by "I did it")', () => {
     const r = simulatePlan(base);

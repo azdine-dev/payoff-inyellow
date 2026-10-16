@@ -1,0 +1,731 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: calc(16px * var(--text-scale));
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-head);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--gray);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: 1.35rem;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- layout ---------- */
+
+.screen {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: calc(env(safe-area-inset-top) + 20px) var(--gutter) calc(env(safe-area-inset-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.screen.with-tabs {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---------- card ---------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.card.soft {
+  background: var(--yellow-soft);
+  border-color: transparent;
+}
+
+.card h2 {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* ---------- highlighter swipe: solid background, never a gradient ---------- */
+
+.hl {
+  background-color: var(--yellow);
+  color: var(--on-yellow);
+  padding: 0 0.18em;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.hl-big {
+  display: inline-block;
+  background-color: var(--yellow);
+  color: var(--on-yellow);
+  padding: 0.02em 0.14em;
+  transform: rotate(-1deg);
+  border-radius: 4px;
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  min-height: 52px;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 0 18px;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.btn.done {
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  min-height: var(--tap);
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* ---------- form fields ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.field input,
+.field select {
+  min-height: var(--tap);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  padding: 10px 12px;
+  font-size: 1rem; /* 16px+ stops iOS from zooming the page */
+  width: 100%;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.field .hint {
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+.affix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.affix > i {
+  position: absolute;
+  font-style: normal;
+  color: var(--gray);
+  pointer-events: none;
+}
+
+.affix > i.pre {
+  left: 12px;
+}
+
+.affix > i.post {
+  right: 12px;
+}
+
+.affix.has-pre input {
+  padding-left: 30px;
+}
+
+/* calm note instead of a red error */
+.note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  border-left: 3px solid var(--ink);
+  padding: 4px 0 4px 10px;
+}
+
+/* ---------- choices (radio cards) ---------- */
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.choice[aria-checked='true'] {
+  border: 2px solid var(--ink);
+  padding: 11px 13px;
+}
+
+.choice .dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  display: grid;
+  place-items: center;
+}
+
+.choice[aria-checked='true'] .dot::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.choice .choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice .choice-text small {
+  color: var(--gray);
+}
+
+/* ---------- checkbox: rounded square that fills yellow ---------- */
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.check .box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  transition: background-color 160ms ease;
+}
+
+.check[aria-checked='true'] .box {
+  background: var(--yellow);
+}
+
+.check .box svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.check[aria-checked='true'] .box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ---------- progress ---------- */
+
+.bar {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar > div {
+  height: 100%;
+  background: var(--yellow);
+  border-right: 3px solid var(--ink);
+  transition: width 400ms ease;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.dots i.on {
+  background: var(--ink);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--yellow);
+  color: var(--on-yellow);
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.pill.plain {
+  background: transparent;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+}
+
+/* ---------- tab bar ---------- */
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10;
+}
+
+.tabbar nav {
+  max-width: 480px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.tabbar button {
+  background: none;
+  border: none;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--gray);
+  cursor: pointer;
+}
+
+.tabbar button i {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+}
+
+.tabbar button[aria-current='page'] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tabbar button[aria-current='page'] i {
+  background: var(--yellow);
+}
+
+/* ---------- bottom sheet ---------- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 42, 68, 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+  animation: fade 160ms ease;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--paper);
+  border-radius: 20px 20px 0 0;
+  padding: 20px var(--gutter) calc(env(safe-area-inset-bottom) + 20px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: rise 200ms ease;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.footer-note {
+  font-size: 0.8rem;
+  color: var(--gray);
+  text-align: center;
+  padding-top: 8px;
+}
+
+/* ---------- payday grid (Progress) ---------- */
+
+.payday-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.sq {
+  aspect-ratio: 1;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font-size: 0.55rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.sq.on {
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+
+.sq.skipped {
+  border-style: dashed;
+}
+
+.sq svg {
+  width: 55%;
+  height: 55%;
+}
+
+.sq > span {
+  font-weight: 600;
+}
+
+.sq.on > span + svg {
+  display: none;
+}
+
+.ms-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.ms-dot.on {
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+
+.ms-dot svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---------- payday list (Plan) ---------- */
+
+.payday-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pd {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  grid-template-areas: 'box date amt' 'box note amt';
+  column-gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  border-top: 1px dashed var(--line);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pd-box {
+  grid-area: box;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+}
+
+.pd.on .pd-box {
+  background: var(--yellow);
+}
+
+.pd-box svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pd-date {
+  grid-area: date;
+  font-weight: 600;
+}
+
+.pd-note {
+  grid-area: note;
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+.pd-amt {
+  grid-area: amt;
+  font-weight: 600;
+}
+
+input[type='range'] {
+  width: 100%;
+  min-height: var(--tap);
+  accent-color: var(--ink);
+}
+
+/* ---------- print: only the one-page summary ---------- */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  .screen > *:not(.print-only),
+  .tabbar {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+    color: #1f2a44;
+  }
+  .print-only table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+  }
+  .print-only th,
+  .print-only td {
+    border-bottom: 1px solid #e2dccd;
+    padding: 4px 6px;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+}
+
+/* ---------- wordmark: dark version on dark backgrounds ---------- */
+
+.wm-dark {
+  display: none;
+}
+
+:root[data-theme='dark'] .wm-light {
+  display: none;
+}
+
+:root[data-theme='dark'] .wm-dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .wm-light {
+    display: none;
+  }
+  :root:not([data-theme]) .wm-dark {
+    display: block;
+  }
+}
+
+/* ---------- help answers ---------- */
+
+.faq {
+  border-top: 1px dashed var(--line);
+}
+
+.faq summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 6px 0;
+}
+
+.faq p {
+  padding: 0 0 12px;
+  color: var(--gray);
+}
+
+/* a link that looks like the main button */
+a.btn {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
