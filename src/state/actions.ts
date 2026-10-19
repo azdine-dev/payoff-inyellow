@@ -186,8 +186,10 @@ export async function didPayday(
     updatedAt: now,
   };
 
+  // Stable ids (payday number + what it was for): two synced phones that both tap "I did it" for the
+  // same payday write the same records, so they merge into one instead of doubling.
   const pay = (p: Omit<Payment, 'id' | 'updatedAt' | 'date' | 'planned' | 'paydayNumber'>): Payment => ({
-    id: newId(),
+    id: `pay-${number}-${p.kind}-${p.debtId ?? p.fundId ?? 'buffer'}`,
     updatedAt: now,
     date,
     planned: true,
@@ -206,7 +208,7 @@ export async function didPayday(
     }
   }
 
-  const log: PaydayLog = { id: newId(), updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
+  const log: PaydayLog = { id: `payday-${number}`, updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
   // One-off money planned for this payday is used now
   const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1);
   const settings: Settings = { ...s, oneOffs, paydayIndex: s.paydayIndex + 1, updatedAt: now };
@@ -253,7 +255,7 @@ export async function skipPaydays(db: PiyDB, data: AppData, count: number, now =
   const logs: PaydayLog[] = [];
   for (let i = 0; i < count; i++) {
     const at = { ...s, paydayIndex: s.paydayIndex + i };
-    logs.push({ id: newId(), updatedAt: now, number: nextPaydayNumber(at), date: nextPaydayISO(at), status: 'skipped', planMoney: 0, total: 0 });
+    logs.push({ id: `payday-${nextPaydayNumber(at)}`, updatedAt: now, number: nextPaydayNumber(at), date: nextPaydayISO(at), status: 'skipped', planMoney: 0, total: 0 });
   }
   const settings: Settings = { ...s, paydayIndex: s.paydayIndex + count, updatedAt: now };
   const tx = db.transaction(['settings', 'paydays'], 'readwrite');

@@ -8,3 +8,6 @@ export const NFCC_URL = 'https://www.nfcc.org';
 export const STORE_URL = 'https://paidinyellow.com/collections/all';
 /** Form endpoint for the free calculator's email box (Shopify, Klaviyo, Formspree...). Empty = box hidden. */
 export const EMAIL_CAPTURE_URL: string = (import.meta.env.VITE_EMAIL_CAPTURE_URL as string | undefined) ?? '';
+
+/** The sync server (Cloudflare Worker). Built in with VITE_SYNC_URL; the default is the production address. */
+export const SYNC_URL: string = ((import.meta.env.VITE_SYNC_URL as string | undefined) || 'https://api.paidinyellow.com').replace(/\/+$/, '');

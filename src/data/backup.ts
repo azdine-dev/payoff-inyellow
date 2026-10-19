@@ -75,13 +75,14 @@ export function summarizeBackup(file: BackupFile): BackupSummary {
 }
 
 /** Replaces everything on this device with the backup. All or nothing. */
-export async function restoreBackup(db: PiyDB, file: BackupFile): Promise<AppData> {
+export async function restoreBackup(db: PiyDB, file: BackupFile, opts: { bumpTo?: number } = {}): Promise<AppData> {
   const names: StoreName[] = [...BACKUP_STORES, 'draft'];
   const tx = db.transaction(names, 'readwrite');
   await Promise.all(names.map((n) => tx.objectStore(n).clear()));
   for (const name of BACKUP_STORES) {
     const store = tx.objectStore(name) as unknown as { put(v: unknown): Promise<unknown> };
-    for (const rec of file.stores[name]) await store.put(rec);
+    // With sync on, the restored plan must be newer than what is on the server, or it would be overwritten
+    for (const rec of file.stores[name]) await store.put(opts.bumpTo ? { ...(rec as object), updatedAt: opts.bumpTo } : rec);
   }
   await tx.done;
   return (await loadAll(db))!;

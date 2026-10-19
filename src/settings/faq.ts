@@ -38,7 +38,11 @@ export const FAQ: Faq[] = [
   },
   {
     q: 'Do I need to connect my bank account?',
-    a: 'No. There is no account and no bank login. Your numbers never leave this device.',
+    a: 'No. There is no account and no bank login. Your numbers never leave this device, unless you turn on sync.',
+  },
+  {
+    q: 'What does sync do with my numbers?',
+    a: 'Sync is optional and off until you turn it on. Your plan is locked on your phone before it is sent, and the key never goes to our server, so we can’t read it. You can stop sync and delete your data from the server at any time in Settings.',
   },
   {
     q: 'What if I lose my phone or clear my browser?',

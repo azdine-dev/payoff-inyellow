@@ -11,3 +11,9 @@ dist-free/
 .env
 .env.local
 .env.*.local
+
+# Worker: local secrets and local databases
+worker/.dev.vars
+worker/.wrangler/
+.wrangler/
+*.sqlite

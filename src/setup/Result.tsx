@@ -3,6 +3,7 @@
  * Without a valid unlock code this is the whole calculator ("calculator mode"): below the
  * result sit what the full planner adds, the code box and "Change my numbers".
  */
+import { syncOn } from '../sync/controller';
 import { planNeedsHelp } from '../engine';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
@@ -153,7 +154,7 @@ export function Result() {
       )}
       <p class="hand">{COPY.slogan}</p>
       <p class="footer-note">
-        {COPY.privacy} {COPY.disclaimer}
+        {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
       </p>
     </main>
   );

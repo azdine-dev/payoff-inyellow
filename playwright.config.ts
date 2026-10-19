@@ -4,6 +4,8 @@ import { TEST_PUBLIC_KEY } from './e2e/testKey';
 // Every test server gets the test public key, so unlock codes made with the test key are valid
 // there and the real private key is never needed.
 const env = { VITE_PUBLIC_KEY_HEX: TEST_PUBLIC_KEY };
+// The sync server runs on this computer (the real Worker code on a node:sqlite database)
+const SYNC_PORT = 8788;
 
 export default defineConfig({
   testDir: 'e2e',
@@ -15,7 +17,13 @@ export default defineConfig({
     baseURL: 'http://localhost:5174',
   },
   webServer: [
-    { command: 'npx vite --port 5174 --strictPort', url: 'http://localhost:5174', reuseExistingServer: false, env },
+    { command: 'npx vite --port 5174 --strictPort', url: 'http://localhost:5174', reuseExistingServer: false, env: { ...env, VITE_SYNC_URL: `http://localhost:${SYNC_PORT}` } },
+    {
+      command: 'npx vite-node worker/dev/server.ts',
+      url: `http://localhost:${SYNC_PORT}/health`,
+      reuseExistingServer: false,
+      env: { PORT: String(SYNC_PORT), PIY_PUBLIC_KEY: TEST_PUBLIC_KEY, ALLOWED_ORIGINS: 'http://localhost:5174' },
+    },
     // The free calculator build, with an email endpoint (the tests intercept it)
     {
       command: 'npx vite --mode free --port 5176 --strictPort',

@@ -11,6 +11,8 @@ import { Progress } from '../progress/Progress';
 import { Money } from '../money/Money';
 import { Today } from '../today/Today';
 import { handleLaunchFragment } from '../state/unlockLink';
+import { startSync } from '../sync/controller';
+import { JoinSheet } from '../settings/SyncSection';
 import { NoticeBar } from '../ui/NoticeBar';
 
 const TABS: { id: Tab; label: string }[] = [
@@ -48,6 +50,7 @@ export function App() {
   return (
     <>
       <NoticeBar />
+      <JoinSheet />
       <Screens />
     </>
   );
@@ -55,7 +58,11 @@ export function App() {
 
 function Screens() {
   useEffect(() => {
-    void boot().then(handleLaunchFragment);
+    void boot().then(handleLaunchFragment).then(startSync);
+    // A link opened in the same window (a scanned code, a tap in the installed app) only changes the # part
+    const onHash = () => void handleLaunchFragment();
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   const look = data.value?.settings;

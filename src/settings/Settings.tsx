@@ -20,6 +20,8 @@ import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, li
 import { Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 import { FAQ, INSTALL_HELP } from './faq';
 import { RestoreButton } from './Restore';
+import { SyncSection } from './SyncSection';
+import { syncOn } from '../sync/controller';
 
 type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | null;
 
@@ -287,6 +289,8 @@ export function Settings() {
         )}
       </section>
 
+      <SyncSection />
+
       <section class="card stack" aria-labelledby="set-help">
         <h2 id="set-help">Help</h2>
         <div>
@@ -323,7 +327,7 @@ export function Settings() {
 
       <section class="card stack" aria-labelledby="set-about">
         <h2 id="set-about">About</h2>
-        <p>{COPY.privacy}</p>
+        <p>{syncOn.value ? COPY.privacySynced : COPY.privacy}</p>
         <p class="muted">{COPY.disclaimer}</p>
         <p class="muted small">PaidInYellow · one paycheck at a time</p>
       </section>

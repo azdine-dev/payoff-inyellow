@@ -89,8 +89,8 @@ The app links to these products but doesn't contain them.
 - Writing style for every string: no em dashes or en dashes, no "not X but Y" constructions, no hype words, no exclamation spam.
 
 **Privacy.**
-- No account, no server, no bank login, no analytics that send personal numbers anywhere.
-- "Your numbers never leave this device."
+- No account, no bank login, no analytics that send personal numbers anywhere. Pack 1 works with no server at all.
+- "Your numbers never leave this device." This stays true until the buyer turns on the optional sync. With sync on, the app says "Your numbers are locked on this device before they sync. The server can't read them." Sync is encrypted on the phone (AES-GCM); the key travels only in the link or QR code (after the #), never to the server. "Stop syncing and delete my server data" is always in Settings.
 
 ---
 

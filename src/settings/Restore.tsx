@@ -4,6 +4,7 @@ import { BackupError, parseBackup, restoreBackup, summarizeBackup, type BackupFi
 import { applyAppearance } from '../lib/appearance';
 import { shortDate } from '../lib/today';
 import { data, getDB, tab, view } from '../state/store';
+import { syncOn, syncSoon } from '../sync/controller';
 import { Note, Sheet } from '../ui/controls';
 
 export function RestoreButton(props: { label?: string; class?: string }) {
@@ -30,12 +31,13 @@ export function RestoreButton(props: { label?: string; class?: string }) {
     if (!file) return;
     setBusy(true);
     try {
-      const restored = await restoreBackup(await getDB(), file.parsed);
+      const restored = await restoreBackup(await getDB(), file.parsed, { bumpTo: syncOn.value ? Date.now() : undefined });
       applyAppearance(restored.settings.theme, restored.settings.textSize);
       data.value = restored;
       tab.value = 'today';
       view.value = 'app';
       setFile(null);
+      syncSoon(300);
     } catch {
       setMsg('Something went wrong and nothing was changed. Try again.');
       setFile(null);

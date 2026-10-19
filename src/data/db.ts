@@ -33,6 +33,31 @@ export interface CarryRecord {
   license: License | null;
 }
 
+/** Sync on this device: which space, and the key (the key never leaves the device except in the link the buyer shares). */
+export interface SyncConfig {
+  id: 'config';
+  updatedAt: number;
+  syncId: string;
+  /** AES-GCM key, base64url (32 bytes) */
+  key: string;
+  /** Server number of the last change we have fetched */
+  since: number;
+  enabledAt: number;
+  lastSyncAt: number | null;
+  /** The space exists on the server (the first phone creates it with its first save) */
+  created: boolean;
+}
+
+/** What we last sent to or got from the server for one record. Lets us find what changed without hooking every write. */
+export interface LedgerEntry {
+  id: string; // 'rid:' + rid
+  updatedAt: number;
+  rid: string;
+  ts: number;
+  hash: string;
+  deleted: boolean;
+}
+
 interface PiySchema extends DBSchema {
   settings: { key: string; value: Settings };
   debts: { key: string; value: Debt };
@@ -44,6 +69,7 @@ interface PiySchema extends DBSchema {
   draft: { key: string; value: DraftRecord | CarryRecord };
   milestones: { key: string; value: Milestone };
   findMoney: { key: string; value: FindMoneyRecord };
+  sync: { key: string; value: SyncConfig | LedgerEntry };
 }
 
 export type PiyDB = IDBPDatabase<PiySchema>;
@@ -57,12 +83,14 @@ export type StoreName =
   | 'paydays'
   | 'draft'
   | 'milestones'
-  | 'findMoney';
+  | 'findMoney'
+  | 'sync';
 
 /** Stores per database version. Never change an old line: add a new version instead. */
 const VERSIONS: StoreName[][] = [
   ['settings', 'debts', 'payments', 'charges', 'buffer', 'funds', 'paydays', 'draft'], // v1
   ['milestones', 'findMoney'], // v2
+  ['sync'], // v3
 ];
 export const STORES: StoreName[] = VERSIONS.flat();
 

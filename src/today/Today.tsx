@@ -1,4 +1,5 @@
 /** Today (mockup screen 2): one clear step every payday. */
+import { syncOn } from '../sync/controller';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { dailyInterestCost, planNeedsHelp, simulatePlan } from '../engine';
 import { backupDue } from '../data/backup';
@@ -303,7 +304,7 @@ export function Today() {
       )}
 
       <p class="footer-note">
-        {COPY.privacy} {COPY.disclaimer}
+        {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
       </p>
 
       <Sheet open={dueDebtId !== null} onClose={() => setDueDebtId(null)} title={`Due day for ${d.debts.find((x) => x.id === dueDebtId)?.name ?? ''}`}>

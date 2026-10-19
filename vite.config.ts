@@ -57,7 +57,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: { port: 5173 },
     test: {
-      include: ['src/**/*.test.ts'],
+      include: ['src/**/*.test.ts', 'worker/**/*.test.ts'],
       environment: 'node',
     },
   };

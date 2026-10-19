@@ -1,0 +1,31 @@
+# PaidInYellow Worker: encrypted sync (and, in the same Worker, order to code to email).
+# Nothing secret is in this file. Secrets are set with `wrangler secret put` (see worker/README.md).
+
+name = "paidinyellow-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# To serve it at https://api.paidinyellow.com (the domain must be on your Cloudflare account):
+# routes = [{ pattern = "api.paidinyellow.com", custom_domain = true }]
+
+[vars]
+# PUBLIC key that checks unlock codes. Must equal APP_PUBLIC_KEY in src/lib/licenseKey.ts
+# (a test checks this). `node scripts/make-keypair.js` updates both.
+PIY_PUBLIC_KEY = "09c17cdad4e1e063fe45ef09986ed42fb43d97496ec7dd4158e31944dc33ba0a"
+ALLOWED_ORIGINS = "https://app.paidinyellow.com"
+APP_URL = "https://app.paidinyellow.com"
+# Limits (defaults shown)
+MAX_RECORD_BYTES = "65536"
+MAX_RECORDS_PER_PUT = "200"
+MAX_RECORDS_PER_SPACE = "5000"
+MAX_BYTES_PER_SPACE = "10485760"
+MAX_SPACES_PER_CODE = "3"
+RATE_PER_SPACE_PER_MIN = "120"
+RATE_PER_IP_PER_MIN = "300"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "paidinyellow"
+# Replace with the id printed by:  npx wrangler d1 create paidinyellow
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
