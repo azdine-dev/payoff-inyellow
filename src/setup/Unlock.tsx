@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { STORE_URL, EMAIL_CAPTURE_URL } from '../lib/config';
 import { IS_FREE } from '../lib/edition';
-import { verifyCode } from '../lib/license';
+import { cleanCode, verifyCode } from '../lib/license';
 import { isEmail, submitEmail } from '../lib/leadCapture';
 import { saveLicense } from '../state/settingsActions';
 import { act } from '../state/store';
@@ -25,7 +25,7 @@ export function UnlockCard() {
   const check = async () => {
     const r = await verifyCode(code);
     if (r.ok) {
-      await act((db, x) => saveLicense(db, x, code.replace(/\s/g, '')));
+      await act((db, x) => saveLicense(db, x, cleanCode(code)));
     } else {
       setMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : 'This code doesn’t look right. Check that you copied all of it.');
     }

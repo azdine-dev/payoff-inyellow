@@ -9,7 +9,7 @@ import { downloadText } from '../lib/csv';
 import { buildIcs } from '../lib/ics';
 import { COPY } from '../lib/copy';
 import { HARDSHIP_SCRIPT_URL, SUPPORT_EMAIL, VIDEO_URL } from '../lib/config';
-import { verifyCode } from '../lib/license';
+import { cleanCode, verifyCode } from '../lib/license';
 import { CURRENCY_CHOICES, currencyFromCode, formatMoney, parseAmount, symbolFor } from '../lib/money';
 import { TEXT_SIZE_LABELS } from '../lib/appearance';
 import { shortDate, timeLabel, WEEKDAYS } from '../lib/today';
@@ -122,7 +122,7 @@ export function Settings() {
   const checkCode = async () => {
     const r = await verifyCode(code);
     if (r.ok) {
-      await act((db, x) => saveLicense(db, x, code.replace(/\s/g, '')));
+      await act((db, x) => saveLicense(db, x, cleanCode(code)));
       setCode('');
       setCodeMsg('');
     } else {

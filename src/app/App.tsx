@@ -10,6 +10,8 @@ import { data } from '../state/store';
 import { Progress } from '../progress/Progress';
 import { Money } from '../money/Money';
 import { Today } from '../today/Today';
+import { handleLaunchFragment } from '../state/unlockLink';
+import { NoticeBar } from '../ui/NoticeBar';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'today', label: 'Today' },
@@ -43,8 +45,17 @@ function TabBar() {
 }
 
 export function App() {
+  return (
+    <>
+      <NoticeBar />
+      <Screens />
+    </>
+  );
+}
+
+function Screens() {
   useEffect(() => {
-    boot();
+    void boot().then(handleLaunchFragment);
   }, []);
 
   const look = data.value?.settings;

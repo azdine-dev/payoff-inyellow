@@ -1,27 +1,48 @@
 #!/usr/bin/env node
-// Makes the key pair for unlock codes.
-//   node scripts/make-keypair.js            prints a new pair, writes nothing
-//   node scripts/make-keypair.js --write    saves the PRIVATE key to .keys/private.hex (git ignores it)
-//   node scripts/make-keypair.js --write --force   replaces an existing pair (old codes stop working)
+// Makes the Ed25519 key pair for unlock codes. Run it ONCE.
 //
-// Paste the PUBLIC key into src/lib/licenseKey.ts. Keep the PRIVATE key off the repo and out of the app.
-// You can also keep it in a .env file as PIY_PRIVATE_KEY=... (also ignored by git).
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { ed } from './lib.js';
+//   node scripts/make-keypair.js            makes the pair if there is none, and puts the PUBLIC key in the app
+//   node scripts/make-keypair.js --force    replaces the pair (every code made with the old key stops working)
+//
+// PRIVATE key: ~/.piy/private.pem (outside the project, never committed, never in a build).
+// PUBLIC key:  src/lib/licenseKey.ts (this is the only key the app contains).
+import { generateKeyPairSync } from 'node:crypto';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { KEY_LINE, LICENSE_KEY_FILE, PIY_DIR, PRIVATE_PEM, loadPrivateKey, publicKeyHex } from './lib.js';
 
-const priv = ed.utils.randomPrivateKey();
-const privHex = ed.etc.bytesToHex(priv);
-const pubHex = ed.etc.bytesToHex(await ed.getPublicKeyAsync(priv));
+const force = process.argv.includes('--force');
 
-if (process.argv.includes('--write')) {
-  if (existsSync('.keys/private.hex') && !process.argv.includes('--force')) {
-    console.error('.keys/private.hex already exists. Use --force to replace it (codes made with the old key stop working).');
-    process.exit(1);
-  }
-  mkdirSync('.keys', { recursive: true });
-  writeFileSync('.keys/private.hex', privHex + '\n');
-  console.log('PRIVATE key saved to .keys/private.hex (git ignores this folder). Back it up somewhere safe.');
+let pubHex;
+if (existsSync(PRIVATE_PEM) && !force) {
+  pubHex = publicKeyHex(loadPrivateKey().key);
+  console.log(`A key pair already exists: ${PRIVATE_PEM}`);
+  console.log('Nothing was changed. (Use --force to replace it. Codes made with the old key would stop working.)');
 } else {
-  console.log('PRIVATE (keep secret):', privHex);
+  const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  mkdirSync(PIY_DIR, { recursive: true });
+  writeFileSync(PRIVATE_PEM, privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 });
+  try {
+    chmodSync(PRIVATE_PEM, 0o600);
+  } catch {
+    /* Windows: the file stays inside your own user folder */
+  }
+  pubHex = publicKeyHex(publicKey);
+  console.log(`PRIVATE key saved to ${PRIVATE_PEM}`);
+  console.log('Back it up somewhere safe (a password manager). Without it you can not make codes.');
 }
-console.log('PUBLIC  (goes in src/lib/licenseKey.ts):', pubHex);
+
+// Put the public key in the app
+const source = readFileSync(LICENSE_KEY_FILE, 'utf8');
+const m = KEY_LINE.exec(source);
+if (!m) {
+  console.error(`Could not find "const APP_PUBLIC_KEY = '...'" in ${LICENSE_KEY_FILE}. Paste this public key there by hand:`);
+  console.log(pubHex);
+  process.exit(1);
+}
+if (m[2] === pubHex) {
+  console.log(`PUBLIC key already in ${LICENSE_KEY_FILE}: ${pubHex}`);
+} else {
+  writeFileSync(LICENSE_KEY_FILE, source.replace(KEY_LINE, `$1${pubHex}$3`));
+  console.log(`PUBLIC key written to ${LICENSE_KEY_FILE}: ${pubHex}`);
+  console.log('Commit that file. Rebuild the app so it checks codes against the new key.');
+}

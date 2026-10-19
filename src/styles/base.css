@@ -729,3 +729,29 @@ a.btn {
   place-items: center;
   text-decoration: none;
 }
+
+/* ---------- a short message at the top ---------- */
+
+.notice-bar {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(448px, calc(100% - 24px));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: 0 6px 20px rgba(31, 42, 68, 0.25);
+}
+
+.notice-bar .link {
+  color: var(--on-ink);
+  min-height: 36px;
+  flex: none;
+}

@@ -7,8 +7,8 @@ import { BackupError, backupDue, buildBackup, parseBackup, restoreBackup, summar
 import type { AppData } from '../data/types';
 import { applyAppearance, TEXT_SCALES } from '../lib/appearance';
 import { buildIcs, foldLine } from '../lib/ics';
-import { b64urlDecode, b64urlEncode, cleanCode, makeCode, verifyCode } from '../lib/license';
-import { PUBLIC_KEY_HEX } from '../lib/licenseKey';
+import { b64urlDecode, b64urlEncode, cleanCode, publicKeyOf, verifyToken } from '../lib/licenseCore';
+import { makeCode } from '../lib/license';
 import { completeSetup, didPayday, skipPaydays, type SetupValues } from './actions';
 import { addDebt, logCharge } from './debtActions';
 import { addFund, saveFindMoney, findMoneyItems, useBuffer } from './moneyActions';
@@ -160,44 +160,84 @@ describe('calendar file', () => {
 
 describe('unlock code', () => {
   const priv = ed.etc.bytesToHex(ed.utils.randomPrivateKey());
-  let pub: string;
-  beforeEach(async () => {
-    pub = ed.etc.bytesToHex(await ed.getPublicKeyAsync(ed.etc.hexToBytes(priv)));
-  });
-  const payload = { v: 1 as const, id: 'ORDER-1234', iat: '2026-10-15', p: 'planner' as const };
+  const pub = publicKeyOf(priv);
+  const payload = { product: 'pack1', id: 'test@paidinyellow.com', date: '2026-10-19' };
+  const check = (code: string, key = pub) => verifyToken(code, key);
 
-  it('accepts a code signed with the matching key', async () => {
-    const code = await makeCode(payload, priv);
-    expect(code.startsWith('PIY1.')).toBe(true);
-    expect(await verifyCode(code, pub)).toEqual({ ok: true, payload });
+  it('is base64url(PIY1|pack1|<id>|<date>) then a dot then base64url(signature)', () => {
+    const code = makeCode(payload, priv);
+    const [text, signature, ...more] = code.split('.');
+    expect(more).toEqual([]);
+    expect(new TextDecoder().decode(b64urlDecode(text!))).toBe('PIY1|pack1|test@paidinyellow.com|2026-10-19');
+    expect(b64urlDecode(signature!)).toHaveLength(64);
+    expect(code).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
   });
 
-  it('forgives spaces, line breaks and quotes from pasting', async () => {
-    const code = await makeCode(payload, priv);
+  it('accepts a code signed with the matching key, and says who it is for', () => {
+    expect(check(makeCode(payload, priv))).toEqual({ ok: true, payload });
+  });
+
+  it('forgives spaces, line breaks and quotes from pasting', () => {
+    const code = makeCode(payload, priv);
     const messy = `  “${code.slice(0, 30)}\n${code.slice(30)}”  `;
     expect(cleanCode(messy)).toBe(code);
-    expect((await verifyCode(messy, pub)).ok).toBe(true);
+    expect(check(messy).ok).toBe(true);
   });
 
-  it('rejects a changed payload, a changed signature, another key, and nonsense', async () => {
-    const code = await makeCode(payload, priv);
-    const [p, body, sig] = code.split('.');
-    const forged = `${p}.${btoa(JSON.stringify({ ...payload, id: 'FREE' })).replace(/=+$/, '')}.${sig}`;
-    const bytes = b64urlDecode(sig!);
-    bytes[10] = bytes[10]! ^ 0x01; // one real bit, in the middle
-    const flipped = `${p}.${body}.${b64urlEncode(bytes)}`;
-    expect(await verifyCode(forged, pub)).toEqual({ ok: false, reason: 'signature' });
-    expect(await verifyCode(flipped, pub)).toEqual({ ok: false, reason: 'signature' });
-    expect(await verifyCode(code, PUBLIC_KEY_HEX)).toEqual({ ok: false, reason: 'signature' });
-    expect(await verifyCode('hello', pub)).toEqual({ ok: false, reason: 'format' });
-    expect(await verifyCode('PIY1.abc.def', pub)).toEqual({ ok: false, reason: 'format' });
-    expect(await verifyCode('   ', pub)).toEqual({ ok: false, reason: 'empty' });
+  it('refuses a code changed by one letter, wherever the letter is', () => {
+    const code = makeCode(payload, priv);
+    let tried = 0;
+    for (let i = 0; i < code.length; i++) {
+      if (code[i] === '.') continue;
+      const other = code[i] === 'A' ? 'B' : 'A';
+      const changed = code.slice(0, i) + other + code.slice(i + 1);
+      expect(check(changed).ok, `letter ${i} changed`).toBe(false);
+      tried++;
+    }
+    expect(tried).toBeGreaterThan(140);
+  });
+
+  it('refuses a code with a letter added, a letter missing, or the parts swapped', () => {
+    const code = makeCode(payload, priv);
+    const [text, signature] = code.split('.');
+    for (const bad of [code + 'A', code.slice(0, -1), code.slice(1), `${signature}.${text}`, `${text}.${text}`, `${text}`, `${code}.${signature}`]) {
+      expect(check(bad).ok).toBe(false);
+    }
+  });
+
+  it('refuses a changed text (a different buyer) with the old signature', () => {
+    const [, signature] = makeCode(payload, priv).split('.');
+    const forged = b64urlEncode(new TextEncoder().encode('PIY1|pack1|someone.else@example.com|2026-10-19'));
+    expect(check(`${forged}.${signature}`)).toEqual({ ok: false, reason: 'signature' });
+  });
+
+  it('refuses a code signed with another key, other products, bad dates, and nonsense', () => {
+    const code = makeCode(payload, priv);
+    const otherKey = publicKeyOf(ed.etc.bytesToHex(ed.utils.randomPrivateKey()));
+    expect(check(code, otherKey)).toEqual({ ok: false, reason: 'signature' });
+    expect(check(makeCode({ ...payload, product: 'pack2' }, priv))).toEqual({ ok: false, reason: 'format' });
+    expect(() => makeCode({ ...payload, date: 'yesterday' }, priv)).toThrow();
+    expect(() => makeCode({ ...payload, id: 'a|b' }, priv)).toThrow(); // "|" is the separator
+    expect(check('hello')).toEqual({ ok: false, reason: 'format' });
+    expect(check('abc.def')).toEqual({ ok: false, reason: 'format' });
+    expect(check('   ')).toEqual({ ok: false, reason: 'empty' });
+  });
+
+  it('works with no WebCrypto at all (plain http, old phones)', () => {
+    const real = globalThis.crypto;
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+    try {
+      const code = makeCode(payload, priv);
+      expect(check(code).ok).toBe(true);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', { value: real, configurable: true });
+    }
   });
 
   it('keeps the code with the plan', async () => {
-    const d = await saveLicense(db, data, 'PIY1.x.y', 7);
-    expect((await loadAll(db))!.settings.license).toEqual({ code: 'PIY1.x.y', activatedAt: 7 });
-    expect(d.settings.license?.code).toBe('PIY1.x.y');
+    const d = await saveLicense(db, data, 'abc.def', 7);
+    expect((await loadAll(db))!.settings.license).toEqual({ code: 'abc.def', activatedAt: 7 });
+    expect(d.settings.license?.code).toBe('abc.def');
   });
 });
 

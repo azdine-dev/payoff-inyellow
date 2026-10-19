@@ -1,10 +1,9 @@
 /**
- * Public key that unlock codes are checked against.
- * This one is a DEVELOPMENT key. Before selling, make your own:
- *   node tools/make-keypair.mjs --write --force
- * and paste the public key here. Codes made with the old key stop working.
+ * Public key that unlock codes are checked against. This is the ONLY key in the app.
+ * The private key lives in ~/.piy/private.pem on the owner's computer.
+ * Made and written here by:  node scripts/make-keypair.js
  */
-const DEVELOPMENT_KEY = '71313c6e0a551e95c984bd66d64b906c6ce20afe2bcd83b67cc2af846cbb1125';
+const APP_PUBLIC_KEY = '09c17cdad4e1e063fe45ef09986ed42fb43d97496ec7dd4158e31944dc33ba0a';
 
 /** The automated tests set VITE_PUBLIC_KEY_HEX to their own test key, so they never need your private key. */
-export const PUBLIC_KEY_HEX: string = (import.meta.env?.VITE_PUBLIC_KEY_HEX as string | undefined) || DEVELOPMENT_KEY;
+export const PUBLIC_KEY_HEX: string = (import.meta.env?.VITE_PUBLIC_KEY_HEX as string | undefined) || APP_PUBLIC_KEY;

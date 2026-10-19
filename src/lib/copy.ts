@@ -26,5 +26,9 @@ export const COPY = {
   debtPaid: 'PAID. One down.',
   privacy: 'Your numbers never leave this device.',
   disclaimer: 'A planning tool, not financial advice. Figures are estimates based on what you enter.',
+  unlocked: 'Unlocked. Thank you.',
+  codeSaved: 'Your code is saved. The full planner opens when your plan is ready.',
+  codeRefused: 'This code doesn’t look right. Check that you copied all of it.',
+  codeEmpty: 'Paste your unlock code first.',
   extraHint: 'Even $20 matters. You can change it any time.',
 } as const;

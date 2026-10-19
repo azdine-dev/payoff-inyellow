@@ -137,6 +137,19 @@ export async function loadCarry(db: PiyDB): Promise<CarryRecord | undefined> {
   return (await db.get('draft', 'carry')) as CarryRecord | undefined;
 }
 
+/** Keeps a code (or the look) for the next setup. Used when an unlock link is opened before the plan is made. */
+export async function saveCarry(db: PiyDB, patch: Partial<Pick<CarryRecord, 'theme' | 'textSize' | 'license'>>): Promise<void> {
+  const current = await loadCarry(db);
+  await db.put('draft', {
+    id: 'carry',
+    updatedAt: Date.now(),
+    theme: current?.theme ?? 'auto',
+    textSize: current?.textSize ?? 1,
+    license: current?.license ?? null,
+    ...patch,
+  });
+}
+
 export async function saveDraft(db: PiyDB, step: number, data: unknown): Promise<void> {
   await db.put('draft', { id: 'draft', updatedAt: Date.now(), step, data });
 }
