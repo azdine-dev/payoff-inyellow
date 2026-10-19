@@ -59,3 +59,54 @@ Then, in `wrangler.toml`, point `routes` at your domain (for example `api.paidin
 with `VITE_SYNC_URL=https://api.paidinyellow.com` if you use another address (the default is that one).
 
 `PIY_PUBLIC_KEY` in `wrangler.toml` must equal `APP_PUBLIC_KEY` in `src/lib/licenseKey.ts`. A test checks it.
+
+## Orders: Shopify to code to email
+
+```
+POST /webhooks/shopify
+```
+
+- **orders/paid** ("Order payment"): checks Shopify's HMAC signature, makes a code for that order
+  (`PIY1|pack1|shopify-<order number>|<date>`, signed with the private key), and emails the buyer through
+  Resend: the button `https://app.paidinyellow.com/#unlock=<code>`, the code itself, and the kit file links.
+- **One order = one code.** The order id is the key in D1. The same webhook delivered twice sends nothing
+  twice and never makes a second code. If the email fails, the Worker answers 502, Shopify retries, and the retry
+  sends the same code (Resend also gets an `Idempotency-Key`, so it can't send twice).
+- **refunds/create**: a refund that covers the whole order puts that code on the `revoked` list. That blocks
+  **sync only**. The code still unlocks the app on the phone, because it checks offline with the public key.
+  A part refund keeps everything working. Each refund is counted once.
+- Test orders (Shopify's "bogus gateway") are ignored unless `PROCESS_TEST_ORDERS = "true"`.
+- Orders with no usable email are saved but not sent (the log says so), so you can send the code by hand.
+
+### Set up (once)
+
+1. Deploy as above, then set the three secrets. None of them is ever written in a file:
+
+```bash
+cd worker
+node ../scripts/worker-secret.js | npx wrangler secret put PIY_PRIVATE_KEY   # the key from ~/.piy, checked against the app first
+npx wrangler secret put SHOPIFY_WEBHOOK_SECRET                                # the signing secret Shopify shows
+npx wrangler secret put RESEND_API_KEY                                        # from resend.com (verify your sending domain there)
+```
+
+2. Fill the public settings in `wrangler.toml`: `SHOPIFY_SHOP_DOMAIN`, `MAIL_FROM`, `MAIL_REPLY_TO`, `KIT_LINKS`
+   (JSON list of `{ "name", "url" }`, https only), then `npx wrangler deploy` again.
+3. In Shopify admin, Settings, Notifications, Webhooks, add two webhooks in JSON format, both to
+   `https://<your worker address>/webhooks/shopify`: **Order payment** and **Refund create**.
+
+### Test it with a fake order (no Shopify, no Resend)
+
+```bash
+npm run worker:dev                       # terminal 1. Emails are printed here instead of sent.
+node scripts/fake-order.js               # terminal 2. A new paid order: the email appears in terminal 1.
+node scripts/fake-order.js --order 1001 --email you@example.com
+node scripts/fake-order.js --order 1001                    # the same order again: nothing is sent twice
+node scripts/fake-order.js --order 1001 --refund           # refund it: that code can no longer sync
+node scripts/fake-order.js --bad-signature                 # a forged request: refused with 401
+node scripts/check-code.js "<the code from the email>"     # VALID
+```
+
+The dev Worker signs with your key in `~/.piy`, and uses the webhook secret `dev-secret` unless you set
+`SHOPIFY_WEBHOOK_SECRET` in `worker/.dev.vars` (git-ignored). Against a deployed Worker:
+`SHOPIFY_WEBHOOK_SECRET=<real secret> node scripts/fake-order.js --url https://<your worker address>` (it needs
+`PROCESS_TEST_ORDERS = "true"` because fake orders are marked as tests).

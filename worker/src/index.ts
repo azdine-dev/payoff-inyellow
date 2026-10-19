@@ -7,12 +7,14 @@
  *   PUT    /sync/:id          save changed records
  *   GET    /sync/:id?since=N  get records changed after N
  *   DELETE /sync/:id          stop and delete everything stored for this id
+ *   POST   /webhooks/shopify  orders/paid (makes and emails the unlock code) and refunds/create
  */
 import { authorize } from './auth';
 import { realDeps, type Deps, type Env } from './env';
 import { corsHeaders, HttpError, json } from './http';
 import { rateLimit } from './limits';
 import { limits } from './env';
+import { handleShopify } from './shopify';
 import { checkSyncId, deleteSpace, getRecords, putRecords } from './sync';
 
 export function createHandler(deps: Deps = realDeps) {
@@ -22,6 +24,8 @@ export function createHandler(deps: Deps = realDeps) {
       const url = new URL(req.url);
       if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
       if (url.pathname === '/health') return json({ ok: true }, 200, cors);
+
+      if (url.pathname === '/webhooks/shopify') return await handleShopify(req, env, deps);
 
       const m = /^\/sync\/([^/]+)$/.exec(url.pathname);
       if (m) {

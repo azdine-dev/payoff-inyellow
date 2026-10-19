@@ -22,6 +22,8 @@ export interface Harness {
   clock: { now: number };
   mail: { to: string; subject: string; html: string; text: string; headers: Record<string, string> }[];
   fetchCalls: { url: string; init: RequestInit }[];
+  /** Set mailFails to make the fake Resend answer with an error */
+  flags: { mailFails: boolean };
   call(path: string, init?: RequestInit & { code?: string | null; origin?: string; ip?: string }): Promise<Response>;
   json(path: string, init?: RequestInit & { code?: string | null; origin?: string; ip?: string }): Promise<{ status: number; body: any; res: Response }>;
 }
@@ -32,11 +34,13 @@ export function harness(extra: Partial<Env> = {}): Harness {
   const clock = { now: NOW };
   const mail: Harness['mail'] = [];
   const fetchCalls: Harness['fetchCalls'] = [];
+  const flags = { mailFails: false };
   const deps: Deps = {
     now: () => clock.now,
     fetch: (async (url: string | URL | Request, init?: RequestInit) => {
       fetchCalls.push({ url: String(url), init: init ?? {} });
       if (String(url) === 'https://api.resend.com/emails') {
+        if (flags.mailFails) return new Response('{"message":"nope"}', { status: 500 });
         const body = JSON.parse(String(init?.body));
         mail.push({ to: body.to[0], subject: body.subject, html: body.html, text: body.text, headers: init?.headers as Record<string, string> });
         return new Response(JSON.stringify({ id: 'email_1' }), { status: 200 });
@@ -75,6 +79,7 @@ export function harness(extra: Partial<Env> = {}): Harness {
     clock,
     mail,
     fetchCalls,
+    flags,
     call,
     async json(path, init) {
       const res = await call(path, init);

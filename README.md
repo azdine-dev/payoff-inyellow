@@ -86,6 +86,11 @@ npx playwright test e2e/unlock-link.spec.ts e2e/real-code.spec.ts
 `e2e/real-code.spec.ts` uses your real private key in `~/.piy` and is skipped without it. The other
 tests use a test key (`e2e/testKey.ts`) that can't make codes the real app accepts.
 
+## Sync and orders (Worker)
+
+`worker/` is a Cloudflare Worker: optional encrypted sync between devices, and the Shopify order to code to
+email flow. See `worker/README.md` for how it works, deploy commands, and how to test with a fake order.
+
 ## Data
 
 Everything is stored in the browser (IndexedDB) on the buyer's device. Settings has backup and

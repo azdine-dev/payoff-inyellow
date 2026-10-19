@@ -6,7 +6,9 @@
  * Defaults are made for trying things out on this computer. Emails are printed, not sent.
  */
 import { existsSync, readFileSync } from 'node:fs';
+import { createPrivateKey } from 'node:crypto';
 import { createServer } from 'node:http';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createHandler } from '../src/index';
 import type { Env } from '../src/env';
@@ -30,14 +32,22 @@ function appPublicKey(): string {
   return m![1]!;
 }
 
+/** The signing key from ~/.piy (the same one make-code.js uses), as the 64 hex seed the Worker takes. Local only. */
+function localPrivateSeed(): string | undefined {
+  const file = join(homedir(), '.piy', 'private.pem');
+  if (!existsSync(file)) return undefined;
+  const jwk = createPrivateKey(readFileSync(file)).export({ format: 'jwk' }) as { d?: string };
+  return jwk.d ? Buffer.from(jwk.d, 'base64url').toString('hex') : undefined;
+}
+
 const vars = { ...readDevVars(), ...(process.env as Record<string, string>) };
 const port = Number(vars.PORT ?? 8787);
 
 const env: Env = {
   DB: createD1(vars.WORKER_DB ?? ':memory:'),
   PIY_PUBLIC_KEY: vars.PIY_PUBLIC_KEY ?? appPublicKey(),
-  PIY_PRIVATE_KEY: vars.PIY_PRIVATE_KEY,
-  SHOPIFY_WEBHOOK_SECRET: vars.SHOPIFY_WEBHOOK_SECRET,
+  PIY_PRIVATE_KEY: vars.PIY_PRIVATE_KEY ?? localPrivateSeed(),
+  SHOPIFY_WEBHOOK_SECRET: vars.SHOPIFY_WEBHOOK_SECRET ?? 'dev-secret',
   RESEND_API_KEY: vars.RESEND_API_KEY,
   SHOPIFY_SHOP_DOMAIN: vars.SHOPIFY_SHOP_DOMAIN,
   ALLOWED_ORIGINS: vars.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://localhost:5174,http://localhost:5177,http://localhost:5178',

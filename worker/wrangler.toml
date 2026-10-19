@@ -14,6 +14,12 @@ compatibility_date = "2025-01-01"
 PIY_PUBLIC_KEY = "09c17cdad4e1e063fe45ef09986ed42fb43d97496ec7dd4158e31944dc33ba0a"
 ALLOWED_ORIGINS = "https://app.paidinyellow.com"
 APP_URL = "https://app.paidinyellow.com"
+# Orders and email (public settings; the secrets are listed at the bottom)
+SHOPIFY_SHOP_DOMAIN = "your-store.myshopify.com"
+MAIL_FROM = "PaidInYellow <hello@paidinyellow.com>"
+MAIL_REPLY_TO = "support@paidinyellow.com"
+# Files shown in the email, as JSON. Only https links are used.
+KIT_LINKS = '[]'
 # Limits (defaults shown)
 MAX_RECORD_BYTES = "65536"
 MAX_RECORDS_PER_PUT = "200"
@@ -29,3 +35,8 @@ database_name = "paidinyellow"
 # Replace with the id printed by:  npx wrangler d1 create paidinyellow
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
+
+# Secrets (never in this file). Set each one with `npx wrangler secret put NAME`:
+#   PIY_PRIVATE_KEY          the code-signing key:  node ../scripts/worker-secret.js | npx wrangler secret put PIY_PRIVATE_KEY
+#   SHOPIFY_WEBHOOK_SECRET   the signing secret Shopify shows for your webhooks
+#   RESEND_API_KEY           from resend.com
