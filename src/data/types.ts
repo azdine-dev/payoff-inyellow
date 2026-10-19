@@ -140,6 +140,8 @@ export interface PaydayLog extends Meta {
   plannedTotal?: number;
   /** Total debt left after this payday */
   debtLeft?: number;
+  /** The bills that were due between this payday and the next, as shown on Today */
+  bills?: { debtId: string; name: string; amount: number; due: string }[];
 }
 
 export type MilestoneKey =

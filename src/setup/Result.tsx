@@ -7,6 +7,7 @@ import { planNeedsHelp } from '../engine';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
 import { monthsBetween, monthYear, shortDate } from '../lib/today';
+import { billsForNextPayday } from '../state/billsDue';
 import { toPlanInput } from '../state/planInput';
 import { data, editSeed, licenseState, plan, tab, today, view } from '../state/store';
 import { draftFromData } from './draft';
@@ -23,7 +24,17 @@ export function Result() {
   const mo = r.minimumsOnly;
   const locked = licenseState.value !== 'unlocked';
   const reasons = planNeedsHelp(toPlanInput(d), r, s.paycheckAmount);
-  const first = r.rows[0] ? firstStep(r.rows[0], d) : null;
+  const bills = billsForNextPayday(d);
+  const first = r.rows[0] ? firstStep(r.rows[0], d, bills) : null;
+  // "Bills due $85, yearly bills $42.31, buffer $107.69"
+  const partsList = r.rows[0]
+    ? [
+        bills.total > 0 && `bills due ${formatMoneyAuto(bills.total, cur)}`,
+        r.rows[0].toYearlyBills > 0.004 && `yearly bills ${formatMoneyAuto(r.rows[0].toYearlyBills, cur)}`,
+        r.rows[0].toBuffer > 0.004 && `buffer ${formatMoneyAuto(r.rows[0].toBuffer, cur)}`,
+      ].filter(Boolean)
+    : [];
+  const parts = partsList.join(', ').replace(/^./, (c) => c.toUpperCase());
 
   const sooner = r.debtFreeDate && mo.months !== null ? mo.months - monthsBetween(today.value, r.debtFreeDate) : null;
   const less = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
@@ -87,26 +98,24 @@ export function Result() {
           <p class="label">{COPY.firstStep}</p>
           <p style={{ fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.35 }} data-testid="first-step">
             {when} ({shortDate(first.date)}):{' '}
-            {first.kind === 'minimums' ? (
-              <>
-                pay your minimums, <span class="hl">{formatMoneyAuto(first.amount, cur)}</span>
-              </>
-            ) : first.kind === 'buffer' ? (
+            {first.kind === 'setaside' ? (
               <>
                 set aside <span class="hl">{formatMoneyAuto(first.amount, cur)}</span>
               </>
+            ) : first.kind === 'nothing' ? (
+              <>nothing is due before your next payday</>
             ) : (
               <>
                 pay <span class="hl">{formatMoneyAuto(first.amount, cur)}</span> to {first.target}
               </>
             )}
           </p>
-          {first.kind === 'buffer' && r.rows[0] && (
+          {first.kind === 'setaside' && r.rows[0] && (
             <p class="small num" data-testid="first-step-parts">
-              Minimums {formatMoneyAuto(r.rows[0].minimums, cur)}, yearly bills {formatMoneyAuto(r.rows[0].toYearlyBills, cur)}, buffer {formatMoneyAuto(r.rows[0].toBuffer, cur)}.
+              {parts}.
             </p>
           )}
-          <p class="muted small">{first.kind === 'buffer' ? COPY.buffer : methodReason(s.method)}</p>
+          <p class="muted small">{r.rows[0]?.bufferFirst ? COPY.buffer : first.kind === 'debt' ? methodReason(s.method) : ''}</p>
         </section>
       )}
 

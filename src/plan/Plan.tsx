@@ -4,7 +4,8 @@ import { compareMethods, type PayoffMethod } from '../engine';
 import { downloadText, planToCsv } from '../lib/csv';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
-import { addDaysISO, monthYear, shortDate } from '../lib/today';
+import { addDaysISO, dayMonth, monthYear, shortDate } from '../lib/today';
+import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { applyWhatIf, removeOneOff, setMethod } from '../state/planActions';
 import { toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
@@ -41,9 +42,16 @@ export function Plan() {
 
   const choose = (m: PayoffMethod) => act((db, x) => setMethod(db, x, m));
 
-  const csv = () => downloadText('paidinyellow-plan.csv', planToCsv(r.rows, nameOf));
+  // Per payday: the bills due before the next payday, and the total (bills + yearly bills + buffer + extra)
+  const rowBills = useMemo(() => r.rows.map((_, i) => billsForPlanRow(d, r, i)), [d, r]);
+  const rowTotals = useMemo(() => r.rows.map((row, i) => totalOf(rowBills[i]!, row)), [r, rowBills]);
+
+  const csv = () =>
+    downloadText('paidinyellow-plan.csv', planToCsv(r.rows.map((row, i) => ({ row, billsDue: rowBills[i]!.total, total: rowTotals[i]! })), nameOf));
 
   const opened = open?.kind === 'ahead' ? r.rows[open.index] : undefined;
+  const openedBills = open?.kind === 'ahead' ? rowBills[open.index] : undefined;
+  const openedTotal = open?.kind === 'ahead' ? rowTotals[open.index] : undefined;
   const openedLog = open?.kind === 'done' ? d.paydays.find((p) => p.number === open.number) : undefined;
   const openedPayments = open?.kind === 'done' ? d.payments.filter((p) => p.paydayNumber === open.number) : [];
 
@@ -183,8 +191,8 @@ export function Plan() {
               <button type="button" class="pd" aria-label={`${shortDate(row.date)}, to come`} onClick={() => setOpen({ kind: 'ahead', index: i })}>
                 <span class="pd-box" />
                 <span class="pd-date">{shortDate(row.date)}</span>
-                <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : 'Minimums'}</span>
-                <span class="num pd-amt">{formatMoneyAuto(row.totalToSetAside, cur)}</span>
+                <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : rowBills[i]!.due.length ? 'Bills due' : 'Nothing due'}</span>
+                <span class="num pd-amt">{formatMoneyAuto(rowTotals[i]!, cur)}</span>
               </button>
             </li>
           ))}
@@ -199,10 +207,12 @@ export function Plan() {
       <Sheet open={open !== null} onClose={() => setOpen(null)} title={opened ? shortDate(opened.date) : openedLog ? shortDate(openedLog.date) : 'Payday'}>
         {opened && (
           <div class="stack" style={{ gap: 6 }}>
-            {opened.debts.filter((x) => x.minimum > 0.004).map((x) => (
-              <div key={`m${x.id}`} class="row">
-                <span>{nameOf(x.id)} minimum</span>
-                <span class="num">{formatMoney(x.minimum, cur)}</span>
+            {openedBills?.due.map((b) => (
+              <div key={`b${b.debtId}`} class="row">
+                <span>
+                  {b.name}, due {dayMonth(b.due)}
+                </span>
+                <span class="num">{formatMoney(b.amount, cur)}</span>
               </div>
             ))}
             {opened.toYearlyBills > 0.004 && (
@@ -219,7 +229,7 @@ export function Plan() {
             ))}
             <div class="row" style={{ borderTop: '1px solid var(--ink)', paddingTop: 6, fontWeight: 600 }}>
               <span>Total</span>
-              <span class="num">{formatMoney(opened.totalToSetAside, cur)}</span>
+              <span class="num">{formatMoney(openedTotal ?? 0, cur)}</span>
             </div>
             <p class="muted small num" data-testid="debt-left-after">Debt left after: {formatMoney(opened.debtLeft, cur)}</p>
           </div>
@@ -230,8 +240,16 @@ export function Plan() {
               <p>{COPY.missed}</p>
             ) : (
               <>
+                {openedLog.bills?.map((b) => (
+                  <div key={`b${b.debtId}`} class="row">
+                    <span>
+                      {b.name}, due {dayMonth(b.due)}
+                    </span>
+                    <span class="num">{formatMoney(b.amount, cur)}</span>
+                  </div>
+                ))}
                 {openedPayments
-                  .filter((p) => p.kind !== 'fund')
+                  .filter((p) => p.kind !== 'fund' && !(p.kind === 'minimum' && openedLog.bills !== undefined))
                   .map((p) => (
                     <div key={p.id} class="row">
                       <span>
@@ -268,11 +286,11 @@ export function Plan() {
         <table>
           <thead><tr><th>Payday</th><th>Date</th><th>Total</th><th>Extra goes to</th><th>Debt left</th></tr></thead>
           <tbody>
-            {r.rows.slice(0, 26).map((row) => (
+            {r.rows.slice(0, 26).map((row, i) => (
               <tr key={row.payday}>
                 <td>{row.payday}</td>
                 <td>{shortDate(row.date)}</td>
-                <td>{formatMoney(row.totalToSetAside, cur)}</td>
+                <td>{formatMoney(rowTotals[i]!, cur)}</td>
                 <td>{row.extraGoesTo ? nameOf(row.extraGoesTo) : row.bufferFirst ? 'Buffer first' : ''}</td>
                 <td>{formatMoney(row.debtLeft, cur, { whole: true })}</td>
               </tr>

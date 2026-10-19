@@ -61,7 +61,7 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
           <NumberInput pre={symbol} value={f.min} onInput={(v) => set({ min: v })} label="Monthly minimum" />
         </Field>
       </div>
-      <Field label="Due day (optional)">
+      <Field label="Due day (recommended)" hint="It’s on your statement.">
         <input type="text" inputMode="numeric" maxLength={2} value={f.dueDay} onInput={(e) => set({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
       </Field>
       <label class="row" style={{ justifyContent: 'flex-start', minHeight: 44 }}>

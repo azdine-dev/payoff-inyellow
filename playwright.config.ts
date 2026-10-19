@@ -23,6 +23,8 @@ export default defineConfig({
       reuseExistingServer: false,
       env: { ...env, VITE_EMAIL_CAPTURE_URL: 'https://leads.example.test/capture' },
     },
+    // The app with its own public key (no test key): for codes made by scripts/make-code.js
+    { command: 'npx vite --port 5177 --strictPort', url: 'http://localhost:5177', reuseExistingServer: false },
     // The real build, for the offline test
     {
       command: 'npx vite build && npx vite preview --port 4175 --strictPort',

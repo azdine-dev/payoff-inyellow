@@ -50,10 +50,14 @@ Other links (store page, video, hardship script, support email) are in `src/lib/
 Before selling:
 
 ```
-npm run make-keypair          # writes .keys/private.hex (git ignores it). Back it up somewhere safe.
-# paste the printed public key into src/lib/licenseKey.ts
-npm run make-code ORDER-1234  # one code per order
+npm run make-keypair                     # writes .keys/private.hex (git ignores it). Back it up somewhere safe.
+# paste the printed PUBLIC key into src/lib/licenseKey.ts
+node scripts/make-code.js buyer@example.com   # one code per buyer or order
+node scripts/check-code.js "PIY1...."         # check a code the way the app does (public key only)
 ```
+
+The private key signs codes. It is read from `PIY_PRIVATE_KEY`, a `.env` file, or `.keys/private.hex`, and all
+three are git-ignored. The app and its builds only ever contain the PUBLIC key.
 
 The automated tests use their own test key (`e2e/testKey.ts`) and never need your private key.
 

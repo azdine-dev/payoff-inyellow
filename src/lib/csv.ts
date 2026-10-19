@@ -8,18 +8,26 @@ const cell = (v: string | number): string => {
 
 const cents = (n: number) => (Math.round(n * 100) / 100).toFixed(2);
 
-export function planToCsv(rows: readonly PaydayStep[], nameOf: (id: string) => string): string {
-  const header = ['Payday', 'Date', 'Minimums', 'Yearly bills', 'Buffer', 'Extra', 'Extra goes to', 'Total to set aside', 'Debt left'];
-  const lines = rows.map((r) =>
+export interface CsvRow {
+  row: PaydayStep;
+  /** Bills due between this payday and the next */
+  billsDue: number;
+  /** Bills due + yearly bills + buffer + extra */
+  total: number;
+}
+
+export function planToCsv(rows: readonly CsvRow[], nameOf: (id: string) => string): string {
+  const header = ['Payday', 'Date', 'Bills due', 'Yearly bills', 'Buffer', 'Extra', 'Extra goes to', 'Total to set aside', 'Debt left'];
+  const lines = rows.map(({ row: r, billsDue, total }) =>
     [
       r.payday,
       r.date,
-      cents(r.minimums),
+      cents(billsDue),
       cents(r.toYearlyBills),
       cents(r.toBuffer),
       cents(r.extra),
       r.extraGoesTo ? nameOf(r.extraGoesTo) : r.bufferFirst ? 'Buffer first' : '',
-      cents(r.totalToSetAside),
+      cents(total),
       cents(r.debtLeft),
     ]
       .map(cell)

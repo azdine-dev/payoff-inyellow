@@ -150,7 +150,7 @@ Each feature exists for a reason, so keep the reason when you build it. Details 
 1. **Welcome.** "You pay every month, but the balance never goes down. Let's fix that, one paycheck at a time." Second line: "You're not bad at math. The math was hidden from you." Link: "Watch the 3-minute video".
 2. **Currency.** Auto-detected from the phone's region; editable. Any symbol works.
 3. **Pay schedule.** How often you get paid (Every week / Every 2 weeks / Twice a month / Every month) and your next payday. Twice a month also asks for the two pay days: "1st and 15th", "15th and last day", or two custom days (one date can't tell the schedule apart). Optional: usual paycheck amount.
-4. **Debts.** Quick add: name, balance, interest rate %, monthly minimum, due day; the type is optional. Show an "Add another" button. Allow unlimited debts.
+4. **Debts.** Quick add: name, balance, interest rate %, monthly minimum, due day; the type is optional. The due day is recommended, not optional: label "Due day (recommended)", hint "It's on your statement". It can still be left empty (see Today). Show an "Add another" button. Allow unlimited debts.
 5. **Buffer.** "How much do you have set aside for surprises?" plus the goal (default $500).
 6. **Money for the plan.** "How much can you put toward the plan each payday, on top of your minimums?" Hint: "Even $20 matters. You can change it any time."
 7. **Yearly bills** (optional, skippable). Car repairs, gifts and holidays, insurance renewals, school. Each takes an amount per year and the month it's needed.
@@ -168,7 +168,11 @@ Each feature exists for a reason, so keep the reason when you build it. Details 
 
 **Today** (home):
 - Debt-free pill at the top ("Debt-free · Mar 2028").
-- Next payday card listing what to pay or move: minimums, yearly bills, buffer, and extra → focus debt (the focus debt name is highlighted).
+- Next payday card listing what to pay or move, in this order: the **bills due before the next payday**, yearly bills, buffer, and extra → focus debt (the focus debt name is highlighted).
+  - A bill is a debt whose due day falls from this payday (included) up to the next payday (not included). It shows its **full monthly minimum** and its due date, like "Car loan $285, due 28 Oct". The engine's per-payday average of the minimums is never shown.
+  - Total this payday (the "I did it" amount, the first step on the result screen, the Plan list, the CSV and the print page) = those bills + yearly bills + buffer + extra.
+  - A debt with a minimum but no due day shows as "Visa $96, add a due day" with a link that sets the day. It is not counted in the total until it has a due day (we can't tell which payday it belongs to).
+  - Pressing "I did it" still applies the engine's step to the balances, so the payoff date does not change.
 - Each line has a checkbox, plus one big button "I did it · $370" that ticks everything and turns it yellow.
 - Small links: "I got a different amount" (enter the real amount and the payday recalculates in the same order) and "+ Extra payment" (any extra money goes to the focus debt).
 - Focus debt card: "Store Card · 64% gone · $320 left · gone by Dec 2026".
@@ -240,7 +244,7 @@ The model, in one step per payday:
   - monthly: the same day each month, clamped to the month's end
   - twice a month: two fixed days of the month (`other_payday`; 31 means the last day), capped at the month's end, alternating. Without `other_payday`: a day up to the 15th pairs with day + 15, the last day of a month pairs with the 15th, any other day after the 15th pairs with day - 15. See `twice_a_month_days()` in the reference.
 - **Interest each payday:** `balance × APR / ppy`.
-- **Minimum set aside each payday:** `monthly minimum × 12 / ppy`, capped at what the debt owes.
+- **Minimum set aside each payday:** `monthly minimum × 12 / ppy`, capped at what the debt owes. This average lives only inside the engine (for the payoff date). The screens show real bills by due date instead.
 - **The order money goes each payday.** Available money is `money for the plan` plus any "+/- this payday".
   1. Yearly bills: `sum(yearly costs) / ppy`, capped at what's available.
   2. Buffer: until it reaches the goal.

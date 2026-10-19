@@ -71,3 +71,9 @@ export function timeLabel(hhmm: string): string {
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return min ? `${h12}:${String(min).padStart(2, '0')} ${suffix}` : `${h12} ${suffix}`;
 }
+
+/** "28 Oct" */
+export function dayMonth(iso: string): string {
+  const { m, d } = parseISO(iso);
+  return `${d} ${MONTHS[m - 1]!.slice(0, 3)}`;
+}

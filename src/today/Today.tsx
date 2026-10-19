@@ -6,8 +6,10 @@ import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { shortDate, shortMonthYear } from '../lib/today';
 import { didPayday, extraPayment, missedPaydays, skipPaydays } from '../state/actions';
+import { billsForNextPayday } from '../state/billsDue';
+import { editDebt } from '../state/debtActions';
 import { activeDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
-import { data, getDB, plan, tab, today } from '../state/store';
+import { act, data, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { comingUp, dueLine, focusDebt, paydayLines } from './model';
@@ -33,6 +35,10 @@ export function Today() {
   const [sheet, setSheet] = useState<'amount' | 'extra' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
+  // "add a due day" for a debt that has none
+  const [dueDebtId, setDueDebtId] = useState<string | null>(null);
+  const [dueText, setDueText] = useState('');
+  const [dueNote, setDueNote] = useState('');
 
   // A new payday starts with nothing ticked and the usual amount
   useEffect(() => {
@@ -42,7 +48,8 @@ export function Today() {
 
   const r = useMemo(() => (override === null ? plan.value! : simulatePlan(toPlanInput(d, override))), [d, override]);
   const row = r.rows[0];
-  const { lines, total } = row ? paydayLines(row, d) : { lines: [], total: 0 };
+  const bills = useMemo(() => billsForNextPayday(d), [d]);
+  const { lines, total, noDueDay } = row ? paydayLines(row, d, bills) : { lines: [], total: 0, noDueDay: [] };
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
@@ -74,6 +81,23 @@ export function Today() {
     data.value = await skipPaydays(await getDB(), d, Math.max(1, missed));
     setSkippedNote(true);
     setJustPaid(null);
+  };
+
+  const openDue = (id: string) => {
+    setDueText('');
+    setDueNote('');
+    setDueDebtId(id);
+  };
+
+  const saveDue = async () => {
+    const day = Number(dueText);
+    const debt = d.debts.find((x) => x.id === dueDebtId);
+    if (!debt) return;
+    if (!Number.isInteger(day) || day < 1 || day > 31) return setDueNote('Type a day of the month, from 1 to 31.');
+    await act((db, x) =>
+      editDebt(db, x, debt.id, { name: debt.name, type: debt.type, balance: debt.balance, apr: debt.apr, minMonthly: debt.minMonthly, dueDay: day, autopay: debt.autopay }),
+    );
+    setDueDebtId(null);
   };
 
   const openSheet = (which: 'amount' | 'extra') => {
@@ -193,20 +217,32 @@ export function Today() {
                       checked={checked.has(l.key)}
                       onToggle={() => toggle(l.key)}
                       right={
-                        <span class="num" style={{ fontWeight: 600 }}>
-                          {formatMoneyAuto(l.amount, cur)}
-                        </span>
+                        l.inline ? undefined : (
+                          <span class="num" style={{ fontWeight: 600 }}>
+                            {formatMoneyAuto(l.amount, cur)}
+                          </span>
+                        )
                       }
                     >
                       {l.label} {l.highlight && <span class="hl">{l.highlight}</span>}
                     </Checkbox>
-                    {l.details && (
-                      <p class="muted small" style={{ margin: '-6px 0 8px 34px' }}>
-                        {l.details.map((x) => `${x.name} ${formatMoneyAuto(x.amount, cur)}`).join(' · ')}
-                      </p>
-                    )}
                   </div>
                 ))}
+                {noDueDay.map((b) => (
+                  <div key={`nd-${b.debtId}`} data-testid="no-due-day" style={{ borderTop: lines.length ? '1px dashed var(--line)' : 'none', minHeight: 44, display: 'flex', alignItems: 'center', paddingLeft: 34 }}>
+                    <span>
+                      {b.name} {formatMoneyAuto(b.amount, cur)},{' '}
+                      <button type="button" class="link" style={{ display: 'inline' }} onClick={() => openDue(b.debtId)}>
+                        add a due day
+                      </button>
+                    </span>
+                  </div>
+                ))}
+                {noDueDay.length > 0 && (
+                  <p class="muted small" style={{ margin: '0 0 8px 34px' }}>
+                    Not counted until you add a due day.
+                  </p>
+                )}
               </div>
               {row.bufferFirst && (
                 <p class="muted small" data-testid="buffer-first" style={{ margin: '0 0 8px 34px' }}>
@@ -269,6 +305,19 @@ export function Today() {
       <p class="footer-note">
         {COPY.privacy} {COPY.disclaimer}
       </p>
+
+      <Sheet open={dueDebtId !== null} onClose={() => setDueDebtId(null)} title={`Due day for ${d.debts.find((x) => x.id === dueDebtId)?.name ?? ''}`}>
+        <Field label="Day of the month" hint="It’s on your statement.">
+          <input type="text" inputMode="numeric" maxLength={2} value={dueText} onInput={(e) => { setDueText((e.target as HTMLInputElement).value.replace(/\D/g, '')); setDueNote(''); }} />
+        </Field>
+        {dueNote && <Note>{dueNote}</Note>}
+        <button type="button" class="btn" onClick={saveDue}>
+          Save
+        </button>
+        <button type="button" class="link" onClick={() => setDueDebtId(null)}>
+          Cancel
+        </button>
+      </Sheet>
 
       <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' ? COPY.differentAmount : 'Extra payment'}>
         {sheet === 'amount' ? (

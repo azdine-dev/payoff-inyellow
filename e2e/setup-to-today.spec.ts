@@ -49,7 +49,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
     await card.getByLabel('Monthly minimum').fill(d.min);
-    await card.getByLabel('Due day (optional)').fill(d.due);
+    await card.getByLabel('Due day (recommended)').fill(d.due);
   }
   await shot(page, '03-debts');
   await next.click();
@@ -83,17 +83,22 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
 
   // Result: same date as the Sheet (2028-10-06)
   await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028');
-  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $365.08');
+  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $235');
+  await expect(page.getByTestId('first-step-parts')).toHaveText('Bills due $85, yearly bills $42.31, buffer $107.69.');
   await shot(page, '06-result');
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();
 
   // Today: payday 1 of the fixture
   await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free · Oct 2028');
-  await expect(page.getByRole('checkbox', { name: /Minimums due \(4\).*\$215\.08/ })).toBeVisible();
+  // The bills due before the next payday, each with its full monthly minimum and its due date
+  await expect(page.getByRole('checkbox', { name: 'Medical bill $50, due 1 Nov' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Store card $35, due 5 Nov' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Visa|Car loan/ })).toHaveCount(0); // due after the next payday, or before this one
+  await expect(page.getByText(/Minimums due/)).toHaveCount(0); // the per-payday average stays inside the engine
   await expect(page.getByRole('checkbox', { name: /Yearly bills.*\$42\.31/ })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Buffer \(\$200 of \$500\).*\$107\.69/ })).toBeVisible();
-  const didIt = page.getByRole('button', { name: 'I did it · $365.08' });
+  const didIt = page.getByRole('button', { name: 'I did it · $235' }); // 85 + 42.31 + 107.69
   await expect(didIt).toBeVisible();
   await shot(page, '07-today');
 
@@ -154,13 +159,27 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await quickSetup(page);
   await expect(page.getByRole('checkbox', { name: /Extra →.*Store card.*\$150/ })).toBeVisible();
 
+  // No due days were entered: the bills are listed but not counted, with a way to add the day
+  await expect(page.getByText('Visa $96,')).toBeVisible();
+  await expect(page.getByText('Store card $35,')).toBeVisible();
+  await expect(page.getByText('Not counted until you add a due day.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$150');
+
   // A different amount for this payday only
   await page.getByRole('button', { name: 'I got a different amount' }).click();
   await page.getByLabel('Money for the plan this payday').fill('250');
   await page.getByRole('button', { name: 'Update this payday' }).click();
-  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$310.46'); // minimums (96 + 35) x 12 / 26 = 60.46, plus 250
+  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$250');
   await page.getByRole('button', { name: 'Use the usual amount' }).click();
-  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$210.46');
+  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$150');
+
+  // Add Store card's due day (the 5th): it is due 5 Nov, before the next payday, so it counts now
+  await page.getByRole('button', { name: 'add a due day' }).last().click();
+  await expect(page.getByRole('dialog')).toContainText('It’s on your statement.');
+  await page.getByRole('textbox', { name: 'Day of the month' }).fill('5');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'Store card $35, due 5 Nov' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$185'); // 35 + 150
 
   // The payday goes by without a check
   await page.clock.setFixedTime(new Date('2026-10-26T10:00:00'));

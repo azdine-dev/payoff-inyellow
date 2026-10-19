@@ -5,6 +5,7 @@ import { loadAll, openAppDB, type PiyDB } from '../data/db';
 import type { AppData } from '../data/types';
 import { chartData, minimumsOnlySeries } from '../lib/series';
 import { planToCsv } from '../lib/csv';
+import { billsForPlanRow, totalOf } from './billsDue';
 import { completeSetup, didPayday, extraPayment, type SetupValues } from './actions';
 import { updateBalance } from './debtActions';
 import { progressStats, projectedDate, reachedKeys, syncMilestones } from './milestones';
@@ -101,8 +102,9 @@ describe('progress and milestones', () => {
 
   it('logs planned vs actual when a payday is done', async () => {
     const done = await didPayday(db, data, { planMoney: 90 });
-    expect(done.data.paydays[0]!.plannedTotal).toBeCloseTo(60.46 + 150, 1);
-    expect(done.data.paydays[0]!.total).toBeCloseTo(60.46 + 90, 1);
+    // No due days in this setup, so nothing is due: the total is just the money for the plan (no yearly bills here)
+    expect(done.data.paydays[0]!.plannedTotal).toBeCloseTo(150, 2);
+    expect(done.data.paydays[0]!.total).toBeCloseTo(90, 2);
   });
 });
 
@@ -151,13 +153,17 @@ describe('plan tab', () => {
     expect(line).toMatch(/\$|costs the same/);
   });
 
-  it('exports the plan as CSV with quoted names', () => {
+  it('exports the plan as CSV with quoted names, bills due and the total the buyer sees', () => {
     const r = simulatePlan(toPlanInput(data));
-    const csv = planToCsv(r.rows.slice(0, 2), (id) => (id === data.debts[1]!.id ? 'Store, "main"' : 'Visa'));
+    const rows = r.rows.slice(0, 2).map((row, i) => ({ row, billsDue: billsForPlanRow(data, r, i).total, total: totalOf(billsForPlanRow(data, r, i), row) }));
+    const csv = planToCsv(rows, (id) => (id === data.debts[1]!.id ? 'Store, "main"' : 'Visa'));
     const lines = csv.trim().split('\r\n');
-    expect(lines[0]).toBe('Payday,Date,Minimums,Yearly bills,Buffer,Extra,Extra goes to,Total to set aside,Debt left');
+    expect(lines[0]).toBe('Payday,Date,Bills due,Yearly bills,Buffer,Extra,Extra goes to,Total to set aside,Debt left');
     expect(lines).toHaveLength(3);
-    expect(lines[1]).toMatch(/^1,2026-10-23,60\.46,0\.00,/);
+    // These debts have no due day, so no bill is due: the total is yearly bills + buffer + extra only
+    expect(lines[1]).toMatch(/^1,2026-10-23,0\.00,0\.00,/);
     expect(csv).toContain('"Store, ""main"""');
+    const withDays = planToCsv([{ row: r.rows[0]!, billsDue: 285, total: 285 + 150 }], () => 'Visa');
+    expect(withDays.split('\r\n')[1]).toMatch(/^1,2026-10-23,285\.00,/);
   });
 });

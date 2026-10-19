@@ -17,7 +17,7 @@ test('without a code: the date and first step, nothing more, and a way to unlock
 
   // What the full planner adds, and how to get it
   await expect(page.getByTestId('unlock-card')).toContainText('Tick off every payday');
-  await expect(page.getByRole('link', { name: 'Get the full planner' })).toHaveAttribute('href', 'https://paidinyellow.com');
+  await expect(page.getByRole('link', { name: 'Get the full planner' })).toHaveAttribute('href', 'https://paidinyellow.com/collections/all');
 
   // No tracker, no tabs
   await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);

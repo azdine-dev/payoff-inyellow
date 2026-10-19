@@ -57,6 +57,8 @@ export interface PaydayExpect {
   buffer?: number;
   extra?: { amount: number; to: string };
   yearly?: number;
+  /** The bills that were due before the next payday */
+  bills?: { name: string; amount: number; due: string }[];
 }
 
 /** Checks a paid payday on the Plan tab, the way the scenario table lists it. */
@@ -70,6 +72,7 @@ export async function expectPaidPayday(page: Page, e: PaydayExpect) {
   }
   if (e.yearly !== undefined) await expect(sheet).toContainText(new RegExp(`Yearly bills\\s*${near(e.yearly).source}`));
   if (e.extra) await expect(sheet).toContainText(new RegExp(`Extra to ${e.extra.to}\\s*${near(e.extra.amount).source}`));
+  for (const b of e.bills ?? []) await expect(sheet).toContainText(new RegExp(`${b.name}, due ${b.due}\\s*${near(b.amount).source}`));
   await closeSheet(page);
 }
 
@@ -111,7 +114,7 @@ export async function runWizard(page: Page, c: WizardConfig) {
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
     await card.getByLabel('Monthly minimum').fill(d.min);
-    if (d.due) await card.getByLabel('Due day (optional)').fill(d.due);
+    if (d.due) await card.getByLabel('Due day (recommended)').fill(d.due);
   }
   await next.click();
   await page.getByLabel('Buffer now').fill(c.bufferNow);

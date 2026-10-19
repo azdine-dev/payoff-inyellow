@@ -16,6 +16,7 @@ import { newId, type PiyDB } from '../data/db';
 import type { AppData, BufferRecord, Debt, Fund, Milestone, Payment, PaydayLog, Settings, StartMode } from '../data/types';
 import type { Currency } from '../lib/money';
 import { firstOfNextMonth } from '../lib/today';
+import { billsForNextPayday, totalOf } from './billsDue';
 import {
   activeDebts,
   baselineFor,
@@ -156,7 +157,12 @@ export async function didPayday(
   const planMoney = opts.planMoney ?? usual;
   const state = { balances: plan.ids.map((id) => byId.get(id)!.balance), buffer: data.buffer.amount, bufferGoal: s.bufferGoal };
   const step = stepPayday(plan, state, planMoney, 0, number, date);
-  const plannedTotal = planMoney === usual ? step.totalToSetAside : stepPayday(plan, state, usual, 0, number, date).totalToSetAside;
+  const usualStep = planMoney === usual ? step : stepPayday(plan, state, usual, 0, number, date);
+  // What the buyer saw and set aside: the bills due before the next payday + yearly bills + buffer + extra.
+  // (The balances still move by the engine's step: its per-payday average decides the payoff date.)
+  const bills = billsForNextPayday(data);
+  const total = totalOf(bills, step);
+  const plannedTotal = totalOf(bills, usualStep);
 
   const newlyPaid: string[] = [];
   const changedDebts = step.debts
@@ -200,7 +206,7 @@ export async function didPayday(
     }
   }
 
-  const log: PaydayLog = { id: newId(), updatedAt: now, number, date, status: 'done', planMoney, total: step.totalToSetAside, plannedTotal, debtLeft: step.debtLeft };
+  const log: PaydayLog = { id: newId(), updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
   // One-off money planned for this payday is used now
   const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1);
   const settings: Settings = { ...s, oneOffs, paydayIndex: s.paydayIndex + 1, updatedAt: now };
