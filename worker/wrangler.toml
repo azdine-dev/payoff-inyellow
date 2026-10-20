@@ -15,7 +15,7 @@ PIY_PUBLIC_KEY = "09c17cdad4e1e063fe45ef09986ed42fb43d97496ec7dd4158e31944dc33ba
 ALLOWED_ORIGINS = "https://app.paidinyellow.com"
 APP_URL = "https://app.paidinyellow.com"
 # Orders and email (public settings; the secrets are listed at the bottom)
-SHOPIFY_SHOP_DOMAIN = "your-store.myshopify.com"
+SHOPIFY_SHOP_DOMAIN = "gmyb5d-i0.myshopify.com"
 MAIL_FROM = "PaidInYellow <hello@paidinyellow.com>"
 MAIL_REPLY_TO = "support@paidinyellow.com"
 # Files shown in the email, as JSON. Only https links are used.
@@ -33,7 +33,7 @@ RATE_PER_IP_PER_MIN = "300"
 binding = "DB"
 database_name = "paidinyellow"
 # Replace with the id printed by:  npx wrangler d1 create paidinyellow
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "d3fad3d6-a404-4ff5-a2ce-a11dd944c897"
 migrations_dir = "migrations"
 
 # Secrets (never in this file). Set each one with `npx wrangler secret put NAME`:

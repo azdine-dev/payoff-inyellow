@@ -7,10 +7,11 @@ import { createPrivateKey, createPublicKey } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const PIY_DIR = join(homedir(), '.piy');
 export const PRIVATE_PEM = join(PIY_DIR, 'private.pem');
-export const LICENSE_KEY_FILE = 'src/lib/licenseKey.ts';
+export const LICENSE_KEY_FILE = fileURLToPath(new URL('../src/lib/licenseKey.ts', import.meta.url));
 
 export const b64url = (bytes) => Buffer.from(bytes).toString('base64url');
 export const fromB64url = (text) => new Uint8Array(Buffer.from(text, 'base64url'));

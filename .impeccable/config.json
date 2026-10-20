@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-10-19T18:49:43.779Z",
+        "reason": "CLAUDE.md section 3 (the project brand brief) specifies Inter for body text and numbers; first in the email font stack with system fallbacks. Not asked in chat."
+      }
+    ]
+  }
+}
