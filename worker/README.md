@@ -1,4 +1,4 @@
-# PaidInYellow Worker
+# PaidInYellow  Worker
 
 One Cloudflare Worker with a D1 database. It does the parts the app can't do alone:
 
