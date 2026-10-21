@@ -6,12 +6,12 @@ const sum = (p: Partial<WhatIfSummary>): WhatIfSummary => ({ newDate: '2028-08-1
 
 describe('deltaPhrase', () => {
   it('says paydays sooner and interest saved', () => {
-    expect(deltaPhrase(sum({}), money)).toBe('3 paydays sooner, $210 less interest');
-    expect(deltaPhrase(sum({ paydaysSooner: 1 }), money)).toBe('1 payday sooner, $210 less interest');
+    expect(deltaPhrase(sum({}), money)).toBe('3 paydays sooner · $210 less interest');
+    expect(deltaPhrase(sum({ paydaysSooner: 1 }), money)).toBe('1 payday sooner · $210 less interest');
   });
 
   it('says "same date" when the date does not move, and nothing when nothing changes', () => {
-    expect(deltaPhrase(sum({ paydaysSooner: 0, interestSaved: 40 }), money)).toBe('same date, $40 less interest');
+    expect(deltaPhrase(sum({ paydaysSooner: 0, interestSaved: 40 }), money)).toBe('same date · $40 less interest');
     expect(deltaPhrase(sum({ paydaysSooner: 0, interestSaved: 0.2, newDate: null }), money)).toBeNull();
   });
 

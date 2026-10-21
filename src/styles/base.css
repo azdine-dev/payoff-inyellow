@@ -683,6 +683,29 @@ select {
 
 /* ---------- payday list (Plan) ---------- */
 
+/* What-if: three small cards side by side */
+.whatif-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.card.mini {
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mini-num {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
 /* Paydays as a timeline, month by month */
 .month-head {
   font-family: var(--font-body);

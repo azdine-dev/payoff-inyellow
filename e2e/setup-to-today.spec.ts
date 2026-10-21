@@ -256,13 +256,13 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   const pill = page.getByTestId('debt-free-pill');
   const before = await pill.textContent();
 
-  // Plan: the what-if shows a sooner date and "Use this in my plan" changes Today
+  // Plan: the what-if shows a sooner date and "Apply to my plan" changes Today
   await page.getByRole('button', { name: 'Plan' }).click();
   await expect(page.getByTestId('comparison')).toContainText(/Biggest interest first|PaidInYellow order/);
   await page.getByLabel('Add money each payday').fill('100');
   await expect(page.getByTestId('whatif-result')).toContainText('sooner');
   await shot(page, '13-plan');
-  await page.getByRole('button', { name: 'Use this in my plan' }).click();
+  await page.getByRole('button', { name: 'Apply to my plan' }).click();
   await expect(page.getByText('Done. Your plan and Today use it now.')).toBeVisible();
   await page.getByRole('button', { name: 'Today' }).click();
   expect(await pill.textContent()).not.toBe(before);

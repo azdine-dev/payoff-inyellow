@@ -120,6 +120,7 @@ export function Plan() {
 
       <section class="card stack" aria-labelledby="whatif-title">
         <h2 id="whatif-title">What if?</h2>
+        <p class="muted small">Try it here first. Nothing changes until you tap Apply to my plan.</p>
         <label class="field">
           <span>
             Add <b class="num">{formatMoneyAuto(add, cur)}</b> each payday
@@ -156,28 +157,31 @@ export function Plan() {
         {oneOff && <Field label="What is it? (optional)"><input type="text" placeholder="Tax refund" value={oneNote} onInput={(e) => setOneNote((e.target as HTMLInputElement).value)} /></Field>}
 
         {changed ? (
-          <div class="card soft stack" style={{ gap: 4 }} data-testid="whatif-result">
+          <div class="stack" style={{ gap: 8 }} data-testid="whatif-result">
             {sum.newDate ? (
-              <>
-                <p>
-                  New date: <b>{monthYear(sum.newDate)}</b>
-                </p>
-                <p class="num small">
-                  {sum.nowEnds
-                    ? 'This gets your plan to an end.'
-                    : sum.monthsSaved !== null && sum.monthsSaved > 0
-                      ? `${sum.monthsSaved} month${sum.monthsSaved === 1 ? '' : 's'} sooner`
-                      : 'The same month'}
-                  {sum.paydaysSooner !== null && sum.paydaysSooner > 0 ? ` · ${sum.paydaysSooner} payday${sum.paydaysSooner === 1 ? '' : 's'} sooner` : ''}
-                  {sum.interestSaved >= 1 ? ` · ${formatMoney(sum.interestSaved, cur, { whole: true })} less interest` : ''}
-                </p>
-              </>
+              <div class="whatif-cards">
+                <div class="card mini">
+                  <p class="muted small">Debt-free</p>{' '}
+                  <p class="mini-num">{monthYear(sum.newDate)}</p>{' '}
+                  <p class="muted small">instead of {r.debtFreeDate ? monthYear(r.debtFreeDate) : 'more than 20 years'}</p>
+                </div>
+                {sum.paydaysSooner !== null && (
+                  <div class="card mini">
+                    <p class="mini-num num">{Math.max(0, sum.paydaysSooner)}</p>{' '}
+                    <p class="muted small">payday{sum.paydaysSooner === 1 ? '' : 's'} sooner</p>
+                  </div>
+                )}
+                <div class="card mini">
+                  <p class="mini-num num">{formatMoney(Math.max(0, sum.interestSaved), cur, { whole: true })}</p>{' '}
+                  <p class="muted small">less interest</p>
+                </div>
+              </div>
             ) : (
               <p>Still more than 20 years. A bigger amount might get there.</p>
             )}
           </div>
         ) : (
-          <p class="muted small">Move the slider or add one-off money, like a tax refund. You see the new date right here.</p>
+          <p class="muted small">Move the slider, tap an amount, or add one-off money, like a tax refund.</p>
         )}
 
         <button
@@ -193,7 +197,7 @@ export function Plan() {
             setApplied(true);
           }}
         >
-          Use this in my plan
+          Apply to my plan
         </button>
         {applied && <Note>Done. Your plan and Today use it now.</Note>}
 

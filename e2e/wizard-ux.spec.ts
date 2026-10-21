@@ -170,7 +170,7 @@ test('the what-if shows each quick amount as a change, not a second plan', async
   await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
   await expect(group.getByRole('button', { name: /^\+\$50 each payday/ })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Add money each payday')).toHaveValue('50'); // the slider follows
-  await expect(page.getByTestId('whatif-result')).toContainText('New date');
+  await expect(page.getByTestId('whatif-result')).toContainText('instead of');
   // Tapping it again puts it back
   await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
   await expect(page.getByLabel('Add money each payday')).toHaveValue('0');
@@ -276,4 +276,23 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   // Tapping a row still opens its details
   await done.getByRole('button').click();
   await expect(page.getByRole('dialog')).toContainText('Total');
+});
+
+test('the what-if shows three small cards and says nothing changes until you apply', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  const { goTab } = await import('./scenario');
+  await quickSetup(page);
+  await goTab(page, 'Plan');
+  await expect(page.getByText('Try it here first. Nothing changes until you tap Apply to my plan.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Apply to my plan' })).toBeDisabled();
+  await page.getByRole('button', { name: /^\+\$100 each payday/ }).click();
+  const cards = page.getByTestId('whatif-result').locator('.card.mini');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.nth(0)).toContainText(/Debt-free\s+[A-Z][a-z]+ 20\d\d\s+instead of [A-Z][a-z]+ 20\d\d/);
+  await expect(cards.nth(1)).toContainText(/\d+ paydays? sooner/);
+  await expect(cards.nth(2)).toContainText(/\$\d[\d,]* less interest/);
+  // The three sit side by side
+  const tops = await cards.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(1);
+  await expect(page.getByRole('button', { name: 'Apply to my plan' })).toBeEnabled();
 });
