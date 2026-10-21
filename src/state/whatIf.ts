@@ -36,6 +36,16 @@ export function whatIfSummary(base: PlanResult, next: PlanResult): WhatIfSummary
   };
 }
 
+/** "3 paydays sooner, $210 less interest" for one what-if, or null when nothing changes. */
+export function deltaPhrase(s: WhatIfSummary, money: (n: number) => string): string | null {
+  const bits: string[] = [];
+  if (s.nowEnds) bits.push('gets your plan to an end');
+  else if (s.paydaysSooner !== null && s.paydaysSooner > 0) bits.push(`${s.paydaysSooner} payday${s.paydaysSooner === 1 ? '' : 's'} sooner`);
+  else if (s.newDate) bits.push('same date');
+  if (s.interestSaved >= 1) bits.push(`${money(s.interestSaved)} less interest`);
+  return bits.length ? bits.join(', ') : null;
+}
+
 /** One calm sentence about Biggest interest first vs PaidInYellow order, in dollars. */
 export function comparisonLine(c: MethodComparison, cur: Currency): string {
   const saved = formatMoney(c.interestSaved, cur, { whole: true });

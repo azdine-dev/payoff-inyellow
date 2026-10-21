@@ -9,7 +9,7 @@ import { biggerNote, billsForPlanRow, totalOf } from '../state/billsDue';
 import { applyWhatIf, removeOneOff, setMethod } from '../state/planActions';
 import { toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
-import { comparisonLine, whatIfPlan, whatIfSummary } from '../state/whatIf';
+import { comparisonLine, deltaPhrase, whatIfPlan, whatIfSummary } from '../state/whatIf';
 import { CheckIcon, Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 
 const FUTURE_STEP = 26;
@@ -39,6 +39,11 @@ export function Plan() {
   const wi = useMemo(() => whatIfPlan(d, add, oneOff), [d, add, oneAmount, oneDate]);
   const sum = whatIfSummary(r, wi);
   const changed = add > 0 || oneOff !== null;
+  // Quick amounts, each with what it would change: no second plan, just the difference
+  const chips = useMemo(
+    () => [25, 50, 100].map((n) => ({ n, phrase: deltaPhrase(whatIfSummary(r, whatIfPlan(d, n, null)), (v) => formatMoney(v, cur, { whole: true })) })),
+    [d, r],
+  );
 
   const choose = (m: PayoffMethod) => act((db, x) => setMethod(db, x, m));
 
@@ -98,6 +103,25 @@ export function Plan() {
           </span>
           <input type="range" min="0" max="1000" step="10" value={add} aria-label="Add money each payday" onInput={(e) => { setAdd(Number((e.target as HTMLInputElement).value)); setApplied(false); }} />
         </label>
+        <div class="stack" style={{ gap: 8 }} role="group" aria-label="Quick what-ifs">
+          {chips.map((c) => (
+            <button
+              key={c.n}
+              type="button"
+              class="choice chip-delta"
+              aria-pressed={add === c.n}
+              onClick={() => {
+                setAdd(add === c.n ? 0 : c.n);
+                setApplied(false);
+              }}
+            >
+              <span class="choice-text">
+                <span>+{formatMoneyAuto(c.n, cur)} each payday</span>
+                {c.phrase && <small class="hint">{c.phrase}</small>}
+              </span>
+            </button>
+          ))}
+        </div>
         <div class="grid-2">
           <Field label="One-off money">
             <NumberInput pre={cur.symbol} value={oneAmount} onInput={(v) => { setOneAmount(v); setApplied(false); }} label="One-off money" />

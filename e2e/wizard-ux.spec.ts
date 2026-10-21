@@ -156,3 +156,20 @@ test('"How we got this" shows the plain math behind the date and the first step'
     await expect(sheet).toHaveCount(0);
   }
 });
+
+test('the what-if shows each quick amount as a change, not a second plan', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  await quickSetup(page);
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Plan', exact: true }).click();
+  const group = page.getByRole('group', { name: 'Quick what-ifs' });
+  for (const amount of ['$25', '$50', '$100']) {
+    await expect(group.getByRole('button', { name: `+${amount} each payday`, exact: false })).toContainText(/sooner|same date/);
+  }
+  await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
+  await expect(group.getByRole('button', { name: /^\+\$50 each payday/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Add money each payday')).toHaveValue('50'); // the slider follows
+  await expect(page.getByTestId('whatif-result')).toContainText('New date');
+  // Tapping it again puts it back
+  await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
+  await expect(page.getByLabel('Add money each payday')).toHaveValue('0');
+});

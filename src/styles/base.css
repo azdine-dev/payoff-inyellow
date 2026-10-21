@@ -294,7 +294,8 @@ select {
   width: 100%;
 }
 
-.choice[aria-checked='true'] {
+.choice[aria-checked='true'],
+.choice[aria-pressed='true'] {
   border: 2px solid var(--ink);
   padding: 11px 13px;
 }
