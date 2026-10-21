@@ -139,7 +139,16 @@ export function twiceFromSchedule(nextPayday: string, other: number | null): { p
   return { pair: 'custom', a: String(lo), b: String(hi) };
 }
 
-export const STEP_COUNT = 8; // after the welcome screen
+export const STEP_COUNT = 7; // after the welcome screen
+
+/** Version of the saved wizard draft. 2 = the currency is part of the pay schedule step. */
+export const DRAFT_VERSION = 2;
+
+/** The step to come back to. A draft saved before version 2 counted its steps one higher after the currency screen. */
+export function resumeStep(savedStep: number, savedVersion: number | undefined): number {
+  if (savedVersion === DRAFT_VERSION) return savedStep;
+  return savedStep >= 2 ? savedStep - 1 : savedStep;
+}
 
 const isBlank = (d: DraftDebt) => !d.name.trim() && !d.balance.trim() && !d.apr.trim() && !d.min.trim() && !d.dueDay.trim();
 
@@ -162,7 +171,7 @@ function validDate(iso: string): boolean {
 
 /**
  * Calm notes for a step; empty = ready to continue. Written in ink, never red.
- * @param step 1-8 (0 is the welcome screen)
+ * @param step 1-7 (0 is the welcome screen)
  */
 export function stepNotes(step: number, draft: Draft, today: string): string[] {
   const notes: string[] = [];
@@ -170,8 +179,6 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
   switch (step) {
     case 1:
       if (!draft.currencySymbol.trim()) notes.push('Type the symbol you use for money, like $ or €.');
-      break;
-    case 2:
       if (!draft.frequency) notes.push('Choose how often you get paid.');
       if (!draft.nextPayday || !validDate(draft.nextPayday)) notes.push('Pick the date of your next payday.');
       else if (draft.nextPayday < today) notes.push('Pick your next payday: today or a day after today.');
@@ -179,7 +186,7 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
       notes.push(...twiceNotes(draft.frequency, draft.nextPayday, draft.twicePair, draft.twiceA, draft.twiceB));
       if (draft.paycheck.trim() && (amount(draft.paycheck) ?? -1) < 0) notes.push('The paycheck amount should be a number, like 1400.');
       break;
-    case 3: {
+    case 2: {
       const debts = filledDebts(draft);
       if (!debts.length) notes.push('Add at least one debt with its balance.');
       debts.forEach((d, i) => {
@@ -198,14 +205,14 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
       if (debts.length && !debts.some((d) => (amount(d.balance) ?? 0) > 0)) notes.push('Add at least one debt with a balance above zero.');
       break;
     }
-    case 4:
+    case 3:
       if (draft.bufferNow.trim() && (amount(draft.bufferNow) ?? -1) < 0) notes.push('Type what you have set aside, or leave it empty.');
       if ((amount(draft.bufferGoal) ?? -1) < 0) notes.push('Type a goal for your buffer, like 500.');
       break;
-    case 5:
+    case 4:
       if ((amount(draft.extra) ?? -1) < 0) notes.push('Type an amount, even 0. You can change it any time.');
       break;
-    case 6:
+    case 5:
       draft.funds.forEach((f) => {
         if (!f.name.trim() && !f.perYear.trim()) return;
         if ((amount(f.perYear) ?? -1) <= 0) notes.push(`${f.name.trim() || 'This bill'}: add how much it costs in a year.`);

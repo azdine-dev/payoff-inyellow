@@ -11,7 +11,6 @@ const next = (page: import('@playwright/test').Page) => page.getByRole('button',
 async function toDebts(page: import('@playwright/test').Page) {
   await page.goto('/');
   await next(page).click(); // welcome
-  await next(page).click(); // currency
   await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next(page).click();
@@ -94,4 +93,21 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await expect(field).toHaveValue('20');
   await field.fill('135'); // still editable
   await expect(page.getByRole('button', { name: '$20' })).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('the currency is a small line on the pay schedule step, with Change', async ({ page }) => {
+  await page.goto('/');
+  await next(page).click(); // welcome
+  await expect(page.getByLabel('Step 1 of 7')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
+  await expect(page.getByTestId('currency-line')).toHaveText('Currency: USD ($)');
+  await expect(page.getByLabel('Currency')).toHaveCount(0); // closed until asked
+  await page.getByRole('button', { name: 'Change' }).click();
+  await page.getByLabel('Currency').selectOption('EUR');
+  await expect(page.getByTestId('currency-line')).toHaveText('Currency: EUR (€)');
+  await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
+  await page.getByLabel('Your next payday').fill('2026-10-23');
+  await next(page).click();
+  await page.locator('fieldset').getByLabel('Balance').fill('500');
+  await expect(page.locator('fieldset')).toContainText('€'); // the euro sign follows to the next steps
 });

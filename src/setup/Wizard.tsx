@@ -6,8 +6,8 @@ import { completeSetup } from '../state/actions';
 import { data, editSeed, getDB, today, view } from '../state/store';
 import { RestoreButton } from '../settings/Restore';
 import { Dots, Note } from '../ui/controls';
-import { newDraft, STEP_COUNT, stepNotes, toSetupValues, type Draft } from './draft';
-import { CurrencyStep, PayStep, Welcome } from './steps/Basics';
+import { DRAFT_VERSION, newDraft, resumeStep, STEP_COUNT, stepNotes, toSetupValues, type Draft } from './draft';
+import { PayStep, Welcome } from './steps/Basics';
 import { DebtsStep } from './steps/Debts';
 import { BufferStep, ExtraStep, YearlyStep } from './steps/Money';
 import { FreshStartStep, OrderStep } from './steps/Order';
@@ -18,7 +18,7 @@ export interface StepProps {
   today: string;
 }
 
-const STEPS = [Welcome, CurrencyStep, PayStep, DebtsStep, BufferStep, ExtraStep, YearlyStep, OrderStep, FreshStartStep];
+const STEPS = [Welcome, PayStep, DebtsStep, BufferStep, ExtraStep, YearlyStep, OrderStep, FreshStartStep];
 
 export function Wizard() {
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -37,8 +37,9 @@ export function Wizard() {
       }
       const saved = await loadDraft(await getDB());
       if (saved) {
-        setDraft({ ...newDraft(), ...(saved.data as Partial<Draft>) });
-        setStep(saved.step);
+        const { _v, ...answers } = saved.data as Partial<Draft> & { _v?: number };
+        setDraft({ ...newDraft(), ...answers });
+        setStep(resumeStep(saved.step, _v));
       } else setDraft(newDraft());
     })();
   }, []);
@@ -46,7 +47,7 @@ export function Wizard() {
   // Autosave, so a reload or a phone call doesn't lose 15 minutes of typing
   useEffect(() => {
     if (!draft || editSeed.value) return;
-    const t = setTimeout(async () => saveDraft(await getDB(), step, draft), 300);
+    const t = setTimeout(async () => saveDraft(await getDB(), step, { ...draft, _v: DRAFT_VERSION }), 300);
     return () => clearTimeout(t);
   }, [draft, step]);
 
@@ -84,7 +85,7 @@ export function Wizard() {
     view.value = 'result';
   };
 
-  const yearlyEmpty = step === 6 && !draft.funds.some((f) => f.perYear.trim());
+  const yearlyEmpty = step === 5 && !draft.funds.some((f) => f.perYear.trim());
   const label = step === 0 ? 'Let’s start' : last ? 'See my plan' : yearlyEmpty ? 'Skip for now' : 'Continue';
 
   return (

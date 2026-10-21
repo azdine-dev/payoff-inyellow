@@ -108,7 +108,6 @@ export async function runWizard(page: Page, c: WizardConfig) {
   await page.goto('/');
   const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
   await next.click(); // welcome
-  await next.click(); // currency (auto)
   await page.getByRole('radio', { name: c.frequency, exact: true }).click();
   if (c.twiceDays) await page.getByRole('radio', { name: c.twiceDays }).click();
   await page.getByLabel('Your next payday').fill(c.nextPayday);

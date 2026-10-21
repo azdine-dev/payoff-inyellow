@@ -39,13 +39,14 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByText('You pay every month, but the balance never goes down.')).toBeVisible();
     await expect(page.getByText('You’re not bad at math. The math was hidden from you.')).toBeVisible();
     await next.click();
-    await expect(page.getByLabel('Step 1 of 8')).toBeVisible(); // progress dots
+    await expect(page.getByLabel('Step 1 of 7')).toBeVisible(); // progress dots
     await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
   });
 
-  await test.step('2 Currency: picked from the phone, and editable', async () => {
+  await test.step('2 Currency: picked from the device, shown as a small line, and editable', async () => {
+    await expect(page.getByTestId('currency-line')).toContainText('USD ($)');
+    await page.getByRole('button', { name: 'Change' }).click();
     await expect(page.getByLabel('Currency')).toHaveValue('USD');
-    await next.click();
   });
 
   await test.step('3 Pay schedule: every 2 weeks, next payday Fri 23 Oct 2026', async () => {

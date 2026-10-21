@@ -23,8 +23,6 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean } = {}) {
   await page.goto('/');
   const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
   await next.click();
-  await page.getByLabel('Currency').selectOption('USD');
-  await next.click();
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next.click();

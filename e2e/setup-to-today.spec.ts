@@ -29,10 +29,9 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await shot(page, '01-welcome');
   await next.click();
 
-  // Currency
-  await expect(page.getByRole('heading', { name: 'Your currency' })).toBeVisible();
-  await page.getByLabel('Currency').selectOption('USD');
-  await next.click();
+  // Currency is a small line on the pay schedule step
+  await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
+  await expect(page.getByTestId('currency-line')).toContainText('USD ($)');
 
   // Pay schedule: calm note when nothing is picked yet
   await next.click();
@@ -130,8 +129,6 @@ test('the wizard keeps what was typed after a reload', async ({ page }) => {
 async function quickSetup(page: Page) {
   await page.goto('/');
   const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
-  await next.click();
-  await page.getByLabel('Currency').selectOption('USD');
   await next.click();
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');

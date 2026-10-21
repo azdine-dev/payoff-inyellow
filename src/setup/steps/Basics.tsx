@@ -1,4 +1,5 @@
-/** Welcome, Currency, Pay schedule */
+/** Welcome and Pay schedule (with the currency as a small line) */
+import { useState } from 'preact/hooks';
 import { COPY } from '../../lib/copy';
 import { VIDEO_URL } from '../../lib/config';
 import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
@@ -24,12 +25,22 @@ export function Welcome() {
   );
 }
 
-export function CurrencyStep({ draft, set }: StepProps) {
+/** "Currency: USD ($) · Change". Picked from the device. The choices open only when asked for. */
+function CurrencyLine({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
   const other = draft.currencyCode === '';
+  const [open, setOpen] = useState(false);
+  const shown = other ? draft.currencySymbol.trim() || 'your own symbol' : `${draft.currencyCode} (${draft.currencySymbol})`;
   return (
-    <div class="stack">
-      <h1>Your currency</h1>
-      <p class="muted">We picked it from your device. Change it if it's wrong.</p>
+    <div class="stack" style={{ gap: 6 }}>
+      <p class="muted small" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span data-testid="currency-line">Currency: {shown}</span>
+        {!open && !other && (
+          <button type="button" class="link small" onClick={() => setOpen(true)}>
+            Change
+          </button>
+        )}
+      </p>
+      {(open || other) && (
       <Field label="Currency">
         <select
           value={draft.currencyCode}
@@ -51,7 +62,8 @@ export function CurrencyStep({ draft, set }: StepProps) {
           <option value="">Other: type my own symbol</option>
         </select>
       </Field>
-      {other && (
+      )}
+      {(open || other) && other && (
         <Field label="Your symbol" hint="Any symbol works, like $, €, DH or ₦.">
           <input type="text" maxLength={5} value={draft.currencySymbol} onInput={(e) => set({ currencySymbol: (e.target as HTMLInputElement).value })} />
         </Field>
@@ -65,6 +77,7 @@ export function PayStep({ draft, set, today }: StepProps) {
     <div class="stack">
       <h1>Your pay schedule</h1>
       <p class="muted">Your whole plan follows your paydays, not the calendar month.</p>
+      <CurrencyLine draft={draft} set={set} />
       <div class="stack" role="radiogroup" aria-label="How often you get paid" style={{ gap: 8 }}>
         {FREQUENCIES.map((f) => (
           <Choice key={f.value} checked={draft.frequency === f.value} onSelect={() => set({ frequency: f.value, ifThenDay: '' })} title={f.label} />

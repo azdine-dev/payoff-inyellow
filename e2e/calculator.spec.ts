@@ -35,9 +35,8 @@ test('"Change my numbers" starts from the current answers and recalculates', asy
   await page.getByRole('button', { name: 'Change my numbers' }).click();
 
   // Debts step shows what was entered; the welcome screen is skipped
-  await expect(page.getByRole('heading', { name: 'Your currency' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue' }).click(); // currency
-  await page.getByRole('button', { name: 'Continue' }).click(); // schedule
+  await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue' }).click(); // schedule (with the currency line)
   await expect(page.getByTestId('debt-summary').first()).toContainText('Visa · $3,200 · 22.9% · $96/mo · due 12th'); // a finished debt is one line
   await page.getByRole('button', { name: 'Edit Visa' }).click();
   await expect(page.locator('fieldset').getByLabel('Name')).toHaveValue('Visa');
