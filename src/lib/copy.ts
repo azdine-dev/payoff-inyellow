@@ -34,7 +34,7 @@ export const COPY = {
   disclaimer: 'A planning tool, not financial advice. Figures are estimates based on what you enter.',
   unlocked: 'Unlocked. Thank you.',
   codeSaved: 'Code saved. Your full planner opens when setup is done.',
-  codeRefused: 'This code doesn’t look right. Check that you copied all of it.',
+  codeRefused: 'This code looks incomplete. Copy it again, or tap the button in your purchase email.',
   codeEmpty: 'Paste your unlock code first.',
   extraHint: 'Even $20 matters. You can change it any time.',
 } as const;

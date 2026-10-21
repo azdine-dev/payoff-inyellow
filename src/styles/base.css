@@ -457,11 +457,14 @@ select {
   cursor: pointer;
 }
 
-.tabbar button i {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--ink);
-  border-radius: 5px;
+.tabbar button .tab-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--ink);
+}
+
+.tabbar button .tab-icon .fill {
+  fill: none;
 }
 
 .tabbar button[aria-current='page'] {
@@ -469,8 +472,9 @@ select {
   font-weight: 600;
 }
 
-.tabbar button[aria-current='page'] i {
-  background: var(--yellow);
+/* Yellow only on the tab you are on */
+.tabbar button[aria-current='page'] .tab-icon .fill {
+  fill: var(--yellow);
 }
 
 /* ---------- bottom sheet ---------- */

@@ -117,9 +117,8 @@ export function Progress() {
           <span class="muted small">each paid payday turns yellow</span>
         </div>
         <div class="payday-grid" role="list">
-          {['list', 'plan'].map((t) => (
-            <div key={t} class="sq on" role="listitem" aria-label={t === 'list' ? 'Debts listed' : 'Plan made'}>
-              <span>{t}</span>
+          {['Debts listed', 'Plan made'].map((label) => (
+            <div key={label} class="sq on" role="listitem" aria-label={label} title={label}>
               <CheckIcon />
             </div>
           ))}
@@ -138,6 +137,7 @@ export function Progress() {
             <div key={`a${i}`} class="sq" role="listitem" aria-label={r.rows[i] ? `${shortDate(r.rows[i]!.date)}: to come` : 'to come'} />
           ))}
         </div>
+        <p class="muted small">The first two squares are done already: debts listed, plan made.</p>
         {ahead > aheadShown && <p class="muted small">+ {ahead - aheadShown} more paydays after these.</p>}
       </section>
 

@@ -134,7 +134,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('checkbox', { name: /Yearly bills/ })).toContainText(near(42.31));
     await expect(page.getByRole('checkbox', { name: /Buffer \(\$200 of \$500\)/ })).toContainText(near(107.69));
     await expect(page.getByRole('checkbox', { name: /Extra →/ })).toHaveCount(0);
-    await expect(page.getByTestId('buffer-first')).toContainText('Extra: Buffer first');
+    await expect(page.getByTestId('buffer-first')).toContainText('Extra goes to your buffer until it reaches');
     await expect(page.getByRole('button', { name: 'I did it · $235' })).toBeVisible(); // 85 + 42.31 + 107.69
     const focus = page.getByRole('region', { name: 'Focus debt' });
     await expect(focus).toContainText('Store card');

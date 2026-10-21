@@ -44,7 +44,7 @@ export function Chart(props: { data: ChartData; startLabel: string; endLabel: st
           {props.endLabel}
         </text>
       </svg>
-      <figcaption class="row small muted" style={{ justifyContent: 'flex-start', gap: 18, marginTop: 4 }}>
+      <figcaption class="row small muted" style={{ justifyContent: 'flex-start', flexWrap: 'wrap', gap: '4px 18px', marginTop: 4 }}>
         <span>
           <b style={{ color: 'var(--ink)' }}>━</b> Your plan
         </span>

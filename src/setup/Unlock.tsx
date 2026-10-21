@@ -27,7 +27,7 @@ export function UnlockCard() {
     if (r.ok) {
       await act((db, x) => saveLicense(db, x, cleanCode(code)));
     } else {
-      setMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : 'This code doesn’t look right. Check that you copied all of it.');
+      setMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : COPY.codeRefused);
     }
   };
 

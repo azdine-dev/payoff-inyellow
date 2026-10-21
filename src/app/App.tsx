@@ -23,6 +23,50 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'money', label: 'Money' },
 ];
 
+/** Simple line icons, 24px, drawn in ink. The shape marked "fill" turns yellow on the tab you are on. */
+function TabIcon(props: { id: Tab }) {
+  const common = { viewBox: '0 0 24 24', width: 24, height: 24, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round' as const, 'stroke-linejoin': 'round' as const, 'aria-hidden': true, class: 'tab-icon' };
+  switch (props.id) {
+    case 'today': // a calendar page with today ticked
+      return (
+        <svg {...common}>
+          <rect class="fill" x="3.5" y="5" width="17" height="15.5" rx="3" />
+          <path d="M8 3v4M16 3v4M3.5 10h17" />
+          <path d="M8.8 15.2l2.2 2.2 4.4-4.6" />
+        </svg>
+      );
+    case 'plan': // a list of paydays
+      return (
+        <svg {...common}>
+          <rect class="fill" x="3.5" y="4" width="17" height="16.5" rx="3" />
+          <path d="M8 9h8M8 12.5h8M8 16h5" />
+        </svg>
+      );
+    case 'debts': // a card
+      return (
+        <svg {...common}>
+          <rect class="fill" x="2.8" y="5.5" width="18.4" height="13" rx="3" />
+          <path d="M2.8 10h18.4M6.5 15h3" />
+        </svg>
+      );
+    case 'progress': // rising bars
+      return (
+        <svg {...common}>
+          <rect class="fill" x="4" y="12" width="4" height="8" rx="1.2" />
+          <rect class="fill" x="10" y="8" width="4" height="12" rx="1.2" />
+          <rect class="fill" x="16" y="4" width="4" height="16" rx="1.2" />
+        </svg>
+      );
+    default: // money: a coin
+      return (
+        <svg {...common}>
+          <circle class="fill" cx="12" cy="12" r="8.5" />
+          <path d="M14.6 9.2c-.5-.8-1.5-1.2-2.6-1.2-1.5 0-2.6.8-2.6 1.9 0 2.7 5.4 1.2 5.4 4 0 1.1-1.1 1.9-2.8 1.9-1.2 0-2.3-.5-2.8-1.4M12 6.5V8M12 16v1.5" />
+        </svg>
+      );
+  }
+}
+
 function TabBar() {
   return (
     <div class="tabbar">
@@ -37,7 +81,7 @@ function TabBar() {
               window.scrollTo(0, 0);
             }}
           >
-            <i aria-hidden="true" />
+            <TabIcon id={t.id} />
             {t.label}
           </button>
         ))}

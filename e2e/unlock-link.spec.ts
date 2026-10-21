@@ -53,7 +53,7 @@ test('a link with a code changed by one letter is refused with a simple message'
   const link = await context.newPage();
   await link.clock.setFixedTime(FIXED);
   await link.goto(`/#unlock=${edited}`);
-  await expect(link.getByTestId('notice')).toHaveText(/This code doesn’t look right\. Check that you copied all of it\./);
+  await expect(link.getByTestId('notice')).toHaveText(/This code looks incomplete\. Copy it again, or tap the button in your purchase email\./);
   await expect(link.getByTestId('unlock-card')).toBeVisible(); // still calculator mode
   await expect(link.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
   await link.getByRole('button', { name: 'OK' }).click();

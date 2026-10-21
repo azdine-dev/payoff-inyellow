@@ -32,7 +32,7 @@ test('a code from scripts/make-code.js unlocks, a code changed by one letter doe
   await page.getByRole('button', { name: 'I have a code' }).click();
   const box = page.getByRole('textbox', { name: 'Your unlock code' });
   const unlock = page.getByRole('button', { name: 'Unlock', exact: true });
-  const refused = page.getByText('This code doesn’t look right. Check that you copied all of it.');
+  const refused = page.getByText('This code looks incomplete. Copy it again, or tap the button in your purchase email.');
 
   // One letter changed: in the text part, and in the signature part
   await box.fill(oneLetter(code, 25));
@@ -71,7 +71,7 @@ test('the same code works as a link: #unlock=<code>', async ({ page, context }) 
   const link = await context.newPage();
   await link.clock.setFixedTime(FIXED);
   await link.goto(`/#unlock=${oneLetter(code)}`);
-  await expect(link.getByTestId('notice')).toContainText('doesn’t look right');
+  await expect(link.getByTestId('notice')).toContainText('looks incomplete');
   const good = await context.newPage();
   await good.clock.setFixedTime(FIXED);
   await good.goto(`/#unlock=${code}`);

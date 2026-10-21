@@ -128,7 +128,7 @@ export function Settings() {
       setCode('');
       setCodeMsg('');
     } else {
-      setCodeMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : 'This code doesn’t look right. Check that you copied all of it.');
+      setCodeMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : COPY.codeRefused);
     }
   };
 

@@ -65,7 +65,7 @@ test('an unlock code is checked on the phone', async ({ page }) => {
   await expect(page.getByText('The calendar file with your paydays and due dates comes with the full planner.')).toBeVisible();
   await page.getByRole('textbox', { name: 'Code' }).fill('hello');
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();
-  await expect(page.getByText('This code doesn’t look right.')).toBeVisible();
+  await expect(page.getByText('This code looks incomplete.')).toBeVisible();
   await expect(page.getByTestId('unlocked')).toHaveCount(0);
 
   await page.getByRole('textbox', { name: 'Code' }).fill(await testCode());

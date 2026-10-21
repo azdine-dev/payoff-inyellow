@@ -247,7 +247,7 @@ export function Today() {
               </div>
               {row.bufferFirst && (
                 <p class="muted small" data-testid="buffer-first" style={{ margin: '0 0 8px 34px' }}>
-                  Extra: Buffer first. It goes there until it reaches your goal.
+                  Extra goes to your buffer until it reaches {formatMoneyAuto(s.bufferGoal, cur)}.
                 </p>
               )}
               {override !== null && (

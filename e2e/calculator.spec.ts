@@ -65,7 +65,7 @@ test('a code from a different key, or a changed code, does not unlock', async ({
   await page.getByRole('button', { name: 'I have a code' }).click();
   await page.getByRole('textbox', { name: 'Your unlock code' }).fill('PIY1.eyJ2IjoxLCJpZCI6IkZSRUUiLCJpYXQiOiIyMDI2LTEwLTE1IiwicCI6InBsYW5uZXIifQ.' + 'A'.repeat(86));
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();
-  await expect(page.getByText('This code doesn’t look right.')).toBeVisible();
+  await expect(page.getByText('This code looks incomplete.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Start my plan' })).toHaveCount(0);
 });
 
