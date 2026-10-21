@@ -1,7 +1,7 @@
 /** Today (mockup screen 2): one clear step every payday. */
 import { syncOn } from '../sync/controller';
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { dailyInterestCost, planNeedsHelp, simulatePlan } from '../engine';
+import { dailyInterestCost, PAYDAYS_PER_YEAR, planNeedsHelp, simulatePlan } from '../engine';
 import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
@@ -34,7 +34,8 @@ export function Today() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [justPaid, setJustPaid] = useState<JustPaid | null>(null);
-  const [paidNames, setPaidNames] = useState<string[]>([]);
+  // Debts that reached zero with the last payment: shown as a full-screen moment until "Next payday"
+  const [paidIds, setPaidIds] = useState<string[]>([]);
   const [skippedNote, setSkippedNote] = useState(false);
   const [closedMoments, setClosedMoments] = useState<Set<string>>(new Set());
   // "Undo" lasts until the next tap. "askedEarly" remembers the payday we already asked about.
@@ -79,7 +80,7 @@ export function Today() {
     const res = await didPayday(await getDB(), d, { planMoney: override });
     setUndo({ before: d, after: res.data });
     setJustPaid({ date: res.step.date, total });
-    setPaidNames(res.newlyPaid.map(nameOf));
+    setPaidIds(res.newlyPaid);
     setSkippedNote(false);
     data.value = res.data;
     setBusy(false);
@@ -97,7 +98,7 @@ export function Today() {
     const restored = await undoPayday(await getDB(), undo.before, data.peek()!);
     setUndo(null);
     setJustPaid(null);
-    setPaidNames([]);
+    setPaidIds([]);
     setChecked(new Set());
     data.value = restored;
   };
@@ -142,7 +143,7 @@ export function Today() {
     } else {
       const owed = active.reduce((sum, x) => sum + x.balance, 0);
       const res = await extraPayment(await getDB(), d, Math.min(amount, owed), today.value);
-      setPaidNames(res.newlyPaid.map(nameOf));
+      setPaidIds(res.newlyPaid);
       data.value = res.data;
     }
     setSheet(null);
@@ -175,12 +176,28 @@ export function Today() {
         </section>
       )}
 
-      {paidNames.map((name) => (
-        <section key={name} class="card" style={{ background: 'var(--yellow)', borderColor: 'var(--yellow)', color: 'var(--on-yellow)' }}>
-          <p style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1.3rem' }}>{name}</p>
-          <p style={{ fontWeight: 600 }}>{COPY.debtPaid}</p>
-        </section>
-      ))}
+      {paidIds.length > 0 && (
+        <div class="paid-moment" role="dialog" aria-modal="true" aria-label="Debt paid" data-testid="paid-moment">
+          <div class="paid-moment-body">
+            <p class="paid-moment-title">{COPY.debtPaid}</p>
+            {paidIds.map((id) => {
+              const debt = d.debts.find((x) => x.id === id);
+              if (!debt) return null;
+              // The minimum this debt took on each payday, which now goes on to the next one
+              const freed = (debt.minMonthly * 12) / PAYDAYS_PER_YEAR[s.frequency];
+              return (
+                <p key={id} class="paid-moment-line">
+                  {debt.name} is paid.{' '}
+                  {freed > 0 ? (focus ? `Its ${formatMoney(freed, cur)} per payday now goes to ${focus.debt.name}.` : 'That was your last debt.') : focus ? `Next up: ${focus.debt.name}.` : 'That was your last debt.'}
+                </p>
+              );
+            })}
+            <button type="button" class="btn" onClick={() => setPaidIds([])}>
+              {focus ? 'Next payday' : 'Done'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {d.milestones
         .filter((m) => m.reachedOn === today.value && !closedMoments.has(m.id))

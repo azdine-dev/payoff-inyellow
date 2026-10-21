@@ -484,6 +484,40 @@ select {
   fill: var(--yellow);
 }
 
+/* A debt reached zero: the whole screen is yellow (paid), with the rollover said in words */
+.paid-moment {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px var(--gutter);
+  background: var(--yellow);
+  color: var(--on-yellow);
+  animation: fade 200ms ease;
+}
+
+.paid-moment-body {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paid-moment-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 2.4rem;
+  line-height: 1.1;
+}
+
+.paid-moment-line {
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 /* A finished debt in the setup wizard: one line */
 .debt-sum {
   padding-top: 8px;

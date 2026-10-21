@@ -195,6 +195,9 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await page.getByRole('textbox', { name: 'Extra payment' }).fill('640');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('PAID. One down.')).toBeVisible();
+  await expect(page.getByTestId('paid-moment')).toContainText('Store card is paid.');
+  await page.getByRole('button', { name: 'Next payday' }).click();
+  await expect(page.getByTestId('paid-moment')).toHaveCount(0);
   await shot(page, '10-paid-off');
   await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Visa');
 });

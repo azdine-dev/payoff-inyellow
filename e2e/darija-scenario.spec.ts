@@ -308,6 +308,9 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await tapDidIt(page);
     await expect(page.getByText('Fri 26 Mar is paid.')).toBeVisible();
     await expect(page.getByText('PAID. One down.')).toBeVisible();
+    // The rollover is said in words: its minimum per payday ($35 x 12 / 26) goes on to the next debt
+    await expect(page.getByTestId('paid-moment')).toContainText('Store card is paid. Its $16.15 per payday now goes to Medical bill.');
+    await page.getByRole('button', { name: 'Next payday' }).click();
     await expectPaidPayday(page, { date: 'Fri 26 Mar', total: 216.32, extra: { amount: 110.49, to: 'Medical bill' }, debtLeft: 12495.65 });
     await goTab(page, 'Debts');
     await expect(page.getByRole('region', { name: 'Store card' })).toContainText('PAID');
