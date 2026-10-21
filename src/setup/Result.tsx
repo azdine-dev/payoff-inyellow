@@ -10,6 +10,7 @@ import { formatMoney, formatMoneyAuto } from '../lib/money';
 import { monthsBetween, monthYear, shortDate } from '../lib/today';
 import { billsForNextPayday } from '../state/billsDue';
 import { toPlanInput } from '../state/planInput';
+import { exampleMode, leaveExample } from '../state/example';
 import { data, editSeed, licenseState, plan, tab, today, view } from '../state/store';
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
@@ -23,6 +24,7 @@ export function Result() {
   const s = d.settings;
   const cur = s.currency;
   const mo = r.minimumsOnly;
+  const example = exampleMode.value;
   const locked = licenseState.value !== 'unlocked';
   const reasons = planNeedsHelp(toPlanInput(d), r, s.paycheckAmount);
   const bills = billsForNextPayday(d);
@@ -43,9 +45,15 @@ export function Result() {
 
   return (
     <main class="screen">
+      {example && (
+        <section class="card soft stack" style={{ gap: 4 }} data-testid="example-banner">
+          <p class="label">Example</p>
+          <p>This is Sara’s plan, made up so you can see what you will get. Nothing is saved.</p>
+        </section>
+      )}
       <div class="row" style={{ paddingTop: 8 }}>
         <p class="muted">{COPY.resultReady}</p>
-        {locked && (
+        {locked && !example && (
           <button type="button" class="link small" onClick={() => { tab.value = 'settings'; view.value = 'app'; }}>
             Settings
           </button>
@@ -120,9 +128,16 @@ export function Result() {
         </section>
       )}
 
-      <p class="card">{ifThenLine(s.ifThen.day, s.ifThen.time)}</p>
+      {!example && <p class="card">{ifThenLine(s.ifThen.day, s.ifThen.time)}</p>}
 
-      {locked ? (
+      {example ? (
+        <>
+          <div class="spacer" />
+          <button type="button" class="btn" onClick={leaveExample}>
+            Start with my numbers
+          </button>
+        </>
+      ) : locked ? (
         <>
           <UnlockCard />
           <button

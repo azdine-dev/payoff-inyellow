@@ -111,3 +111,28 @@ test('the currency is a small line on the pay schedule step, with Change', async
   await page.locator('fieldset').getByLabel('Balance').fill('500');
   await expect(page.locator('fieldset')).toContainText('€'); // the euro sign follows to the next steps
 });
+
+test('"See an example first" shows Sara\'s result, labelled Example, and saves nothing', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'See an example first' }).click();
+  await expect(page.getByTestId('example-banner')).toContainText('Example');
+  await expect(page.getByTestId('example-banner')).toContainText('Sara');
+  await expect(page.getByTestId('debt-free-date')).toBeVisible();
+  await expect(page.getByTestId('first-step')).toContainText('This payday');
+  // No code box, no "Change my numbers" here: one clear way out
+  await expect(page.getByTestId('unlock-card')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Start with my numbers' })).toBeVisible();
+
+  // A reload goes back to the welcome screen: nothing was stored
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Let’s start' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'See an example first' })).toBeVisible();
+
+  // Start for real
+  await page.getByRole('button', { name: 'See an example first' }).click();
+  await page.getByRole('button', { name: 'Start with my numbers' }).click();
+  await expect(page.getByRole('button', { name: 'Let’s start' })).toBeVisible();
+  await page.getByRole('button', { name: 'Let’s start' }).click();
+  await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
+  await expect(page.getByLabel('Your next payday')).toHaveValue(''); // nothing from Sara carried over
+});

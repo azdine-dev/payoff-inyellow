@@ -4,6 +4,8 @@ import { COPY } from '../../lib/copy';
 import { VIDEO_URL } from '../../lib/config';
 import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
 import { shortDate } from '../../lib/today';
+import { showExample } from '../../state/example';
+import { today } from '../../state/store';
 import { Choice, Field, NumberInput, Wordmark } from '../../ui/controls';
 import { FREQUENCIES } from '../draft';
 import { TwicePicker } from '../TwicePicker';
@@ -21,6 +23,9 @@ export function Welcome() {
           {COPY.watchVideo}
         </a>
       )}
+      <button type="button" class="link" style={{ alignSelf: 'flex-start' }} onClick={() => showExample(today.value)}>
+        See an example first
+      </button>
     </div>
   );
 }

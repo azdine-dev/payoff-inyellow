@@ -71,6 +71,12 @@ export function act(fn: (db: PiyDB, current: AppData) => Promise<AppData>): Prom
   return run;
 }
 
+/** Set by example.ts (kept here as a plain function to avoid a circular import at load). */
+let exampleModeOn: () => boolean = () => false;
+export function setExampleCheck(fn: () => boolean): void {
+  exampleModeOn = fn;
+}
+
 export async function boot(): Promise<void> {
   const db = await getDB();
   let loaded = await loadAll(db);
@@ -96,7 +102,7 @@ export async function boot(): Promise<void> {
     const current = data.value;
     const result = plan.value;
     const day = today.value;
-    if (!current || !result || view.value === 'setup') return;
+    if (!current || !result || view.value === 'setup' || exampleModeOn()) return;
     void syncMilestones(db, current, result, day).then((next) => {
       if (next !== current && data.peek() === current) data.value = next;
     });

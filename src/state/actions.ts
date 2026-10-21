@@ -64,13 +64,8 @@ export function startIndex(v: Pick<SetupValues, 'frequency' | 'nextPayday' | 'st
 /** What to keep when numbers are redone ("Change my numbers"). */
 export type SetupCarry = Partial<Pick<Settings, 'theme' | 'textSize' | 'license'>>;
 
-export async function completeSetup(
-  db: PiyDB,
-  v: SetupValues,
-  today: string,
-  now = Date.now(),
-  carry: SetupCarry = {},
-): Promise<AppData> {
+/** The records a finished setup makes (nothing is stored here). Used for the saved plan and for the example. */
+export function buildSetupData(v: SetupValues, today: string, now = Date.now(), carry: SetupCarry = {}): AppData {
   const settings: Settings = {
     id: 'settings',
     updatedAt: now,
@@ -116,6 +111,19 @@ export async function completeSetup(
   const fresh: AppData = { settings, debts, buffer, funds, payments: [], charges: [], paydays: [], milestones: [], findMoney: null };
   settings.baseline = baselineFor(fresh, today);
   const milestone: Milestone = { id: 'plan-made', updatedAt: now, reachedOn: today };
+  return { ...fresh, milestones: [milestone] };
+}
+
+export async function completeSetup(
+  db: PiyDB,
+  v: SetupValues,
+  today: string,
+  now = Date.now(),
+  carry: SetupCarry = {},
+): Promise<AppData> {
+  const built = buildSetupData(v, today, now, carry);
+  const { settings, debts, buffer, funds } = built;
+  const milestone = built.milestones[0]!;
 
   const stores = ['settings', 'debts', 'payments', 'charges', 'buffer', 'funds', 'paydays', 'draft', 'milestones', 'findMoney'] as const;
   const tx = db.transaction([...stores], 'readwrite');
@@ -126,7 +134,7 @@ export async function completeSetup(
   for (const d of debts) await tx.objectStore('debts').put(d);
   for (const f of funds) await tx.objectStore('funds').put(f);
   await tx.done;
-  return { ...fresh, milestones: [milestone] };
+  return built;
 }
 
 export interface PaydayDone {
