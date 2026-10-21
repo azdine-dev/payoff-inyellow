@@ -107,8 +107,9 @@ test('a debt with no due day: "Visa $96, add a due day", not counted, and the li
 
   // The same day is now on the debt, and the Debts tab asks for it as "recommended"
   await goTab(page, 'Debts');
-  await expect(page.getByRole('region', { name: 'Visa' })).toContainText('due on the 30');
-  await page.getByRole('region', { name: 'Visa' }).getByRole('button', { name: 'Edit' }).click();
+  await expect(page.getByRole('region', { name: 'Visa' })).toContainText('due on the 30th');
+  await page.getByRole('button', { name: 'Visa, options' }).click();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(page.getByLabel('Due day (recommended)')).toHaveValue('30');
   await expect(page.getByRole('dialog')).toContainText('It’s on your statement.');
 });

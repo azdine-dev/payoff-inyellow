@@ -477,6 +477,17 @@ select {
   fill: var(--yellow);
 }
 
+/* A whole debt card is one tap target */
+.debt-hit {
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+.debt-hit:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 4px;
+}
+
 /* ---------- bottom sheet ---------- */
 
 .sheet-backdrop {

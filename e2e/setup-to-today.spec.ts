@@ -211,7 +211,8 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   // Log a charge on Visa
   await page.getByRole('button', { name: 'Debts' }).click();
   await expect(page.getByRole('region', { name: 'Visa' })).toContainText('$3,200');
-  await page.getByRole('region', { name: 'Visa' }).getByRole('button', { name: 'Log a new charge or fee' }).click();
+  await page.getByRole('button', { name: 'Visa, options' }).click();
+  await page.getByRole('button', { name: 'Log a new charge or fee' }).click();
   await page.getByRole('textbox', { name: 'Charge amount' }).fill('900');
   await page.getByRole('radio', { name: 'Emergency' }).click();
   await page.getByRole('button', { name: 'Add to balance' }).click();
@@ -226,7 +227,8 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   await page.getByRole('textbox', { name: 'Monthly minimum' }).fill('25');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('region', { name: 'Phone' })).toBeVisible();
-  await page.getByRole('region', { name: 'Phone' }).getByRole('button', { name: 'Archive' }).click();
+  await page.getByRole('button', { name: 'Phone, options' }).click();
+  await page.getByRole('button', { name: 'Archive' }).click();
   await expect(page.getByText('Archived')).toBeVisible();
 
   // The date moved

@@ -4,13 +4,13 @@ import { growingDebts } from '../engine';
 import type { ChargeTag, Debt } from '../data/types';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
-import { shortMonthYear } from '../lib/today';
+import { ordinal, shortMonthYear } from '../lib/today';
 import { addDebt, archiveDebt, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
 import { toDebtInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
 import { Bar, Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 
-type Mode = { kind: 'add' } | { kind: 'edit' | 'charge' | 'statement'; id: string } | null;
+type Mode = { kind: 'add' } | { kind: 'actions' | 'edit' | 'charge' | 'statement'; id: string } | null;
 
 const TAGS: { value: ChargeTag; label: string }[] = [
   { value: 'everyday', label: 'Everyday' },
@@ -124,6 +124,14 @@ export function Debts() {
         style={isPaid ? { background: 'var(--yellow)', borderColor: 'var(--yellow)', color: 'var(--on-yellow)' } : undefined}
         aria-label={debt.name}
       >
+        <div
+          class="stack debt-hit"
+          role="button"
+          tabIndex={0}
+          aria-label={`${debt.name}, options`}
+          onClick={() => setMode({ kind: 'actions', id: debt.id })}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setMode({ kind: 'actions', id: debt.id }))}
+        >
         <div class="row">
           <h2>{debt.name}</h2>
           {isPaid ? <b>PAID</b> : <span class="num" style={{ fontWeight: 600 }}>{formatMoney(debt.balance, cur, { whole: true })}</span>}
@@ -135,7 +143,7 @@ export function Debts() {
             <Bar pct={pct} label={`${debt.name} paid off`} />
             <p class="muted small num">
               {Math.floor(pct)}% gone · {debt.apr}% rate · minimum {formatMoneyAuto(debt.minMonthly, cur)}
-              {debt.dueDay ? ` · due on the ${debt.dueDay}${debt.autopay ? ' (autopay)' : ''}` : ''}
+              {debt.dueDay ? ` · due on the ${ordinal(debt.dueDay)}${debt.autopay ? ' (autopay)' : ''}` : ''}
             </p>
             <p class="muted small">
               {goneBy ? `Gone by ${shortMonthYear(goneBy)}${paydaysLeft ? ` · ${paydaysLeft} paydays left` : ''}` : 'Not gone within 20 years at this pace'}
@@ -143,23 +151,6 @@ export function Debts() {
             {growing.has(debt.id) && <Note>{debt.name} grows even with the minimum. It's first in your plan.</Note>}
           </>
         )}
-        <div class="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-start', gap: '0 18px' }}>
-          {!isPaid && (
-            <>
-              <button type="button" class="link small" onClick={() => { setText(''); setMode({ kind: 'charge', id: debt.id }); }}>
-                Log a new charge or fee
-              </button>
-              <button type="button" class="link small" onClick={() => { setText(str(debt.balance)); setMode({ kind: 'statement', id: debt.id }); }}>
-                Update from statement
-              </button>
-            </>
-          )}
-          <button type="button" class="link small" onClick={() => setMode({ kind: 'edit', id: debt.id })}>
-            Edit
-          </button>
-          <button type="button" class="link small" onClick={() => act((db, x) => archiveDebt(db, x, debt.id))}>
-            Archive
-          </button>
         </div>
       </section>
     );
@@ -193,6 +184,31 @@ export function Debts() {
         </>
       )}
 
+      <Sheet open={mode?.kind === 'actions'} onClose={close} title={current?.name ?? ''}>
+        {current && (
+          <>
+            {current.status !== 'paid' && (
+              <>
+                <button type="button" class="btn ghost" onClick={() => { setText(''); setMode({ kind: 'charge', id: current.id }); }}>
+                  Log a new charge or fee
+                </button>
+                <button type="button" class="btn ghost" onClick={() => { setText(str(current.balance)); setMode({ kind: 'statement', id: current.id }); }}>
+                  Update from statement
+                </button>
+              </>
+            )}
+            <button type="button" class="btn ghost" onClick={() => setMode({ kind: 'edit', id: current.id })}>
+              Edit
+            </button>
+            <button type="button" class="link" onClick={async () => { await act((db, x) => archiveDebt(db, x, current.id)); close(); }}>
+              Archive
+            </button>
+            <button type="button" class="link" onClick={close}>
+              Close
+            </button>
+          </>
+        )}
+      </Sheet>
       <Sheet open={mode?.kind === 'add'} onClose={close} title="Add a debt">
         <DebtForm symbol={cur.symbol} onCancel={close} onSave={async (f) => { await act((db, x) => addDebt(db, x, f)); close(); }} />
       </Sheet>

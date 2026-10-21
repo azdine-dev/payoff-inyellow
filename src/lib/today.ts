@@ -2,6 +2,13 @@
 import { addMonths, daysInMonth, dayNumber, fromDayNumber, parseISO, toISO } from '../engine/dates';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+/** 1 -> "1st", 2 -> "2nd", 11 -> "11th", 22 -> "22nd" */
+export function ordinal(n: number): string {
+  const last = n % 100;
+  if (last >= 11 && last <= 13) return `${n}th`;
+  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`;
+}
+
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** Today on this phone, in local time (not UTC). */

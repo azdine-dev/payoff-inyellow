@@ -211,8 +211,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   // ---------------------------------------------------------------- part 7: a new charge
   await test.step('A new $45 charge on Visa moves the date by one payday, calmly', async () => {
     await goTab(page, 'Debts');
-    const visa = page.getByRole('region', { name: 'Visa' });
-    await visa.getByRole('button', { name: 'Log a new charge or fee' }).click();
+    await page.getByRole('button', { name: 'Visa, options' }).click();
+    await page.getByRole('button', { name: 'Log a new charge or fee' }).click();
     await expect(page.getByRole('dialog')).toContainText('No judgment');
     await page.getByRole('textbox', { name: 'Charge amount' }).fill('45');
     await page.getByRole('radio', { name: 'Everyday' }).click();
@@ -265,8 +265,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   // ---------------------------------------------------------------- part 10: update from statement
   await test.step('Update from statement: Store card is really $521.60', async () => {
     await goTab(page, 'Debts');
-    const card = page.getByRole('region', { name: 'Store card' });
-    await card.getByRole('button', { name: 'Update from statement' }).click();
+    await page.getByRole('button', { name: 'Store card, options' }).click();
+    await page.getByRole('button', { name: 'Update from statement' }).click();
     await expect(page.getByRole('textbox', { name: 'Balance on statement' })).toHaveValue('509.6');
     await page.getByRole('textbox', { name: 'Balance on statement' }).fill('521.60');
     await page.getByRole('button', { name: 'Update balance' }).click();
