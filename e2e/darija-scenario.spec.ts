@@ -386,7 +386,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   await test.step('Backup, then restore on a clean phone: everything comes back', async () => {
     await page.getByRole('button', { name: 'Today' }).click();
     await page.getByRole('button', { name: 'Settings' }).click();
-    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Save a backup' }).click()]);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Back up my plan' }).click()]);
     const file = info.outputPath('sara-backup.json');
     await download.saveAs(file);
 

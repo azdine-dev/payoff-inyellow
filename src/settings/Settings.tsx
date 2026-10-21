@@ -19,6 +19,7 @@ import { changeSchedule, clearLicense, markBackedUp, saveLicense, setAppearance,
 import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, licenseState, tab, today, updateReady, view } from '../state/store';
 import { Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 import { FAQ, INSTALL_HELP } from './faq';
+import { downloadBackup } from '../state/backupActions';
 import { RestoreButton } from './Restore';
 import { SyncSection } from './SyncSection';
 import { syncOn } from '../sync/controller';
@@ -101,10 +102,7 @@ export function Settings() {
   };
 
   const saveBackup = async () => {
-    const db = await getDB();
-    const file = await buildBackup(db);
-    downloadText(backupFilename(), JSON.stringify(file, null, 1), 'application/json');
-    await act((dbx, x) => markBackedUp(dbx, x));
+    await downloadBackup();
     setBackupMsg('Saved. Keep the file somewhere safe, like your email or a cloud folder.');
   };
 
@@ -196,7 +194,7 @@ export function Settings() {
           {lastBackup ? `Last saved ${shortDate(lastBackup)}.` : 'You haven’t saved a backup yet.'}
         </p>
         <button type="button" class="btn" onClick={saveBackup}>
-          Save a backup
+          Back up my plan
         </button>
         {backupMsg && <Note>{backupMsg}</Note>}
         <RestoreButton />

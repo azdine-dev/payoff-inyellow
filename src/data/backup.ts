@@ -9,6 +9,8 @@ import type { AppData } from './types';
 export const BACKUP_FORMAT = 'paidinyellow-backup';
 export const BACKUP_VERSION = 1;
 export const BACKUP_REMINDER_DAYS = 30;
+/** The reminder also comes after this many paydays are done since the last backup */
+export const BACKUP_REMINDER_PAYDAYS = 4;
 
 /** Stores that go into a backup (the wizard draft does not). */
 const BACKUP_STORES = ['settings', 'debts', 'payments', 'charges', 'buffer', 'funds', 'paydays', 'milestones', 'findMoney'] as const;
@@ -86,6 +88,17 @@ export async function restoreBackup(db: PiyDB, file: BackupFile, opts: { bumpTo?
   }
   await tx.done;
   return (await loadAll(db))!;
+}
+
+/** Paydays marked done since the last backup (all of them if there was never one). */
+export function paydaysSinceBackup(data: Pick<AppData, 'paydays' | 'settings'>): number {
+  const since = data.settings.lastBackupAt ?? 0;
+  return data.paydays.filter((p) => p.status === 'done' && p.updatedAt > since).length;
+}
+
+/** The calm reminder: 4 paydays or 30 days since the last backup (or since setup, if there never was one). */
+export function backupReminder(data: Pick<AppData, 'paydays' | 'settings'>, now = Date.now()): boolean {
+  return paydaysSinceBackup(data) >= BACKUP_REMINDER_PAYDAYS || backupDue(data.settings.lastBackupAt, data.settings.setupDoneAt, now);
 }
 
 /** True when it's time for the calm "Save a backup" card. */

@@ -17,7 +17,7 @@ test('a backup restores the same plan on a fresh phone', async ({ page, browser 
 
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByTestId('last-backup')).toHaveText('You haven’t saved a backup yet.');
-  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Save a backup' }).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Back up my plan' }).click()]);
   expect(download.suggestedFilename()).toBe('paidinyellow-backup-2026-10-15.json');
   const path = info.outputPath('backup.json');
   await download.saveAs(path);
@@ -117,10 +117,9 @@ test('a calm backup reminder shows after 30 days and goes away once saved', asyn
   await expect(page.getByLabel('Backup reminder')).toHaveCount(0);
   await page.clock.setFixedTime(new Date('2026-11-20T10:00:00'));
   await page.reload();
-  await expect(page.getByLabel('Backup reminder')).toContainText('Your plan lives only on this device');
-  await page.getByLabel('Backup reminder').getByRole('button', { name: 'Save a backup' }).click();
-  await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Save a backup' }).first().click()]);
-  await page.getByRole('button', { name: 'Back to Today' }).click();
+  await expect(page.getByLabel('Backup reminder')).toContainText('Save a backup file. Takes 5 seconds.');
+  // One tap on the reminder saves the file, and the reminder goes away
+  await Promise.all([page.waitForEvent('download'), page.getByLabel('Backup reminder').getByRole('button', { name: 'Back up my plan' }).click()]);
   await expect(page.getByLabel('Backup reminder')).toHaveCount(0);
 });
 

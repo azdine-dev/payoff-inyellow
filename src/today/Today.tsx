@@ -2,7 +2,8 @@
 import { syncOn } from '../sync/controller';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { dailyInterestCost, planNeedsHelp, simulatePlan } from '../engine';
-import { backupDue } from '../data/backup';
+import { backupReminder } from '../data/backup';
+import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { dayMonth, shortDate, shortMonthYear } from '../lib/today';
@@ -165,11 +166,11 @@ export function Today() {
 
       <StatusLine />
 
-      {backupDue(s.lastBackupAt, s.setupDoneAt) && (
+      {backupReminder(d) && (
         <section class="card soft row" aria-label="Backup reminder">
-          <span>Your plan lives only on this device. Save a backup.</span>
-          <button type="button" class="link" onClick={() => (tab.value = 'settings')}>
-            Save a backup
+          <span>Save a backup file. Takes 5 seconds.</span>
+          <button type="button" class="link" onClick={() => void downloadBackup()}>
+            Back up my plan
           </button>
         </section>
       )}
