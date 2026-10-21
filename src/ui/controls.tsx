@@ -27,9 +27,11 @@ export function Checkbox(props: {
   onToggle: () => void;
   children: ComponentChildren;
   right?: ComponentChildren;
+  /** Keeps the spoken name short when `right` adds words that are only for the eyes */
+  label?: string;
 }) {
   return (
-    <button type="button" role="checkbox" aria-checked={props.checked} class="check" onClick={props.onToggle}>
+    <button type="button" role="checkbox" aria-checked={props.checked} aria-label={props.label} class="check" onClick={props.onToggle}>
       <span class="box">
         <CheckIcon />
       </span>

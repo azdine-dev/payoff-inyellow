@@ -12,6 +12,8 @@ export interface PaydayLine {
   highlight?: string;
   /** Rounded to cents, so the total always equals the sum of what's shown */
   amount: number;
+  /** The bill's due date (ISO), for "in 4 days" */
+  due?: string;
   /** A bill: its amount is part of the label ("Car loan $285, due 28 Oct"), not in a column */
   inline?: boolean;
 }
@@ -35,6 +37,7 @@ export function paydayLines(row: PaydayStep, data: AppData, bills: BillsWindow):
       label: `${b.name} ${formatMoneyAuto(b.amount, cur)}, due ${dayMonth(b.due)}${b.autopay ? ', autopay' : ''}`,
       amount: b.amount,
       inline: true,
+      due: b.due,
     });
   }
   if (toCents(row.toYearlyBills) > 0) lines.push({ key: 'yearly', label: 'Yearly bills', amount: toCents(row.toYearlyBills) });

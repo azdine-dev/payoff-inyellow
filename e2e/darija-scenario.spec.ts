@@ -144,7 +144,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(focus).toContainText('$640 left');
     await expect(focus).toContainText('gone by Jan 2027');
     await expect(page.getByText(/Your debt costs you/)).toContainText('$4.49 a day');
-    await expect(page.getByText(/Coming up/)).toContainText('Car loan due Tue 20 Oct');
+    await expect(page.getByText(/Coming up/)).toContainText('Car loan due Tue 20 Oct · $285 (in 5 days)');
     await shot(page, '21-sara-today');
   });
 

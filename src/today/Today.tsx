@@ -6,7 +6,7 @@ import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
-import { dayMonth, shortDate, shortMonthYear } from '../lib/today';
+import { dayMonth, relativeDay, shortDate, shortMonthYear } from '../lib/today';
 import { didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
@@ -288,8 +288,15 @@ export function Today() {
                     <Checkbox
                       checked={checked.has(l.key)}
                       onToggle={() => toggle(l.key)}
+                      label={l.due ? l.label : undefined}
                       right={
-                        l.inline ? undefined : (
+                        l.inline ? (
+                          l.due && (
+                            <span class="muted small" data-testid="due-in" style={{ whiteSpace: 'nowrap' }}>
+                              {relativeDay(today.value, l.due)}
+                            </span>
+                          )
+                        ) : (
                           <span class="num" style={{ fontWeight: 600 }}>
                             {formatMoneyAuto(l.amount, cur)}
                           </span>
@@ -375,7 +382,7 @@ export function Today() {
 
       {due.length > 0 && (
         <p class="muted small">
-          Coming up · {due.map((i) => dueLine(i, d)).join(' · ')}
+          Coming up · {due.map((i) => `${dueLine(i, d)} (${relativeDay(today.value, i.date)})`).join(' · ')}
         </p>
       )}
 

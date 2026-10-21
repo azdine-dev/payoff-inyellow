@@ -24,6 +24,15 @@ export function diffDays(fromISO: string, toDate: string): number {
   return dayNumber(parseISO(toDate)) - dayNumber(parseISO(fromISO));
 }
 
+/** "today", "tomorrow", "in 4 days", "2 days ago": calm, no alarm. */
+export function relativeDay(todayISO: string, iso: string): string {
+  const n = diffDays(todayISO, iso);
+  if (n === 0) return 'today';
+  if (n === 1) return 'tomorrow';
+  if (n === -1) return 'yesterday';
+  return n > 0 ? `in ${n} days` : `${-n} days ago`;
+}
+
 /** Calendar months from one date to another (Oct 2026 to Mar 2028 = 17). */
 export function monthsBetween(fromISO: string, toDate: string): number {
   const a = parseISO(fromISO);

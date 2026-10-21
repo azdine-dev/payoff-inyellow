@@ -194,3 +194,15 @@ test('every main tab has the same header line, and the paydays left count down a
   await goTab(page, 'Progress');
   expect(await left()).toBe(before - 1);
 });
+
+test('each bill on Today says how soon it is due, and the checkbox name stays short', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  await quickSetup(page); // today is Thu 15 Oct; the first payday is Fri 23 Oct
+  // Medical-style due days are not in the quick setup: Store card is due the 5th, Visa the 12th (after Nov payday?)
+  const bills = page.getByRole('checkbox', { name: /due \d+ \w+$/ });
+  await expect(bills.first()).toBeVisible();
+  await expect(page.getByTestId('due-in').first()).toHaveText(/^(today|tomorrow|in \d+ days)$/);
+  // The spoken name is the plain label, without the extra words
+  const name = (await bills.first().getAttribute('aria-label')) ?? '';
+  expect(name).not.toMatch(/in \d+ days|tomorrow/);
+});
