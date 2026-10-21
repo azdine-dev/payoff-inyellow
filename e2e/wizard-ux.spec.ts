@@ -206,3 +206,19 @@ test('each bill on Today says how soon it is due, and the checkbox name stays sh
   const name = (await bills.first().getAttribute('aria-label')) ?? '';
   expect(name).not.toMatch(/in \d+ days|tomorrow/);
 });
+
+test('a calm Today: at most 3 cards above the fold, and every card has room around its text', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  await quickSetup(page);
+  const stats = await page.evaluate(() => {
+    const h = window.innerHeight;
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('main .card'));
+    const above = cards.filter((c) => c.getBoundingClientRect().top < h - 80); // 80px = the tab bar
+    const padding = Math.min(...cards.map((c) => parseFloat(getComputedStyle(c).paddingLeft)));
+    const gaps = above.slice(1).map((c, i) => c.getBoundingClientRect().top - above[i]!.getBoundingClientRect().bottom);
+    return { above: above.length, padding, minGap: gaps.length ? Math.min(...gaps) : 99 };
+  });
+  expect(stats.above).toBeLessThanOrEqual(3);
+  expect(stats.padding).toBeGreaterThanOrEqual(20);
+  expect(stats.minGap).toBeGreaterThanOrEqual(16);
+});

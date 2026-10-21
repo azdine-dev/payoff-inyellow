@@ -85,7 +85,7 @@ select {
   padding: calc(env(safe-area-inset-top) + 20px) var(--gutter) calc(env(safe-area-inset-bottom) + 88px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 /* Netlify adds a "Powered by Netlify" badge to the page on its own. It sat over the Continue button. */
@@ -126,7 +126,8 @@ select {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 16px 18px;
+  /* One idea per card, with room around it */
+  padding: 22px;
 }
 
 .card.soft {
