@@ -8,7 +8,7 @@ import { chartData } from '../lib/series';
 import { formatMoney } from '../lib/money';
 import { makeMilestoneImage, shareImage } from '../lib/shareImage';
 import { addDaysISO, monthYear, shortDate, shortMonthYear } from '../lib/today';
-import { horizonText, MILESTONE_LABELS, MILESTONE_ORDER, progressStats, projectedDate } from '../state/milestones';
+import { aboveMinimums, horizonText, MILESTONE_LABELS, MILESTONE_ORDER, progressStats, projectedDate } from '../state/milestones';
 import { activeDebts, countedDebts } from '../state/planInput';
 import { data, plan, today } from '../state/store';
 import { Chart } from './Chart';
@@ -89,6 +89,9 @@ export function Progress() {
             {formatMoney(stats.paid, cur, { whole: true })}
           </p>
           <p class="muted small num">of {formatMoney(stats.start, cur, { whole: true })}</p>
+          <p class="small num" data-testid="above-minimums">
+            Above the minimums: <b>{formatMoney(aboveMinimums(d), cur, { whole: true })}</b>
+          </p>
         </div>
       </section>
       <p class="muted small">Balances move in even steps from payday to payday, while Today lists each bill on the payday before it is due.</p>

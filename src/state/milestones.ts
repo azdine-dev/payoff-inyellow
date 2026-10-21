@@ -32,6 +32,11 @@ export function horizonText(paydaysLeft: number, paydaysPerYear: number): string
   return `about ${years} years`;
 }
 
+/** All the extra money paid so far, on top of the minimums (the paydays' extra and any "+ Extra payment"). */
+export function aboveMinimums(data: Pick<AppData, 'payments'>): number {
+  return data.payments.filter((p) => p.kind === 'extra').reduce((s, p) => s + p.amount, 0);
+}
+
 export interface ProgressStats {
   start: number;
   owed: number;

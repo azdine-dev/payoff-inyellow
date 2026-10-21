@@ -201,3 +201,19 @@ describe('the focus debt card', () => {
     expect(payThisPayday(undefined, bills, 'a')).toBeCloseTo(35, 2);
   });
 });
+
+import { aboveMinimums } from './milestones';
+
+describe('above the minimums', () => {
+  it('adds up the extra payments only', () => {
+    const payments = [
+      { kind: 'minimum', amount: 100 },
+      { kind: 'extra', amount: 23.08 },
+      { kind: 'extra', amount: 50 },
+      { kind: 'buffer', amount: 107.69 },
+      { kind: 'fund', amount: 42.31 },
+    ] as never;
+    expect(aboveMinimums({ payments })).toBeCloseTo(73.08, 2);
+    expect(aboveMinimums({ payments: [] })).toBe(0);
+  });
+});
