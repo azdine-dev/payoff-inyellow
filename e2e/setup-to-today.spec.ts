@@ -3,6 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
+import { tapDidIt } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult } from './helpers';
@@ -103,6 +104,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await shot(page, '07-today');
 
   await didIt.click();
+  await page.getByRole('button', { name: 'Yes, mark it done' }).click(); // the payday is still a week away
   await expect(page.getByRole('status').filter({ hasText: 'Fri 23 Oct is paid.' })).toContainText('Next payday: Fri 6 Nov.');
   await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free · Oct 2028');
   await shot(page, '08-paid');
@@ -264,11 +266,11 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   expect(await pill.textContent()).not.toBe(before);
 
   // Do two paydays
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await page.clock.setFixedTime(new Date('2026-11-06T10:00:00'));
   await page.reload();
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
 
   // Plan: both paydays are paid and open to show their payments

@@ -20,6 +20,7 @@ import {
   runWizard,
   setDay,
   startPlan,
+  tapDidIt,
 } from './scenario';
 
 test.beforeEach(async ({ page }) => {
@@ -303,7 +304,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('checkbox', { name: /Store card .*, due 5 Apr/ })).toContainText(near(13.52)); // what is left, not the full $35
     await expect(page.getByRole('checkbox', { name: /Extra →.*Medical bill/ })).toContainText(near(110.49));
     await expect(page.getByRole('button', { name: /^I did it/ })).toContainText(near(216.32)); // 50 + 13.52 + 42.31 + 110.49
-    await page.getByRole('button', { name: /^I did it/ }).click();
+    await tapDidIt(page);
     await expect(page.getByText('Fri 26 Mar is paid.')).toBeVisible();
     await expect(page.getByText('PAID. One down.')).toBeVisible();
     await expectPaidPayday(page, { date: 'Fri 26 Mar', total: 216.32, extra: { amount: 110.49, to: 'Medical bill' }, debtLeft: 12495.65 });

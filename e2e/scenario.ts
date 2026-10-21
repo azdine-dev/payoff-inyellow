@@ -31,10 +31,16 @@ export async function goTab(page: Page, name: 'Today' | 'Plan' | 'Debts' | 'Prog
   await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name, exact: true }).click();
 }
 
+/** Taps "I did it". If the payday is still ahead, the app asks once: answer yes. */
+export async function tapDidIt(page: Page) {
+  await page.getByRole('button', { name: /^I did it/ }).click();
+  await page.getByRole('button', { name: 'Yes, mark it done' }).click({ timeout: 1500 }).catch(() => undefined);
+}
+
 /** Taps "I did it" and waits for the payday to turn paid. */
 export async function iDidIt(page: Page, paidLabel: string) {
   await goTab(page, 'Today');
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText(`${paidLabel} is paid.`)).toBeVisible();
 }
 

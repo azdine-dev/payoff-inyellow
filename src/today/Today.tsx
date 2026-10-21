@@ -6,7 +6,7 @@ import { backupDue } from '../data/backup';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { dayMonth, shortDate, shortMonthYear } from '../lib/today';
-import { didPayday, extraPayment, missedPaydays, skipPaydays } from '../state/actions';
+import { didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
@@ -35,6 +35,10 @@ export function Today() {
   const [paidNames, setPaidNames] = useState<string[]>([]);
   const [skippedNote, setSkippedNote] = useState(false);
   const [closedMoments, setClosedMoments] = useState<Set<string>>(new Set());
+  // "Undo" lasts until the next tap. "askedEarly" remembers the payday we already asked about.
+  const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
+  const [askEarly, setAskEarly] = useState(false);
+  const [askedEarly, setAskedEarly] = useState<string | null>(null);
   const [sheet, setSheet] = useState<'amount' | 'extra' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
@@ -60,12 +64,18 @@ export function Today() {
   const due = comingUp(d, today.value);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
 
-  const apply = async () => {
+  const apply = async (confirmed = false) => {
     if (busy) return;
+    // The payday is still ahead: ask once, in case the tap was by mistake
+    if (!confirmed && nextDate > today.value && askedEarly !== nextDate) {
+      setAskEarly(true);
+      return;
+    }
     setBusy(true);
     setChecked(new Set(lines.map((l) => l.key)));
     await new Promise((res) => setTimeout(res, 650)); // let the boxes turn yellow first
     const res = await didPayday(await getDB(), d, { planMoney: override });
+    setUndo({ before: d, after: res.data });
     setJustPaid({ date: res.step.date, total });
     setPaidNames(res.newlyPaid.map(nameOf));
     setSkippedNote(false);
@@ -77,7 +87,17 @@ export function Today() {
     const next = new Set(checked);
     next.has(key) ? next.delete(key) : next.add(key);
     setChecked(next);
-    if (lines.length && next.size === lines.length) apply();
+    if (lines.length && next.size === lines.length) void apply();
+  };
+
+  const doUndo = async () => {
+    if (!undo) return;
+    const restored = await undoPayday(await getDB(), undo.before, data.peek()!);
+    setUndo(null);
+    setJustPaid(null);
+    setPaidNames([]);
+    setChecked(new Set());
+    data.value = restored;
   };
 
   const skip = async () => {
@@ -129,7 +149,7 @@ export function Today() {
   const pill = r.debtFreeDate ? `Debt-free · ${shortMonthYear(r.debtFreeDate)}` : active.length ? 'More than 20 years' : 'Debt-free';
 
   return (
-    <main class="screen with-tabs">
+    <main class="screen with-tabs" onClickCapture={(e) => !(e.target as HTMLElement).closest('[data-undo]') && undo && setUndo(null)}>
       <header class="row" style={{ flexWrap: 'wrap' }}>
         <Wordmark />
         <div class="row" style={{ gap: 4, flexWrap: 'wrap', marginLeft: 'auto' }}>
@@ -181,6 +201,11 @@ export function Today() {
           <span class="num" style={{ fontWeight: 600 }}>
             {formatMoney(justPaid.total, cur)}
           </span>
+          {undo && (
+            <button type="button" class="link small" data-undo onClick={doUndo}>
+              Undo
+            </button>
+          )}
         </section>
       )}
 
@@ -280,7 +305,7 @@ export function Today() {
                   </button>
                 </p>
               )}
-              <button type="button" class={`btn${busy ? ' done' : ''}`} style={{ marginTop: 10 }} onClick={apply} disabled={busy}>
+              <button type="button" class={`btn${busy ? ' done' : ''}`} style={{ marginTop: 10 }} onClick={() => void apply()} disabled={busy}>
                 {COPY.didIt} · <span class="num">{formatMoneyAuto(total, cur)}</span>
               </button>
               <div class="row" style={{ marginTop: 4 }}>
@@ -328,6 +353,24 @@ export function Today() {
       <p class="footer-note">
         {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
       </p>
+
+      <Sheet open={askEarly} onClose={() => setAskEarly(false)} title="Mark it done now?">
+        <p>Your payday is {shortDate(nextDate)}. It hasn’t come yet.</p>
+        <button
+          type="button"
+          class="btn"
+          onClick={() => {
+            setAskEarly(false);
+            setAskedEarly(nextDate);
+            void apply(true);
+          }}
+        >
+          Yes, mark it done
+        </button>
+        <button type="button" class="link" onClick={() => { setAskEarly(false); setChecked(new Set()); }}>
+          Not yet
+        </button>
+      </Sheet>
 
       <Sheet open={dueDebtId !== null} onClose={() => setDueDebtId(null)} title={`Due day for ${d.debts.find((x) => x.id === dueDebtId)?.name ?? ''}`}>
         <Field label="Day of the month" hint="It’s on your statement.">

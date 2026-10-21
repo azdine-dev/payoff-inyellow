@@ -1,4 +1,5 @@
 /** Step 4 on a phone: backup and restore, calendar file, unlock code, appearance, schedule. */
+import { tapDidIt } from './scenario';
 import { expect, test } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { FIXED, quickSetup, shot } from './helpers';
@@ -10,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test('a backup restores the same plan on a fresh phone', async ({ page, browser }, info) => {
   await quickSetup(page);
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   const pill = await page.getByTestId('debt-free-pill').textContent();
 
@@ -97,7 +98,7 @@ test('dark mode and a larger text size apply at once and stay after a reload', a
 
 test('changing the pay schedule keeps history and moves the next payday', async ({ page }) => {
   await quickSetup(page);
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Change Pay schedule' }).click();
@@ -134,7 +135,7 @@ test('help answers and the support email are there', async ({ page }) => {
 
 test('start over erases the plan and keeps the unlock code by default', async ({ page }) => {
   await quickSetup(page);
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Erase everything and start over' }).click();

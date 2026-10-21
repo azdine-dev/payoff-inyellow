@@ -5,7 +5,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, shot } from './helpers';
-import { goTab, near, runWizard, setDay, startPlan } from './scenario';
+import { goTab, near, runWizard, setDay, startPlan, tapDidIt } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026
@@ -43,14 +43,14 @@ test('the Today card: bills due before the next payday, and the window moves wit
 
   // Tick the bill and the extra: the payday is applied
   await setDay(page, '2026-10-23');
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
 
   // Fri 6 Nov up to Fri 20 Nov: nothing is due, so only the extra
   await setDay(page, '2026-11-06');
   await expect(page.getByRole('button', { name: 'I did it · $150' })).toBeVisible(); // wait for the page first
   await expect(page.getByRole('checkbox', { name: /Car loan \$285/ })).toHaveCount(0); // no bill row (the extra row says "Extra → Car loan")
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  await tapDidIt(page);
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
 
   // Fri 20 Nov up to Fri 4 Dec: the next car loan bill, due 28 Nov

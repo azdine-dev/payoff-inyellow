@@ -237,6 +237,37 @@ export async function didPayday(
   };
 }
 
+/**
+ * Undo "I did it": balances, buffer, yearly-bill savings, the next payday and the logs go back to how
+ * they were. Records made by that payday are deleted, and the rest are saved again with a new time,
+ * so a synced second device takes the undone state too.
+ */
+export async function undoPayday(db: PiyDB, before: AppData, after: AppData, now = Date.now()): Promise<AppData> {
+  const bump = <T extends { updatedAt: number }>(r: T): T => ({ ...r, updatedAt: now });
+  const keep = {
+    payments: new Set(before.payments.map((p) => p.id)),
+    paydays: new Set(before.paydays.map((p) => p.id)),
+    milestones: new Set(before.milestones.map((m) => m.id)),
+  };
+  const restored: AppData = {
+    ...before,
+    settings: bump(before.settings),
+    debts: before.debts.map(bump),
+    funds: before.funds.map(bump),
+    buffer: bump(before.buffer),
+  };
+  const tx = db.transaction(['settings', 'debts', 'funds', 'buffer', 'payments', 'paydays', 'milestones'], 'readwrite');
+  await tx.objectStore('settings').put(restored.settings);
+  for (const d of restored.debts) await tx.objectStore('debts').put(d);
+  for (const f of restored.funds) await tx.objectStore('funds').put(f);
+  await tx.objectStore('buffer').put(restored.buffer);
+  for (const p of after.payments) if (!keep.payments.has(p.id)) await tx.objectStore('payments').delete(p.id);
+  for (const p of after.paydays) if (!keep.paydays.has(p.id)) await tx.objectStore('paydays').delete(p.id);
+  for (const m of after.milestones) if (!keep.milestones.has(m.id)) await tx.objectStore('milestones').delete(m.id);
+  await tx.done;
+  return { ...restored, milestones: before.milestones.filter((m) => keep.milestones.has(m.id)) };
+}
+
 /** Paydays before `today` that were neither done nor skipped. */
 export function missedPaydays(data: AppData, today: string): number {
   let count = 0;

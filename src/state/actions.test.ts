@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { simulatePlan } from '../engine';
 import { loadAll, openAppDB, type PiyDB } from '../data/db';
 import type { AppData } from '../data/types';
-import { completeSetup, didPayday, extraPayment, missedPaydays, skipPaydays, startIndex, type SetupValues } from './actions';
+import { completeSetup, didPayday, extraPayment, missedPaydays, skipPaydays, startIndex, undoPayday, type SetupValues } from './actions';
 import { nextPaydayISO, toPlanInput } from './planInput';
 
 /** Same numbers as engine/fixtures.json "sample_every_2_weeks" */
@@ -144,5 +144,38 @@ describe('+ Extra payment', () => {
     expect(by['Medical bill']!.balance).toBe(1090); // PaidInYellow order: Store card, then Medical bill
     expect(newlyPaid).toEqual([by['Store card']!.id]);
     expect(after.payments.every((p) => p.planned === false)).toBe(true);
+  });
+});
+
+describe('undo', () => {
+  /** The same data, ignoring when each record was last saved */
+  const strip = (data: AppData | null) => JSON.parse(JSON.stringify(data), (k, v) => (k === 'updatedAt' ? 0 : v));
+
+  it('puts balances, buffer, funds, payday and logs back exactly', async () => {
+    const start = await completeSetup(db, sample, '2026-10-15', 1000);
+    const done = await didPayday(db, start, { now: 2000 });
+    expect(strip(done.data)).not.toEqual(strip(start));
+
+    const undone = await undoPayday(db, start, done.data, 3000);
+    expect(strip(undone)).toEqual(strip(start));
+    expect(strip(await loadAll(db))).toEqual(strip(start)); // and the stored copy is the same
+    expect(undone.settings.paydayIndex).toBe(start.settings.paydayIndex);
+  });
+
+  it('the same payday done again after an undo gives the same result as the first time', async () => {
+    const start = await completeSetup(db, sample, '2026-10-15', 1000);
+    const first = await didPayday(db, start, { now: 2000 });
+    const undone = await undoPayday(db, start, first.data, 3000);
+    const again = await didPayday(db, undone, { now: 4000 });
+    expect(strip(again.data)).toEqual(strip(first.data));
+  });
+
+  it('makes the undone records newer, so a synced second device takes them', async () => {
+    const start = await completeSetup(db, sample, '2026-10-15', 1000);
+    const done = await didPayday(db, start, { now: 2000 });
+    const undone = await undoPayday(db, start, done.data, 3000);
+    expect(undone.debts.every((d) => d.updatedAt === 3000)).toBe(true);
+    expect(undone.buffer.updatedAt).toBe(3000);
+    expect(undone.settings.updatedAt).toBe(3000);
   });
 });
