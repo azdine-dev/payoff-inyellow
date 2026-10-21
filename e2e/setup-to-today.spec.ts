@@ -83,8 +83,8 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
 
   // Result: same date as the Sheet (2028-10-06)
   await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028');
-  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $235');
-  await expect(page.getByTestId('first-step-parts')).toHaveText('Bills due $85, yearly bills $42.31, buffer $107.69.');
+  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $235.00');
+  await expect(page.getByTestId('first-step-parts')).toHaveText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');
   await shot(page, '06-result');
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();

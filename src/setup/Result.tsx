@@ -3,11 +3,12 @@
  * Without a valid unlock code this is the whole calculator ("calculator mode"): below the
  * result sit what the full planner adds, the code box and "Change my numbers".
  */
+import { useState } from 'preact/hooks';
 import { syncOn } from '../sync/controller';
 import { planNeedsHelp } from '../engine';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
-import { monthsBetween, monthYear, shortDate } from '../lib/today';
+import { dayMonth, monthsBetween, monthYear, shortDate } from '../lib/today';
 import { billsForNextPayday } from '../state/billsDue';
 import { toPlanInput } from '../state/planInput';
 import { exampleMode, leaveExample } from '../state/example';
@@ -15,6 +16,7 @@ import { data, editSeed, licenseState, plan, tab, today, view } from '../state/s
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
 import { NeedsHelp } from '../ui/NeedsHelp';
+import { HowWeGotThis } from './HowWeGotThis';
 import { ifThenLine } from './steps/Order';
 import { EmailCapture, UnlockCard } from './Unlock';
 
@@ -29,15 +31,16 @@ export function Result() {
   const reasons = planNeedsHelp(toPlanInput(d), r, s.paycheckAmount);
   const bills = billsForNextPayday(d);
   const first = r.rows[0] ? firstStep(r.rows[0], d, bills) : null;
-  // "Bills due $85, yearly bills $42.31, buffer $107.69"
+  // "Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69"
   const partsList = r.rows[0]
     ? [
-        bills.total > 0 && `bills due ${formatMoneyAuto(bills.total, cur)}`,
-        r.rows[0].toYearlyBills > 0.004 && `yearly bills ${formatMoneyAuto(r.rows[0].toYearlyBills, cur)}`,
-        r.rows[0].toBuffer > 0.004 && `buffer ${formatMoneyAuto(r.rows[0].toBuffer, cur)}`,
+        ...bills.due.map((b) => `${b.name} ${formatMoneyAuto(b.amount, cur)} (due ${dayMonth(b.due)})`),
+        r.rows[0].toYearlyBills > 0.004 && `Yearly bills ${formatMoneyAuto(r.rows[0].toYearlyBills, cur)}`,
+        r.rows[0].toBuffer > 0.004 && `Buffer ${formatMoneyAuto(r.rows[0].toBuffer, cur)}`,
       ].filter(Boolean)
     : [];
-  const parts = partsList.join(', ').replace(/^./, (c) => c.toUpperCase());
+  const parts = partsList.join(' · ');
+  const [how, setHow] = useState(false);
 
   const sooner = r.debtFreeDate && mo.months !== null ? mo.months - monthsBetween(today.value, r.debtFreeDate) : null;
   const less = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
@@ -66,6 +69,9 @@ export function Result() {
           <span class="hl-big" style={{ fontSize: '2.9rem', fontWeight: 800, marginTop: 10 }} data-testid="debt-free-date">
             {monthYear(r.debtFreeDate)}
           </span>
+          <button type="button" class="link small" style={{ display: 'block', marginTop: 6, fontWeight: 500 }} aria-label="How we got this date" onClick={() => setHow(true)}>
+            How we got this
+          </button>
         </h1>
       ) : (
         <h1 style={{ fontSize: '2rem' }}>Right now this plan takes more than 20 years.</h1>
@@ -109,7 +115,7 @@ export function Result() {
             {when} ({shortDate(first.date)}):{' '}
             {first.kind === 'setaside' ? (
               <>
-                set aside <span class="hl">{formatMoneyAuto(first.amount, cur)}</span>
+                set aside <span class="hl">{formatMoney(first.amount, cur)}</span>
               </>
             ) : first.kind === 'nothing' ? (
               <>nothing is due before your next payday</>
@@ -121,9 +127,12 @@ export function Result() {
           </p>
           {first.kind === 'setaside' && r.rows[0] && (
             <p class="small num" data-testid="first-step-parts">
-              {parts}.
+              {parts}
             </p>
           )}
+          <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} aria-label="How we got this step" onClick={() => setHow(true)}>
+            How we got this
+          </button>
           <p class="muted small">{r.rows[0]?.bufferFirst ? COPY.buffer : first.kind === 'debt' ? methodReason(s.method) : ''}</p>
         </section>
       )}
@@ -167,6 +176,7 @@ export function Result() {
           </button>
         </>
       )}
+      <HowWeGotThis open={how} onClose={() => setHow(false)} />
       <p class="hand">{COPY.slogan}</p>
       <p class="footer-note">
         {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}

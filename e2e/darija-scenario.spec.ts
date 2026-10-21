@@ -118,8 +118,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByText('months sooner than minimums').locator('..')).toContainText('30');
     await expect(page.getByText('less interest').locator('..')).toContainText('$1,790'); // 1,789.83
     // New rule: only the bills due before the next payday (Medical bill $50 on 1 Nov, Store card $35 on 5 Nov)
-    await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $235');
-    await expect(page.getByTestId('first-step-parts')).toContainText('Bills due $85, yearly bills $42.31, buffer $107.69');
+    await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $235.00');
+    await expect(page.getByTestId('first-step-parts')).toContainText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');
     await expect(page.getByText('When I get paid on Friday, I open PaidInYellow at 7 pm.')).toBeVisible();
     await shot(page, '20-sara-result');
     await startPlan(page);

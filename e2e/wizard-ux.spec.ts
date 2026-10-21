@@ -136,3 +136,23 @@ test('"See an example first" shows Sara\'s result, labelled Example, and saves n
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
   await expect(page.getByLabel('Your next payday')).toHaveValue(''); // nothing from Sara carried over
 });
+
+test('"How we got this" shows the plain math behind the date and the first step', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'See an example first' }).click();
+  // The first step names the bills, and its total adds up to the cent
+  await expect(page.getByTestId('first-step-parts')).toContainText('Yearly bills $42.31 · Buffer $107.69');
+  await expect(page.getByTestId('first-step-parts')).toContainText('Car loan $285 (due 20 Oct)'); // the example starts Fri 16 Oct, so the car loan is the bill before the next payday
+
+  for (const name of ['How we got this date', 'How we got this step']) {
+    await page.getByRole('button', { name }).click();
+    const sheet = page.getByRole('dialog', { name: 'How we got this' });
+    await expect(sheet).toContainText('Your minimums: $466 a month. Spread over 26 paydays a year, that is $215.08 each payday.');
+    await expect(sheet).toContainText('Yearly bills: $1,100 a year, so $42.31 each payday.');
+    await expect(sheet).toContainText('Buffer: $107.69 this payday. It comes first, until it reaches $500. You have $200 now.');
+    await expect(sheet).toContainText('Extra for debts: $0.00 this payday. The buffer takes it first.');
+    await expect(sheet).toContainText('Smallest first, so you see a debt disappear soon.');
+    await sheet.getByRole('button', { name: 'Close' }).click();
+    await expect(sheet).toHaveCount(0);
+  }
+});
