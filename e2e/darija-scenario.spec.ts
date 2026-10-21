@@ -179,7 +179,10 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await iDidIt(page, 'Fri 20 Nov');
     await expectPaidPayday(page, { date: 'Fri 20 Nov', total: 485.01, buffer: 84.62, yearly: 42.31, extra: { amount: 23.08, to: 'Store card' }, debtLeft: 14309.37 });
     await expectBuffer(page, 500);
+    await goTab(page, 'Today');
+    await expect(page.getByTestId('milestone-moment').filter({ hasText: 'Your buffer is full. From now on the extra goes to Store card.' })).toBeVisible();
     await goTab(page, 'Progress');
+    await expect(page.getByRole('listitem', { name: 'Buffer full, reached' })).toBeVisible();
     await expect(page.getByRole('listitem', { name: 'First extra payment, reached' })).toBeVisible();
     await goTab(page, 'Plan');
     await expect(page.getByText(/October 2028 · 49 paydays/)).toBeVisible(); // still 6 Oct 2028: 52 paydays in all

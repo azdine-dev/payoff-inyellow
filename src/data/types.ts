@@ -146,6 +146,7 @@ export interface PaydayLog extends Meta {
 
 export type MilestoneKey =
   | 'plan-made'
+  | 'buffer-full'
   | 'first-extra'
   | 'first-debt'
   | 'pct-10'

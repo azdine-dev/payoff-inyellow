@@ -9,6 +9,7 @@ import { dayMonth, shortDate, shortMonthYear } from '../lib/today';
 import { didPayday, extraPayment, missedPaydays, skipPaydays } from '../state/actions';
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
+import { momentText } from '../state/milestones';
 import { activeDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
 import { act, data, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
@@ -33,6 +34,7 @@ export function Today() {
   const [justPaid, setJustPaid] = useState<JustPaid | null>(null);
   const [paidNames, setPaidNames] = useState<string[]>([]);
   const [skippedNote, setSkippedNote] = useState(false);
+  const [closedMoments, setClosedMoments] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<'amount' | 'extra' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
@@ -155,6 +157,21 @@ export function Today() {
           <p style={{ fontWeight: 600 }}>{COPY.debtPaid}</p>
         </section>
       ))}
+
+      {d.milestones
+        .filter((m) => m.reachedOn === today.value && !closedMoments.has(m.id))
+        .map((m) => {
+          const firstExtra = d.payments.find((p) => p.kind === 'extra');
+          const text = momentText(m.id, focus?.debt.name ?? null, firstExtra?.debtId ? nameOf(firstExtra.debtId) : null);
+          return text ? (
+            <section key={m.id} class="card row" data-testid="milestone-moment" role="status" style={{ background: 'var(--yellow)', borderColor: 'var(--yellow)', color: 'var(--on-yellow)' }}>
+              <span style={{ fontWeight: 600 }}>{text}</span>
+              <button type="button" class="link small" style={{ color: 'var(--on-yellow)' }} onClick={() => setClosedMoments(new Set([...closedMoments, m.id]))}>
+                OK
+              </button>
+            </section>
+          ) : null;
+        })}
 
       {justPaid && (
         <section class="card soft row" role="status">
