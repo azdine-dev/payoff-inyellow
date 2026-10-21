@@ -1,7 +1,7 @@
 /** A ring that fills with the share paid. Ink outline, yellow for the paid part (yellow means paid). */
-export function Ring({ pct, size = 112, label }: { pct: number; size?: number; label: string }) {
+export function Ring({ pct, size = 112, label, showText = true }: { pct: number; size?: number; label: string; showText?: boolean }) {
   const p = Math.max(0, Math.min(100, pct));
-  const stroke = 12;
+  const stroke = size < 64 ? 6 : 12;
   const r = (size - stroke) / 2 - 3;
   const c = 2 * Math.PI * r;
   const mid = size / 2;
@@ -24,7 +24,7 @@ export function Ring({ pct, size = 112, label }: { pct: number; size?: number; l
           />
         )}
       </svg>
-      <span class="ring-text num">{Math.floor(p)}%</span>
+      {showText && <span class="ring-text num">{Math.floor(p)}%</span>}
     </div>
   );
 }

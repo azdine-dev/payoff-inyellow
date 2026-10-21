@@ -337,3 +337,24 @@ test('Quick add: a debt needs only a name, a balance and a rate, and carries a s
   await expect(page.getByTestId('min-pending')).toHaveCount(0);
   await expect(card).toContainText('minimum $40');
 });
+
+test('ticking items on payday shows what is left, with a small ring that fills', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  await quickSetup(page);
+  const money = (s: string) => Number(s.replace(/[^0-9.]/g, ''));
+  const total = money((await page.getByRole('button', { name: /^I did it/ }).innerText()).split('·')[1]!);
+  await expect(page.getByTestId('left-this-payday')).toHaveCount(0); // nothing ticked yet
+
+  const extra = page.getByRole('checkbox', { name: /Extra →/ });
+  const extraAmount = money((await extra.innerText()).match(/\$[\d,.]+/)![0]);
+  await extra.click();
+  const left = page.getByTestId('left-this-payday');
+  await expect(left).toContainText(`Left this payday: $${(total - extraAmount).toFixed(2)}`);
+  const ring = left.getByRole('progressbar', { name: 'Done this payday' });
+  await expect(ring).toHaveAttribute('aria-valuenow', String(Math.round((extraAmount / total) * 100)));
+
+  // Untick: back to nothing. "I did it" is still there to tick everything at once.
+  await extra.click();
+  await expect(left).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
+});

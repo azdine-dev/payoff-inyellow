@@ -5,7 +5,7 @@ import { dailyInterestCost, growingDebts, PAYDAYS_PER_YEAR, planNeedsHelp, simul
 import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
-import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
+import { formatMoney, formatMoneyAuto, parseAmount, toCents } from '../lib/money';
 import { dayMonth, relativeDay, shortDate, shortMonthYear } from '../lib/today';
 import { didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
@@ -16,6 +16,7 @@ import { showNotice } from '../state/notice';
 import { activeDebts, nextPaydayISO, toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
+import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { StatusLine } from '../ui/StatusLine';
 import { comingUp, dueLine, focusDebt, paydayLines, payThisPayday, whyFirst } from './model';
@@ -96,6 +97,11 @@ export function Today() {
     setChecked(next);
     if (lines.length && next.size === lines.length) void apply();
   };
+
+  // What is ticked so far, and what is left of this payday
+  const doneCents = lines.filter((l) => checked.has(l.key)).reduce((sum, l) => sum + l.amount, 0);
+  const leftCents = Math.max(0, toCents(total - doneCents));
+  const doneShare = total > 0 ? (doneCents / total) * 100 : 0;
 
   const doUndo = async () => {
     if (!undo) return;
@@ -342,6 +348,14 @@ export function Today() {
                     Use the usual amount
                   </button>
                 </p>
+              )}
+              {checked.size > 0 && (
+                <div class="row" style={{ justifyContent: 'flex-start', gap: 12, margin: '10px 0 0 34px' }} data-testid="left-this-payday" role="status">
+                  <Ring pct={doneShare} size={44} label="Done this payday" showText={false} />
+                  <span>
+                    Left this payday: <b class="num">{formatMoney(leftCents, cur)}</b>
+                  </span>
+                </div>
               )}
               <button type="button" class={`btn${busy ? ' done' : ''}`} style={{ marginTop: 10 }} onClick={() => void apply()} disabled={busy}>
                 {COPY.didIt} · <span class="num">{formatMoneyAuto(total, cur)}</span>
