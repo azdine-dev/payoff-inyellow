@@ -1,6 +1,7 @@
 /** Setup wizard: shorter and clearer. One debt open at a time, gentle checks, money step, currency, example. */
 import { expect, test } from '@playwright/test';
 import { FIXED } from './helpers';
+import { expectBrandRules } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -115,6 +116,7 @@ test('the currency is a small line on the pay schedule step, with Change', async
 test('"See an example first" shows Sara\'s result, labelled Example, and saves nothing', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'See an example first' }).click();
+  await expectBrandRules(page);
   await expect(page.getByTestId('example-banner')).toContainText('Example');
   await expect(page.getByTestId('example-banner')).toContainText('Sara');
   await expect(page.getByTestId('debt-free-date')).toBeVisible();
@@ -234,6 +236,7 @@ test('Progress starts with a countdown and shows the share paid as a ring', asyn
   await expect(countdown).toContainText(/Debt-free [A-Z][a-z]+ 20\d\d/);
   const ring = page.getByRole('progressbar', { name: 'Debt paid off' });
   await expect(ring).toHaveAttribute('aria-valuenow', '0');
+  await expectBrandRules(page); // no red, no yellow text, no loan or transfer words
   const before = Number((await countdown.innerText()).match(/(\d+) paydays to go/)![1]);
 
   await goTab(page, 'Today');
@@ -257,6 +260,7 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   await expect(oct23.locator('.tag').first()).toBeVisible(); // Extra (and the bills)
   await expect(oct23.locator('.tag.paid')).toHaveCount(0); // outline until it is paid
   // Done is empty at first
+  await expectBrandRules(page);
   await showPaydays(page, 'Done');
   await expect(page.getByText('No paydays done yet.')).toBeVisible();
 
