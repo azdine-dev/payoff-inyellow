@@ -2,6 +2,7 @@
 import { useState } from 'preact/hooks';
 import { COPY } from '../../lib/copy';
 import { parseAmount } from '../../lib/money';
+import { ordinal } from '../../lib/today';
 import { Field, Note, NumberInput } from '../../ui/controls';
 import { emptyDebt, type DraftDebt } from '../draft';
 import type { StepProps } from '../Wizard';
@@ -13,6 +14,27 @@ function grows(d: DraftDebt): boolean {
   const apr = parseAmount(d.apr) ?? 0;
   const min = parseAmount(d.min);
   return bal > 0 && apr > 0 && min !== null && min <= (bal * apr) / 1200;
+}
+
+/** Name, balance, rate and minimum are all there (the due day and type are optional). */
+export function debtComplete(d: DraftDebt): boolean {
+  return d.name.trim() !== '' && parseAmount(d.balance) !== null && parseAmount(d.apr) !== null && parseAmount(d.min) !== null;
+}
+
+const plain = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+/** "Visa · $3,200 · 22.9% · $96/mo · due 12th" */
+export function debtSummary(d: DraftDebt, symbol: string, index: number): string {
+  const bits = [d.name.trim() || `Debt ${index + 1}`];
+  const bal = parseAmount(d.balance);
+  const apr = parseAmount(d.apr);
+  const min = parseAmount(d.min);
+  if (bal !== null) bits.push(`${symbol}${plain(bal)}`);
+  if (apr !== null) bits.push(`${plain(apr)}%`);
+  if (min !== null) bits.push(`${symbol}${plain(min)}/mo`);
+  const day = Number(d.dueDay);
+  if (d.dueDay.trim() && Number.isInteger(day) && day >= 1 && day <= 31) bits.push(`due ${ordinal(day)}`);
+  return bits.join(' · ');
 }
 
 function DebtCard(props: { debt: DraftDebt; index: number; symbol: string; canRemove: boolean; onChange: (p: Partial<DraftDebt>) => void; onRemove: () => void }) {
@@ -73,22 +95,47 @@ function DebtCard(props: { debt: DraftDebt; index: number; symbol: string; canRe
 
 export function DebtsStep({ draft, set }: StepProps) {
   const update = (key: string, patch: Partial<DraftDebt>) => set({ debts: draft.debts.map((d) => (d.key === key ? { ...d, ...patch } : d)) });
+  // Only the debt being filled in is open. The rest are one line each, with Edit.
+  const [openKey, setOpenKey] = useState<string | null>(() => draft.debts.find((d) => !debtComplete(d))?.key ?? null);
   return (
     <div class="stack">
       <h1>Your debts</h1>
       <p class="muted">Cards, loans, medical bills, money from family. You find the rate and minimum on your statement.</p>
-      {draft.debts.map((d, i) => (
-        <DebtCard
-          key={d.key}
-          debt={d}
-          index={i}
-          symbol={draft.currencySymbol}
-          canRemove={draft.debts.length > 1}
-          onChange={(p) => update(d.key, p)}
-          onRemove={() => set({ debts: draft.debts.filter((x) => x.key !== d.key) })}
-        />
-      ))}
-      <button type="button" class="btn ghost" onClick={() => set({ debts: [...draft.debts, emptyDebt()] })}>
+      {draft.debts.map((d, i) =>
+        d.key === openKey ? (
+          <DebtCard
+            key={d.key}
+            debt={d}
+            index={i}
+            symbol={draft.currencySymbol}
+            canRemove={draft.debts.length > 1}
+            onChange={(p) => update(d.key, p)}
+            onRemove={() => {
+              set({ debts: draft.debts.filter((x) => x.key !== d.key) });
+              setOpenKey(null);
+            }}
+          />
+        ) : (
+          <div key={d.key} class="card row debt-sum" data-testid="debt-summary">
+            <span class="num" style={{ flex: 1 }}>
+              {debtSummary(d, draft.currencySymbol, i)}
+              {!debtComplete(d) && <span class="muted small"> · needs details</span>}
+            </span>
+            <button type="button" class="link" aria-label={`Edit ${d.name.trim() || `debt ${i + 1}`}`} onClick={() => setOpenKey(d.key)}>
+              Edit
+            </button>
+          </div>
+        ),
+      )}
+      <button
+        type="button"
+        class="btn ghost"
+        onClick={() => {
+          const fresh = emptyDebt();
+          set({ debts: [...draft.debts, fresh] });
+          setOpenKey(fresh.key);
+        }}
+      >
         Add another
       </button>
     </div>

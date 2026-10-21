@@ -38,7 +38,9 @@ test('"Change my numbers" starts from the current answers and recalculates', asy
   await expect(page.getByRole('heading', { name: 'Your currency' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click(); // currency
   await page.getByRole('button', { name: 'Continue' }).click(); // schedule
-  await expect(page.locator('fieldset').nth(0).getByLabel('Name')).toHaveValue('Visa');
+  await expect(page.getByTestId('debt-summary').first()).toContainText('Visa · $3,200 · 22.9% · $96/mo · due 12th'); // a finished debt is one line
+  await page.getByRole('button', { name: 'Edit Visa' }).click();
+  await expect(page.locator('fieldset').getByLabel('Name')).toHaveValue('Visa');
   await page.getByRole('button', { name: 'Continue' }).click(); // debts
   await page.getByRole('button', { name: 'Continue' }).click(); // buffer
   await page.getByLabel('Money for the plan each payday').fill('400');

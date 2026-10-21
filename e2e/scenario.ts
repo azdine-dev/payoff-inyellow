@@ -115,7 +115,7 @@ export async function runWizard(page: Page, c: WizardConfig) {
   await next.click();
   for (const [i, d] of c.debts.entries()) {
     if (i > 0) await page.getByRole('button', { name: 'Add another' }).click();
-    const card = page.locator('fieldset').nth(i);
+    const card = page.locator('fieldset').last();
     await card.getByLabel('Name').fill(d.name);
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);

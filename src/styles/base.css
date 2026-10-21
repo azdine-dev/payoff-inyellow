@@ -477,6 +477,13 @@ select {
   fill: var(--yellow);
 }
 
+/* A finished debt in the setup wizard: one line */
+.debt-sum {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 56px;
+}
+
 /* A whole debt card is one tap target */
 .debt-hit {
   cursor: pointer;

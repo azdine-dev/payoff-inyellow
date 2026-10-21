@@ -45,7 +45,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   // Debts
   for (const [i, d] of debts.entries()) {
     if (i > 0) await page.getByRole('button', { name: 'Add another' }).click();
-    const card = page.locator('fieldset').nth(i);
+    const card = page.locator('fieldset').last();
     await card.getByLabel('Name').fill(d.name);
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
@@ -138,7 +138,7 @@ async function quickSetup(page: Page) {
   await next.click();
   for (const [i, d] of debts.slice(0, 2).entries()) {
     if (i > 0) await page.getByRole('button', { name: 'Add another' }).click();
-    const card = page.locator('fieldset').nth(i);
+    const card = page.locator('fieldset').last();
     await card.getByLabel('Name').fill(d.name);
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);

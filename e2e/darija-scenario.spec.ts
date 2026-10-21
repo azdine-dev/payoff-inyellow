@@ -64,7 +64,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     ];
     for (const [i, d] of debts.entries()) {
       if (i > 0) await page.getByRole('button', { name: 'Add another' }).click();
-      const card = page.locator('fieldset').nth(i);
+      const card = page.locator('fieldset').last();
       await card.getByLabel('Name').fill(d.name);
       await card.getByLabel('Balance').fill(d.balance);
       await card.getByLabel('Interest rate').fill(d.apr);
