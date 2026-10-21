@@ -1,4 +1,5 @@
 /** Progress (mockup screen 3): paid so far, chart, payday grid, milestones. */
+import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { CheckIcon, Bar } from '../ui/controls';
 import { chartData } from '../lib/series';
@@ -53,6 +54,7 @@ export function Progress() {
   return (
     <main class="screen with-tabs">
       <h1>Progress</h1>
+      <StatusLine />
 
       <section class="card stack" aria-label="Paid so far">
         <p class="label">Paid so far</p>

@@ -1,4 +1,5 @@
 /** Money tab: buffer, yearly bills, "Find your first $500", debt share of pay. */
+import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
@@ -92,6 +93,7 @@ export function Money() {
   return (
     <main class="screen with-tabs">
       <h1>Money</h1>
+      <StatusLine />
 
       <section class="card stack" aria-labelledby="buffer-title">
         <div class="row">

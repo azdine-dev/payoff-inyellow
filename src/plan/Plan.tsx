@@ -1,4 +1,5 @@
 /** Plan: payday list, method switch, what-if, export. */
+import { StatusLine } from '../ui/StatusLine';
 import { useMemo, useState } from 'preact/hooks';
 import { compareMethods, type PayoffMethod } from '../engine';
 import { downloadText, planToCsv } from '../lib/csv';
@@ -63,6 +64,7 @@ export function Plan() {
   return (
     <main class="screen with-tabs">
       <h1>Plan</h1>
+      <StatusLine />
 
       <section class="card stack" aria-label="Debt-free date">
         {r.debtFreeDate ? (

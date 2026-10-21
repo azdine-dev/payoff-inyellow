@@ -1,4 +1,5 @@
 /** Debts tab: one card per debt, add, edit, archive, new charge, update from statement. */
+import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { growingDebts } from '../engine';
 import type { ChargeTag, Debt } from '../data/types';
@@ -159,6 +160,7 @@ export function Debts() {
   return (
     <main class="screen with-tabs">
       <h1>Debts</h1>
+      <StatusLine />
       {sorted.map(card)}
       {!active.length && <p class="card">No debts to pay right now.</p>}
       <button type="button" class="btn ghost" onClick={() => setMode({ kind: 'add' })}>

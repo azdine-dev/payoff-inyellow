@@ -14,6 +14,7 @@ import { activeDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
 import { act, data, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
 import { NeedsHelp } from '../ui/NeedsHelp';
+import { StatusLine } from '../ui/StatusLine';
 import { comingUp, dueLine, focusDebt, paydayLines } from './model';
 
 interface JustPaid {
@@ -161,6 +162,8 @@ export function Today() {
           </button>
         </div>
       </header>
+
+      <StatusLine />
 
       {backupDue(s.lastBackupAt, s.setupDoneAt) && (
         <section class="card soft row" aria-label="Backup reminder">

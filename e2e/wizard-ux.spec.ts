@@ -173,3 +173,24 @@ test('the what-if shows each quick amount as a change, not a second plan', async
   await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
   await expect(page.getByLabel('Add money each payday')).toHaveValue('0');
 });
+
+test('every main tab has the same header line, and the paydays left count down at "I did it"', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  const { goTab, tapDidIt } = await import('./scenario');
+  await quickSetup(page);
+  const line = page.getByTestId('status-line');
+  const left = async () => Number((await line.innerText()).match(/(\d+) paydays? left/)![1]);
+
+  const first = await line.innerText();
+  expect(first).toMatch(/^Debt-free [A-Z][a-z]{2} 20\d\d · \d+ paydays left$/);
+  for (const tab of ['Plan', 'Debts', 'Progress', 'Money', 'Today'] as const) {
+    await goTab(page, tab);
+    await expect(line).toHaveText(first);
+  }
+  const before = await left();
+  await tapDidIt(page);
+  await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
+  expect(await left()).toBe(before - 1);
+  await goTab(page, 'Progress');
+  expect(await left()).toBe(before - 1);
+});
