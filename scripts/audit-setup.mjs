@@ -55,10 +55,7 @@ await snap('01-welcome');
 
 const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
 await next.click();
-await snap('02-currency');
-await page.getByLabel('Currency').selectOption('USD');
-await next.click();
-await snap('03-schedule');
+await snap('02-schedule'); // the currency is a small line on this screen
 await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
 await page.getByLabel('Your next payday').fill('2026-10-23');
 await next.click();
@@ -70,7 +67,7 @@ const debts = [
 ];
 for (const [i, d] of debts.entries()) {
   if (i > 0) await page.getByRole('button', { name: 'Add another' }).click();
-  const card = page.locator('fieldset').nth(i);
+  const card = page.locator('fieldset').last(); // one debt is open at a time
   await card.getByLabel('Name').fill(d.name);
   await card.getByLabel('Balance').fill(d.balance);
   await card.getByLabel('Interest rate').fill(d.apr);
@@ -115,8 +112,8 @@ await snap('13-settings');
 // Time a person would need: 1.5 s per tap, 4 s to reach and focus a field, 0.35 s per character, 3 s reading each screen.
 const seconds = (m, screens) => Math.round(m.taps * 1.5 + m.fields * 4 + m.chars * 0.35 + screens * 3);
 const result = {
-  toResult: { ...marks.result, screens: 10, minutes: +(seconds(marks.result, 10) / 60).toFixed(1) },
-  toToday: { ...marks.today, screens: 11, minutes: +(seconds(marks.today, 11) / 60).toFixed(1) },
+  toResult: { ...marks.result, screens: 9, minutes: +(seconds(marks.result, 10) / 60).toFixed(1) },
+  toToday: { ...marks.today, screens: 10, minutes: +(seconds(marks.today, 11) / 60).toFixed(1) },
 };
 console.log(JSON.stringify(result, null, 2));
 await browser.close();

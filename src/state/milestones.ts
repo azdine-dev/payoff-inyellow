@@ -22,6 +22,16 @@ export const MILESTONE_ORDER = Object.keys(MILESTONE_LABELS) as MilestoneKey[];
 
 const PCT: Partial<Record<MilestoneKey, number>> = { 'pct-10': 10, 'pct-25': 25, 'pct-50': 50, 'pct-75': 75 };
 
+/** "about 2 years", "about 21 months", "less than a month": how long the paydays left are in plain words. */
+export function horizonText(paydaysLeft: number, paydaysPerYear: number): string {
+  const months = Math.round((paydaysLeft * 12) / paydaysPerYear);
+  if (months < 1) return 'less than a month';
+  if (months === 1) return 'about 1 month';
+  if (months < 24) return `about ${months} months`;
+  const years = Math.round((months / 12) * 2) / 2; // to the nearest half year
+  return `about ${years} years`;
+}
+
 export interface ProgressStats {
   start: number;
   owed: number;

@@ -222,3 +222,25 @@ test('a calm Today: at most 3 cards above the fold, and every card has room arou
   expect(stats.padding).toBeGreaterThanOrEqual(20);
   expect(stats.minGap).toBeGreaterThanOrEqual(16);
 });
+
+test('Progress starts with a countdown and shows the share paid as a ring', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  const { goTab, tapDidIt } = await import('./scenario');
+  await quickSetup(page);
+  await goTab(page, 'Progress');
+  const countdown = page.getByTestId('countdown');
+  await expect(countdown).toContainText(/\d+ paydays to go/);
+  await expect(countdown).toContainText(/about \d+(\.5)? (years|months)/);
+  await expect(countdown).toContainText(/Debt-free [A-Z][a-z]+ 20\d\d/);
+  const ring = page.getByRole('progressbar', { name: 'Debt paid off' });
+  await expect(ring).toHaveAttribute('aria-valuenow', '0');
+  const before = Number((await countdown.innerText()).match(/(\d+) paydays to go/)![1]);
+
+  await goTab(page, 'Today');
+  await tapDidIt(page);
+  await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
+  await goTab(page, 'Progress');
+  expect(Number((await countdown.innerText()).match(/(\d+) paydays to go/)![1])).toBe(before - 1);
+  await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
+  expect(Number(await ring.getAttribute('aria-valuenow'))).toBeGreaterThan(0);
+});

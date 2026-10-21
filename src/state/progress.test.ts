@@ -167,3 +167,17 @@ describe('plan tab', () => {
     expect(withDays.split('\r\n')[1]).toMatch(/^1,2026-10-23,285\.00,/);
   });
 });
+
+import { horizonText } from './milestones';
+
+describe('horizonText', () => {
+  it('says how long the paydays left are, in plain words', () => {
+    expect(horizonText(52, 26)).toBe('about 2 years'); // 52 paydays every 2 weeks
+    expect(horizonText(45, 26)).toBe('about 21 months');
+    expect(horizonText(60, 26)).toBe('about 2.5 years');
+    expect(horizonText(2, 26)).toBe('about 1 month');
+    expect(horizonText(1, 26)).toBe('less than a month');
+    expect(horizonText(12, 12)).toBe('about 12 months');
+    expect(horizonText(52, 52)).toBe('about 12 months');
+  });
+});

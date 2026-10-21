@@ -1,12 +1,14 @@
 /** Progress (mockup screen 3): paid so far, chart, payday grid, milestones. */
 import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
-import { CheckIcon, Bar } from '../ui/controls';
+import { CheckIcon } from '../ui/controls';
+import { Ring } from '../ui/Ring';
+import { PAYDAYS_PER_YEAR } from '../engine';
 import { chartData } from '../lib/series';
 import { formatMoney } from '../lib/money';
 import { makeMilestoneImage, shareImage } from '../lib/shareImage';
 import { addDaysISO, monthYear, shortDate, shortMonthYear } from '../lib/today';
-import { MILESTONE_LABELS, MILESTONE_ORDER, progressStats, projectedDate } from '../state/milestones';
+import { horizonText, MILESTONE_LABELS, MILESTONE_ORDER, progressStats, projectedDate } from '../state/milestones';
 import { activeDebts, countedDebts } from '../state/planInput';
 import { data, plan, today } from '../state/store';
 import { Chart } from './Chart';
@@ -56,18 +58,40 @@ export function Progress() {
       <h1>Progress</h1>
       <StatusLine />
 
-      <section class="card stack" aria-label="Paid so far">
-        <p class="label">Paid so far</p>
-        <p class="num" style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '2.4rem', lineHeight: 1.1 }} data-testid="paid-so-far">
-          {formatMoney(stats.paid, cur, { whole: true })}
-        </p>
-        <Bar pct={stats.pct} label="Debt paid off" />
-        <p class="muted small num">
-          {Math.floor(stats.pct)}% of {formatMoney(stats.start, cur, { whole: true })}
-          {paydaysLeft !== null ? ` · ${paydaysLeft} paydays left` : ''}
-        </p>
-        <p class="muted small">This is how much your balances went down. They move in even steps from payday to payday, while Today lists each bill on the payday before it is due.</p>
+      <section class="card stack" aria-label="Countdown" data-testid="countdown">
+        {paydaysLeft === null ? (
+          <>
+            <p class="countdown-number">A long way to go</p>
+            <p class="muted">More than 20 years at this pace. The what-if on the Plan tab can help.</p>
+          </>
+        ) : paydaysLeft === 0 ? (
+          <p class="countdown-number">Debt-free</p>
+        ) : (
+          <>
+            <p class="countdown-number num">
+              {paydaysLeft} payday{paydaysLeft === 1 ? '' : 's'} to go
+            </p>
+            <p class="muted">{horizonText(paydaysLeft, PAYDAYS_PER_YEAR[d.settings.frequency])}</p>
+            {r.debtFreeDate && (
+              <p>
+                Debt-free <span class="hl">{monthYear(r.debtFreeDate)}</span>
+              </p>
+            )}
+          </>
+        )}
       </section>
+
+      <section class="card row ring-card" aria-label="Paid so far">
+        <Ring pct={stats.pct} label="Debt paid off" />
+        <div class="stack" style={{ gap: 4, flex: 1 }}>
+          <p class="label">Paid so far</p>
+          <p class="num" style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1.9rem', lineHeight: 1.1 }} data-testid="paid-so-far">
+            {formatMoney(stats.paid, cur, { whole: true })}
+          </p>
+          <p class="muted small num">of {formatMoney(stats.start, cur, { whole: true })}</p>
+        </div>
+      </section>
+      <p class="muted small">Balances move in even steps from payday to payday, while Today lists each bill on the payday before it is due.</p>
 
       <div class="grid-2">
         <div class="card">
