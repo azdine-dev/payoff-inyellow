@@ -44,3 +44,23 @@ test('a finished debt becomes one line, and only one debt is open at a time', as
   await expect(card.getByLabel('Name')).toHaveValue('Visa');
   await expect(card.getByLabel('Balance')).toHaveValue('3200');
 });
+
+test('a number that looks like a typo is asked about, and never blocks', async ({ page }) => {
+  await toDebts(page);
+  const card = page.locator('fieldset');
+  await card.getByLabel('Name').fill('Visa');
+  await card.getByLabel('Balance').fill('$3,200');
+  await card.getByLabel('Interest rate').fill('2290');
+  await card.getByLabel('Monthly minimum').fill('96');
+  await expect(card).toContainText('Is 2290% right? Most cards are 15-30%.');
+  // It is only a question: Continue still works, and the pasted "$3,200" was understood
+  await next(page).click();
+  await expect(page.getByRole('heading', { name: 'Your buffer' })).toBeVisible();
+
+  // Low minimum for the balance
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Edit Visa' }).click();
+  await card.getByLabel('Interest rate').fill('24');
+  await card.getByLabel('Monthly minimum').fill('20');
+  await expect(card).toContainText('At this minimum the balance won’t go down. Check the statement.');
+});

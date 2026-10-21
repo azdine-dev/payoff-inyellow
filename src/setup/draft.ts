@@ -188,7 +188,7 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
         const apr = amount(d.apr);
         const min = amount(d.min);
         if (bal === null || bal < 0) notes.push(`${name}: add the balance you owe.`);
-        if (apr === null || apr < 0 || apr > 100) notes.push(`${name}: add the interest rate, from 0 to 100. Type 0 if there is none.`);
+        if (apr === null || apr < 0 || apr > 10000) notes.push(`${name}: add the interest rate, like 22.9. Type 0 if there is none.`);
         if (min === null || min < 0) notes.push(`${name}: add the monthly minimum. Type 0 if there is none.`);
         if (d.dueDay.trim()) {
           const day = Number(d.dueDay);

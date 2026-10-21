@@ -9,6 +9,24 @@ import type { StepProps } from '../Wizard';
 
 const TYPES = ['Credit card', 'Store card', 'Car loan', 'Student loan', 'Medical bill', 'Personal loan', 'Family or friend', 'Other'];
 
+/** "22.9" as 22.9, whatever way it was typed or pasted. */
+const rate = (n: number) => String(Math.round(n * 100) / 100);
+
+/**
+ * Quiet questions about numbers that look like a typo. They are only questions: nothing is blocked,
+ * and the buyer can keep what they typed.
+ */
+export function debtChecks(d: DraftDebt): string[] {
+  const out: string[] = [];
+  const bal = parseAmount(d.balance);
+  const apr = parseAmount(d.apr);
+  const min = parseAmount(d.min);
+  if (apr !== null && apr > 60) out.push(`Is ${rate(apr)}% right? Most cards are 15-30%.`);
+  if (bal !== null && min !== null && bal > 0 && min > bal) out.push('Your minimum is larger than the balance. Is that right?');
+  if (grows(d)) out.push('At this minimum the balance won’t go down. Check the statement.');
+  return out;
+}
+
 function grows(d: DraftDebt): boolean {
   const bal = parseAmount(d.balance) ?? 0;
   const apr = parseAmount(d.apr) ?? 0;
@@ -68,6 +86,9 @@ function DebtCard(props: { debt: DraftDebt; index: number; symbol: string; canRe
       <Field label="Due day (recommended)" hint="It’s on your statement.">
         <input type="text" inputMode="numeric" maxLength={2} value={d.dueDay} onInput={(e) => props.onChange({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
       </Field>
+      {debtChecks(d).map((n) => (
+        <Note key={n}>{n}</Note>
+      ))}
       {grows(d) && <Note>{COPY.debtGrows}</Note>}
       {more ? (
         <>
