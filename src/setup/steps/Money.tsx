@@ -1,7 +1,9 @@
 /** Buffer, Money for the plan, Yearly bills */
+import { PAYDAYS_PER_YEAR } from '../../engine';
 import { COPY } from '../../lib/copy';
+import { parseAmount } from '../../lib/money';
 import { Field, NumberInput } from '../../ui/controls';
-import { MONTH_CHOICES, newFund, type DraftFund } from '../draft';
+import { filledDebts, MONTH_CHOICES, newFund, type Draft, type DraftFund } from '../draft';
 import type { StepProps } from '../Wizard';
 
 export function BufferStep({ draft, set }: StepProps) {
@@ -19,13 +21,41 @@ export function BufferStep({ draft, set }: StepProps) {
   );
 }
 
+const EXTRA_CHIPS = [20, 50, 100, 150];
+const whole = (symbol: string, n: number) => `${symbol}${Math.round(n).toLocaleString('en-US')}`;
+
+/** "Your minimums: $466 a month, about $215 each payday." Null until a debt has a minimum. */
+export function minimumsLine(draft: Pick<Draft, 'debts' | 'frequency' | 'currencySymbol'>): string | null {
+  const monthly = filledDebts(draft as Draft).reduce((s, d) => s + Math.max(0, parseAmount(d.min) ?? 0), 0);
+  if (monthly <= 0) return null;
+  const ppy = draft.frequency ? PAYDAYS_PER_YEAR[draft.frequency] : null;
+  const sym = draft.currencySymbol;
+  return ppy
+    ? `Your minimums: ${whole(sym, monthly)} a month, about ${whole(sym, (monthly * 12) / ppy)} each payday.`
+    : `Your minimums: ${whole(sym, monthly)} a month.`;
+}
+
 export function ExtraStep({ draft, set }: StepProps) {
+  const line = minimumsLine(draft);
+  const current = parseAmount(draft.extra);
   return (
     <div class="stack">
       <h1>Money for the plan</h1>
+      {line && (
+        <p class="card" data-testid="minimums-line">
+          {line}
+        </p>
+      )}
       <Field label="How much can you put toward the plan each payday, on top of your minimums?" hint={COPY.extraHint}>
         <NumberInput pre={draft.currencySymbol} value={draft.extra} onInput={(v) => set({ extra: v })} label="Money for the plan each payday" />
       </Field>
+      <div class="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8 }} role="group" aria-label="Quick amounts">
+        {EXTRA_CHIPS.map((n) => (
+          <button key={n} type="button" class="pill plain chip" aria-pressed={current === n} style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => set({ extra: String(n) })}>
+            {draft.currencySymbol}{n}
+          </button>
+        ))}
+      </div>
       <p class="muted small">It fills your yearly bills and your buffer first, then goes to one debt at a time.</p>
     </div>
   );

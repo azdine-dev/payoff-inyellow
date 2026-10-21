@@ -423,6 +423,12 @@ select {
   color: var(--ink);
 }
 
+/* A quick-amount chip you picked: ink, never yellow (yellow means paid) */
+.pill.chip[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
 /* ---------- tab bar ---------- */
 
 .tabbar {

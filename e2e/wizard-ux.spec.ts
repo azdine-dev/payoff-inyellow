@@ -64,3 +64,34 @@ test('a number that looks like a typo is asked about, and never blocks', async (
   await card.getByLabel('Monthly minimum').fill('20');
   await expect(card).toContainText('At this minimum the balance won’t go down. Check the statement.');
 });
+
+test('the money step shows the minimums first and has quick amounts', async ({ page }) => {
+  await toDebts(page);
+  const card = page.locator('fieldset');
+  const add = async (name: string, balance: string, apr: string, min: string) => {
+    await card.getByLabel('Name').fill(name);
+    await card.getByLabel('Balance').fill(balance);
+    await card.getByLabel('Interest rate').fill(apr);
+    await card.getByLabel('Monthly minimum').fill(min);
+  };
+  await add('Visa', '3200', '22.9', '96');
+  await page.getByRole('button', { name: 'Add another' }).click();
+  await add('Store card', '640', '26.99', '35');
+  await page.getByRole('button', { name: 'Add another' }).click();
+  await add('Car loan', '9800', '7.5', '285');
+  await page.getByRole('button', { name: 'Add another' }).click();
+  await add('Medical bill', '1150', '0', '50');
+  await next(page).click(); // debts
+  await next(page).click(); // buffer
+
+  await expect(page.getByRole('heading', { name: 'Money for the plan' })).toBeVisible();
+  await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month, about $215 each payday.');
+  const field = page.getByLabel('Money for the plan each payday');
+  await page.getByRole('button', { name: '$100' }).click();
+  await expect(field).toHaveValue('100');
+  await expect(page.getByRole('button', { name: '$100' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '$20' }).click();
+  await expect(field).toHaveValue('20');
+  await field.fill('135'); // still editable
+  await expect(page.getByRole('button', { name: '$20' })).toHaveAttribute('aria-pressed', 'false');
+});

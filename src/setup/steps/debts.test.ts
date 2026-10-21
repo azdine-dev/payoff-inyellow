@@ -56,3 +56,23 @@ describe('quiet questions about numbers that look like a typo', () => {
     expect(debtChecks(full({ balance: '$10,000', apr: '24', min: '$150.00' }))).toEqual(['At this minimum the balance won’t go down. Check the statement.']);
   });
 });
+
+import { minimumsLine } from './Money';
+
+describe('the minimums line on the money step', () => {
+  const sara = ['96', '35', '285', '50'].map((min, i) => debt({ key: `k${i}`, name: `D${i}`, balance: '1000', apr: '10', min }));
+
+  it("Sara's minimums: $466 a month, about $215 each payday (every 2 weeks)", () => {
+    expect(minimumsLine({ debts: sara, frequency: 'biweekly', currencySymbol: '$' })).toBe('Your minimums: $466 a month, about $215 each payday.');
+  });
+
+  it('follows the pay schedule', () => {
+    expect(minimumsLine({ debts: sara, frequency: 'weekly', currencySymbol: '$' })).toBe('Your minimums: $466 a month, about $108 each payday.');
+    expect(minimumsLine({ debts: sara, frequency: 'monthly', currencySymbol: '$' })).toBe('Your minimums: $466 a month, about $466 each payday.');
+  });
+
+  it('has no line until a debt has a minimum, and skips the payday part without a schedule', () => {
+    expect(minimumsLine({ debts: [debt({})], frequency: 'biweekly', currencySymbol: '$' })).toBeNull();
+    expect(minimumsLine({ debts: sara, frequency: '', currencySymbol: '€' })).toBe('Your minimums: €466 a month.');
+  });
+});
