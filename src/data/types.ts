@@ -81,6 +81,8 @@ export interface Debt extends Meta {
   /** percent */
   apr: number;
   minMonthly: number;
+  /** Added with the quick add: the minimum is not known yet (it counts as 0 until it is typed in) */
+  minPending?: boolean;
   dueDay: number | null;
   autopay: boolean;
   myOrder: number | null;

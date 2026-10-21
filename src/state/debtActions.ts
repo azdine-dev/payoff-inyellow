@@ -10,6 +10,8 @@ export interface DebtFields {
   balance: number;
   apr: number;
   minMonthly: number;
+  /** True when the minimum was left empty (quick add) */
+  minPending?: boolean;
   dueDay: number | null;
   autopay: boolean;
 }

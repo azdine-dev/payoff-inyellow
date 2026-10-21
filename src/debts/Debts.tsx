@@ -29,11 +29,13 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     name: debt?.name ?? '',
     balance: debt ? str(debt.balance) : '',
     apr: debt ? str(debt.apr) : '',
-    min: debt ? str(debt.minMonthly) : '',
+    min: debt && !debt.minPending ? str(debt.minMonthly) : '',
     dueDay: debt?.dueDay ? String(debt.dueDay) : '',
     autopay: debt?.autopay ?? false,
   });
   const [note, setNote] = useState('');
+  // A new debt starts as a quick add: name, balance and rate. Editing shows everything.
+  const [more, setMore] = useState(Boolean(debt));
   const set = (p: Partial<typeof f>) => setF({ ...f, ...p });
 
   const save = () => {
@@ -44,9 +46,10 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     if (!f.name.trim()) return setNote('Give this debt a name.');
     if (balance === null || balance < 0) return setNote('Add the balance you owe.');
     if (apr === null || apr < 0 || apr > 100) return setNote('Add the interest rate, from 0 to 100. Type 0 if there is none.');
-    if (min === null || min < 0) return setNote('Add the monthly minimum. Type 0 if there is none.');
+    // The minimum can wait: left empty it counts as 0 and the debt carries a soft tag until it is added
+    if (f.min.trim() && (min === null || min < 0)) return setNote('The monthly minimum should be a number. Type 0 if there is none.');
     if (day !== null && (!Number.isInteger(day) || day < 1 || day > 31)) return setNote('The due day is a day of the month, from 1 to 31.');
-    onSave({ name: f.name.trim(), type: debt?.type ?? '', balance, apr, minMonthly: min, dueDay: day, autopay: f.autopay });
+    onSave({ name: f.name.trim(), type: debt?.type ?? '', balance, apr, minMonthly: min ?? 0, minPending: !f.min.trim(), dueDay: day, autopay: f.autopay });
   };
 
   return (
@@ -57,21 +60,28 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
       <Field label="Balance you owe">
         <NumberInput pre={symbol} value={f.balance} onInput={(v) => set({ balance: v })} label="Balance" />
       </Field>
-      <div class="grid-2">
-        <Field label="Interest rate">
-          <NumberInput post="%" value={f.apr} onInput={(v) => set({ apr: v })} label="Interest rate" />
-        </Field>
-        <Field label="Monthly minimum">
-          <NumberInput pre={symbol} value={f.min} onInput={(v) => set({ min: v })} label="Monthly minimum" />
-        </Field>
-      </div>
-      <Field label="Due day (recommended)" hint="It’s on your statement.">
-        <input type="text" inputMode="numeric" maxLength={2} value={f.dueDay} onInput={(e) => set({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
+      <Field label="Interest rate" hint="Example: 22.9. It’s on your statement as APR.">
+        <NumberInput post="%" value={f.apr} onInput={(v) => set({ apr: v })} label="Interest rate" />
       </Field>
-      <label class="row" style={{ justifyContent: 'flex-start', minHeight: 44 }}>
-        <input type="checkbox" checked={f.autopay} onChange={(e) => set({ autopay: (e.target as HTMLInputElement).checked })} style={{ width: 22, height: 22 }} />
-        <span>The minimum is paid by autopay</span>
-      </label>
+      {more ? (
+        <>
+          <Field label="Monthly minimum" hint={debt ? undefined : 'You can leave it empty and add it later.'}>
+            <NumberInput pre={symbol} value={f.min} onInput={(v) => set({ min: v })} label="Monthly minimum" />
+          </Field>
+          <Field label="Due day (recommended)" hint="It’s on your statement.">
+            <input type="text" inputMode="numeric" maxLength={2} value={f.dueDay} onInput={(e) => set({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
+          </Field>
+          <label class="row" style={{ justifyContent: 'flex-start', minHeight: 44 }}>
+            <input type="checkbox" checked={f.autopay} onChange={(e) => set({ autopay: (e.target as HTMLInputElement).checked })} style={{ width: 22, height: 22 }} />
+            <span>The minimum is paid by autopay</span>
+          </label>
+        </>
+      ) : (
+        <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => setMore(true)}>
+          Add minimum and due day now
+        </button>
+      )}
+      {!more && <p class="muted small">Quick add. Until you add the minimum, the plan counts it as {symbol}0.</p>}
       {note && <Note>{note}</Note>}
       <button type="button" class="btn" onClick={save}>
         Save
@@ -150,13 +160,18 @@ export function Debts() {
           <>
             <Bar pct={pct} label={`${debt.name} paid off`} />
             <p class="muted small num">
-              {Math.floor(pct)}% gone · {debt.apr}% rate · minimum {formatMoneyAuto(debt.minMonthly, cur)}
+              {Math.floor(pct)}% gone · {debt.apr}% rate{debt.minPending ? '' : ` · minimum ${formatMoneyAuto(debt.minMonthly, cur)}`}
               {debt.dueDay ? ` · due on the ${ordinal(debt.dueDay)}${debt.autopay ? ' (autopay)' : ''}` : ''}
             </p>
             <p class="muted small">
               {goneBy ? `Gone by ${shortMonthYear(goneBy)}${paydaysLeft ? ` · ${paydaysLeft} paydays left` : ''}` : 'Not gone within 20 years at this pace'}
             </p>
-            {growing.has(debt.id) && <Note>{debt.name} grows even with the minimum. It's first in your plan.</Note>}
+            {debt.minPending && (
+              <span class="tag" data-testid="min-pending" style={{ alignSelf: 'flex-start' }}>
+                Add your minimum
+              </span>
+            )}
+            {growing.has(debt.id) && !debt.minPending && <Note>{debt.name} grows even with the minimum. It's first in your plan.</Note>}
           </>
         )}
         </div>

@@ -306,3 +306,34 @@ test('the focus debt card says what to pay this payday, when it is gone, and why
   await expect(page.getByTestId('focus-action')).toContainText('· gone by');
   await expect(page.getByTestId('focus-why')).toHaveText('Smallest balance, so it disappears first.');
 });
+
+test('Quick add: a debt needs only a name, a balance and a rate, and carries a soft tag until the minimum is added', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  const { goTab } = await import('./scenario');
+  await quickSetup(page);
+  await goTab(page, 'Debts');
+  await page.getByRole('button', { name: 'Add a debt' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add a debt' });
+  // Only three fields to begin with
+  await expect(dialog.getByLabel('Monthly minimum')).toHaveCount(0);
+  await expect(dialog.getByLabel('Due day (recommended)')).toHaveCount(0);
+  await dialog.getByLabel('Name').fill('Phone bill');
+  await dialog.getByRole('textbox', { name: 'Balance' }).fill('400');
+  await dialog.getByRole('textbox', { name: 'Interest rate' }).fill('0');
+  await expect(dialog).toContainText('Until you add the minimum, the plan counts it as $0.');
+  await dialog.getByRole('button', { name: 'Save' }).click();
+
+  const card = page.getByRole('region', { name: 'Phone bill' });
+  await expect(card).toContainText('$400');
+  await expect(page.getByTestId('min-pending')).toHaveText('Add your minimum');
+  await expect(card).not.toContainText('minimum $'); // no made-up minimum is shown
+
+  // Fill it in later: the tag goes away and the minimum shows
+  await page.getByRole('button', { name: 'Phone bill, options' }).click();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expect(page.getByRole('dialog').getByLabel('Monthly minimum')).toHaveValue('');
+  await page.getByRole('dialog').getByLabel('Monthly minimum').fill('40');
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByTestId('min-pending')).toHaveCount(0);
+  await expect(card).toContainText('minimum $40');
+});

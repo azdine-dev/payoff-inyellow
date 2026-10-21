@@ -224,6 +224,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   await page.getByLabel('Name').fill('Phone');
   await page.getByRole('textbox', { name: 'Balance' }).fill('300');
   await page.getByRole('textbox', { name: 'Interest rate' }).fill('0');
+  await page.getByRole('button', { name: 'Add minimum and due day now' }).click();
   await page.getByRole('textbox', { name: 'Monthly minimum' }).fill('25');
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('region', { name: 'Phone' })).toBeVisible();
