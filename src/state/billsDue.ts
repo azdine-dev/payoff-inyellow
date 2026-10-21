@@ -114,6 +114,18 @@ export function billsForPlanRow(data: AppData, result: PlanResult, i: number): B
 }
 
 /**
+ * When the bills due before a payday add up to more than the usual even share of the minimums, say which
+ * ones, in one sentence. Null when the payday is not bigger (by at least one currency unit).
+ */
+export function biggerNote(bills: BillsWindow, step: Pick<PaydayStep, 'debts'>, money: (n: number) => string, day: (iso: string) => string): string | null {
+  const usual = step.debts.reduce((s, d) => s + d.minimum, 0);
+  if (bills.total - usual < 1) return null;
+  const top = [...bills.due].sort((a, b) => b.amount - a.amount).slice(0, 2);
+  if (!top.length) return null;
+  return `Bigger this time: ${top.map((b) => `${b.name} ${money(b.amount)} is due ${day(b.due)}`).join(' and ')}.`;
+}
+
+/**
  * What to set aside on a payday: the bills due + yearly bills + buffer + extra. Every part is
  * rounded to the cent and the total is their sum, so it always equals what is listed.
  */

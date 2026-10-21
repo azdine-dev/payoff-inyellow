@@ -5,9 +5,9 @@ import { dailyInterestCost, planNeedsHelp, simulatePlan } from '../engine';
 import { backupDue } from '../data/backup';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
-import { shortDate, shortMonthYear } from '../lib/today';
+import { dayMonth, shortDate, shortMonthYear } from '../lib/today';
 import { didPayday, extraPayment, missedPaydays, skipPaydays } from '../state/actions';
-import { billsForNextPayday } from '../state/billsDue';
+import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
 import { activeDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
 import { act, data, getDB, plan, tab, today } from '../state/store';
@@ -245,6 +245,11 @@ export function Today() {
                   </p>
                 )}
               </div>
+              {row && biggerNote(bills, row, (n) => formatMoneyAuto(n, cur), dayMonth) && (
+                <p class="muted small" data-testid="bigger-note" style={{ margin: '0 0 8px 34px' }}>
+                  {biggerNote(bills, row, (n) => formatMoneyAuto(n, cur), dayMonth)}
+                </p>
+              )}
               {row.bufferFirst && (
                 <p class="muted small" data-testid="buffer-first" style={{ margin: '0 0 8px 34px' }}>
                   Extra goes to your buffer until it reaches {formatMoneyAuto(s.bufferGoal, cur)}.

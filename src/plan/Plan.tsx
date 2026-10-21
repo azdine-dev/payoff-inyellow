@@ -5,7 +5,7 @@ import { downloadText, planToCsv } from '../lib/csv';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { addDaysISO, dayMonth, monthYear, shortDate } from '../lib/today';
-import { billsForPlanRow, totalOf } from '../state/billsDue';
+import { biggerNote, billsForPlanRow, totalOf } from '../state/billsDue';
 import { applyWhatIf, removeOneOff, setMethod } from '../state/planActions';
 import { toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
@@ -194,6 +194,11 @@ export function Plan() {
                 <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : rowBills[i]!.due.length ? 'Bills due' : 'Nothing due'}</span>
                 <span class="num pd-amt">{formatMoneyAuto(rowTotals[i]!, cur)}</span>
               </button>
+              {biggerNote(rowBills[i]!, row, (n) => formatMoneyAuto(n, cur), dayMonth) && (
+                <p class="muted small" data-testid="bigger-note" style={{ margin: '0 0 6px 40px' }}>
+                  {biggerNote(rowBills[i]!, row, (n) => formatMoneyAuto(n, cur), dayMonth)}
+                </p>
+              )}
             </li>
           ))}
         </ul>

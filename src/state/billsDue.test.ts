@@ -4,7 +4,7 @@ import { simulatePlan } from '../engine';
 import { openAppDB, type PiyDB } from '../data/db';
 import type { AppData } from '../data/types';
 import { completeSetup, didPayday, type SetupValues } from './actions';
-import { billAmount, billsBetween, billsForNextPayday, billsForPlanRow, dueDateIn, totalOf, type BillDebt } from './billsDue';
+import { biggerNote, billAmount, billsBetween, billsForNextPayday, billsForPlanRow, dueDateIn, totalOf, type BillDebt } from './billsDue';
 import { toPlanInput } from './planInput';
 
 const debt = (name: string, dueDay: number | null, minMonthly: number, balance = 1000, apr = 0, autopay = false): BillDebt => ({
@@ -175,5 +175,22 @@ describe('for the next payday', () => {
     ]);
     // What is applied to the balances is still the engine's step
     expect(r.step.debtLeft).toBeCloseTo(14638.02, 2);
+  });
+});
+
+describe('biggerNote', () => {
+  const money = (n: number) => `$${n}`;
+  const day = (iso: string) => iso.slice(5);
+  const step = { debts: [{ minimum: 100 }, { minimum: 115.08 }] } as unknown as Parameters<typeof biggerNote>[1];
+  const bill = (name: string, amount: number, due: string) => ({ debtId: name, name, amount, due, autopay: false });
+
+  it('says nothing when the payday is the usual size or smaller', () => {
+    expect(biggerNote({ due: [bill('Visa', 96, '2026-11-12')], noDueDay: [], total: 96 }, step, money, day)).toBeNull();
+    expect(biggerNote({ due: [bill('Visa', 215.5, '2026-11-12')], noDueDay: [], total: 215.5 }, step, money, day)).toBeNull();
+  });
+
+  it('names the biggest bills when the payday is bigger', () => {
+    const bills = { due: [bill('Visa', 96, '2026-11-12'), bill('Car loan', 285, '2026-11-20'), bill('Store card', 35, '2026-11-05')], noDueDay: [], total: 416 };
+    expect(biggerNote(bills, step, money, day)).toBe('Bigger this time: Car loan $285 is due 11-20 and Visa $96 is due 11-12.');
   });
 });

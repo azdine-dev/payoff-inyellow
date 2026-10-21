@@ -64,6 +64,7 @@ export function Progress() {
           {Math.floor(stats.pct)}% of {formatMoney(stats.start, cur, { whole: true })}
           {paydaysLeft !== null ? ` · ${paydaysLeft} paydays left` : ''}
         </p>
+        <p class="muted small">This is how much your balances went down. They move in even steps from payday to payday, while Today lists each bill on the payday before it is due.</p>
       </section>
 
       <div class="grid-2">
