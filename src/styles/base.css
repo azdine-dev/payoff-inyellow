@@ -81,10 +81,16 @@ select {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top) + 20px) var(--gutter) calc(env(safe-area-inset-bottom) + 24px);
+  /* Room under the last button, so nothing the host page floats over the corner (a badge, a banner) can cover it */
+  padding: calc(env(safe-area-inset-top) + 20px) var(--gutter) calc(env(safe-area-inset-bottom) + 88px);
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Netlify adds a "Powered by Netlify" badge to the page on its own. It sat over the Continue button. */
+#nl-badge-frame {
+  display: none !important;
 }
 
 .screen.with-tabs {
@@ -748,9 +754,12 @@ a.btn {
   background: var(--ink);
   color: var(--on-ink);
   box-shadow: 0 6px 20px rgba(31, 42, 68, 0.25);
+  /* Taps go through the message to the screen under it. Only the OK button takes a tap. */
+  pointer-events: none;
 }
 
 .notice-bar .link {
+  pointer-events: auto;
   color: var(--on-ink);
   min-height: 36px;
   flex: none;

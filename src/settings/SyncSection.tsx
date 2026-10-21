@@ -15,8 +15,8 @@ const STATUS_TEXT: Record<string, string> = {
   syncing: 'Syncing...',
   offline: 'No connection. Your changes are safe here and go out when you are back online.',
   'needs-code': 'Sync needs your unlock code.',
-  blocked: 'Sync is turned off for this code. Your plan on this phone is untouched.',
-  stopped: 'Sync was stopped on another phone. Your plan stays here.',
+  blocked: 'Sync is turned off for this code. Your plan on this device is untouched.',
+  stopped: 'Sync was stopped on another device. Your plan stays here.',
   error: 'Sync hit a problem. It will try again.',
   off: '',
 };
@@ -60,7 +60,7 @@ export function SyncSection() {
       await refreshSyncState();
       setConfirmStop(false);
       setLink(null);
-      setMsg('Sync is off and your synced data was deleted from the server. Your plan stays on this phone.');
+      setMsg('Sync is off and your synced data was deleted from the server. Your plan stays on this device.');
     } catch (e) {
       setMsg(e instanceof JoinError && e.reason === 'offline' ? 'No connection, so nothing was deleted yet. Try again when you are online.' : 'Something went wrong and sync is still on. Try again.');
       setConfirmStop(false);
@@ -75,7 +75,7 @@ export function SyncSection() {
       {!syncOn.value ? (
         <>
           <p class="muted">
-            Optional. Use your plan on a second phone. Your numbers are locked on this phone before they are sent, and the key stays with you, so the server can’t read them. Without sync, nothing leaves this device.
+            Optional. Use your plan on a second device. Your numbers are locked on this device before they are sent, and the key stays with you, so the server can’t read them. Without sync, nothing leaves this device.
           </p>
           <button type="button" class="btn ghost" disabled={busy} onClick={turnOn}>
             Turn on sync
@@ -90,12 +90,12 @@ export function SyncSection() {
             Sync now
           </button>
           <button type="button" class="btn ghost" onClick={showLink}>
-            Add another phone
+            Add another device
           </button>
           {link && (
             <div class="stack" data-testid="sync-link-box">
               <p class="muted small">
-                On the other phone, scan this code with the camera, or open the link. It holds the key to your plan, so keep it between you and the people you trust.
+                On the other device, scan this code with the camera, or open the link. It holds the key to your plan, so keep it between you and the people you trust.
               </p>
               <div
                 style={{ background: '#fff', padding: 12, borderRadius: 12, alignSelf: 'center', width: 240 }}
@@ -111,7 +111,7 @@ export function SyncSection() {
       )}
       {msg && <Note>{msg}</Note>}
       <Sheet open={confirmStop} onClose={() => setConfirmStop(false)} title="Stop syncing?">
-        <p>Your synced copy is deleted from the server and your other phones stop syncing. The plan on this phone stays.</p>
+        <p>Your synced copy is deleted from the server and your other devices stop syncing. The plan on this device stays.</p>
         <button type="button" class="btn" disabled={busy} onClick={stop}>
           Stop syncing and delete
         </button>

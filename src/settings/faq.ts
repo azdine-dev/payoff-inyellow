@@ -42,15 +42,15 @@ export const FAQ: Faq[] = [
   },
   {
     q: 'What does sync do with my numbers?',
-    a: 'Sync is optional and off until you turn it on. Your plan is locked on your phone before it is sent, and the key never goes to our server, so we can’t read it. You can stop sync and delete your data from the server at any time in Settings.',
+    a: 'Sync is optional and off until you turn it on. Your plan is locked on your device before it is sent, and the key never goes to our server, so we can’t read it. You can stop sync and delete your data from the server at any time in Settings.',
   },
   {
-    q: 'What if I lose my phone or clear my browser?',
-    a: 'Your plan lives only on this device. Save a backup from Settings once a month and keep the file somewhere safe, like your email or a cloud folder. You can restore it on any phone.',
+    q: 'What if I lose my device or clear my browser?',
+    a: 'Your plan lives only on this device. Save a backup from Settings once a month and keep the file somewhere safe, like your email or a cloud folder. You can restore it on any device.',
   },
   {
-    q: 'How do I move to a new phone?',
-    a: 'Save a backup on the old phone, send the file to the new one, open PaidInYellow there and choose “Restore from a backup”.',
+    q: 'How do I move to a new device?',
+    a: 'Save a backup on the old device, send the file to the new one, open PaidInYellow there and choose “Restore from a backup”.',
   },
   {
     q: 'Does it work without internet?',

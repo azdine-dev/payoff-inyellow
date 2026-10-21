@@ -26,7 +26,7 @@ import { syncOn } from '../sync/controller';
 type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | null;
 
 const THEMES: { value: Theme; label: string }[] = [
-  { value: 'auto', label: 'Match my phone' },
+  { value: 'auto', label: 'Match my device' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
 ];
@@ -191,7 +191,7 @@ export function Settings() {
 
       <section class="card stack" aria-labelledby="set-backup">
         <h2 id="set-backup">Backup</h2>
-        <p class="muted">Your plan lives only on this device. A backup file lets you restore it on this phone or a new one.</p>
+        <p class="muted">Your plan lives only on this device. A backup file lets you restore it on this device or a new one.</p>
         <p class="small" data-testid="last-backup">
           {lastBackup ? `Last saved ${shortDate(lastBackup)}.` : 'You haven’t saved a backup yet.'}
         </p>
@@ -272,12 +272,12 @@ export function Settings() {
           <>
             <p data-testid="unlocked">Unlocked. Thank you.</p>
             <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => act((db, x) => clearLicense(db, x))}>
-              Remove the code from this phone
+              Remove the code from this device
             </button>
           </>
         ) : (
           <>
-            <p class="muted">Your code came with your purchase. Paste it here. It’s checked on this phone, with no internet needed.</p>
+            <p class="muted">Your code came with your purchase. Paste it here. It’s checked on this device, with no internet needed.</p>
             <Field label="Code">
               <input type="text" autoCapitalize="off" autoCorrect="off" spellcheck={false} value={code} onInput={(e) => setCode((e.target as HTMLInputElement).value)} />
             </Field>
@@ -319,7 +319,7 @@ export function Settings() {
 
       <section class="card stack" aria-labelledby="set-over">
         <h2 id="set-over">Start over</h2>
-        <p class="muted">Erase your plan from this phone and begin again with a clean setup.</p>
+        <p class="muted">Erase your plan from this device and begin again with a clean setup.</p>
         <button type="button" class="btn ghost" onClick={() => { setAlsoCode(false); setErasing(true); }}>
           Erase everything and start over
         </button>
@@ -334,7 +334,7 @@ export function Settings() {
 
       <Sheet open={erasing} onClose={() => setErasing(false)} title="Erase everything?">
         <p>
-          This erases your debts, paydays, payments, buffer and yearly bills from this phone. It can’t be undone.
+          This erases your debts, paydays, payments, buffer and yearly bills from this device. It can’t be undone.
         </p>
         <p class="muted">If you might want your plan back, save a backup first. It takes a second.</p>
         <button type="button" class="btn ghost" onClick={saveBackup}>
@@ -344,7 +344,7 @@ export function Settings() {
         {s.license && (
           <label class="row" style={{ justifyContent: 'flex-start', minHeight: 44 }}>
             <input type="checkbox" checked={alsoCode} onChange={(e) => setAlsoCode((e.target as HTMLInputElement).checked)} style={{ width: 22, height: 22 }} />
-            <span>Also remove my unlock code from this phone</span>
+            <span>Also remove my unlock code from this device</span>
           </label>
         )}
         <button type="button" class="btn" onClick={startOver}>
@@ -384,7 +384,7 @@ export function Settings() {
       <Sheet open={edit === 'extra' || edit === 'goal' || edit === 'paycheck'} onClose={close} title={edit === 'extra' ? 'Money for the plan' : edit === 'goal' ? 'Buffer goal' : 'Usual paycheck'}>
         <Field
           label="Amount"
-          hint={edit === 'extra' ? COPY.extraHint : edit === 'paycheck' ? 'Stays on this phone. Leave it empty to remove it.' : undefined}
+          hint={edit === 'extra' ? COPY.extraHint : edit === 'paycheck' ? 'Stays on this device. Leave it empty to remove it.' : undefined}
         >
           <NumberInput pre={cur.symbol} value={text} onInput={setText} label="Amount" />
         </Field>

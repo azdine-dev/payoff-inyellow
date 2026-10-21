@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 test('a link opened before setup is kept, and the planner is open when the plan is ready', async ({ page }) => {
   const code = await testCode('shopify-1042');
   await page.goto(`/#unlock=${code}`);
-  await expect(page.getByTestId('notice')).toContainText('Your code is saved. The full planner opens when your plan is ready.');
+  await expect(page.getByTestId('notice')).toContainText('Code saved. Your full planner opens when setup is done.');
   // The code is out of the address bar right away
   expect(page.url()).not.toContain('unlock');
   expect(page.url()).not.toContain(code.slice(0, 12));
@@ -64,4 +64,16 @@ test('a link with a code changed by one letter is refused with a simple message'
   await empty.clock.setFixedTime(FIXED);
   await empty.goto('/#unlock=');
   await expect(empty.getByTestId('notice')).toContainText('Paste your unlock code first.');
+});
+
+test('the "code saved" message goes away by itself and never blocks a tap', async ({ page }) => {
+  // No fixed clock here: a frozen clock would also freeze the message's timer
+  await page.goto(`/#unlock=${await testCode('shopify-1042')}`);
+  const notice = page.getByTestId('notice');
+  await expect(notice).toBeVisible();
+  // A tap on the screen under the message goes through it
+  await page.getByRole('button', { name: /Let’s start/ }).click();
+  await expect(page.getByRole('heading').first()).toBeVisible();
+  // And it is gone after a few seconds, with no tap on OK
+  await expect(notice).toHaveCount(0, { timeout: 8000 });
 });

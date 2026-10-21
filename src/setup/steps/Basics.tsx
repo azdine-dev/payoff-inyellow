@@ -29,7 +29,7 @@ export function CurrencyStep({ draft, set }: StepProps) {
   return (
     <div class="stack">
       <h1>Your currency</h1>
-      <p class="muted">We picked it from your phone. Change it if it's wrong.</p>
+      <p class="muted">We picked it from your device. Change it if it's wrong.</p>
       <Field label="Currency">
         <select
           value={draft.currencyCode}
@@ -77,7 +77,7 @@ export function PayStep({ draft, set, today }: StepProps) {
         <input type="date" min={today} value={draft.nextPayday} onInput={(e) => set({ nextPayday: (e.target as HTMLInputElement).value, ifThenDay: '' })} />
       </Field>
       {draft.nextPayday && draft.nextPayday >= today && <p class="muted small">That's {shortDate(draft.nextPayday)}.</p>}
-      <Field label="Your usual paycheck (optional)" hint="Only used to check that the plan fits. It stays on this phone.">
+      <Field label="Your usual paycheck (optional)" hint="Only used to check that the plan fits. It stays on this device.">
         <NumberInput pre={draft.currencySymbol} value={draft.paycheck} onInput={(v) => set({ paycheck: v })} label="Usual paycheck" />
       </Field>
     </div>

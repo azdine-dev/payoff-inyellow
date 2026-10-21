@@ -195,7 +195,7 @@ export function Money() {
         <button type="button" class="link" onClick={close}>Cancel</button>
       </Sheet>
       <Sheet open={mode === 'paycheck'} onClose={close} title="Your usual paycheck">
-        <Field label="Amount" hint="Stays on this phone. Leave it empty to remove it."><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Usual paycheck" /></Field>
+        <Field label="Amount" hint="Stays on this device. Leave it empty to remove it."><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Usual paycheck" /></Field>
         {msg && <Note>{msg}</Note>}
         <button type="button" class="btn" onClick={save}>Save</button>
         <button type="button" class="link" onClick={close}>Cancel</button>

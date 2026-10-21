@@ -62,7 +62,7 @@ export function RestoreButton(props: { label?: string; class?: string }) {
               , {file.summary.paydays} payday{file.summary.paydays === 1 ? '' : 's'} logged
               {file.summary.lastPayday ? `, last paid ${shortDate(file.summary.lastPayday)}` : ''}. Saved on {file.summary.exportedAt.slice(0, 10)}.
             </p>
-            <p class="muted">This replaces the plan that’s on this phone now.</p>
+            <p class="muted">This replaces the plan that’s on this device now.</p>
             <button type="button" class="btn" disabled={busy} onClick={confirm}>
               Restore it
             </button>

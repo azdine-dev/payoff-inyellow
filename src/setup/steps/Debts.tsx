@@ -36,8 +36,8 @@ function DebtCard(props: { debt: DraftDebt; index: number; symbol: string; canRe
         <NumberInput pre={props.symbol} value={d.balance} onInput={(v) => props.onChange({ balance: v })} label="Balance" />
       </Field>
       <div class="grid-2">
-        <Field label="Interest rate">
-          <NumberInput post="%" value={d.apr} placeholder="22.9" onInput={(v) => props.onChange({ apr: v })} label="Interest rate" />
+        <Field label="Interest rate" hint="Example: 22.9. It’s on your statement as APR.">
+          <NumberInput post="%" value={d.apr} onInput={(v) => props.onChange({ apr: v })} label="Interest rate" />
         </Field>
         <Field label="Monthly minimum">
           <NumberInput pre={props.symbol} value={d.min} onInput={(v) => props.onChange({ min: v })} label="Monthly minimum" />

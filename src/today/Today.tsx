@@ -142,7 +142,7 @@ export function Today() {
 
       {backupDue(s.lastBackupAt, s.setupDoneAt) && (
         <section class="card soft row" aria-label="Backup reminder">
-          <span>Your plan lives only on this phone. Save a backup.</span>
+          <span>Your plan lives only on this device. Save a backup.</span>
           <button type="button" class="link" onClick={() => (tab.value = 'settings')}>
             Save a backup
           </button>
@@ -247,7 +247,7 @@ export function Today() {
               </div>
               {row.bufferFirst && (
                 <p class="muted small" data-testid="buffer-first" style={{ margin: '0 0 8px 34px' }}>
-                  Extra: Buffer first. {COPY.buffer}
+                  Extra: Buffer first. It goes there until it reaches your goal.
                 </p>
               )}
               {override !== null && (

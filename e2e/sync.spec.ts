@@ -16,7 +16,7 @@ async function turnOnAndGetLink(page: Page): Promise<string> {
   await settings(page);
   await page.getByRole('button', { name: 'Turn on sync' }).click();
   await expect(page.getByTestId('sync-status')).toHaveText('Up to date.');
-  await page.getByRole('button', { name: 'Add another phone' }).click();
+  await page.getByRole('button', { name: 'Add another device' }).click();
   await expect(page.getByTestId('sync-link-box').locator('svg')).toBeVisible(); // the QR code
   return page.getByTestId('sync-link').inputValue();
 }
@@ -38,7 +38,7 @@ test('a second phone joins with the link and the two stay in step', async ({ bro
   b.on('request', (r) => requests.push(r.url()));
   await b.clock.setFixedTime(later(1));
   await b.goto(link);
-  await expect(b.getByTestId('notice')).toContainText('Synced. Your plan is on this phone now.');
+  await expect(b.getByTestId('notice')).toContainText('Synced. Your plan is on this device now.');
   await expect(b.getByTestId('debt-free-pill')).toBeVisible(); // the full planner, with the plan
   expect(b.url()).not.toContain('sync=');
   // The key never went to any server
@@ -51,7 +51,6 @@ test('a second phone joins with the link and the two stay in step', async ({ bro
   await iDidIt(a, 'Fri 23 Oct');
   // B syncs and sees the payday done
   await b.clock.setFixedTime(later(6));
-  await b.getByTestId('notice').getByRole('button', { name: 'OK' }).click();
   await settings(b);
   await b.getByRole('button', { name: 'Sync now' }).click();
   await expect(b.getByTestId('sync-status')).toHaveText('Up to date.');

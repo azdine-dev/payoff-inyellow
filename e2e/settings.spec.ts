@@ -116,7 +116,7 @@ test('a calm backup reminder shows after 30 days and goes away once saved', asyn
   await expect(page.getByLabel('Backup reminder')).toHaveCount(0);
   await page.clock.setFixedTime(new Date('2026-11-20T10:00:00'));
   await page.reload();
-  await expect(page.getByLabel('Backup reminder')).toContainText('Your plan lives only on this phone');
+  await expect(page.getByLabel('Backup reminder')).toContainText('Your plan lives only on this device');
   await page.getByLabel('Backup reminder').getByRole('button', { name: 'Save a backup' }).click();
   await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Save a backup' }).first().click()]);
   await page.getByRole('button', { name: 'Back to Today' }).click();
@@ -126,7 +126,7 @@ test('a calm backup reminder shows after 30 days and goes away once saved', asyn
 test('help answers and the support email are there', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByText('What if I lose my phone or clear my browser?').click();
+  await page.getByText('What if I lose my device or clear my browser?').click();
   await expect(page.getByText('Save a backup from Settings once a month')).toBeVisible();
   await expect(page.getByRole('link', { name: 'support@paidinyellow.com' })).toHaveAttribute('href', 'mailto:support@paidinyellow.com');
   await shot(page, '16-settings');
@@ -171,7 +171,7 @@ test('start over can also remove the unlock code', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Erase everything and start over' }).click();
-  await page.getByLabel('Also remove my unlock code from this phone').check();
+  await page.getByLabel('Also remove my unlock code from this device').check();
   await page.getByRole('button', { name: 'Yes, erase everything' }).click();
   await expect(page.getByText('You’re not bad at math.')).toBeVisible();
 

@@ -48,7 +48,7 @@ export function UnlockCard() {
       </a>
       {open ? (
         <>
-          <Field label="Your unlock code" hint="It came with your purchase. It’s checked on this phone, with no internet needed.">
+          <Field label="Your unlock code" hint="It came with your purchase. It’s checked on this device, with no internet needed.">
             <input type="text" autoCapitalize="off" autoCorrect="off" spellcheck={false} value={code} onInput={(e) => { setCode((e.target as HTMLInputElement).value); setMsg(''); }} />
           </Field>
           {msg && <Note>{msg}</Note>}
