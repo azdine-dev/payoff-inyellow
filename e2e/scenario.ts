@@ -44,9 +44,15 @@ export async function iDidIt(page: Page, paidLabel: string) {
   await expect(page.getByText(`${paidLabel} is paid.`)).toBeVisible();
 }
 
+/** Shows the Upcoming or the Done paydays on the Plan tab. */
+export async function showPaydays(page: Page, which: 'Upcoming' | 'Done') {
+  await page.getByRole('group', { name: 'Which paydays' }).getByRole('button', { name: new RegExp(`^${which}`) }).click();
+}
+
 /** Opens a payday on the Plan tab and returns the dialog, then the caller closes it. */
 export async function openPayday(page: Page, label: string) {
   await goTab(page, 'Plan');
+  await showPaydays(page, /paid|skipped/.test(label) ? 'Done' : 'Upcoming');
   await page.getByRole('button', { name: label, exact: true }).click();
   return page.getByRole('dialog');
 }

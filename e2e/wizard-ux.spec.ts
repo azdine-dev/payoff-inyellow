@@ -244,3 +244,32 @@ test('Progress starts with a countdown and shows the share paid as a ring', asyn
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
   expect(Number(await ring.getAttribute('aria-valuenow'))).toBeGreaterThan(0);
 });
+
+test('Plan is a timeline by month with tags, and an Upcoming / Done switch', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  const { goTab, showPaydays, tapDidIt } = await import('./scenario');
+  await quickSetup(page);
+  await goTab(page, 'Plan');
+  // Upcoming: months as headings, then one row per payday with small tags
+  await expect(page.getByRole('heading', { name: 'October 2026' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'November 2026' })).toBeVisible();
+  const oct23 = page.getByRole('button', { name: 'Fri 23 Oct, to come' }).locator('xpath=..');
+  await expect(oct23.locator('.tag').first()).toBeVisible(); // Extra (and the bills)
+  await expect(oct23.locator('.tag.paid')).toHaveCount(0); // outline until it is paid
+  // Done is empty at first
+  await showPaydays(page, 'Done');
+  await expect(page.getByText('No paydays done yet.')).toBeVisible();
+
+  await goTab(page, 'Today');
+  await tapDidIt(page);
+  await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
+  await goTab(page, 'Plan');
+  await showPaydays(page, 'Done');
+  const done = page.getByRole('button', { name: 'Fri 23 Oct, paid' }).locator('xpath=..');
+  await expect(done.locator('.tag.paid').first()).toBeVisible(); // yellow once paid
+  await expect(done.locator('.tag.paid', { hasText: 'Extra' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toHaveCount(0);
+  // Tapping a row still opens its details
+  await done.getByRole('button').click();
+  await expect(page.getByRole('dialog')).toContainText('Total');
+});

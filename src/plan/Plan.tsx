@@ -15,6 +15,26 @@ import { CheckIcon, Choice, Field, Note, NumberInput, Sheet } from '../ui/contro
 
 const FUTURE_STEP = 26;
 
+/** What a payday held, as small tags. Outline for what is ahead, yellow once it is paid. */
+const TAG_KINDS = [
+  { kind: 'minimum', label: 'Minimum' },
+  { kind: 'extra', label: 'Extra' },
+  { kind: 'buffer', label: 'Buffer' },
+  { kind: 'fund', label: 'Yearly bill' },
+] as const;
+
+/** Items in date order, grouped by month ("2026-11"). */
+function monthGroups<T>(items: T[], dateOf: (x: T) => string): { month: string; items: T[] }[] {
+  const groups: { month: string; items: T[] }[] = [];
+  for (const it of items) {
+    const month = dateOf(it).slice(0, 7);
+    const last = groups[groups.length - 1];
+    if (last && last.month === month) last.items.push(it);
+    else groups.push({ month, items: [it] });
+  }
+  return groups;
+}
+
 export function Plan() {
   const d = data.value!;
   const s = d.settings;
@@ -29,6 +49,7 @@ export function Plan() {
   const [oneDate, setOneDate] = useState('');
   const [oneNote, setOneNote] = useState('');
   const [applied, setApplied] = useState(false);
+  const [list, setList] = useState<'upcoming' | 'done'>('upcoming');
 
   const { method: _m, ...rest } = toPlanInput(d);
   const cmp = useMemo(() => compareMethods(rest), [d]);
@@ -195,40 +216,83 @@ export function Plan() {
 
       <section class="card stack" aria-labelledby="list-title">
         <h2 id="list-title">Payday by payday</h2>
-        {d.paydays.length === 0 && r.rows.length === 0 && <p class="muted">No paydays yet.</p>}
-        <ul class="payday-list" aria-label="Paydays">
-          {d.paydays.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                class={`pd${p.status === 'done' ? ' on' : ''}`}
-                aria-label={`${shortDate(p.date)}, ${p.status === 'done' ? 'paid' : 'skipped'}`}
-                onClick={() => setOpen({ kind: 'done', number: p.number })}
-              >
-                <span class="pd-box">{p.status === 'done' && <CheckIcon />}</span>
-                <span class="pd-date">{shortDate(p.date)}</span>
-                <span class="pd-note">{p.status === 'done' ? 'Paid' : 'Skipped'}</span>
-                <span class="num pd-amt">{p.status === 'done' ? formatMoneyAuto(p.total, cur) : ''}</span>
-              </button>
-            </li>
+        <div class="row" style={{ justifyContent: 'flex-start', gap: 8 }} role="group" aria-label="Which paydays">
+          {(['upcoming', 'done'] as const).map((v) => (
+            <button key={v} type="button" class="pill plain chip" aria-pressed={list === v} style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => setList(v)}>
+              {v === 'upcoming' ? 'Upcoming' : `Done${d.paydays.length ? ` (${d.paydays.length})` : ''}`}
+            </button>
           ))}
-          {r.rows.slice(0, shown).map((row, i) => (
-            <li key={row.date + i}>
-              <button type="button" class="pd" aria-label={`${shortDate(row.date)}, to come`} onClick={() => setOpen({ kind: 'ahead', index: i })}>
-                <span class="pd-box" />
-                <span class="pd-date">{shortDate(row.date)}</span>
-                <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : rowBills[i]!.due.length ? 'Bills due' : 'Nothing due'}</span>
-                <span class="num pd-amt">{formatMoneyAuto(rowTotals[i]!, cur)}</span>
-              </button>
-              {biggerNote(rowBills[i]!, row, (n) => formatMoneyAuto(n, cur), dayMonth) && (
-                <p class="muted small" data-testid="bigger-note" style={{ margin: '0 0 6px 40px' }}>
-                  {biggerNote(rowBills[i]!, row, (n) => formatMoneyAuto(n, cur), dayMonth)}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-        {r.rows.length > shown && (
+        </div>
+
+        {list === 'done' && d.paydays.length === 0 && <p class="muted">No paydays done yet. Each one you mark done turns yellow here.</p>}
+        {list === 'upcoming' && r.rows.length === 0 && <p class="muted">No paydays ahead.</p>}
+
+        <div class="timeline" aria-label="Paydays">
+          {list === 'done'
+            ? monthGroups(d.paydays, (p) => p.date).map((g) => (
+                <div key={g.month}>
+                  <h3 class="month-head">{monthYear(g.items[0]!.date)}</h3>
+                  <ul class="payday-list">
+                    {g.items.map((p) => {
+                      const kinds = new Set(d.payments.filter((x) => x.paydayNumber === p.number).map((x) => x.kind));
+                      return (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            class={`pd${p.status === 'done' ? ' on' : ''}`}
+                            aria-label={`${shortDate(p.date)}, ${p.status === 'done' ? 'paid' : 'skipped'}`}
+                            onClick={() => setOpen({ kind: 'done', number: p.number })}
+                          >
+                            <span class="pd-box">{p.status === 'done' && <CheckIcon />}</span>
+                            <span class="pd-date">{shortDate(p.date)}</span>
+                            <span class="pd-note">{p.status === 'done' ? 'Paid' : 'Skipped'}</span>
+                            <span class="num pd-amt">{p.status === 'done' ? formatMoneyAuto(p.total, cur) : ''}</span>
+                          </button>
+                          {p.status === 'done' && (
+                            <div class="tags" aria-hidden="true">
+                              {TAG_KINDS.filter((t) => kinds.has(t.kind)).map((t) => (
+                                <span key={t.kind} class="tag paid">
+                                  {t.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))
+            : monthGroups(r.rows.slice(0, shown).map((row, i) => ({ row, i })), (x) => x.row.date).map((g) => (
+                <div key={g.month}>
+                  <h3 class="month-head">{monthYear(g.items[0]!.row.date)}</h3>
+                  <ul class="payday-list">
+                    {g.items.map(({ row, i }) => (
+                      <li key={row.date + i}>
+                        <button type="button" class="pd" aria-label={`${shortDate(row.date)}, to come`} onClick={() => setOpen({ kind: 'ahead', index: i })}>
+                          <span class="pd-box" />
+                          <span class="pd-date">{shortDate(row.date)}</span>
+                          <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : rowBills[i]!.due.length ? 'Bills due' : 'Nothing due'}</span>
+                          <span class="num pd-amt">{formatMoneyAuto(rowTotals[i]!, cur)}</span>
+                        </button>
+                        <div class="tags" aria-hidden="true">
+                          {rowBills[i]!.due.length > 0 && <span class="tag">Minimum</span>}
+                          {row.extraGoesTo && <span class="tag">Extra</span>}
+                          {row.toBuffer > 0.004 && <span class="tag">Buffer</span>}
+                          {row.toYearlyBills > 0.004 && <span class="tag">Yearly bill</span>}
+                        </div>
+                        {biggerNote(rowBills[i]!, row, (n) => formatMoneyAuto(n, cur), dayMonth) && (
+                          <p class="muted small" data-testid="bigger-note" style={{ margin: '0 0 6px 40px' }}>
+                            {biggerNote(rowBills[i]!, row, (n) => formatMoneyAuto(n, cur), dayMonth)}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+        </div>
+        {list === 'upcoming' && r.rows.length > shown && (
           <button type="button" class="btn ghost" onClick={() => setShown(shown + FUTURE_STEP)}>
             Show more paydays
           </button>

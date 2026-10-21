@@ -3,7 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
-import { tapDidIt } from './scenario';
+import { showPaydays, tapDidIt } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult } from './helpers';
@@ -277,6 +277,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
 
   // Plan: both paydays are paid and open to show their payments
   await page.getByRole('button', { name: 'Plan' }).click();
+  await showPaydays(page, 'Done');
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toBeVisible();
   await page.getByRole('button', { name: 'Fri 23 Oct, paid' }).click();
   await expect(page.getByRole('dialog')).toContainText('Total');

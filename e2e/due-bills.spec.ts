@@ -5,7 +5,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, shot } from './helpers';
-import { goTab, near, runWizard, setDay, startPlan, tapDidIt } from './scenario';
+import { goTab, near, runWizard, setDay, showPaydays, startPlan, tapDidIt } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026
@@ -65,6 +65,7 @@ test('the Today card: bills due before the next payday, and the window moves wit
   await expect(page.getByRole('dialog')).toContainText(new RegExp(`Total\\s*${near(435).source}`));
   await expect(page.getByRole('dialog')).not.toContainText('minimum');
   await page.getByRole('button', { name: 'Close' }).click();
+  await showPaydays(page, 'Done');
   await page.getByRole('button', { name: 'Fri 6 Nov, paid', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText(new RegExp(`Total\\s*${near(150).source}`)); // what was set aside that payday
 });

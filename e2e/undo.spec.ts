@@ -3,7 +3,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { goTab } from './scenario';
+import { goTab, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026, the payday is Fri 23 Oct
@@ -59,8 +59,10 @@ test('Undo puts the balances, the payday and the logs back, and goes away after 
   // Undo again is not possible, and a second payday log was not left behind
   await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
   await goTab(page, 'Plan');
+  await showPaydays(page, 'Done');
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Fri 6 Nov, paid' })).toHaveCount(0);
+  await showPaydays(page, 'Upcoming');
   await expect(page.getByRole('button', { name: 'Fri 6 Nov, to come' })).toBeVisible();
 });
 
