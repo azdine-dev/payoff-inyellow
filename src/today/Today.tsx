@@ -1,7 +1,7 @@
 /** Today (mockup screen 2): one clear step every payday. */
 import { syncOn } from '../sync/controller';
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { dailyInterestCost, PAYDAYS_PER_YEAR, planNeedsHelp, simulatePlan } from '../engine';
+import { dailyInterestCost, growingDebts, PAYDAYS_PER_YEAR, planNeedsHelp, simulatePlan } from '../engine';
 import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
@@ -13,12 +13,12 @@ import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
-import { activeDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
+import { activeDebts, nextPaydayISO, toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { StatusLine } from '../ui/StatusLine';
-import { comingUp, dueLine, focusDebt, paydayLines } from './model';
+import { comingUp, dueLine, focusDebt, paydayLines, payThisPayday, whyFirst } from './model';
 
 interface JustPaid {
   date: string;
@@ -65,6 +65,8 @@ export function Today() {
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
+  const growingNow = new Set(growingDebts(d.debts.filter((x) => x.status === 'active').map(toDebtInput)));
+  const payAmount = focus ? payThisPayday(row, bills, focus.debt.id) : 0;
   const active = activeDebts(d);
   const due = comingUp(d, today.value);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
@@ -368,8 +370,19 @@ export function Today() {
             </span>
           </div>
           <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
-          <p class="muted small">
-            {formatMoney(focus.left, cur, { whole: true })} left{focus.goneBy ? ` · gone by ${shortMonthYear(focus.goneBy)}` : ''}
+          <p class="muted small">{formatMoney(focus.left, cur, { whole: true })} left</p>
+          <p style={{ fontWeight: 600 }} data-testid="focus-action">
+            {payAmount > 0 ? (
+              <>
+                Pay this payday: <span class="num">{formatMoneyAuto(payAmount, cur)}</span>
+              </>
+            ) : (
+              <>Pay this payday: nothing yet</>
+            )}
+            {focus.goneBy ? ` · gone by ${shortMonthYear(focus.goneBy)}` : ''}
+          </p>
+          <p class="muted small" data-testid="focus-why">
+            {whyFirst(s.method, growingNow.has(focus.debt.id))}
           </p>
         </section>
       )}

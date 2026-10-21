@@ -75,6 +75,24 @@ export function methodReason(method: AppData['settings']['method']): string {
   return 'In the order you chose.';
 }
 
+/** One line on why this debt is the one getting the extra. */
+export function whyFirst(method: AppData['settings']['method'], grows: boolean): string {
+  if (grows) return 'It grows even when you pay the minimum, so it goes first.';
+  if (method === 'paidinyellow') return 'Smallest balance, so it disappears first.';
+  if (method === 'biggest-interest') return 'Highest rate, so it costs you the most.';
+  return 'First in the order you chose.';
+}
+
+/**
+ * What goes to the focus debt on this payday: its extra, plus its own bill if that falls due before the next
+ * payday. Rounded to cents. Zero while the buffer is filling and no bill is due.
+ */
+export function payThisPayday(row: PaydayStep | undefined, bills: BillsWindow, debtId: string): number {
+  const extra = row?.debts.find((x) => x.id === debtId)?.extra ?? 0;
+  const bill = bills.due.find((b) => b.debtId === debtId)?.amount ?? 0;
+  return toCents(extra) + toCents(bill);
+}
+
 export interface FocusInfo {
   debt: Debt;
   pctGone: number;

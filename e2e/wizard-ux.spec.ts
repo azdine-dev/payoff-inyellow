@@ -296,3 +296,13 @@ test('the what-if shows three small cards and says nothing changes until you app
   expect(new Set(tops).size).toBe(1);
   await expect(page.getByRole('button', { name: 'Apply to my plan' })).toBeEnabled();
 });
+
+test('the focus debt card says what to pay this payday, when it is gone, and why it is first', async ({ page }) => {
+  const { quickSetup } = await import('./helpers');
+  await quickSetup(page); // Store card (due the 5th) is the smallest balance
+  const focus = page.getByRole('region', { name: 'Focus debt' });
+  await expect(focus).toContainText('Store card');
+  await expect(page.getByTestId('focus-action')).toContainText(/Pay this payday: \$\d[\d,.]*( · gone by [A-Z][a-z]{2} 20\d\d)?/);
+  await expect(page.getByTestId('focus-action')).toContainText('· gone by');
+  await expect(page.getByTestId('focus-why')).toHaveText('Smallest balance, so it disappears first.');
+});

@@ -181,3 +181,23 @@ describe('horizonText', () => {
     expect(horizonText(52, 52)).toBe('about 12 months');
   });
 });
+
+import { payThisPayday, whyFirst } from '../today/model';
+
+describe('the focus debt card', () => {
+  it('says why this debt is first', () => {
+    expect(whyFirst('paidinyellow', false)).toBe('Smallest balance, so it disappears first.');
+    expect(whyFirst('paidinyellow', true)).toBe('It grows even when you pay the minimum, so it goes first.');
+    expect(whyFirst('biggest-interest', false)).toBe('Highest rate, so it costs you the most.');
+    expect(whyFirst('my-order', false)).toBe('First in the order you chose.');
+  });
+
+  it('pay this payday = its extra + its own bill, to the cent', () => {
+    const row = { debts: [{ id: 'a', extra: 150.004 }, { id: 'b', extra: 0 }] } as never;
+    const bills = { due: [{ debtId: 'a', amount: 35 }, { debtId: 'c', amount: 96 }], noDueDay: [], total: 131 } as never;
+    expect(payThisPayday(row, bills, 'a')).toBeCloseTo(185, 2);
+    expect(payThisPayday(row, bills, 'b')).toBe(0);
+    expect(payThisPayday(row, bills, 'c')).toBeCloseTo(96, 2);
+    expect(payThisPayday(undefined, bills, 'a')).toBeCloseTo(35, 2);
+  });
+});
