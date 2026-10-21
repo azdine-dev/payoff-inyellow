@@ -11,6 +11,8 @@ import { didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from 
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
+import { dateMoveSentence } from '../state/changeNote';
+import { showNotice } from '../state/notice';
 import { activeDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
 import { act, data, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
@@ -140,6 +142,12 @@ export function Today() {
     }
     if (sheet === 'amount') {
       setOverride(amount === s.extraPerPayday ? null : amount);
+      const diff = amount - s.extraPerPayday;
+      if (diff !== 0) {
+        // The rest of the plan keeps its order: nothing is added on top of the next payday
+        const move = dateMoveSentence(plan.value!, simulatePlan(toPlanInput(d, amount)));
+        showNotice('info', `You have ${formatMoneyAuto(Math.abs(diff), cur)} ${diff < 0 ? 'less' : 'more'} for the plan this payday. ${move}`);
+      }
     } else {
       const owed = active.reduce((sum, x) => sum + x.balance, 0);
       const res = await extraPayment(await getDB(), d, Math.min(amount, owed), today.value);

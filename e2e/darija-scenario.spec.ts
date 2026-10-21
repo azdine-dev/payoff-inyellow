@@ -197,6 +197,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await page.getByRole('button', { name: 'I got a different amount' }).click();
     await page.getByRole('textbox', { name: 'Money for the plan this payday' }).fill('100');
     await page.getByRole('button', { name: 'Update this payday' }).click();
+    // One calm sentence: $50 less this payday, and the date stays 6 Oct 2028
+    await expect(page.getByTestId('notice')).toContainText('You have $50 less for the plan this payday. Your debt-free date didn’t move.');
     await expect(page.getByRole('checkbox', { name: 'Store card $35, due 5 Dec' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Visa $96, due 12 Dec' })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: /Yearly bills/ })).toContainText(near(42.31));
@@ -218,6 +220,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await page.getByRole('textbox', { name: 'Charge amount' }).fill('45');
     await page.getByRole('radio', { name: 'Everyday' }).click();
     await page.getByRole('button', { name: 'Add to balance' }).click();
+    await expect(page.getByTestId('notice')).toContainText('That adds $45 to Visa. Your debt-free date moved 1 payday later (20 Oct 2028).');
     await goTab(page, 'Progress');
     await expect(page.getByText('still owed').locator('..')).toContainText('$14,143'); // 14,142.83
     await goTab(page, 'Plan');

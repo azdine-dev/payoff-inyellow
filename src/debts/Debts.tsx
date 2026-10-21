@@ -6,8 +6,11 @@ import type { ChargeTag, Debt } from '../data/types';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { ordinal, shortMonthYear } from '../lib/today';
+import { dateMoveSentence } from '../state/changeNote';
+import { showNotice } from '../state/notice';
+import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
-import { toDebtInput } from '../state/planInput';
+import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
 import { Bar, Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 
@@ -108,7 +111,11 @@ export function Debts() {
   const saveAmount = async () => {
     const amount = parseAmount(text);
     if (!current || amount === null || amount < 0 || (mode?.kind === 'charge' && amount === 0)) return setMsg('Type an amount, like 25.');
-    if (mode?.kind === 'charge') await act((db, x) => logCharge(db, x, current.id, amount, tag, note, today.value));
+    if (mode?.kind === 'charge') {
+      const before = plan.value!;
+      const next = await act((db, x) => logCharge(db, x, current.id, amount, tag, note, today.value));
+      showNotice('info', `That adds ${formatMoneyAuto(amount, cur)} to ${current.name}. ${dateMoveSentence(before, simulatePlan(toPlanInput(next)))}`);
+    }
     else await act((db, x) => updateBalance(db, x, current.id, amount));
     close();
   };
