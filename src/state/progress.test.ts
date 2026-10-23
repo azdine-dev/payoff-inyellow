@@ -96,8 +96,10 @@ describe('progress and milestones', () => {
 
   it('"one month ahead" appears when extra money moves the date a month', async () => {
     const d = await applyWhatIf(db, data, 200, null);
-    const r = simulatePlan(toPlanInput(d));
-    expect(reachedKeys(d, r)).toContain('month-ahead');
+    // No money has moved yet, so nothing is "ahead" of anything
+    expect(reachedKeys(d, simulatePlan(toPlanInput(d)))).not.toContain('month-ahead');
+    const paid = await didPayday(db, d);
+    expect(reachedKeys(paid.data, simulatePlan(toPlanInput(paid.data)))).toContain('month-ahead');
   });
 
   it('logs planned vs actual when a payday is done', async () => {

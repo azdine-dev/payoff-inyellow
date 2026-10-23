@@ -49,9 +49,14 @@ export function weekdayName(iso: string): string {
 }
 
 /** "Fri 24 Oct" */
-export function shortDate(iso: string): string {
-  const { m, d } = parseISO(iso);
-  return `${WEEKDAYS[weekdayIndex(iso)]!.slice(0, 3)} ${d} ${MONTHS[m - 1]!.slice(0, 3)}`;
+export function shortDate(iso: string, today = todayISO()): string {
+  const { y, m, d } = parseISO(iso);
+  return `${WEEKDAYS[weekdayIndex(iso)]!.slice(0, 3)} ${d} ${MONTHS[m - 1]!.slice(0, 3)}${yearSuffix(y, today)}`;
+}
+
+/** " 2027" when the date is not in the current year, "" when it is. "next Fri 8 Oct" must not hide that it is a year away. */
+function yearSuffix(year: number, today: string): string {
+  return year === parseISO(today).y ? '' : ` ${year}`;
 }
 
 /** "March 2028" */
@@ -89,7 +94,7 @@ export function timeLabel(hhmm: string): string {
 }
 
 /** "28 Oct" */
-export function dayMonth(iso: string): string {
-  const { m, d } = parseISO(iso);
-  return `${d} ${MONTHS[m - 1]!.slice(0, 3)}`;
+export function dayMonth(iso: string, today = todayISO()): string {
+  const { y, m, d } = parseISO(iso);
+  return `${d} ${MONTHS[m - 1]!.slice(0, 3)}${yearSuffix(y, today)}`;
 }

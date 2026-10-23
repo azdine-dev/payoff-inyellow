@@ -2,7 +2,8 @@
 import type { PlanResult } from '../engine';
 import { dayMonth } from '../lib/today';
 
-const full = (iso: string) => `${dayMonth(iso)} ${iso.slice(0, 4)}`;
+// Always with the year: this sentence is about a date far away
+const full = (iso: string) => `${dayMonth(iso, iso)} ${iso.slice(0, 4)}`;
 
 export function dateMoveSentence(before: PlanResult, after: PlanResult): string {
   const a = before.debtFreeDate;

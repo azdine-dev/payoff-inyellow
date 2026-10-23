@@ -2,7 +2,8 @@
 import { ZERO } from '../engine';
 import { commit, newId, type PiyDB } from '../data/db';
 import type { AppData, Charge, ChargeTag, Debt } from '../data/types';
-import { orderFor } from './planInput';
+import { todayISO } from '../lib/today';
+import { baselineFor, orderFor } from './planInput';
 
 export interface DebtFields {
   name: string;
@@ -32,7 +33,7 @@ export async function addDebt(db: PiyDB, data: AppData, f: DebtFields, now = Dat
   };
   // A new debt changes the order: make it again
   const withNew: AppData = { ...data, debts: [...data.debts, debt] };
-  return commit(db, data, { debts: [debt], settings: { ...data.settings, payoffOrder: orderFor(withNew), updatedAt: now } });
+  return commit(db, data, { debts: [debt], settings: { ...data.settings, payoffOrder: orderFor(withNew), baseline: baselineFor(withNew, todayISO()), updatedAt: now } });
 }
 
 /**
@@ -77,12 +78,12 @@ export async function archiveDebt(db: PiyDB, data: AppData, id: string, now = Da
   const debt = data.debts.find((d) => d.id === id)!;
   const archived = { ...debt, status: 'archived' as const, updatedAt: now };
   const after: AppData = { ...data, debts: data.debts.map((d) => (d.id === id ? archived : d)) };
-  return commit(db, data, { debts: [archived], settings: { ...data.settings, payoffOrder: orderFor(after), updatedAt: now } });
+  return commit(db, data, { debts: [archived], settings: { ...data.settings, payoffOrder: orderFor(after), baseline: baselineFor(after, todayISO()), updatedAt: now } });
 }
 
 export async function restoreDebt(db: PiyDB, data: AppData, id: string, now = Date.now()): Promise<AppData> {
   const debt = data.debts.find((d) => d.id === id)!;
   const back = { ...debt, status: debt.balance <= ZERO ? ('paid' as const) : ('active' as const), updatedAt: now };
   const after: AppData = { ...data, debts: data.debts.map((d) => (d.id === id ? back : d)) };
-  return commit(db, data, { debts: [back], settings: { ...data.settings, payoffOrder: orderFor(after), updatedAt: now } });
+  return commit(db, data, { debts: [back], settings: { ...data.settings, payoffOrder: orderFor(after), baseline: baselineFor(after, todayISO()), updatedAt: now } });
 }

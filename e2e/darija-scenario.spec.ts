@@ -501,7 +501,7 @@ test('Case B: a debt that grows, paid twice a month (15th and last day)', async 
 
   await test.step('Payday dates: 31 Oct, 15 Nov, 30 Nov, 15 Dec, 31 Dec, 15 Jan', async () => {
     await goTab(page, 'Plan');
-    for (const label of ['Sat 31 Oct', 'Sun 15 Nov', 'Mon 30 Nov', 'Tue 15 Dec', 'Thu 31 Dec', 'Fri 15 Jan']) {
+    for (const label of ['Sat 31 Oct', 'Sun 15 Nov', 'Mon 30 Nov', 'Tue 15 Dec', 'Thu 31 Dec', 'Fri 15 Jan 2027']) { // the year shows once a date is not in the current year
       await expect(page.getByRole('button', { name: `${label}, to come`, exact: true })).toBeVisible();
     }
     await expect(page.getByText(/March 2032 · 131 paydays/)).toBeVisible();

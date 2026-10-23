@@ -14,7 +14,7 @@ import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
 import { activeDebts, nextPaydayISO, toDebtInput, toPlanInput } from '../state/planInput';
-import { act, data, getDB, plan, tab, today } from '../state/store';
+import { act, data, freshMilestones, getDB, plan, tab, today } from '../state/store';
 import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -216,7 +216,7 @@ export function Today() {
       )}
 
       {d.milestones
-        .filter((m) => m.reachedOn === today.value && !closedMoments.has(m.id))
+        .filter((m) => freshMilestones.value.includes(m.id) && !closedMoments.has(m.id))
         .map((m) => {
           const firstExtra = d.payments.find((p) => p.kind === 'extra');
           const text = momentText(m.id, focus?.debt.name ?? null, firstExtra?.debtId ? nameOf(firstExtra.debtId) : null);

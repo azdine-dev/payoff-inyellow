@@ -32,7 +32,7 @@ describe('money', () => {
 
 describe('dates for screens', () => {
   it('formats like the mockup', () => {
-    expect(shortDate('2026-10-24')).toBe('Sat 24 Oct');
+    expect(shortDate('2026-10-24', '2026-10-15')).toBe('Sat 24 Oct');
     expect(weekdayName('2026-10-23')).toBe('Friday');
     expect(timeLabel('20:00')).toBe('8 pm');
     expect(timeLabel('07:30')).toBe('7:30 am');

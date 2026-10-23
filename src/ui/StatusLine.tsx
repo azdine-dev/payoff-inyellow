@@ -1,6 +1,7 @@
 /** The same small line at the top of every main tab: when the debts are gone and how many paydays that is. */
 import { shortMonthYear } from '../lib/today';
-import { plan } from '../state/store';
+import { isDebtFree } from '../state/debtFree';
+import { data, plan } from '../state/store';
 
 export function statusText(debtFreeDate: string | null, paydaysLeft: number | null, anyActive: boolean): string {
   if (!anyActive) return 'Debt-free';
@@ -14,7 +15,7 @@ export function StatusLine() {
   if (!r) return null;
   return (
     <p class="muted small num" data-testid="status-line">
-      {statusText(r.debtFreeDate, r.paydaysToDebtFree, (r.paydaysToDebtFree ?? 1) > 0)}
+      {statusText(r.debtFreeDate, r.paydaysToDebtFree, data.value ? !isDebtFree(data.value) : true)}
     </p>
   );
 }

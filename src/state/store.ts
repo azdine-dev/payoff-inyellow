@@ -17,6 +17,9 @@ export const tab = signal<Tab>('today');
 export const data = signal<AppData | null>(null);
 export const today = signal(todayISO());
 
+/** Milestones reached while the app is open (not the ones found when it starts). Today shows a short yellow moment for each. */
+export const freshMilestones = signal<string[]>([]);
+
 /**
  * 'checking' while a stored code is being verified, 'locked' = calculator mode (no valid code),
  * 'unlocked' = the full planner. The check runs on the phone, with no internet.
@@ -77,6 +80,8 @@ export function setExampleCheck(fn: () => boolean): void {
   exampleModeOn = fn;
 }
 
+let milestonesChecked = false;
+
 export async function boot(): Promise<void> {
   const db = await getDB();
   let loaded = await loadAll(db);
@@ -104,7 +109,14 @@ export async function boot(): Promise<void> {
     const day = today.value;
     if (!current || !result || view.value === 'setup' || exampleModeOn()) return;
     void syncMilestones(db, current, result, day).then((next) => {
-      if (next !== current && data.peek() === current) data.value = next;
+      const atStart = !milestonesChecked;
+      milestonesChecked = true;
+      if (next !== current && data.peek() === current) {
+        const had = new Set(current.milestones.map((m) => m.id));
+        const added = next.milestones.filter((m) => !had.has(m.id)).map((m) => m.id);
+        if (added.length && !atStart) freshMilestones.value = [...freshMilestones.value, ...added];
+        data.value = next;
+      }
     });
   });
   window.addEventListener('beforeinstallprompt', (e) => {

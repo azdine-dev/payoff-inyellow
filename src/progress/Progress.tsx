@@ -3,6 +3,7 @@ import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { CheckIcon } from '../ui/controls';
 import { Ring } from '../ui/Ring';
+import { isDebtFree } from '../state/debtFree';
 import { PAYDAYS_PER_YEAR } from '../engine';
 import { chartData } from '../lib/series';
 import { formatMoney } from '../lib/money';
@@ -59,7 +60,9 @@ export function Progress() {
       <StatusLine />
 
       <section class="card stack" aria-label="Countdown" data-testid="countdown">
-        {paydaysLeft === null ? (
+        {isDebtFree(d) ? (
+          <p class="countdown-number">Debt-free</p>
+        ) : paydaysLeft === null ? (
           <>
             <p class="countdown-number">A long way to go</p>
             <p class="muted">More than 20 years at this pace. The what-if on the Plan tab can help.</p>

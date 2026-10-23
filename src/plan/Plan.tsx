@@ -1,4 +1,5 @@
 /** Plan: payday list, method switch, what-if, export. */
+import { isDebtFree } from '../state/debtFree';
 import { StatusLine } from '../ui/StatusLine';
 import { useMemo, useState } from 'preact/hooks';
 import { compareMethods, type PayoffMethod } from '../engine';
@@ -50,6 +51,7 @@ export function Plan() {
   const [oneNote, setOneNote] = useState('');
   const [applied, setApplied] = useState(false);
   const [list, setList] = useState<'upcoming' | 'done'>('upcoming');
+  const debtFree = isDebtFree(d);
 
   const { method: _m, ...rest } = toPlanInput(d);
   const cmp = useMemo(() => compareMethods(rest), [d]);
@@ -88,7 +90,9 @@ export function Plan() {
       <StatusLine />
 
       <section class="card stack" aria-label="Debt-free date">
-        {r.debtFreeDate ? (
+        {debtFree ? (
+          <p>You’re debt-free. Every debt is paid or archived, so there is nothing left to plan.</p>
+        ) : r.debtFreeDate ? (
           <p>
             You can be debt-free by <span class="hl">{monthYear(r.debtFreeDate)}</span>
             {r.paydaysToDebtFree ? ` · ${r.paydaysToDebtFree} paydays` : ''}.
@@ -106,6 +110,7 @@ export function Plan() {
         </div>
       </section>
 
+      {!debtFree && (
       <section class="card stack" aria-labelledby="method-title">
         <h2 id="method-title">Which debt first?</h2>
         <div class="stack" role="radiogroup" aria-label="Payoff order" style={{ gap: 8 }}>
@@ -118,6 +123,9 @@ export function Plan() {
         </p>
       </section>
 
+      )}
+
+      {!debtFree && (
       <section class="card stack" aria-labelledby="whatif-title">
         <h2 id="whatif-title">What if?</h2>
         <p class="muted small">Try it here first. Nothing changes until you tap Apply to my plan.</p>
@@ -217,6 +225,7 @@ export function Plan() {
           </div>
         )}
       </section>
+      )}
 
       <section class="card stack" aria-labelledby="list-title">
         <h2 id="list-title">Payday by payday</h2>
@@ -380,7 +389,7 @@ export function Plan() {
       {/* Printed by "Print one page": everything else is hidden in print */}
       <section class="print-only" aria-hidden="true">
         <h1>My payoff plan · PaidInYellow</h1>
-        <p>{r.debtFreeDate ? `Debt-free by ${monthYear(r.debtFreeDate)}` : 'More than 20 years at this pace'}</p>
+        <p>{debtFree ? 'Debt-free' : r.debtFreeDate ? `Debt-free by ${monthYear(r.debtFreeDate)}` : 'More than 20 years at this pace'}</p>
         <p>Order: {r.order.map(nameOf).join(', ')}</p>
         <table>
           <thead><tr><th>Payday</th><th>Date</th><th>Total</th><th>Extra goes to</th><th>Debt left</th></tr></thead>

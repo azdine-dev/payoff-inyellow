@@ -16,6 +16,7 @@ import { data, editSeed, licenseState, plan, tab, today, view } from '../state/s
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
 import { NeedsHelp } from '../ui/NeedsHelp';
+import { isDebtFree } from '../state/debtFree';
 import { HowWeGotThis } from './HowWeGotThis';
 import { ifThenLine } from './steps/Order';
 import { EmailCapture, UnlockCard } from './Unlock';
@@ -74,7 +75,7 @@ export function Result() {
           </button>
         </h1>
       ) : (
-        <h1 style={{ fontSize: '2rem' }}>Right now this plan takes more than 20 years.</h1>
+        <h1 style={{ fontSize: '2rem' }}>{isDebtFree(d) ? 'You’re debt-free.' : 'Right now this plan takes more than 20 years.'}</h1>
       )}
 
       {r.debtFreeDate && (

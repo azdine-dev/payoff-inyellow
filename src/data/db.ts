@@ -194,7 +194,7 @@ export interface Changes {
   paydays?: PaydayLog[];
   milestones?: Milestone[];
   /** ids to delete, per store */
-  remove?: Partial<Record<'funds', string[]>>;
+  remove?: Partial<Record<'funds' | 'milestones', string[]>>;
 }
 
 export async function writeChanges(db: PiyDB, c: Changes): Promise<void> {
@@ -212,6 +212,7 @@ export async function writeChanges(db: PiyDB, c: Changes): Promise<void> {
   for (const l of c.paydays ?? []) puts.push(tx.objectStore('paydays').put(l));
   for (const m of c.milestones ?? []) puts.push(tx.objectStore('milestones').put(m));
   for (const id of c.remove?.funds ?? []) puts.push(tx.objectStore('funds').delete(id));
+  for (const id of c.remove?.milestones ?? []) puts.push(tx.objectStore('milestones').delete(id));
   await Promise.all([...puts, tx.done]);
 }
 
@@ -232,7 +233,7 @@ export function mergeChanges(data: AppData, c: Changes): AppData {
     payments: upsert(data.payments, c.payments),
     charges: upsert(data.charges, c.charges),
     paydays: upsert(data.paydays, c.paydays),
-    milestones: upsert(data.milestones, c.milestones),
+    milestones: upsert(data.milestones, c.milestones).filter((m) => !c.remove?.milestones?.includes(m.id)),
   };
 }
 
