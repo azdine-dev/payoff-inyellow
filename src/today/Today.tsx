@@ -19,6 +19,7 @@ import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } fr
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { StatusLine } from '../ui/StatusLine';
+import { LaterCard } from './LaterCard';
 import { comingUp, dueLine, focusDebt, paydayLines, payThisPayday, whyFirst } from './model';
 
 interface JustPaid {
@@ -412,6 +413,8 @@ export function Today() {
           Coming up · {due.map((i) => `${dueLine(i, d)} (${relativeDay(today.value, i.date)})`).join(' · ')}
         </p>
       )}
+
+      <LaterCard />
 
       <p class="footer-note">
         {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}

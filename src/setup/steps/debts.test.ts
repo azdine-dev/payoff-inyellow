@@ -1,27 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import type { DraftDebt } from '../draft';
-import { debtChecks, debtComplete, debtSummary } from './Debts';
+import { debtChecks, debtComplete, debtRow } from './Debts';
 
 const debt = (p: Partial<DraftDebt>): DraftDebt => ({ key: 'k', name: '', type: '', balance: '', apr: '', min: '', dueDay: '', autopay: false, ...p });
 
-describe('a finished debt as one line', () => {
-  it('names, balance, rate, minimum and due day', () => {
-    const d = debt({ name: 'Visa', balance: '3200', apr: '22.9', min: '96', dueDay: '12' });
+describe('a debt added so far, as one line', () => {
+  it('name, rate, minimum and due day, with the balance on the right', () => {
+    const d = debt({ name: 'Store Card', balance: '890', apr: '26.99', min: '35', dueDay: '2' });
     expect(debtComplete(d)).toBe(true);
-    expect(debtSummary(d, '$', 0)).toBe('Visa · $3,200 · 22.9% · $96/mo · due 12th');
+    expect(debtRow(d, '$', 0)).toEqual({ name: 'Store Card', sub: '26.99% · $35 a month · due the 2nd', amount: '$890' });
   });
 
   it('works without a due day, with pasted dollars and commas, and with cents', () => {
-    const d = debt({ name: 'Store card', balance: '$1,234.56', apr: '26.99', min: '35' });
+    const d = debt({ name: 'Visa', balance: '$1,234.56', apr: '24.99', min: '65' });
     expect(debtComplete(d)).toBe(true);
-    expect(debtSummary(d, '$', 1)).toBe('Store card · $1,234.56 · 26.99% · $35/mo');
+    expect(debtRow(d, '$', 1)).toEqual({ name: 'Visa', sub: '24.99% · $65 a month', amount: '$1,234.56' });
+  });
+
+  it('an empty rate says "rate missing" and still counts as complete', () => {
+    const d = debt({ name: 'Mom', balance: '800', apr: '', min: '40', dueDay: '15' });
+    expect(debtComplete(d)).toBe(true);
+    expect(debtRow(d, '$', 0).sub).toBe('rate missing · $40 a month · due the 15th');
   });
 
   it('a debt with something missing is not complete, and still has a line', () => {
     const d = debt({ name: '', balance: '500' });
     expect(debtComplete(d)).toBe(false);
-    expect(debtSummary(d, '$', 2)).toBe('Debt 3 · $500');
+    expect(debtRow(d, '$', 2)).toEqual({ name: 'Debt 3', sub: 'rate missing', amount: '$500' });
     expect(debtComplete(debt({ name: 'Visa', balance: '1', apr: '0', min: '' }))).toBe(false);
+    expect(debtComplete(debt({ name: 'Visa', balance: '1', apr: 'abc', min: '5' }))).toBe(false);
   });
 
   it('a 0% debt with a $0 minimum is complete', () => {

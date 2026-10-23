@@ -8,6 +8,7 @@ import { currencyFromCode, detectCurrency, parseAmount } from '../lib/money';
 import { addDaysISO, weekdayName } from '../lib/today';
 import type { AppData } from '../data/types';
 import type { SetupValues } from '../state/actions';
+import { DEFAULT_RATE } from '../state/debtActions';
 import { activeDebts, nextPaydayISO } from '../state/planInput';
 
 export interface DraftDebt {
@@ -139,15 +140,22 @@ export function twiceFromSchedule(nextPayday: string, other: number | null): { p
   return { pair: 'custom', a: String(lo), b: String(hi) };
 }
 
-export const STEP_COUNT = 7; // after the welcome screen
+/** The screens a buyer fills in: pay, debts, money. The fourth step is the result ("Your date"). */
+export const SETUP_STEPS = 4;
+export const STEP_COUNT = 3; // screens before the result
 
-/** Version of the saved wizard draft. 2 = the currency is part of the pay schedule step. */
-export const DRAFT_VERSION = 2;
+/** Version of the saved wizard draft. 3 = four steps (pay with the welcome, debts, money, your date). */
+export const DRAFT_VERSION = 3;
 
-/** The step to come back to. A draft saved before version 2 counted its steps one higher after the currency screen. */
+/**
+ * The screen to come back to. Older drafts counted their steps differently:
+ *   version 1: welcome, currency, pay, debts, buffer, extra, yearly, order, fresh start
+ *   version 2: welcome, pay, debts, buffer, extra, yearly, order, fresh start
+ */
 export function resumeStep(savedStep: number, savedVersion: number | undefined): number {
   if (savedVersion === DRAFT_VERSION) return savedStep;
-  return savedStep >= 2 ? savedStep - 1 : savedStep;
+  if (savedVersion === 2) return savedStep <= 1 ? 0 : savedStep === 2 ? 1 : 2;
+  return savedStep <= 2 ? 0 : savedStep === 3 ? 1 : 2;
 }
 
 const isBlank = (d: DraftDebt) => !d.name.trim() && !d.balance.trim() && !d.apr.trim() && !d.min.trim() && !d.dueDay.trim();
@@ -171,13 +179,13 @@ function validDate(iso: string): boolean {
 
 /**
  * Calm notes for a step; empty = ready to continue. Written in ink, never red.
- * @param step 1-7 (0 is the welcome screen)
+ * @param step 0 pay, 1 debts, 2 money
  */
 export function stepNotes(step: number, draft: Draft, today: string): string[] {
   const notes: string[] = [];
   const amount = (s: string) => parseAmount(s);
   switch (step) {
-    case 1:
+    case 0:
       if (!draft.currencySymbol.trim()) notes.push('Type the symbol you use for money, like $ or €.');
       if (!draft.frequency) notes.push('Choose how often you get paid.');
       if (!draft.nextPayday || !validDate(draft.nextPayday)) notes.push('Pick the date of your next payday.');
@@ -186,7 +194,7 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
       notes.push(...twiceNotes(draft.frequency, draft.nextPayday, draft.twicePair, draft.twiceA, draft.twiceB));
       if (draft.paycheck.trim() && (amount(draft.paycheck) ?? -1) < 0) notes.push('The paycheck amount should be a number, like 1400.');
       break;
-    case 2: {
+    case 1: {
       const debts = filledDebts(draft);
       if (!debts.length) notes.push('Add at least one debt with its balance.');
       debts.forEach((d, i) => {
@@ -195,7 +203,8 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
         const apr = amount(d.apr);
         const min = amount(d.min);
         if (bal === null || bal < 0) notes.push(`${name}: add the balance you owe.`);
-        if (apr === null || apr < 0 || apr > 10000) notes.push(`${name}: add the interest rate, like 22.9. Type 0 if there is none.`);
+        // The rate can be left empty: 24% is used and the debt is marked "rate missing"
+        if (d.apr.trim() && (apr === null || apr < 0 || apr > 10000)) notes.push(`${name}: add the interest rate, like 22.9, or leave it empty.`);
         if (min === null || min < 0) notes.push(`${name}: add the monthly minimum. Type 0 if there is none.`);
         if (d.dueDay.trim()) {
           const day = Number(d.dueDay);
@@ -205,18 +214,10 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
       if (debts.length && !debts.some((d) => (amount(d.balance) ?? 0) > 0)) notes.push('Add at least one debt with a balance above zero.');
       break;
     }
-    case 3:
+    case 2:
       if (draft.bufferNow.trim() && (amount(draft.bufferNow) ?? -1) < 0) notes.push('Type what you have set aside, or leave it empty.');
       if ((amount(draft.bufferGoal) ?? -1) < 0) notes.push('Type a goal for your buffer, like 500.');
-      break;
-    case 4:
       if ((amount(draft.extra) ?? -1) < 0) notes.push('Type an amount, even 0. You can change it any time.');
-      break;
-    case 5:
-      draft.funds.forEach((f) => {
-        if (!f.name.trim() && !f.perYear.trim()) return;
-        if ((amount(f.perYear) ?? -1) <= 0) notes.push(`${f.name.trim() || 'This bill'}: add how much it costs in a year.`);
-      });
       break;
   }
   return notes;
@@ -228,7 +229,7 @@ export function draftDebtInputs(draft: Draft): DebtInput[] {
     id: d.key,
     name: debtName(d, i),
     balance: parseAmount(d.balance) ?? 0,
-    apr: parseAmount(d.apr) ?? 0,
+    apr: parseAmount(d.apr) ?? DEFAULT_RATE,
     minMonthly: parseAmount(d.min) ?? 0,
     myOrder: draft.method === 'my-order' ? myOrderKeys(draft).indexOf(d.key) + 1 : null,
   }));
@@ -267,6 +268,7 @@ export function toSetupValues(draft: Draft): SetupValues {
       dueDay: d.dueDay.trim() ? Number(d.dueDay) : null,
       autopay: d.autopay,
       myOrder: inputs[i]!.myOrder ?? null,
+      ...(d.apr.trim() ? {} : { rateMissing: true }),
     })),
     bufferNow: parseAmount(draft.bufferNow) ?? 0,
     bufferGoal: parseAmount(draft.bufferGoal) ?? 0,
@@ -306,7 +308,7 @@ export function draftFromData(d: AppData): Draft {
       name: x.name,
       type: x.type,
       balance: num(x.balance),
-      apr: num(x.apr),
+      apr: x.rateMissing ? '' : num(x.apr),
       min: num(x.minMonthly),
       dueDay: x.dueDay ? String(x.dueDay) : '',
       autopay: x.autopay,

@@ -72,8 +72,8 @@ test('the "code saved" message goes away by itself and never blocks a tap', asyn
   const notice = page.getByTestId('notice');
   await expect(notice).toBeVisible();
   // A tap on the screen under the message goes through it
-  await page.getByRole('button', { name: /Let’s start/ }).click();
-  await expect(page.getByRole('heading').first()).toBeVisible();
+  await page.getByRole('radio', { name: 'Every week' }).click(); // a tap on the screen under the message goes through it
+  await expect(page.getByRole('radio', { name: 'Every week' })).toHaveAttribute('aria-checked', 'true');
   // And it is gone after a few seconds, with no tap on OK
   await expect(notice).toHaveCount(0, { timeout: 8000 });
 });

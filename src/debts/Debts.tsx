@@ -9,7 +9,7 @@ import { ordinal, shortMonthYear } from '../lib/today';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
 import { simulatePlan } from '../engine';
-import { addDebt, archiveDebt, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
+import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
 import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
 import { Bar, Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
@@ -28,7 +28,7 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
   const [f, setF] = useState({
     name: debt?.name ?? '',
     balance: debt ? str(debt.balance) : '',
-    apr: debt ? str(debt.apr) : '',
+    apr: debt && !debt.rateMissing ? str(debt.apr) : '',
     min: debt && !debt.minPending ? str(debt.minMonthly) : '',
     dueDay: debt?.dueDay ? String(debt.dueDay) : '',
     autopay: debt?.autopay ?? false,
@@ -45,11 +45,12 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     const day = f.dueDay.trim() ? Number(f.dueDay) : null;
     if (!f.name.trim()) return setNote('Give this debt a name.');
     if (balance === null || balance < 0) return setNote('Add the balance you owe.');
-    if (apr === null || apr < 0 || apr > 100) return setNote('Add the interest rate, from 0 to 100. Type 0 if there is none.');
+    // The rate can wait: left empty, 24% is used and the debt is marked "rate missing" until the real one is added
+    if (f.apr.trim() && (apr === null || apr < 0 || apr > 100)) return setNote('The interest rate should be a number from 0 to 100, like 22.9. Type 0 if there is none.');
     // The minimum can wait: left empty it counts as 0 and the debt carries a soft tag until it is added
     if (f.min.trim() && (min === null || min < 0)) return setNote('The monthly minimum should be a number. Type 0 if there is none.');
     if (day !== null && (!Number.isInteger(day) || day < 1 || day > 31)) return setNote('The due day is a day of the month, from 1 to 31.');
-    onSave({ name: f.name.trim(), type: debt?.type ?? '', balance, apr, minMonthly: min ?? 0, minPending: !f.min.trim(), dueDay: day, autopay: f.autopay });
+    onSave({ name: f.name.trim(), type: debt?.type ?? '', balance, apr: apr ?? DEFAULT_RATE, rateMissing: !f.apr.trim(), minMonthly: min ?? 0, minPending: !f.min.trim(), dueDay: day, autopay: f.autopay });
   };
 
   return (
@@ -60,7 +61,7 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
       <Field label="Balance you owe">
         <NumberInput pre={symbol} value={f.balance} onInput={(v) => set({ balance: v })} label="Balance" />
       </Field>
-      <Field label="Interest rate" hint="Example: 22.9. It’s on your statement as APR.">
+      <Field label="Interest rate" hint={`Example: 22.9. Leave it empty if you don’t know it: we’ll use ${DEFAULT_RATE}%.`}>
         <NumberInput post="%" value={f.apr} onInput={(v) => set({ apr: v })} label="Interest rate" />
       </Field>
       {more ? (
@@ -160,7 +161,7 @@ export function Debts() {
           <>
             <Bar pct={pct} label={`${debt.name} paid off`} />
             <p class="muted small num">
-              {Math.floor(pct)}% gone · {debt.apr}% rate{debt.minPending ? '' : ` · minimum ${formatMoneyAuto(debt.minMonthly, cur)}`}
+              {Math.floor(pct)}% gone · {debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}% rate`}{debt.minPending ? '' : ` · minimum ${formatMoneyAuto(debt.minMonthly, cur)}`}
               {debt.dueDay ? ` · due on the ${ordinal(debt.dueDay)}${debt.autopay ? ' (autopay)' : ''}` : ''}
             </p>
             <p class="muted small">

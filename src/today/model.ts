@@ -54,19 +54,22 @@ export function paydayLines(row: PaydayStep, data: AppData, bills: BillsWindow):
 export interface FirstStep {
   date: string;
   kind: 'debt' | 'setaside' | 'nothing';
+  /** What goes to the debt (kind 'debt'), or the whole total (kind 'setaside') */
   amount: number;
+  /** Everything to move this payday: bills + yearly bills + buffer + extra */
+  total: number;
   target: string;
 }
 
 /** "This payday (Fri 24 Oct): pay $150 to Store Card", or "set aside $235" when nothing goes to a debt yet. */
 export function firstStep(row: PaydayStep, data: AppData, bills: BillsWindow): FirstStep {
   const debts = debtMap(data);
+  const total = totalOf(bills, row);
   if (row.extraGoesTo) {
     const extra = row.debts.find((d) => d.id === row.extraGoesTo)!.extra;
-    return { date: row.date, kind: 'debt', amount: extra, target: debts.get(row.extraGoesTo)?.name ?? '' };
+    return { date: row.date, kind: 'debt', amount: extra, total, target: debts.get(row.extraGoesTo)?.name ?? '' };
   }
-  const total = totalOf(bills, row);
-  return total > 0 ? { date: row.date, kind: 'setaside', amount: total, target: '' } : { date: row.date, kind: 'nothing', amount: 0, target: '' };
+  return total > 0 ? { date: row.date, kind: 'setaside', amount: total, total, target: '' } : { date: row.date, kind: 'nothing', amount: 0, total: 0, target: '' };
 }
 
 export function methodReason(method: AppData['settings']['method']): string {

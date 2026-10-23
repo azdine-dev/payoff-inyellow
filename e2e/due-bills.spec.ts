@@ -13,7 +13,6 @@ test.beforeEach(async ({ page }) => {
 
 test('setup asks for the due day, recommended, with where to find it', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Let’s start' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');

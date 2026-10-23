@@ -1,34 +1,14 @@
-/** Welcome and Pay schedule (with the currency as a small line) */
+/** Pay schedule, with the welcome words on top and the currency as a small line */
 import { useState } from 'preact/hooks';
 import { COPY } from '../../lib/copy';
 import { VIDEO_URL } from '../../lib/config';
 import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
 import { shortDate } from '../../lib/today';
-import { showExample } from '../../state/example';
-import { today } from '../../state/store';
+import { editSeed } from '../../state/store';
 import { Choice, Field, NumberInput, Wordmark } from '../../ui/controls';
 import { FREQUENCIES } from '../draft';
 import { TwicePicker } from '../TwicePicker';
 import type { StepProps } from '../Wizard';
-
-export function Welcome() {
-  return (
-    <div class="stack" style={{ gap: 20, paddingTop: 24 }}>
-      <Wordmark height={34} />
-      <h1 style={{ fontSize: '2rem' }}>{COPY.welcome}</h1>
-      <p style={{ fontSize: '1.1rem' }}>{COPY.welcome2}</p>
-      <p class="muted">About 15 minutes. Have your card statements or banking app close by.</p>
-      {VIDEO_URL && (
-        <a href={VIDEO_URL} target="_blank" rel="noopener" class="link">
-          {COPY.watchVideo}
-        </a>
-      )}
-      <button type="button" class="link" style={{ alignSelf: 'flex-start' }} onClick={() => showExample(today.value)}>
-        See an example first
-      </button>
-    </div>
-  );
-}
 
 /** "Currency: USD ($) · Change". Picked from the device. The choices open only when asked for. */
 function CurrencyLine({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
@@ -77,10 +57,28 @@ function CurrencyLine({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
   );
 }
 
+/** The words that used to be a screen of their own. Skipped when numbers are being changed. */
+function Welcome() {
+  return (
+    <div class="stack" style={{ gap: 12 }}>
+      <Wordmark height={30} />
+      <h1 style={{ fontSize: '1.7rem' }}>{COPY.welcome}</h1>
+      <p style={{ fontSize: '1.05rem' }}>{COPY.welcome2}</p>
+      <p class="muted">About 5 minutes. Have your card statements or banking app close by.</p>
+      {VIDEO_URL && (
+        <a href={VIDEO_URL} target="_blank" rel="noopener" class="link">
+          {COPY.watchVideo}
+        </a>
+      )}
+    </div>
+  );
+}
+
 export function PayStep({ draft, set, today }: StepProps) {
   return (
     <div class="stack">
-      <h1>Your pay schedule</h1>
+      {!editSeed.value && <Welcome />}
+      <h2 style={{ fontSize: '1.5rem' }}>Your pay schedule</h2>
       <p class="muted">Your whole plan follows your paydays, not the calendar month.</p>
       <CurrencyLine draft={draft} set={set} />
       <div class="stack" role="radiogroup" aria-label="How often you get paid" style={{ gap: 8 }}>

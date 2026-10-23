@@ -51,11 +51,9 @@ const mark = async (name) => (marks[name] = await metrics());
 
 await page.goto(process.env.PIY_CODE ? `${url}/#unlock=${process.env.PIY_CODE}` : url);
 await page.waitForSelector('button');
-await snap('01-welcome');
+await snap('01-pay'); // the welcome words are on top of the pay step
 
-const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
-await next.click();
-await snap('02-schedule'); // the currency is a small line on this screen
+const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
 await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
 await page.getByLabel('Your next payday').fill('2026-10-23');
 await next.click();
@@ -74,22 +72,14 @@ for (const [i, d] of debts.entries()) {
   await card.getByLabel('Monthly minimum').fill(d.min);
   await card.getByLabel('Due day (recommended)').fill(d.due);
 }
-await snap('04-debts');
+await snap('02-debts');
 await next.click();
-await snap('05-buffer');
-await page.getByLabel('Buffer now').fill('200');
-await next.click();
-await snap('06-money-for-plan');
 await page.getByLabel('Money for the plan each payday').fill('150');
-await next.click();
-await snap('07-yearly-bills');
-await next.click(); // skip
-await snap('08-order');
-await next.click();
-await snap('09-fresh-start');
+await page.getByLabel('Buffer now').fill('200');
+await snap('03-money');
 await next.click();
 await page.getByTestId('debt-free-date').waitFor();
-await snap('10-result');
+await snap('04-result');
 await mark('result'); // "what do I do now" is the first step on this screen
 
 await page.getByRole('button', { name: /Start my plan/ }).click().catch(() => undefined);
@@ -112,8 +102,8 @@ await snap('13-settings');
 // Time a person would need: 1.5 s per tap, 4 s to reach and focus a field, 0.35 s per character, 3 s reading each screen.
 const seconds = (m, screens) => Math.round(m.taps * 1.5 + m.fields * 4 + m.chars * 0.35 + screens * 3);
 const result = {
-  toResult: { ...marks.result, screens: 9, minutes: +(seconds(marks.result, 10) / 60).toFixed(1) },
-  toToday: { ...marks.today, screens: 10, minutes: +(seconds(marks.today, 11) / 60).toFixed(1) },
+  toResult: { ...marks.result, screens: 4, minutes: +(seconds(marks.result, 4) / 60).toFixed(1) },
+  toToday: { ...marks.today, screens: 5, minutes: +(seconds(marks.today, 5) / 60).toFixed(1) },
 };
 console.log(JSON.stringify(result, null, 2));
 await browser.close();

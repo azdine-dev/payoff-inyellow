@@ -41,7 +41,6 @@ test('a date in another year shows its year', async ({ page }) => {
   // Today is Sun 20 Dec 2026. The next payday, Fri 1 Jan 2027, is a different year: it must say so.
   await page.clock.setFixedTime(new Date('2026-12-20T10:00:00'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Let’s start' }).click();
   await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
   await page.getByLabel('Your next payday').fill('2027-01-01');
   await expect(page.getByText(/That.s Fri 1 Jan 2027\./)).toBeVisible();
@@ -52,12 +51,8 @@ test('a date in another year shows its year', async ({ page }) => {
   await card.getByLabel('Interest rate').fill('20');
   await card.getByLabel('Monthly minimum').fill('90');
   await card.getByLabel('Due day (recommended)').fill('9');
-  await page.getByRole('button', { name: 'Continue' }).click(); // debts
-  await page.getByRole('button', { name: 'Continue' }).click(); // buffer
+  await page.getByRole('button', { name: 'That’s all of them' }).click(); // debts
   await page.getByLabel('Money for the plan each payday').fill('100');
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Skip for now' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click(); // order
   await page.getByRole('button', { name: 'See my plan' }).click();
-  await expect(page.getByTestId('first-step')).toContainText('(Fri 1 Jan 2027)');
+  await expect(page.getByTestId('first-card')).toContainText('Fri 1 Jan 2027');
 });

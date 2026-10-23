@@ -12,7 +12,7 @@ import {
   type PaydayStep,
   type PayoffMethod,
 } from '../engine';
-import { newId, type PiyDB } from '../data/db';
+import { commit, newId, type PiyDB } from '../data/db';
 import type { AppData, BufferRecord, Debt, Fund, Milestone, Payment, PaydayLog, Settings, StartMode } from '../data/types';
 import type { Currency } from '../lib/money';
 import { firstOfNextMonth } from '../lib/today';
@@ -44,6 +44,8 @@ export interface SetupValues {
     dueDay: number | null;
     autopay: boolean;
     myOrder: number | null;
+    /** The rate was left empty: `apr` is the default and the debt is marked "rate missing" */
+    rateMissing?: boolean;
   }[];
   bufferNow: number;
   bufferGoal: number;
@@ -59,6 +61,18 @@ export function startIndex(v: Pick<SetupValues, 'frequency' | 'nextPayday' | 'st
   if (v.startMode === 'this-payday') return 0;
   const n = paydayNumberOnOrAfter(v.nextPayday, v.frequency, firstOfNextMonth(today), 520, v.otherPayday);
   return n === null ? 0 : n - 1;
+}
+
+/**
+ * "Start on the 1st of next month" (or back to "this payday"), chosen on the result screen. Only before the
+ * first payday is done. The plan and its starting point are made again from the new start.
+ */
+export async function setStartMode(db: PiyDB, data: AppData, mode: StartMode, today: string, now = Date.now()): Promise<AppData> {
+  if (data.paydays.length > 0 || data.settings.startMode === mode) return data;
+  const s = data.settings;
+  const paydayIndex = startIndex({ frequency: s.frequency, nextPayday: s.anchorPayday, startMode: mode, otherPayday: s.otherPayday }, today);
+  const next: AppData = { ...data, settings: { ...s, startMode: mode, paydayIndex, updatedAt: now } };
+  return commit(db, data, { settings: { ...next.settings, baseline: baselineFor(next, today) } });
 }
 
 /** What to keep when numbers are redone ("Change my numbers"). */

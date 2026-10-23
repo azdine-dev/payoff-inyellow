@@ -42,6 +42,11 @@ export async function setIfThen(db: PiyDB, data: AppData, day: string, time: str
   return commit(db, data, { settings: { ...data.settings, ifThen: { day, time }, updatedAt: now } });
 }
 
+/** A "Do these later" item is done (or not needed). */
+export async function markLater(db: PiyDB, data: AppData, key: 'yearly' | 'reminder', now = Date.now()): Promise<AppData> {
+  return commit(db, data, { settings: { ...data.settings, later: { ...data.settings.later, [key]: true }, updatedAt: now } });
+}
+
 export async function setAppearance(db: PiyDB, data: AppData, theme: Theme, textSize: TextSize, now = Date.now()): Promise<AppData> {
   return commit(db, data, { settings: { ...data.settings, theme, textSize, updatedAt: now } });
 }

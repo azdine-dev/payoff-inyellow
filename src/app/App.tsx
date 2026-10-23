@@ -100,6 +100,12 @@ function Screens() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  // A new screen (the result after setup, Today after "Start my plan") starts at the top, not where the last one was scrolled to
+  const screen = view.value;
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [screen]);
+
   const look = data.value?.settings;
   useEffect(() => {
     if (look) applyAppearance(look.theme, look.textSize);

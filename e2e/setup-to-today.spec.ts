@@ -3,7 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
-import { showPaydays, tapDidIt, goTab } from './scenario';
+import { addYearlyBills, showPaydays, tapDidIt, goTab } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult } from './helpers';
@@ -23,25 +23,22 @@ const debts = [
 test('a new user gets a debt-free date and marks the first payday paid', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-15T10:00:00'));
   await page.goto('/');
-  const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
+  const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
 
+  // 1 Pay: the welcome words are on top, the currency is a small line
   await expect(page.getByText('You’re not bad at math.')).toBeVisible();
-  await shot(page, '01-welcome');
-  await next.click();
-
-  // Currency is a small line on the pay schedule step
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
   await expect(page.getByTestId('currency-line')).toContainText('USD ($)');
+  await shot(page, '01-pay');
 
-  // Pay schedule: calm note when nothing is picked yet
+  // Calm note when nothing is picked yet
   await next.click();
   await expect(page.getByText('Choose how often you get paid.')).toBeVisible();
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
-  await shot(page, '02-pay');
   await next.click();
 
-  // Debts
+  // 2 Debts
   for (const [i, d] of debts.entries()) {
     if (i > 0) await page.getByRole('button', { name: 'Add another' }).click();
     const card = page.locator('fieldset').last();
@@ -51,42 +48,26 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
     await card.getByLabel('Monthly minimum').fill(d.min);
     await card.getByLabel('Due day (recommended)').fill(d.due);
   }
-  await shot(page, '03-debts');
+  await shot(page, '02-debts');
   await next.click();
 
-  // Buffer
+  // 3 Money: the plan amount and the buffer on one screen
+  await page.getByLabel('Money for the plan each payday').fill('150');
   await page.getByLabel('Buffer now').fill('200');
   await expect(page.getByLabel('Buffer goal')).toHaveValue('500');
+  await shot(page, '03-money');
   await next.click();
 
-  // Money for the plan
-  await page.getByLabel('Money for the plan each payday').fill('150');
-  await next.click();
-
-  // Yearly bills
-  await expect(page.getByRole('button', { name: 'Skip for now' })).toBeVisible();
-  await page.getByRole('button', { name: '+ Car repairs' }).click();
-  await page.getByLabel('Car repairs per year').fill('600');
-  await page.getByRole('button', { name: '+ Gifts and holidays' }).click();
-  await page.getByLabel('Gifts and holidays per year').fill('500');
-  await next.click();
-
-  // Payoff order: the difference is small here, so PaidInYellow order is recommended
-  await expect(page.getByRole('radio', { name: /PaidInYellow order \(recommended\)/ })).toHaveAttribute('aria-checked', 'true');
-  await shot(page, '04-order');
-  await next.click();
-
-  // Fresh start + payday plan
-  await expect(page.getByText('When I get paid on Friday, I open PaidInYellow at 8 pm.')).toBeVisible();
-  await shot(page, '05-fresh-start');
-  await next.click();
-
-  // Result: same date as the Sheet (2028-10-06)
-  await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028');
-  await expect(page.getByTestId('first-step')).toHaveText('This payday (Fri 23 Oct): set aside $235.00');
-  await expect(page.getByTestId('first-step-parts')).toHaveText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');
-  await shot(page, '06-result');
+  // 4 Your date. Yearly bills come after, from "Do these later" (the planner is unlocked first).
   await unlockOnResult(page);
+  await addYearlyBills(page, [
+    { idea: 'Car repairs', amount: '600' },
+    { idea: 'Gifts and holidays', amount: '500' },
+  ]);
+  await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028'); // same date as the Sheet (2028-10-06)
+  await expect(page.getByTestId('first-step')).toHaveText('Move $235.00.');
+  await expect(page.getByTestId('first-step-parts')).toHaveText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');
+  await shot(page, '04-result');
   await page.getByRole('button', { name: 'Start my plan' }).click();
 
   // Today: payday 1 of the fixture
@@ -117,19 +98,16 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
 test('the wizard keeps what was typed after a reload', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-15T10:00:00'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Let’s start' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('radio', { name: 'Every week' }).click();
   await page.waitForTimeout(500); // autosave runs 300 ms after typing
   await page.reload();
   await expect(page.getByRole('radio', { name: 'Every week' })).toHaveAttribute('aria-checked', 'true');
 });
 
-/** Fast setup: one debt, no yearly bills, buffer already full. */
+/** Fast setup: two debts without due days, buffer already full. */
 async function quickSetup(page: Page) {
   await page.goto('/');
-  const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
-  await next.click();
+  const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next.click();
@@ -142,13 +120,9 @@ async function quickSetup(page: Page) {
     await card.getByLabel('Monthly minimum').fill(d.min);
   }
   await next.click();
+  await page.getByLabel('Money for the plan each payday').fill('150');
   await page.getByLabel('Buffer now').fill('500');
   await next.click();
-  await page.getByLabel('Money for the plan each payday').fill('150');
-  await next.click();
-  await next.click(); // skip yearly bills
-  await next.click(); // order
-  await next.click(); // fresh start
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();
 }
@@ -193,7 +167,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   // Extra money pays off the focus debt
   await page.getByRole('button', { name: '+ Extra payment' }).click();
   await page.getByRole('textbox', { name: 'Extra payment' }).fill('640');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('PAID. One down.')).toBeVisible();
   await expect(page.getByTestId('paid-moment')).toContainText('Store card is paid.');
   await page.getByRole('button', { name: 'Next payday' }).click();
@@ -226,7 +200,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   await page.getByRole('textbox', { name: 'Interest rate' }).fill('0');
   await page.getByRole('button', { name: 'Add minimum and due day now' }).click();
   await page.getByRole('textbox', { name: 'Monthly minimum' }).fill('25');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Phone' })).toBeVisible();
   await page.getByRole('button', { name: 'Phone, options' }).click();
   await page.getByRole('button', { name: 'Archive' }).click();
@@ -241,7 +215,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   await expect(page.getByRole('heading', { name: 'Buffer' })).toBeVisible();
   await page.getByRole('button', { name: 'I used some of it' }).click();
   await page.getByRole('textbox', { name: 'Amount used' }).fill('200');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('That’s what it’s for. Nothing went on a card.')).toBeVisible();
   await expect(page.getByText('$300 of $500')).toBeVisible();
   await shot(page, '12-money');

@@ -7,11 +7,10 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
 });
 
-const next = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
+const next = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
 
 async function toDebts(page: import('@playwright/test').Page) {
   await page.goto('/');
-  await next(page).click(); // welcome
   await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next(page).click();
@@ -28,7 +27,9 @@ test('a finished debt becomes one line, and only one debt is open at a time', as
   await page.getByRole('button', { name: 'Add another' }).click();
 
   await expect(page.getByTestId('debt-summary')).toHaveCount(1);
-  await expect(page.getByTestId('debt-summary')).toContainText('Visa · $3,200 · 22.9% · $96/mo · due 12th');
+  await expect(page.getByTestId('debt-summary')).toContainText('Visa');
+  await expect(page.getByTestId('debt-summary')).toContainText('22.9% · $96 a month · due the 12th');
+  await expect(page.getByTestId('debt-summary')).toContainText('$3,200');
   await expect(card).toHaveCount(1); // only the new debt is open
   await card.getByLabel('Name').fill('Store card');
   await card.getByLabel('Balance').fill('640');
@@ -55,7 +56,7 @@ test('a number that looks like a typo is asked about, and never blocks', async (
   await expect(card).toContainText('Is 2290% right? Most cards are 15-30%.');
   // It is only a question: Continue still works, and the pasted "$3,200" was understood
   await next(page).click();
-  await expect(page.getByRole('heading', { name: 'Your buffer' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Money for the plan' })).toBeVisible();
 
   // Low minimum for the balance
   await page.getByRole('button', { name: 'Back' }).click();
@@ -82,7 +83,6 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await page.getByRole('button', { name: 'Add another' }).click();
   await add('Medical bill', '1150', '0', '50');
   await next(page).click(); // debts
-  await next(page).click(); // buffer
 
   await expect(page.getByRole('heading', { name: 'Money for the plan' })).toBeVisible();
   await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month, about $215 each payday.');
@@ -94,12 +94,15 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await expect(field).toHaveValue('20');
   await field.fill('135'); // still editable
   await expect(page.getByRole('button', { name: '$20' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('button', { name: 'Other' })).toHaveAttribute('aria-pressed', 'true'); // 135 is none of the quick amounts
+  // The buffer is on the same screen, with its goal at $500
+  await expect(page.getByLabel('Buffer goal')).toHaveValue('500');
+  await expect(page.getByLabel('Buffer now')).toBeVisible();
 });
 
 test('the currency is a small line on the pay schedule step, with Change', async ({ page }) => {
   await page.goto('/');
-  await next(page).click(); // welcome
-  await expect(page.getByLabel('Step 1 of 7')).toBeVisible();
+  await expect(page.getByLabel('Step 1 of 4')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
   await expect(page.getByTestId('currency-line')).toHaveText('Currency: USD ($)');
   await expect(page.getByLabel('Currency')).toHaveCount(0); // closed until asked
@@ -120,21 +123,19 @@ test('"See an example first" shows Sara\'s result, labelled Example, and saves n
   await expect(page.getByTestId('example-banner')).toContainText('Example');
   await expect(page.getByTestId('example-banner')).toContainText('Sara');
   await expect(page.getByTestId('debt-free-date')).toBeVisible();
-  await expect(page.getByTestId('first-step')).toContainText('This payday');
+  await expect(page.getByTestId('first-step')).toContainText('Move $');
   // No code box, no "Change my numbers" here: one clear way out
   await expect(page.getByTestId('unlock-card')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Start with my numbers' })).toBeVisible();
 
   // A reload goes back to the welcome screen: nothing was stored
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Let’s start' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'See an example first' })).toBeVisible();
 
   // Start for real
   await page.getByRole('button', { name: 'See an example first' }).click();
   await page.getByRole('button', { name: 'Start with my numbers' }).click();
-  await expect(page.getByRole('button', { name: 'Let’s start' })).toBeVisible();
-  await page.getByRole('button', { name: 'Let’s start' }).click();
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
   await expect(page.getByLabel('Your next payday')).toHaveValue(''); // nothing from Sara carried over
 });

@@ -54,6 +54,8 @@ export interface Settings extends Meta {
   license: License | null;
   /** The plan as it stood when setup was done. Progress compares against it. */
   baseline: Baseline | null;
+  /** "Do these later" items that are done (or that the buyer said they don't need) */
+  later?: { yearly?: boolean; reminder?: boolean };
 }
 
 export interface OneOff {
@@ -83,6 +85,8 @@ export interface Debt extends Meta {
   minMonthly: number;
   /** Added with the quick add: the minimum is not known yet (it counts as 0 until it is typed in) */
   minPending?: boolean;
+  /** The rate was left empty in setup: 24% is used until the buyer adds the real one */
+  rateMissing?: boolean;
   dueDay: number | null;
   autopay: boolean;
   myOrder: number | null;

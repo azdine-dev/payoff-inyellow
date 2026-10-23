@@ -15,17 +15,18 @@ export async function unlockOnResult(page: Page, id = 'TEST-ORDER') {
 }
 
 /**
- * Two debts, buffer already full, no yearly bills, paid every 2 weeks from Fri 23 Oct 2026.
+ * Two debts, buffer already full, no yearly bills, paid every 2 weeks from Fri 23 Oct 2026 (the four setup steps).
  * By default the planner is unlocked at the end. With { unlock: false } it stops at the
  * calculator result.
  */
 export async function quickSetup(page: Page, opts: { unlock?: boolean } = {}) {
   await page.goto('/');
-  const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
-  await next.click();
+  const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
+  // 1 Pay (the welcome words are on top of it)
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next.click();
+  // 2 Debts: the debt in front of you is the only one open
   const debts = [
     { name: 'Visa', balance: '3200', apr: '22.9', min: '96', due: '12' },
     { name: 'Store card', balance: '640', apr: '26.99', min: '35', due: '5' },
@@ -40,13 +41,11 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean } = {}) {
     await card.getByLabel('Due day (recommended)').fill(d.due);
   }
   await next.click();
+  // 3 Money
+  await page.getByLabel('Money for the plan each payday').fill('150');
   await page.getByLabel('Buffer now').fill('500');
   await next.click();
-  await page.getByLabel('Money for the plan each payday').fill('150');
-  await next.click();
-  await next.click(); // skip yearly bills
-  await next.click(); // order
-  await next.click(); // fresh start
+  // 4 Your date
   await expect(page.getByTestId('debt-free-date')).toBeVisible();
   if (opts.unlock === false) return;
   await unlockOnResult(page);

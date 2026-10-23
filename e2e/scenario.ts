@@ -115,15 +115,31 @@ export interface WizardConfig {
   bufferGoal?: string;
   extra: string;
   yearly?: { idea: string; amount: string; month?: string }[];
-  /** "HH:MM" */
-  ifThenTime?: string;
 }
 
-/** The whole setup wizard, from the welcome screen to the result. */
+/** Adds yearly bills from the "Yearly bills" chip (the planner must be unlocked). */
+export async function addYearlyBills(page: Page, bills: { idea: string; amount: string; month?: string }[]) {
+  await page.getByRole('button', { name: 'Yearly bills', exact: true }).click();
+  const sheet = page.getByRole('dialog', { name: 'Yearly bills' });
+  for (const y of bills) {
+    await sheet.getByRole('button', { name: `+ ${y.idea}` }).click();
+    await sheet.getByLabel('Cost per year').fill(y.amount);
+    if (y.month) await sheet.getByLabel('Needed in').selectOption(y.month);
+    await sheet.getByRole('button', { name: 'Add this bill' }).click();
+    await expect(sheet).toContainText(y.idea);
+  }
+  await sheet.getByRole('button', { name: 'Done' }).click();
+  await expect(sheet).toHaveCount(0);
+}
+
+/**
+ * The whole setup, from the first screen to the result: pay, debts, money, your date.
+ * Yearly bills are not part of setup any more. With `yearly` the planner is unlocked on the result screen and
+ * the bills are added there, the way a buyer would do it from "Do these later".
+ */
 export async function runWizard(page: Page, c: WizardConfig) {
   await page.goto('/');
-  const next = page.getByRole('button', { name: /^(Continue|Skip for now|See my plan|Let’s start)$/ });
-  await next.click(); // welcome
+  const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
   await page.getByRole('radio', { name: c.frequency, exact: true }).click();
   if (c.twiceDays) await page.getByRole('radio', { name: c.twiceDays }).click();
   await page.getByLabel('Your next payday').fill(c.nextPayday);
@@ -138,26 +154,20 @@ export async function runWizard(page: Page, c: WizardConfig) {
     if (d.due) await card.getByLabel('Due day (recommended)').fill(d.due);
   }
   await next.click();
+  await page.getByLabel('Money for the plan each payday').fill(c.extra);
   await page.getByLabel('Buffer now').fill(c.bufferNow);
   if (c.bufferGoal !== undefined) await page.getByLabel('Buffer goal').fill(c.bufferGoal);
   await next.click();
-  await page.getByLabel('Money for the plan each payday').fill(c.extra);
-  await next.click();
-  for (const y of c.yearly ?? []) {
-    await page.getByRole('button', { name: `+ ${y.idea}` }).click();
-    await page.getByLabel(`${y.idea} per year`).fill(y.amount);
-    if (y.month) await page.getByLabel('Needed in').last().selectOption(y.month);
-  }
-  await next.click(); // yearly bills (or skip)
-  await next.click(); // payoff order
-  if (c.ifThenTime) await page.getByLabel('I open PaidInYellow at').fill(c.ifThenTime);
-  await next.click(); // fresh start
   await expect(page.getByTestId('debt-free-date').or(page.getByRole('heading', { name: /more than 20 years/i }))).toBeVisible();
+  if (c.yearly?.length) {
+    await unlockOnResult(page);
+    await addYearlyBills(page, c.yearly);
+  }
 }
 
-/** Unlocks with the test code and opens the full planner. */
+/** Unlocks with the test code (if that is not done yet) and opens the full planner. */
 export async function startPlan(page: Page) {
-  await unlockOnResult(page);
+  if (await page.getByRole('button', { name: 'I have a code' }).isVisible()) await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
 }

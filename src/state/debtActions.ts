@@ -5,6 +5,9 @@ import type { AppData, Charge, ChargeTag, Debt } from '../data/types';
 import { todayISO } from '../lib/today';
 import { baselineFor, orderFor } from './planInput';
 
+/** Used when the buyer doesn't know the rate. The debt is marked "rate missing" until the real one is added. */
+export const DEFAULT_RATE = 24;
+
 export interface DebtFields {
   name: string;
   type: string;
@@ -13,6 +16,8 @@ export interface DebtFields {
   minMonthly: number;
   /** True when the minimum was left empty (quick add) */
   minPending?: boolean;
+  /** True when the rate was left empty (24% is used) */
+  rateMissing?: boolean;
   dueDay: number | null;
   autopay: boolean;
 }

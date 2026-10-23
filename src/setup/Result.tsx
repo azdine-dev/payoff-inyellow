@@ -1,24 +1,26 @@
 /**
- * Setup result (mockup screen 1): the debt-free date, what it saves, and the first step.
- * Without a valid unlock code this is the whole calculator ("calculator mode"): below the
- * result sit what the full planner adds, the code box and "Change my numbers".
+ * Step 4, "Your date" (mockup 02): the debt-free date, what it saves, your first step, and the things to do
+ * later. Without a valid unlock code this is the whole calculator ("calculator mode"): below the result sit
+ * what the full planner adds, the code box and "Change my numbers".
  */
 import { useState } from 'preact/hooks';
 import { syncOn } from '../sync/controller';
 import { planNeedsHelp } from '../engine';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
-import { dayMonth, monthsBetween, monthYear, shortDate } from '../lib/today';
+import { addDaysISO, dayMonth, monthsBetween, monthYear, shortDate } from '../lib/today';
+import { setStartMode, startIndex } from '../state/actions';
 import { billsForNextPayday } from '../state/billsDue';
-import { toPlanInput } from '../state/planInput';
+import { isDebtFree } from '../state/debtFree';
 import { exampleMode, leaveExample } from '../state/example';
-import { data, editSeed, licenseState, plan, tab, today, view } from '../state/store';
+import { toPlanInput } from '../state/planInput';
+import { act, data, editSeed, licenseState, plan, tab, today, view } from '../state/store';
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
 import { NeedsHelp } from '../ui/NeedsHelp';
-import { isDebtFree } from '../state/debtFree';
+import { SetupBar } from '../ui/controls';
 import { HowWeGotThis } from './HowWeGotThis';
-import { ifThenLine } from './steps/Order';
+import { LaterChips } from './LaterChips';
 import { EmailCapture, UnlockCard } from './Unlock';
 
 export function Result() {
@@ -45,7 +47,11 @@ export function Result() {
 
   const sooner = r.debtFreeDate && mo.months !== null ? mo.months - monthsBetween(today.value, r.debtFreeDate) : null;
   const less = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
-  const when = s.startMode === 'next-month' ? 'Your first payday' : 'This payday';
+  const minimumsUntil = mo.months !== null ? monthYear(addDaysISO(today.value, Math.round(mo.months * 30.44))) : null;
+
+  // "Start on the 1st of next month" is a choice you can still make until the first payday is done
+  const nextMonthIndex = startIndex({ frequency: s.frequency, nextPayday: s.anchorPayday, startMode: 'next-month', otherPayday: s.otherPayday }, today.value);
+  const canChooseStart = !example && d.paydays.length === 0 && (s.startMode === 'next-month' || nextMonthIndex > 0);
 
   return (
     <main class="screen">
@@ -55,52 +61,55 @@ export function Result() {
           <p>This is Sara’s plan, made up so you can see what you will get. Nothing is saved.</p>
         </section>
       )}
-      <div class="row" style={{ paddingTop: 8 }}>
-        <p class="muted">{COPY.resultReady}</p>
+      <div class="setup-head">
+        <SetupBar step={4} finished />
         {locked && !example && (
           <button type="button" class="link small" onClick={() => { tab.value = 'settings'; view.value = 'app'; }}>
             Settings
           </button>
         )}
       </div>
+
       {r.debtFreeDate ? (
-        <h1 style={{ fontSize: '2.1rem', fontWeight: 700 }}>
-          {COPY.resultLead}
-          <br />
-          <span class="hl-big" style={{ fontSize: '2.9rem', fontWeight: 800, marginTop: 10 }} data-testid="debt-free-date">
-            {monthYear(r.debtFreeDate)}
-          </span>
-          <button type="button" class="link small" style={{ display: 'block', marginTop: 6, fontWeight: 500 }} aria-label="How we got this date" onClick={() => setHow(true)}>
+        <div class="stack" style={{ gap: 8 }}>
+          <p class="muted" style={{ fontSize: '1.1rem' }}>{COPY.resultLead}</p>
+          <h1 style={{ margin: 0 }}>
+            <span class="hl-big tilt" style={{ fontSize: '2.9rem', fontWeight: 800 }} data-testid="debt-free-date">
+              {monthYear(r.debtFreeDate)}
+            </span>
+          </h1>
+          <button type="button" class="link small" style={{ alignSelf: 'flex-start', fontWeight: 500 }} aria-label="How we got this date" onClick={() => setHow(true)}>
             How we got this
           </button>
-        </h1>
+          {!mo.neverEnds && minimumsUntil && (
+            <p class="muted" data-testid="minimums-only">
+              Paying only minimums, it would take until {minimumsUntil}.
+            </p>
+          )}
+        </div>
       ) : (
         <h1 style={{ fontSize: '2rem' }}>{isDebtFree(d) ? 'You’re debt-free.' : 'Right now this plan takes more than 20 years.'}</h1>
       )}
 
       {r.debtFreeDate && (
         <div class="grid-2">
-          {mo.neverEnds ? (
-            <div class="card">
-              <p style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.4rem' }}>Never ends</p>
+          {mo.neverEnds && (
+            <div class="card tile" data-testid="tile-sooner">
+              <p class="tile-big">Never ends</p>
               <p class="muted small">with minimums only. Your plan ends it.</p>
             </div>
-          ) : (
-            sooner !== null &&
-            sooner > 0 && (
-              <div class="card">
-                <p class="num" style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.7rem' }}>
-                  {sooner}
-                </p>
-                <p class="muted small">months sooner than minimums</p>
-              </div>
-            )
+          )}
+          {!mo.neverEnds && sooner !== null && sooner > 0 && (
+            <div class="card tile" data-testid="tile-sooner">
+              <p class="tile-big num">
+                {sooner} month{sooner === 1 ? '' : 's'}
+              </p>
+              <p class="muted small">sooner</p>
+            </div>
           )}
           {less !== null && less >= 1 && (
-            <div class="card">
-              <p class="num" style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.7rem' }}>
-                {formatMoney(less, cur, { whole: true })}
-              </p>
+            <div class="card tile" data-testid="tile-interest">
+              <p class="tile-big num">{formatMoney(less, cur, { whole: true })}</p>
               <p class="muted small">less interest</p>
             </div>
           )}
@@ -110,35 +119,56 @@ export function Result() {
       <NeedsHelp reasons={reasons} />
 
       {first && (
-        <section class="card stack" style={{ gap: 6 }}>
-          <p class="label">{COPY.firstStep}</p>
-          <p style={{ fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.35 }} data-testid="first-step">
-            {when} ({shortDate(first.date)}):{' '}
-            {first.kind === 'setaside' ? (
-              <>
-                set aside <span class="hl">{formatMoney(first.amount, cur)}</span>
-              </>
-            ) : first.kind === 'nothing' ? (
-              <>nothing is due before your next payday</>
+        <section class="first-card" data-testid="first-card">
+          <p class="first-label">
+            {COPY.firstStep} · {shortDate(first.date)}
+          </p>
+          <p class="first-main" data-testid="first-step">
+            {first.kind === 'debt' ? (
+              Math.abs(first.total - first.amount) < 0.01 ? (
+                <>
+                  Pay {formatMoneyAuto(first.amount, cur)} to <span class="hl">{first.target}</span>.
+                </>
+              ) : (
+                <>
+                  Move {formatMoney(first.total, cur)}. The extra {formatMoneyAuto(first.amount, cur)} goes to <span class="hl">{first.target}</span>.
+                </>
+              )
+            ) : first.kind === 'setaside' ? (
+              <>Move {formatMoney(first.total, cur)}.</>
             ) : (
-              <>
-                pay <span class="hl">{formatMoneyAuto(first.amount, cur)}</span> to {first.target}
-              </>
+              <>Nothing is due before your next payday.</>
             )}
           </p>
-          {first.kind === 'setaside' && r.rows[0] && (
-            <p class="small num" data-testid="first-step-parts">
+          {first.kind !== 'nothing' && parts && (
+            <p class="first-parts num" data-testid="first-step-parts">
               {parts}
             </p>
           )}
-          <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} aria-label="How we got this step" onClick={() => setHow(true)}>
+          <p class="first-why">{r.rows[0]?.bufferFirst ? COPY.buffer : first.kind === 'debt' ? methodReason(s.method) : ''}</p>
+          <button type="button" class="link-light small" aria-label="How we got this step" onClick={() => setHow(true)}>
             How we got this
           </button>
-          <p class="muted small">{r.rows[0]?.bufferFirst ? COPY.buffer : first.kind === 'debt' ? methodReason(s.method) : ''}</p>
         </section>
       )}
 
-      {!example && <p class="card">{ifThenLine(s.ifThen.day, s.ifThen.time)}</p>}
+      {!example && !locked && (
+        <section class="stack" style={{ gap: 8 }} aria-label="Do these later">
+          <p class="label">Do these later, on Today</p>
+          <LaterChips />
+        </section>
+      )}
+
+      {canChooseStart && (
+        <button
+          type="button"
+          class="link small"
+          style={{ alignSelf: 'flex-start' }}
+          onClick={() => void act((db, x) => setStartMode(db, x, s.startMode === 'next-month' ? 'this-payday' : 'next-month', today.value))}
+        >
+          {s.startMode === 'next-month' ? 'Start this payday instead' : 'Start on the 1st of next month instead'}
+        </button>
+      )}
 
       {example ? (
         <>

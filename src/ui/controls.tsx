@@ -102,6 +102,17 @@ export function Bar({ pct, label }: { pct: number; label?: string }) {
   );
 }
 
+/** Four segments: yellow = done, ink = where you are, line = still to come. `finished` makes all four yellow. */
+export function SetupBar({ step, total = 4, finished = false }: { step: number; total?: number; finished?: boolean }) {
+  return (
+    <div class="setup-bar" role="img" aria-label={`Step ${step} of ${total}`}>
+      {Array.from({ length: total }, (_, i) => (
+        <i key={i} class={finished || i + 1 < step ? 'done' : i + 1 === step ? 'now' : ''} />
+      ))}
+    </div>
+  );
+}
+
 export function Dots({ count, active }: { count: number; active: number }) {
   return (
     <div class="dots" aria-label={`Step ${active + 1} of ${count}`}>
@@ -125,7 +136,8 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!props.open) return;
-    ref.current?.querySelector<HTMLElement>('input, button')?.focus();
+    // Focus the first field, unless the buyer already put the cursor somewhere in the sheet (typing must never be moved)
+    if (ref.current && !ref.current.contains(document.activeElement)) ref.current.querySelector<HTMLElement>('input, button')?.focus();
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && props.onClose();
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);

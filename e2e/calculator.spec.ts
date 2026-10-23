@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 test('without a code: the date and first step, nothing more, and a way to unlock', async ({ page }) => {
   await quickSetup(page, { unlock: false });
   await expect(page.getByTestId('debt-free-date')).toHaveText('July 2027');
-  await expect(page.getByTestId('first-step')).toContainText('This payday (Fri 23 Oct): pay $150 to Store card');
+  await expect(page.getByTestId('first-step')).toContainText('Move $185.00. The extra $150 goes to Store card.'); // Store card's $35 bill is due before the next payday
   await shot(page, '17-calculator');
 
   // What the full planner adds, and how to get it
@@ -34,18 +34,16 @@ test('"Change my numbers" starts from the current answers and recalculates', asy
   await quickSetup(page, { unlock: false });
   await page.getByRole('button', { name: 'Change my numbers' }).click();
 
-  // Debts step shows what was entered; the welcome screen is skipped
+  // The first screen shows what was entered, without the welcome words
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue' }).click(); // schedule (with the currency line)
-  await expect(page.getByTestId('debt-summary').first()).toContainText('Visa · $3,200 · 22.9% · $96/mo · due 12th'); // a finished debt is one line
+  await expect(page.getByText('You pay every month, but the balance never goes down.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Continue' }).click(); // pay
+  await expect(page.getByTestId('debt-summary').first()).toContainText('Visa'); // a finished debt is one line
+  await expect(page.getByTestId('debt-summary').first()).toContainText('22.9% · $96 a month · due the 12th');
   await page.getByRole('button', { name: 'Edit Visa' }).click();
   await expect(page.locator('fieldset').getByLabel('Name')).toHaveValue('Visa');
-  await page.getByRole('button', { name: 'Continue' }).click(); // debts
-  await page.getByRole('button', { name: 'Continue' }).click(); // buffer
+  await page.getByRole('button', { name: 'That’s all of them' }).click(); // debts
   await page.getByLabel('Money for the plan each payday').fill('400');
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Skip for now' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click(); // order
   await page.getByRole('button', { name: 'See my plan' }).click();
 
   // Sooner than before: July 2027 with $150, earlier with $400
