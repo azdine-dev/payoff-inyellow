@@ -59,14 +59,15 @@ test('the Today card: bills due before the next payday, and the window moves wit
 
   // The Plan tab shows the same figures for the paydays ahead
   await goTab(page, 'Plan');
+  await showPaydays(page, 'Upcoming');
   await page.getByRole('button', { name: 'Fri 20 Nov, to come', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText(new RegExp(`Car loan, due 28 Nov\\s*${near(285).source}`));
-  await expect(page.getByRole('dialog')).toContainText(new RegExp(`Total\\s*${near(435).source}`));
-  await expect(page.getByRole('dialog')).not.toContainText('minimum');
-  await page.getByRole('button', { name: 'Close' }).click();
+  const ahead = page.getByRole('group', { name: 'Fri 20 Nov details' });
+  await expect(ahead).toContainText(new RegExp(`Car loan, due 28 Nov\\s*${near(285).source}`));
+  await expect(ahead).toContainText(new RegExp(`Total\\s*${near(435).source}`));
+  await expect(ahead).not.toContainText('minimum');
   await showPaydays(page, 'Done');
   await page.getByRole('button', { name: 'Fri 6 Nov, paid', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText(new RegExp(`Total\\s*${near(150).source}`)); // what was set aside that payday
+  await expect(page.getByRole('group', { name: 'Fri 6 Nov details' })).toContainText(new RegExp(`Total\\s*${near(150).source}`)); // what was set aside that payday
 });
 
 test('a debt with no due day: "Visa $96, add a due day", not counted, and the link sets it', async ({ page }) => {
@@ -107,7 +108,7 @@ test('a debt with no due day: "Visa $96, add a due day", not counted, and the li
 
   // The same day is now on the debt, and the Debts tab asks for it as "recommended"
   await goTab(page, 'Debts');
-  await expect(page.getByRole('region', { name: 'Visa' })).toContainText('due on the 30th');
+  await expect(page.getByRole('region', { name: 'Visa' })).toContainText('$96 bill on the 30th');
   await page.getByRole('button', { name: 'Visa, options' }).click();
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(page.getByLabel('Due day (recommended)')).toHaveValue('30');

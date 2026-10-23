@@ -185,7 +185,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   await page.getByRole('button', { name: 'Debts' }).click();
   await expect(page.getByRole('region', { name: 'Visa' })).toContainText('$3,200');
   await page.getByRole('button', { name: 'Visa, options' }).click();
-  await page.getByRole('button', { name: 'Log a new charge or fee' }).click();
+  await page.getByRole('button', { name: 'Add a new charge or fee' }).click();
   await page.getByRole('textbox', { name: 'Charge amount' }).fill('900');
   await page.getByRole('radio', { name: 'Emergency' }).click();
   await page.getByRole('button', { name: 'Add to balance' }).click();
@@ -211,7 +211,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
 
   // Use the buffer
   await goTab(page, 'Money');
-  await expect(page.getByRole('heading', { name: 'Buffer' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
   await page.getByRole('button', { name: 'I used some of it' }).click();
   await page.getByRole('textbox', { name: 'Amount used' }).fill('200');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -232,12 +232,13 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
 
   // Plan: the what-if shows a sooner date and "Apply to my plan" changes Today
   await goTab(page, 'Plan');
-  await expect(page.getByTestId('comparison')).toContainText(/Biggest interest first|PaidInYellow order/);
+  await page.getByRole('button', { name: 'What if I add more?' }).click();
   await page.getByLabel('Add money each payday').fill('100');
   await expect(page.getByTestId('whatif-result')).toContainText('sooner');
   await shot(page, '13-plan');
-  await page.getByRole('button', { name: 'Apply to my plan' }).click();
+  await page.getByRole('button', { name: 'Use this in my plan' }).click();
   await expect(page.getByText('Done. Your plan and Today use it now.')).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
   expect(await pill.textContent()).not.toBe(before);
 
@@ -254,7 +255,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   await showPaydays(page, 'Done');
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toBeVisible();
   await page.getByRole('button', { name: 'Fri 23 Oct, paid' }).click();
-  await expect(page.getByRole('dialog')).toContainText('Total');
+  await expect(page.getByRole('group', { name: 'Fri 23 Oct details' })).toContainText('Total');
   await page.getByRole('button', { name: 'Close' }).click();
 
   // Progress: grid, milestones, planned vs actual
@@ -262,7 +263,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
   await expect(page.getByRole('listitem', { name: 'Fri 23 Oct: paid' })).toBeVisible();
   await expect(page.getByRole('listitem', { name: 'Fri 6 Nov: paid' })).toBeVisible();
-  await expect(page.getByRole('listitem', { name: 'Plan made, reached' })).toBeVisible();
+  await expect(page.getByRole('listitem', { name: 'Plan made' })).toBeVisible();
   await expect(page.getByTestId('planned-vs-actual')).toContainText('This month you paid');
   await shot(page, '14-progress');
 });

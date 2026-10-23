@@ -12,7 +12,7 @@ import { chartData } from '../lib/series';
 import { addDaysISO, diffDays, monthYear, shortDate, shortMonthYear } from '../lib/today';
 import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { isDebtFree } from '../state/debtFree';
-import { projectedDate, progressStats } from '../state/milestones';
+import { MILESTONE_LABELS, projectedDate, progressStats } from '../state/milestones';
 import { setMethod } from '../state/planActions';
 import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
@@ -93,6 +93,8 @@ export function Path() {
       return { key: `${it.title}-${it.date}`, title: it.title, when, kind: it.end ? 'end' : i === 0 ? 'next' : 'later' };
     });
   }, [d, r]);
+
+  const reachedList = d.milestones.filter((m) => m.id !== 'plan-made').sort((x, y) => x.reachedOn.localeCompare(y.reachedOn));
 
   const choose = (m: PayoffMethod) => act((db, x) => setMethod(db, x, m));
 
@@ -206,6 +208,12 @@ export function Path() {
         {ahead > aheadShown && <p class="muted small">+ {ahead - aheadShown} more paydays after these.</p>}
       </section>
 
+      {debtFree && (
+        <section class="card">
+          <p>You’re debt-free. Every debt is paid or archived, so there is nothing left to plan.</p>
+        </section>
+      )}
+
       {!debtFree && timeline.length > 0 && (
         <section class="card stack" aria-labelledby="ahead-title" data-testid="whats-ahead">
           <p class="label" id="ahead-title">
@@ -218,6 +226,25 @@ export function Path() {
                 <span class="stack" style={{ gap: 0 }}>
                   <b>{t.title}</b>
                   <span class="muted small">{t.when}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {reachedList.length > 0 && (
+        <section class="card stack" aria-labelledby="reached-title">
+          <p class="label" id="reached-title">
+            Reached
+          </p>
+          <ul class="ahead-list">
+            {reachedList.map((m) => (
+              <li key={m.id} aria-label={`${MILESTONE_LABELS[m.id]}, reached`}>
+                <span class="ahead-dot reached" aria-hidden="true" />
+                <span class="stack" style={{ gap: 0 }}>
+                  <b>{MILESTONE_LABELS[m.id]}</b>
+                  <span class="muted small">{shortDate(m.reachedOn, today.value)}</span>
                 </span>
               </li>
             ))}

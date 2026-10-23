@@ -23,22 +23,25 @@ test('each tab opens its screen, and Path holds what Plan and Progress showed', 
   await quickSetup(page);
   await nav(page).getByRole('button', { name: 'Path', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
-  // Progress side: the countdown and the share paid
-  await expect(page.getByTestId('countdown')).toContainText(/paydays to go/);
+  // Progress side: the date and paydays left, the share paid
+  await expect(page.getByTestId('status-line')).toContainText(/paydays left/);
   await expect(page.getByTestId('paid-so-far')).toBeVisible();
-  // Plan side: the payday list, the order and the what-if
-  await page.getByRole('group', { name: 'Path view' }).getByRole('button', { name: 'Plan', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'What if?' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Which debt first?' })).toBeVisible();
+  await expect(page.getByTestId('whats-ahead')).toBeVisible();
+  // Plan side: the what-if and the payday list are bottom sheets, the order is one line
+  await expect(page.getByText('Order: smallest first')).toBeVisible();
+  await page.getByRole('button', { name: 'What if I add more?' }).click();
+  await expect(page.getByRole('dialog', { name: 'What if I add more?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Payday list', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toBeVisible();
-  await expect(page.getByTestId('status-line')).toBeVisible(); // the same header line, once
+  await page.getByRole('button', { name: 'Close' }).click();
 
   await nav(page).getByRole('button', { name: 'Debts', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Debts' })).toBeVisible();
   await nav(page).getByRole('button', { name: 'Safety net', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
   await expect(page.getByText('So the next surprise bill stays off your cards.')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Buffer' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Surprise buffer' })).toBeVisible();
   await nav(page).getByRole('button', { name: 'Today', exact: true }).click();
   await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
 });
@@ -83,9 +86,10 @@ test('the old shortcuts still land on the right view', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Path tab' }).click(); // "Your payoff order is on the Path tab"
-  await expect(page.getByRole('heading', { name: 'Which debt first?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
+  await expect(page.getByText('Order: smallest first')).toBeVisible();
   await goTab(page, 'Progress');
-  await expect(page.getByTestId('countdown')).toBeVisible();
+  await expect(page.getByTestId('whats-ahead')).toBeVisible();
   await goTab(page, 'Money');
   await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
 });

@@ -92,7 +92,7 @@ test('an empty rate uses 24%, marks the debt, and Today offers to add the real o
   await sheet.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Add Visa’s rate' })).toHaveCount(0);
   await goTab(page, 'Debts');
-  await expect(page.getByRole('region', { name: 'Visa' })).toContainText('22.9% rate');
+  await expect(page.getByRole('region', { name: 'Visa' })).toContainText('22.9% ·');
   await expect(page.getByRole('region', { name: 'Visa' })).not.toContainText('rate missing');
 });
 

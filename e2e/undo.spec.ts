@@ -32,7 +32,7 @@ test('Undo puts the balances, the payday and the logs back, and goes away after 
 
   const owed = async () => {
     await goTab(page, 'Progress');
-    const text = await page.getByText(/still owed/).locator('xpath=preceding-sibling::p[1]').innerText();
+    const text = await page.getByTestId('to-go').innerText();
     await goTab(page, 'Today');
     return text;
   };

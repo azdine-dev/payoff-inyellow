@@ -27,13 +27,12 @@ test('archiving every debt gives the same debt-free state on every screen, with 
   await expect(line).toHaveText('Debt-free');
 
   await goTab(page, 'Progress');
-  await expect(page.getByTestId('countdown')).toContainText('Debt-free');
   await expect(page.getByText('more than 20 years')).toHaveCount(0);
   await expect(page.getByText('A long way to go')).toHaveCount(0);
   await expect(line).toHaveText('Debt-free');
   // Nothing is ticked on an empty plan: the only reached milestone is "Plan made"
-  await expect(page.getByRole('listitem', { name: /, reached$/ })).toHaveCount(1);
-  await expect(page.getByRole('listitem', { name: 'Plan made, reached' })).toBeVisible();
+  await expect(page.getByRole('listitem', { name: /, reached$/ })).toHaveCount(0);
+  await expect(page.getByRole('listitem', { name: 'Plan made' })).toBeVisible();
 });
 
 test('a date in another year shows its year', async ({ page }) => {

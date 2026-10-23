@@ -20,7 +20,7 @@ test('payday card: one total, the extra sentence, and a pill that opens Path', a
 test('the safety tile opens Safety net', async ({ page }) => {
   await quickSetup(page);
   await page.getByTestId('safety-tile').click();
-  await expect(page.getByRole('heading', { name: /buffer/i }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
 });
 
 test('I did it: yellow PAID card, then a countdown with a backup nudge', async ({ page }) => {

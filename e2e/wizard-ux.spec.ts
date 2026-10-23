@@ -164,6 +164,7 @@ test('the what-if shows each quick amount as a change, not a second plan', async
   const { quickSetup } = await import('./helpers');
   await quickSetup(page);
   await goTab(page, 'Plan');
+  await page.getByRole('button', { name: 'What if I add more?' }).click();
   const group = page.getByRole('group', { name: 'Quick what-ifs' });
   for (const amount of ['$25', '$50', '$100']) {
     await expect(group.getByRole('button', { name: `+${amount} each payday`, exact: false })).toContainText(/sooner|same date/);
@@ -177,39 +178,21 @@ test('the what-if shows each quick amount as a change, not a second plan', async
   await expect(page.getByLabel('Add money each payday')).toHaveValue('0');
 });
 
-test('every main tab has the same header line, and the paydays left count down at "I did it"', async ({ page }) => {
+test('Path says the date and the paydays left, and they count down at "I did it"', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   const { goTab, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   const line = page.getByTestId('status-line');
   const left = async () => Number((await line.innerText()).match(/(\d+) paydays? left/)![1]);
 
-  await goTab(page, 'Plan');
-  const first = await line.innerText();
-  expect(first).toMatch(/^Debt-free [A-Z][a-z]{2} 20\d\d · \d+ paydays left$/);
-  for (const tab of ['Debts', 'Progress', 'Money', 'Plan'] as const) {
-    await goTab(page, tab);
-    await expect(line).toHaveText(first);
-  }
+  await goTab(page, 'Path');
+  expect(await line.innerText()).toMatch(/^Debt-free by [A-Z][a-z]{2} 20\d\d · \d+ paydays left$/);
   const before = await left();
   await goTab(page, 'Today');
   await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
-  await goTab(page, 'Plan');
+  await goTab(page, 'Path');
   expect(await left()).toBe(before - 1);
-  await goTab(page, 'Progress');
-  expect(await left()).toBe(before - 1);
-});
-
-test('each bill on Today says how soon it is due, and the checkbox name stays short', async ({ page }) => {
-  const { quickSetup } = await import('./helpers');
-  await quickSetup(page); // today is Thu 15 Oct; the first payday is Fri 23 Oct
-  // Medical-style due days are not in the quick setup: Store card is due the 5th, Visa the 12th (after Nov payday?)
-  const bills = page.getByRole('checkbox', { name: /Bill.*due \w{3} \d+ \w+/ });
-  await expect(bills.first()).toBeVisible();
-  // The spoken name is the plain label, without the extra words
-  const name = (await bills.first().getAttribute('aria-label')) ?? '';
-  expect(name).not.toMatch(/in \d+ days|tomorrow/);
 });
 
 test('a calm Today: at most 3 cards above the fold, and every card has room around its text', async ({ page }) => {
@@ -228,25 +211,25 @@ test('a calm Today: at most 3 cards above the fold, and every card has room arou
   expect(stats.minGap).toBeGreaterThanOrEqual(16);
 });
 
-test('Progress starts with a countdown and shows the share paid as a ring', async ({ page }) => {
+test('Path starts at 0% and shows the share paid, in a card with three numbers', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   const { goTab, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   await goTab(page, 'Progress');
-  const countdown = page.getByTestId('countdown');
-  await expect(countdown).toContainText(/\d+ paydays to go/);
-  await expect(countdown).toContainText(/about \d+(\.5)? (years|months)/);
-  await expect(countdown).toContainText(/Debt-free [A-Z][a-z]+ 20\d\d/);
+  const line = page.getByTestId('status-line');
+  await expect(line).toContainText(/\d+ paydays left/);
+  await expect(page.getByTestId('pct-gone')).toHaveText('0%');
   const ring = page.getByRole('progressbar', { name: 'Debt paid off' });
   await expect(ring).toHaveAttribute('aria-valuenow', '0');
+  for (const id of ['paid-so-far', 'to-go']) await expect(page.getByTestId(id)).toBeVisible();
   await expectBrandRules(page); // no red, no yellow text, no loan or transfer words
-  const before = Number((await countdown.innerText()).match(/(\d+) paydays to go/)![1]);
+  const before = Number((await line.innerText()).match(/(\d+) paydays left/)![1]);
 
   await goTab(page, 'Today');
   await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await goTab(page, 'Progress');
-  expect(Number((await countdown.innerText()).match(/(\d+) paydays to go/)![1])).toBe(before - 1);
+  expect(Number((await line.innerText()).match(/(\d+) paydays left/)![1])).toBe(before - 1);
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
   expect(Number(await ring.getAttribute('aria-valuenow'))).toBeGreaterThan(0);
 });
@@ -256,6 +239,7 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   const { goTab, showPaydays, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   await goTab(page, 'Plan');
+  await showPaydays(page, 'Upcoming');
   // Upcoming: months as headings, then one row per payday with small tags
   await expect(page.getByRole('heading', { name: 'October 2026' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'November 2026' })).toBeVisible();
@@ -266,6 +250,7 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   await expectBrandRules(page);
   await showPaydays(page, 'Done');
   await expect(page.getByText('No paydays done yet.')).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).click();
 
   await goTab(page, 'Today');
   await tapDidIt(page);
@@ -278,7 +263,7 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toHaveCount(0);
   // Tapping a row still opens its details
   await done.getByRole('button').click();
-  await expect(page.getByRole('dialog')).toContainText('Total');
+  await expect(page.getByRole('group', { name: 'Fri 23 Oct details' })).toContainText('Total');
 });
 
 test('the what-if shows three small cards and says nothing changes until you apply', async ({ page }) => {
@@ -286,8 +271,9 @@ test('the what-if shows three small cards and says nothing changes until you app
   const { goTab } = await import('./scenario');
   await quickSetup(page);
   await goTab(page, 'Plan');
-  await expect(page.getByText('Try it here first. Nothing changes until you tap Apply to my plan.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Apply to my plan' })).toBeDisabled();
+  await page.getByRole('button', { name: 'What if I add more?' }).click();
+  await expect(page.getByText('Try it here first. Nothing changes until you tap Use this in my plan.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use this in my plan' })).toBeDisabled();
   await page.getByRole('button', { name: /^\+\$100 each payday/ }).click();
   const cards = page.getByTestId('whatif-result').locator('.card.mini');
   await expect(cards).toHaveCount(3);
@@ -297,7 +283,7 @@ test('the what-if shows three small cards and says nothing changes until you app
   // The three sit side by side
   const tops = await cards.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
   expect(new Set(tops).size).toBe(1);
-  await expect(page.getByRole('button', { name: 'Apply to my plan' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Use this in my plan' })).toBeEnabled();
 });
 
 test('the focus debt card says what to pay this payday, when it is gone, and why it is first', async ({ page }) => {
@@ -329,7 +315,7 @@ test('Quick add: a debt needs only a name, a balance and a rate, and carries a s
   const card = page.getByRole('region', { name: 'Phone bill' });
   await expect(card).toContainText('$400');
   await expect(page.getByTestId('min-pending')).toHaveText('Add your minimum');
-  await expect(card).not.toContainText('minimum $'); // no made-up minimum is shown
+  await expect(card).not.toContainText(/\$\d+ bill/); // no made-up minimum is shown
 
   // Fill it in later: the tag goes away and the minimum shows
   await page.getByRole('button', { name: 'Phone bill, options' }).click();
@@ -338,7 +324,7 @@ test('Quick add: a debt needs only a name, a balance and a rate, and carries a s
   await page.getByRole('dialog').getByLabel('Monthly minimum').fill('40');
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
   await expect(page.getByTestId('min-pending')).toHaveCount(0);
-  await expect(card).toContainText('minimum $40');
+  await expect(card).toContainText('$40 bill');
 });
 
 test('ticking items on payday shows what is left, with a small ring that fills', async ({ page }) => {

@@ -1664,3 +1664,7 @@ a.btn {
   color: var(--ink);
   cursor: pointer;
 }
+
+.ahead-dot.reached {
+  background: var(--yellow);
+}

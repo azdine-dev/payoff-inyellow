@@ -35,7 +35,6 @@ export async function goTab(page: Page, name: 'Today' | 'Path' | 'Debts' | 'Safe
   const nav = page.getByRole('navigation', { name: 'Main' });
   if (name === 'Plan' || name === 'Progress' || name === 'Path') {
     await nav.getByRole('button', { name: 'Path', exact: true }).click();
-    if (name !== 'Path') await page.getByRole('group', { name: 'Path view' }).getByRole('button', { name, exact: true }).click();
     return;
   }
   await nav.getByRole('button', { name: name === 'Money' ? 'Safety net' : name, exact: true }).click();
@@ -58,8 +57,9 @@ export async function iDidIt(page: Page, paidLabel: string) {
   await expect(page.getByText(`${paidLabel} is paid.`)).toBeVisible();
 }
 
-/** Shows the Upcoming or the Done paydays on the Plan tab. */
+/** Opens the "Payday list" sheet on Path (if it is not open) and shows the Upcoming or the Done paydays. */
 export async function showPaydays(page: Page, which: 'Upcoming' | 'Done') {
+  if (!(await page.getByRole('dialog', { name: 'Payday list' }).isVisible())) await page.getByRole('button', { name: 'Payday list', exact: true }).click();
   await page.getByRole('group', { name: 'Which paydays' }).getByRole('button', { name: new RegExp(`^${which}`) }).click();
 }
 
@@ -68,7 +68,7 @@ export async function openPayday(page: Page, label: string) {
   await goTab(page, 'Plan');
   await showPaydays(page, /paid|skipped/.test(label) ? 'Done' : 'Upcoming');
   await page.getByRole('button', { name: label, exact: true }).click();
-  return page.getByRole('dialog');
+  return page.getByRole('group', { name: `${label.split(',')[0]} details` });
 }
 
 export async function closeSheet(page: Page) {

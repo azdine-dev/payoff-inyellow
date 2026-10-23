@@ -101,7 +101,7 @@ export function Money() {
         <div class="row" style={{ justifyContent: 'flex-start', alignItems: 'baseline', gap: 10 }}>
           <span class="buffer-big num" data-testid="buffer-amount">
             {money(d.buffer.amount, cur)}
-          </span>
+          </span>{' '}
           <span class="muted">
             of {formatMoney(s.bufferGoal, cur, { whole: true })}
             {ready && (

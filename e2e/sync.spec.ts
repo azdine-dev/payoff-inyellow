@@ -55,7 +55,7 @@ test('a second phone joins with the link and the two stay in step', async ({ bro
   await b.getByRole('button', { name: 'Sync now' }).click();
   await expect(b.getByTestId('sync-status')).toHaveText('Up to date.');
   await goTab(b, 'Progress');
-  await expect(b.getByText(/Paid so far/i).first()).toBeVisible();
+  await expect(b.getByTestId('paid-so-far')).toBeVisible();
 
   await ctxA.close();
   await ctxB.close();
