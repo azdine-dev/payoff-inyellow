@@ -13,7 +13,7 @@ import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount, toCents } from '../lib/money';
 import { dayMonth, diffDays, relativeDay, shortDate, shortMonthYear, weekdayName } from '../lib/today';
 import { pathView } from '../path/Path';
-import { didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
+import { changeablePayday, changePaid, didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
@@ -92,7 +92,7 @@ export function Today() {
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [showEarly, setShowEarly] = useState(false);
   const [backedUp, setBackedUp] = useState(false);
-  const [sheet, setSheet] = useState<'amount' | 'extra' | null>(null);
+  const [sheet, setSheet] = useState<'amount' | 'extra' | 'redo' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
   // "add a due day" for a debt that has none
@@ -119,6 +119,7 @@ export function Today() {
   const { rows, total, noDueDay } = row ? mergedRows(row, d, bills) : { rows: [], total: 0, noDueDay: [] };
   const extra = row ? extraSummary(row, d) : null;
   const shownTotal = useCountUp(total, 'today-total');
+  const doneCount = d.paydays.filter((p) => p.status === 'done').length;
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
@@ -127,7 +128,8 @@ export function Today() {
   const due = comingUp(d, today.value);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
   // Before the payday: a countdown. Done: the yellow card stays until the next payday, even after a reload.
-  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && !showEarly;
+  // The full card shows until the first "I did it", and when the payday is 2 days away or less (early direct deposit).
+  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && !showEarly && doneCount > 0 && diffDays(today.value, nextDate) > 2;
   const paidView = justPaid ?? (countdownMode ? paidFromLog(d, nextPaydayNumber(s) - 1) : null);
   const showEarlyCard = () => {
     setShowEarly(true);
@@ -136,7 +138,6 @@ export function Today() {
     setPaidIds([]);
   };
   const isPayday = nextDate === today.value;
-  const doneCount = d.paydays.filter((p) => p.status === 'done').length;
 
   const apply = async () => {
     if (busy) return;
@@ -210,8 +211,27 @@ export function Today() {
     setSheet(which);
   };
 
+  // "Change what I paid": the last payday goes back and is done again with the amount typed here
+  const redoLog = paidView ? changeablePayday(d) : null;
+  const openRedo = () => {
+    setInput(String(redoLog?.planMoney ?? s.extraPerPayday));
+    setInputNote('');
+    setSheet('redo');
+  };
+
   const saveSheet = async () => {
     const amount = parseAmount(input);
+    if (sheet === 'redo') {
+      if (amount === null || amount < 0) return setInputNote('Type an amount, like 50.');
+      rememberBalances(d);
+      const res = await changePaid(await getDB(), d, amount);
+      setUndo({ before: res.before, after: res.data });
+      setJustPaid(paidFromLog(res.data, redoLog!.number));
+      setPaidIds(res.newlyPaid);
+      data.value = res.data;
+      setSheet(null);
+      return;
+    }
     if (amount === null || amount < 0 || (sheet === 'extra' && amount === 0)) {
       setInputNote('Type an amount, like 50.');
       return;
@@ -404,11 +424,18 @@ export function Today() {
                 </li>
               ))}
             </ul>
-            {undo && (
-              <button type="button" class="link" data-undo onClick={doUndo}>
-                Undo
-              </button>
-            )}
+            <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
+              {undo && (
+                <button type="button" class="link" data-undo onClick={doUndo}>
+                  Undo
+                </button>
+              )}
+              {redoLog && (
+                <button type="button" class="link small" data-testid="change-paid" onClick={openRedo}>
+                  Change what I paid
+                </button>
+              )}
+            </div>
           </section>
 
           <section class="card stack" style={{ gap: 10 }} data-testid="after-sentence">
@@ -633,8 +660,8 @@ export function Today() {
         </button>
       </Sheet>
 
-      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' ? COPY.differentAmount : 'Extra payment'}>
-        {sheet === 'amount' ? (
+      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : 'Extra payment'}>
+        {sheet === 'amount' || sheet === 'redo' ? (
           <Field label="How much can go to the plan this payday?" hint={`Usually ${money(s.extraPerPayday)}. Your minimums stay the same, and the rest follows the same order.`}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Money for the plan this payday" />
           </Field>
@@ -645,7 +672,7 @@ export function Today() {
         )}
         {inputNote && <Note>{inputNote}</Note>}
         <button type="button" class="btn" onClick={saveSheet}>
-          {sheet === 'amount' ? 'Update this payday' : 'Save'}
+          {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : 'Save'}
         </button>
         <button type="button" class="link" onClick={() => setSheet(null)}>
           Cancel

@@ -12,17 +12,14 @@ test.beforeEach(async ({ page }) => {
 
 const didIt = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^I did it/ });
 
-test('before the payday: a countdown and a small link, no question, and Undo covers a mistake', async ({ page }) => {
+test('no question is asked, and Undo covers a mistake', async ({ page }) => {
   await quickSetup(page);
-  await expect(page.getByTestId('countdown-card')).toContainText('Next payday is Fri 23 Oct');
-  await expect(didIt(page)).toHaveCount(0); // no active button yet
-  await page.getByRole('button', { name: 'Mark it done early' }).click();
-  await didIt(page).click();
+  await didIt(page).click(); // a new user has the card in front of them: no link to press first
   await expect(page.getByRole('dialog')).toHaveCount(0); // no confirm dialog
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByText('Fri 23 Oct is paid.')).toHaveCount(0);
-  await expect(page.getByTestId('countdown-card')).toBeVisible(); // back to counting down
+  await expect(page.getByTestId('payday-total')).toBeVisible(); // nothing is done yet, so the card is back
 });
 
 test('after "I did it" Today stays paid until the next payday, after a tab change and a reload', async ({ page }) => {

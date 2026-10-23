@@ -7,12 +7,10 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
 });
 
-test('before the payday Today counts down, and the payday card opens from "Mark it done early"', async ({ page }) => {
+test('the payday card shows its parts, even a week before the payday', async ({ page }) => {
   await quickSetup(page);
-  await expect(page.getByTestId('countdown-card')).toContainText('Nothing to do until then');
-  await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);
+  await expect(page.getByTestId('countdown-card')).toHaveCount(0); // never done yet: the card
   await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 23 Oct.');
-  await revealEarly(page);
   await expect(page.getByTestId('payday-total')).toHaveText('$185');
   await expect(page.locator('.pc-move')).toHaveText('Move'); // "Move $185", the same words as the result screen
   await expect(page.getByTestId('extra-sentence')).toContainText('The extra $150 goes to Store card');

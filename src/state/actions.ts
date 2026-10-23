@@ -14,7 +14,7 @@ import {
   type PayoffMethod,
 } from '../engine';
 import { commit, newId, type PiyDB } from '../data/db';
-import type { AppData, BufferRecord, Debt, Fund, Milestone, Payment, PaydayLog, Settings, StartMode } from '../data/types';
+import type { AppData, BufferRecord, Debt, Fund, Milestone, Payment, PaydayLog, PaydaySnap, Settings, StartMode } from '../data/types';
 import type { Currency } from '../lib/money';
 import { firstOfNextMonth } from '../lib/today';
 import { billsForNextPayday, totalOf } from './billsDue';
@@ -231,7 +231,17 @@ export async function didPayday(
     }
   }
 
-  const log: PaydayLog = { id: `payday-${number}`, updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, dailyCost: dailyInterestCost(activeDebts(data)), bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
+  const snapOf = (debts: Debt[], bufferAmount: number, fundList: { id: string; saved: number }[]): PaydaySnap => ({
+    debts: Object.fromEntries(debts.map((d) => [d.id, [d.balance, d.status] as [number, string]])),
+    buffer: bufferAmount,
+    funds: Object.fromEntries(fundList.map((f) => [f.id, f.saved])),
+  });
+  const afterDebts = data.debts.map((d) => changedById.get(d.id) ?? d);
+  const snap = {
+    before: { ...snapOf(data.debts, data.buffer.amount, data.funds), historyLen: data.buffer.history.length, oneOffs: s.oneOffs },
+    after: snapOf(afterDebts, buffer.amount, funds),
+  };
+  const log: PaydayLog = { id: `payday-${number}`, snap, updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, dailyCost: dailyInterestCost(activeDebts(data)), bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
   // One-off money planned for this payday is used now
   const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1);
   const settings: Settings = { ...s, oneOffs, paydayIndex: s.paydayIndex + 1, updatedAt: now };
@@ -289,6 +299,43 @@ export async function undoPayday(db: PiyDB, before: AppData, after: AppData, now
   for (const m of after.milestones) if (!keep.milestones.has(m.id)) await tx.objectStore('milestones').delete(m.id);
   await tx.done;
   return { ...restored, milestones: before.milestones.filter((m) => keep.milestones.has(m.id)) };
+}
+
+/** The payday that was done last (the one before the next payday), if it can still be changed: nothing moved since. */
+export function changeablePayday(data: AppData): PaydayLog | null {
+  const number = nextPaydayNumber(data.settings) - 1;
+  const log = data.paydays.find((p) => p.number === number && p.status === 'done');
+  const after = log?.snap?.after;
+  if (!log || !after) return null;
+  const same =
+    data.debts.every((d) => !(d.id in after.debts) || (after.debts[d.id]![0] === d.balance && after.debts[d.id]![1] === d.status)) &&
+    data.buffer.amount === after.buffer &&
+    data.funds.every((f) => !(f.id in after.funds) || after.funds[f.id] === f.saved) &&
+    !data.payments.some((p) => (p.paydayNumber ?? 0) > number);
+  return same ? log : null;
+}
+
+/** The data as it was just before a payday was done, rebuilt from its snapshot. */
+function beforePayday(data: AppData, log: PaydayLog): AppData {
+  const b = log.snap!.before;
+  return {
+    ...data,
+    settings: { ...data.settings, paydayIndex: data.settings.paydayIndex - 1, oneOffs: b.oneOffs },
+    debts: data.debts.map((d) => (d.id in b.debts ? { ...d, balance: b.debts[d.id]![0], status: b.debts[d.id]![1] as Debt['status'] } : d)),
+    funds: data.funds.map((f) => (f.id in b.funds ? { ...f, saved: b.funds[f.id]! } : f)),
+    buffer: { ...data.buffer, amount: b.buffer, history: data.buffer.history.slice(0, b.historyLen) },
+    payments: data.payments.filter((p) => p.paydayNumber !== log.number),
+    paydays: data.paydays.filter((p) => p.number !== log.number),
+  };
+}
+
+/** "Change what I paid": put the last payday back, then do it again with the money the buyer really put toward the plan. */
+export async function changePaid(db: PiyDB, data: AppData, planMoney: number, now = Date.now()): Promise<PaydayDone & { before: AppData }> {
+  const log = changeablePayday(data);
+  if (!log) throw new Error('This payday can no longer be changed.');
+  const restored = await undoPayday(db, beforePayday(data, log), data, now);
+  const res = await didPayday(db, restored, { planMoney, now: now + 1 });
+  return { ...res, before: restored };
 }
 
 /** Paydays before `today` that were neither done nor skipped. */

@@ -162,9 +162,8 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await shot(page, '09-missed');
   await page.getByRole('button', { name: 'I skipped it' }).click();
   await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();
-  await expect(page.getByTestId('countdown-card')).toContainText('Fri 6 Nov');
-
-  // Extra money pays off the focus debt
+  await expect(page.getByTestId('payday-total')).toBeVisible(); // nothing is done yet, so the card
+  await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 6 Nov.');  // Extra money pays off the focus debt
   await page.getByRole('button', { name: '+ Extra payment' }).click();
   await page.getByRole('textbox', { name: 'Extra payment' }).fill('640');
   await page.getByRole('button', { name: 'Save', exact: true }).click();

@@ -135,6 +135,13 @@ export interface Fund extends Meta {
   position: number;
 }
 
+/** Balances and status per debt, the buffer amount, and savings per yearly bill */
+export interface PaydaySnap {
+  debts: Record<string, [number, string]>;
+  buffer: number;
+  funds: Record<string, number>;
+}
+
 export interface PaydayLog extends Meta {
   /** Payday number counted from the anchor (1 = the payday entered in setup) */
   number: number;
@@ -148,6 +155,8 @@ export interface PaydayLog extends Meta {
   debtLeft?: number;
   /** What the debt cost per day (interest) when this payday was done, for "last month $3.48" on Today */
   dailyCost?: number;
+  /** What changed with this payday: balances, buffer and yearly-bill savings before and after. Lets "Change what I paid" redo it. */
+  snap?: { before: PaydaySnap & { historyLen: number; oneOffs: Settings['oneOffs'] }; after: PaydaySnap };
   /** The bills that were due between this payday and the next, as shown on Today */
   bills?: { debtId: string; name: string; amount: number; due: string }[];
 }
