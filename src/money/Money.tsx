@@ -1,5 +1,4 @@
 /** Safety net tab (was Money): buffer, yearly bills, "Find your first $500", debt share of pay. */
-import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
@@ -11,17 +10,16 @@ import {
   removeFund,
   saveFindMoney,
   setBufferGoal,
-  setPaycheck,
   spendFund,
   useBuffer,
   type FundFields,
 } from '../state/moneyActions';
-import { minimumsPerPayday } from '../engine';
+import { minimumsPerPayday, PAYDAYS_PER_YEAR } from '../engine';
 import { activeDebts } from '../state/planInput';
 import { act, data, today } from '../state/store';
-import { Bar, Checkbox, Field, Note, NumberInput, Sheet } from '../ui/controls';
+import { Bar, Checkbox, ChevronRight, Field, Note, NumberInput, Sheet } from '../ui/controls';
 
-type Mode = 'use-buffer' | 'goal' | 'paycheck' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
+type Mode = 'use-buffer' | 'goal' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
 
 export function Money() {
   const d = data.value!;
@@ -70,9 +68,6 @@ export function Money() {
     } else if (mode === 'goal') {
       if (amount === null || amount < 0) return bad();
       await act((db, x) => setBufferGoal(db, x, amount));
-    } else if (mode === 'paycheck') {
-      if (text.trim() && (amount === null || amount < 0)) return bad();
-      await act((db, x) => setPaycheck(db, x, text.trim() ? amount : null));
     } else if (mode === 'fund-add' || (typeof mode === 'object' && mode?.kind === 'edit')) {
       if (amount === null || amount <= 0) return setMsg('Add how much it costs in a year.');
       const f: FundFields = { name: text2.trim() || 'Yearly bill', perYear: amount, month };
@@ -90,29 +85,43 @@ export function Money() {
   const setIdeaAmount = (key: string, v: string) =>
     act((db, x) => saveFindMoney(db, x, items.map((i) => (i.key === key ? { ...i, amount: parseAmount(v) } : i))));
 
+  const ready = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
+  const perYearTotal = d.funds.reduce((sum, f) => sum + f.perYear, 0);
+  const eachPayday = perYearTotal / PAYDAYS_PER_YEAR[s.frequency];
+
   return (
     <main class="screen with-tabs">
       <h1>Safety net</h1>
       <p class="muted">So the next surprise bill stays off your cards.</p>
-      <StatusLine />
 
       <section class="card stack" aria-labelledby="buffer-title">
-        <div class="row">
-          <h2 id="buffer-title">Buffer</h2>
-          <span class="num" style={{ fontWeight: 600 }}>
-            {money(d.buffer.amount, cur)} of {formatMoney(s.bufferGoal, cur, { whole: true })}
+        <p class="label" id="buffer-title">
+          Surprise buffer
+        </p>
+        <div class="row" style={{ justifyContent: 'flex-start', alignItems: 'baseline', gap: 10 }}>
+          <span class="buffer-big num" data-testid="buffer-amount">
+            {money(d.buffer.amount, cur)}
+          </span>
+          <span class="muted">
+            of {formatMoney(s.bufferGoal, cur, { whole: true })}
+            {ready && (
+              <>
+                {' · '}
+                <span class="hl" data-testid="buffer-ready">
+                  ready
+                </span>
+              </>
+            )}
           </span>
         </div>
         <Bar pct={bufferPct} label="Buffer" />
-        {usedNote ? <Note>{COPY.bufferUsed}</Note> : <p class="muted small">{COPY.buffer}</p>}
-        <div class="row" style={{ justifyContent: 'flex-start', gap: 18 }}>
-          <button type="button" class="link small" onClick={() => setMode('use-buffer')}>
-            I used some of it
-          </button>
-          <button type="button" class="link small" onClick={() => { setText(String(s.bufferGoal)); setMode('goal'); }}>
-            Change my goal
-          </button>
-        </div>
+        {usedNote ? <Note>{COPY.bufferUsed}</Note> : <p class="muted">Kept in a plain separate account or an envelope. If you use some, your plan refills it first.</p>}
+        <button type="button" class="btn" onClick={() => setMode('use-buffer')}>
+          I used some of it
+        </button>
+        <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => { setText(String(s.bufferGoal)); setMode('goal'); }}>
+          Change my goal
+        </button>
         {d.buffer.history.length > 0 && (
           <details>
             <summary class="muted small" style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>History</summary>
@@ -129,36 +138,65 @@ export function Money() {
       </section>
 
       <section class="card stack" aria-labelledby="yearly-title">
-        <h2 id="yearly-title">Yearly bills</h2>
-        {d.funds.length === 0 && <p class="muted small">Bills you know are coming, like car repairs or gifts. A little each payday keeps them off a card.</p>}
+        <div class="row" style={{ alignItems: 'baseline' }}>
+          <p class="label" id="yearly-title">
+            Yearly bills
+          </p>
+          {d.funds.length > 0 && <span class="muted num">{money(eachPayday, cur)} each payday</span>}
+        </div>
+        {d.funds.length === 0 && <p class="muted">Bills you know are coming, like car repairs or gifts. A little each payday keeps them off a card.</p>}
         {d.funds.map((f) => (
-          <div key={f.id} class="stack" style={{ gap: 4, borderTop: '1px dashed var(--line)', paddingTop: 8 }}>
-            <div class="row">
+          <button key={f.id} type="button" class="fund-row" aria-label={`${f.name}, edit`} onClick={() => openFund('edit', f.id)}>
+            <span class="row">
               <b>{f.name}</b>
-              <span class="num">{money(f.saved, cur)} saved</span>
-            </div>
-            <Bar pct={f.perYear > 0 ? (f.saved / f.perYear) * 100 : 0} label={`${f.name} saved`} />
-            <p class="muted small num">
-              {money(f.perYear, cur)} a year · needed {f.month === 'Any time' ? 'any time' : `in ${f.month}`}
-            </p>
-            <div class="row" style={{ justifyContent: 'flex-start', gap: 18 }}>
-              <button type="button" class="link small" onClick={() => openFund('spend', f.id)}>I paid this bill</button>
-              <button type="button" class="link small" onClick={() => openFund('edit', f.id)}>Edit</button>
-              <button type="button" class="link small" onClick={() => act((db, x) => removeFund(db, x, f.id))}>Remove</button>
-            </div>
-          </div>
+              <span class="num">
+                {money(f.saved, cur)} of {money(f.perYear, cur)}
+              </span>
+            </span>
+            <span class="bar ink" role="img" aria-label={`${f.name} saved`}>
+              <span style={{ width: `${Math.min(100, f.perYear > 0 ? (f.saved / f.perYear) * 100 : 0)}%` }} />
+            </span>
+            <span class="muted small">{f.month === 'Any time' ? 'Any time' : `Needed in ${f.month}`}</span>
+          </button>
         ))}
-        <button type="button" class="btn ghost" onClick={() => { setText(''); setText2(''); setMonth('Any time'); setMode('fund-add'); }}>
-          Add a yearly bill
-        </button>
+        <div class="grid-2">
+          <button
+            type="button"
+            class="btn ghost"
+            disabled={d.funds.length === 0}
+            onClick={() => (d.funds.length === 1 ? openFund('spend', d.funds[0]!.id) : setMode('pick-fund'))}
+          >
+            I paid a bill
+          </button>
+          <button type="button" class="btn dashed" onClick={() => { setText(''); setText2(''); setMonth('Any time'); setMode('fund-add'); }}>
+            + Add a bill
+          </button>
+        </div>
       </section>
 
-      <section class="card stack" aria-labelledby="find-title">
+      <button type="button" class="card find-row" onClick={() => setMode('find')}>
+        <span class="stack" style={{ gap: 2, textAlign: 'left' }}>
+          <b>Find your first $500</b>
+          <span class="muted small">
+            {items.length} small ideas, with a live total{total > 0 ? ` · ${formatMoney(total, cur, { whole: true })} so far` : ''}
+          </span>
+        </span>
+        <ChevronRight />
+      </button>
+
+      {share !== null && (
+        <p class="muted" style={{ textAlign: 'center' }} aria-label="Debt share of pay">
+          Debt payments are <b class="num">{Math.round(share)}%</b> of your take-home pay.
+        </p>
+      )}
+
+      <Sheet open={mode === 'find'} onClose={close} title="Find your first $500">
         <div class="row">
-          <h2 id="find-title">Find your first $500</h2>
-          <span class="num" style={{ fontWeight: 600 }}>{formatMoney(total, cur, { whole: true })}</span>
+          <span class="muted small">Tick what you do. Type what you think each one is worth.</span>
+          <span class="num" style={{ fontWeight: 600 }} data-testid="find-total">
+            {formatMoney(total, cur, { whole: true })}
+          </span>
         </div>
-        <p class="muted small">Tick what you do. Type what you think each one is worth.</p>
         {items.map((i) => (
           <div key={i.key} class="stack" style={{ gap: 2 }}>
             <Checkbox checked={i.done} onToggle={() => toggleIdea(i.key)}>{i.label}</Checkbox>
@@ -168,20 +206,17 @@ export function Money() {
           </div>
         ))}
         <p class="num small muted">If you do all of them: {formatMoney(potential, cur, { whole: true })}</p>
-      </section>
+        <button type="button" class="btn" onClick={close}>Done</button>
+      </Sheet>
 
-      <section class="card stack" aria-label="Debt share of pay">
-        {share !== null ? (
-          <p>
-            Debt payments are <b class="num">{Math.round(share)}%</b> of your take-home pay.
-          </p>
-        ) : (
-          <p class="muted">Add your usual paycheck to see how much of it goes to debt.</p>
-        )}
-        <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => { setText(s.paycheckAmount ? String(s.paycheckAmount) : ''); setMode('paycheck'); }}>
-          {s.paycheckAmount ? 'Change my paycheck' : 'Add my paycheck'}
-        </button>
-      </section>
+      <Sheet open={mode === 'pick-fund'} onClose={close} title="Which bill did you pay?">
+        {d.funds.map((f) => (
+          <button key={f.id} type="button" class="btn ghost" onClick={() => openFund('spend', f.id)}>
+            {f.name}
+          </button>
+        ))}
+        <button type="button" class="link" onClick={close}>Cancel</button>
+      </Sheet>
 
       <Sheet open={mode === 'use-buffer'} onClose={close} title="I used some of my buffer">
         <p class="muted">That's what it's for.</p>
@@ -193,12 +228,6 @@ export function Money() {
       </Sheet>
       <Sheet open={mode === 'goal'} onClose={close} title="Buffer goal">
         <Field label="Goal"><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Buffer goal" /></Field>
-        {msg && <Note>{msg}</Note>}
-        <button type="button" class="btn" onClick={save}>Save</button>
-        <button type="button" class="link" onClick={close}>Cancel</button>
-      </Sheet>
-      <Sheet open={mode === 'paycheck'} onClose={close} title="Your usual paycheck">
-        <Field label="Amount" hint="Stays on this device. Leave it empty to remove it."><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Usual paycheck" /></Field>
         {msg && <Note>{msg}</Note>}
         <button type="button" class="btn" onClick={save}>Save</button>
         <button type="button" class="link" onClick={close}>Cancel</button>
@@ -215,6 +244,9 @@ export function Money() {
         </div>
         {msg && <Note>{msg}</Note>}
         <button type="button" class="btn" onClick={save}>Save</button>
+        {fund && typeof mode === 'object' && mode?.kind === 'edit' && (
+          <button type="button" class="link" onClick={async () => { await act((db, x) => removeFund(db, x, fund.id)); close(); }}>Remove this bill</button>
+        )}
         <button type="button" class="link" onClick={close}>Cancel</button>
       </Sheet>
       <Sheet open={typeof mode === 'object' && mode?.kind === 'spend'} onClose={close} title={`I paid ${fund?.name ?? 'this bill'}`}>

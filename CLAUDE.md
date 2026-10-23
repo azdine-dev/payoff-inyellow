@@ -1,5 +1,7 @@
 # PaidInYellow · Paycheck Payoff Planner (app) · build brief
 
+UI changes: docs/ux-v2/ux-v2.md replaces section 5 (screens). Match the PNGs in docs/ux-v2/mockups/. Engine, data model and section 2 rules stay unchanged.
+
 This file is the brief for building the **Paycheck Payoff Planner**, the core product of PaidInYellow. It's a phone-first offline web app (PWA). Put this whole folder at the root of the new repo. Claude Code reads this file automatically.
 
 Everything here comes from the research and design work done in the PaidInYellow project (Oct 11-15, 2026). When this file and an older document in `docs/` disagree, this file wins. It is the latest version.

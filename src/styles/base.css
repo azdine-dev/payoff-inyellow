@@ -1485,3 +1485,182 @@ a.btn {
   min-height: 36px;
   flex: none;
 }
+
+/* ---------- Path (ux-v2 section 5) ---------- */
+
+.path-pct {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.path-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.path-stat {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.2;
+}
+
+/* Paid = yellow with an ink border, the next payday = ink outline, later = flat line colour */
+.payday-grid {
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.sq.future {
+  background: var(--line);
+  border-color: var(--line);
+}
+
+.sq.future.current {
+  background: transparent;
+  border-color: var(--ink);
+}
+
+.ahead-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ahead-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.ahead-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.ahead-dot.next {
+  background: var(--ink);
+}
+
+.ahead-dot.end {
+  border-radius: 6px;
+  background: var(--yellow);
+}
+
+.pd-detail {
+  margin: 4px 0 10px 40px;
+}
+
+/* Long sheets (payday list, what-if) scroll inside the sheet */
+.sheet {
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+/* ---------- Debts (ux-v2 section 6) ---------- */
+
+.debt-card.now {
+  border: 2px solid var(--ink);
+}
+
+.debt-card.paid {
+  background: var(--yellow);
+  border-color: var(--ink);
+  color: var(--on-yellow);
+}
+
+.pos-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.pos-tag.now {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.debt-left {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.struck {
+  text-decoration: line-through;
+}
+
+.small-stamp {
+  padding: 3px 8px;
+  font-size: 0.85rem;
+}
+
+.round-btn.dark {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+/* ---------- Safety net (ux-v2 section 7) ---------- */
+
+.buffer-big {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+/* Yearly bills are savings in progress, not paid: ink bars */
+.bar.ink > span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: width 400ms ease;
+}
+
+.fund-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.btn.dashed {
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px dashed var(--ink);
+}
+
+.find-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}

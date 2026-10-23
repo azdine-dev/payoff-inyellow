@@ -1,18 +1,17 @@
 /** Debts tab: one card per debt, add, edit, archive, new charge, update from statement. */
-import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { growingDebts } from '../engine';
 import type { ChargeTag, Debt } from '../data/types';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
-import { ordinal, shortMonthYear } from '../lib/today';
+import { diffDays, ordinal, shortDate, shortMonthYear } from '../lib/today';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
 import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
 import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, plan, today } from '../state/store';
-import { Bar, Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
+import { Bar, CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
 
 type Mode = { kind: 'add' } | { kind: 'actions' | 'edit' | 'charge' | 'statement'; id: string } | null;
 
@@ -131,16 +130,19 @@ export function Debts() {
     close();
   };
 
-  const card = (debt: Debt) => {
+  const owedTotal = sorted.reduce((sum, x) => sum + x.balance, 0);
+  const goneText = (iso: string) => (diffDays(today.value, iso) <= 92 ? shortDate(iso, today.value) : shortMonthYear(iso));
+  const tagFor = (i: number) => (i === 0 ? '1 · Paying now' : i === 1 ? '2 · Next' : `${i + 1} · Later`);
+
+  const card = (debt: Debt, index: number) => {
     const pct = debt.startBalance > 0 ? (1 - debt.balance / debt.startBalance) * 100 : 100;
     const goneBy = r.paidOff[debt.id];
-    const paydaysLeft = goneBy ? r.rows.findIndex((row) => row.debts.some((x) => x.id === debt.id && x.balanceAfter <= 0.005)) + 1 : null;
     const isPaid = debt.status === 'paid';
+    const bill = debt.minPending ? null : formatMoneyAuto(debt.minMonthly, cur);
     return (
       <section
         key={debt.id}
-        class="card stack"
-        style={isPaid ? { background: 'var(--yellow)', borderColor: 'var(--yellow)', color: 'var(--on-yellow)' } : undefined}
+        class={`card stack debt-card${index === 0 && !isPaid ? ' now' : ''}${isPaid ? ' paid' : ''}`}
         aria-label={debt.name}
       >
         <div
@@ -151,30 +153,40 @@ export function Debts() {
           onClick={() => setMode({ kind: 'actions', id: debt.id })}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setMode({ kind: 'actions', id: debt.id }))}
         >
-        <div class="row">
-          <h2>{debt.name}</h2>
-          {isPaid ? <b>PAID</b> : <span class="num" style={{ fontWeight: 600 }}>{formatMoney(debt.balance, cur, { whole: true })}</span>}
-        </div>
-        {isPaid ? (
-          <p>{COPY.debtPaid}</p>
-        ) : (
-          <>
-            <Bar pct={pct} label={`${debt.name} paid off`} />
-            <p class="muted small num">
-              {Math.floor(pct)}% gone · {debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}% rate`}{debt.minPending ? '' : ` · minimum ${formatMoneyAuto(debt.minMonthly, cur)}`}
-              {debt.dueDay ? ` · due on the ${ordinal(debt.dueDay)}${debt.autopay ? ' (autopay)' : ''}` : ''}
-            </p>
-            <p class="muted small">
-              {goneBy ? `Gone by ${shortMonthYear(goneBy)}${paydaysLeft ? ` · ${paydaysLeft} paydays left` : ''}` : 'Not gone within 20 years at this pace'}
-            </p>
-            {debt.minPending && (
-              <span class="tag" data-testid="min-pending" style={{ alignSelf: 'flex-start' }}>
-                Add your minimum
-              </span>
-            )}
-            {growing.has(debt.id) && !debt.minPending && <Note>{debt.name} grows even with the minimum. It's first in your plan.</Note>}
-          </>
-        )}
+          {isPaid ? (
+            <>
+              <div class="row">
+                <h2 class="struck">{debt.name}</h2>
+                <span class="paid-stamp small-stamp">
+                  <CheckIcon /> PAID
+                </span>
+              </div>
+              <p>{COPY.debtPaid}</p>
+            </>
+          ) : (
+            <>
+              <div class="row">
+                <span class={`pos-tag${index === 0 ? ' now' : ''}`}>{tagFor(index)}</span>
+                <span class="muted small num">{goneBy ? `gone by ${goneText(goneBy)}` : 'not gone within 20 years'}</span>
+              </div>
+              <div class="row">
+                <h2>{debt.name}</h2>
+                <span class="num debt-left">{formatMoney(debt.balance, cur, { whole: true })}</span>
+              </div>
+              <Bar pct={pct} label={`${debt.name} paid off`} />
+              <p class="muted small num">
+                {Math.floor(pct)}% gone · {debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}%`}
+                {bill ? ` · ${bill} bill${debt.dueDay ? ` on the ${ordinal(debt.dueDay)}` : ''}` : ''}
+                {debt.autopay ? ' · autopay' : ''}
+              </p>
+              {debt.minPending && (
+                <span class="tag" data-testid="min-pending" style={{ alignSelf: 'flex-start' }}>
+                  Add your minimum
+                </span>
+              )}
+              {growing.has(debt.id) && !debt.minPending && <p class="small">Grows even with the minimum, so it goes first.</p>}
+            </>
+          )}
         </div>
       </section>
     );
@@ -182,13 +194,27 @@ export function Debts() {
 
   return (
     <main class="screen with-tabs">
-      <h1>Debts</h1>
-      <StatusLine />
+      <header class="today-head">
+        <div class="stack" style={{ gap: 2 }}>
+          <h1>Debts</h1>
+          <p class="muted num" data-testid="owed-line">
+            {active.length ? `${formatMoney(owedTotal, cur, { whole: true })} left · in the order you pay them` : 'Nothing left to pay'}
+          </p>
+        </div>
+        <button type="button" class="round-btn dark" aria-label="Add a debt" onClick={() => setMode({ kind: 'add' })}>
+          <PlusIcon />
+        </button>
+      </header>
       {sorted.map(card)}
       {!active.length && <p class="card">No debts to pay right now.</p>}
-      <button type="button" class="btn ghost" onClick={() => setMode({ kind: 'add' })}>
-        Add a debt
-      </button>
+      {active.length > 0 && (
+        <section class="card stack" aria-label="Tap a debt to">
+          <p class="label">Tap a debt to</p>
+          <p>Update from my statement</p>
+          <p>Add a new charge or fee</p>
+          <p>Edit or archive</p>
+        </section>
+      )}
       {paid.length > 0 && (
         <>
           <p class="label">Paid</p>
@@ -215,10 +241,10 @@ export function Debts() {
             {current.status !== 'paid' && (
               <>
                 <button type="button" class="btn ghost" onClick={() => { setText(''); setMode({ kind: 'charge', id: current.id }); }}>
-                  Log a new charge or fee
+                  Add a new charge or fee
                 </button>
                 <button type="button" class="btn ghost" onClick={() => { setText(str(current.balance)); setMode({ kind: 'statement', id: current.id }); }}>
-                  Update from statement
+                  Update from my statement
                 </button>
               </>
             )}
@@ -242,7 +268,7 @@ export function Debts() {
           <DebtForm key={current.id} debt={current} symbol={cur.symbol} onCancel={close} onSave={async (f) => { await act((db, x) => editDebt(db, x, current.id, f)); close(); }} />
         )}
       </Sheet>
-      <Sheet open={mode?.kind === 'charge'} onClose={close} title="Log a new charge or fee">
+      <Sheet open={mode?.kind === 'charge'} onClose={close} title="Add a new charge or fee">
         <p class="muted">It goes on {current?.name}. Your plan updates. No judgment, it just keeps the numbers true.</p>
         <Field label="Amount">
           <NumberInput pre={cur.symbol} value={text} onInput={setText} label="Charge amount" />

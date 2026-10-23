@@ -21,7 +21,7 @@ import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
 import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, freshMilestones, getDB, plan, tab, today } from '../state/store';
-import { Bar, Checkbox, CheckIcon, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
+import { Bar, Checkbox, CheckIcon, ChevronRight, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
@@ -35,14 +35,6 @@ interface JustPaid {
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const reducedMotion = () => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
-
-function ChevronRight() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9.5 5.5L16 12l-6.5 6.5" />
-    </svg>
-  );
-}
 
 /** "Next payday Fri 7 Nov · 14 days. Nothing to do until then." */
 function CountdownCard(props: { nextDate: string; onShow?: () => void }) {

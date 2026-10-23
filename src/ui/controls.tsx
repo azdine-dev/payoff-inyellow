@@ -153,6 +153,22 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
   );
 }
 
+export function ChevronRight() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.5 5.5L16 12l-6.5 6.5" />
+    </svg>
+  );
+}
+
+export function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 /** Settings: three sliders (reads clearer than a cog at this size). */
 export function GearIcon() {
   return (
