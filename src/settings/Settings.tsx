@@ -315,7 +315,7 @@ export function Settings() {
       <Sheet open={edit === 'extra' || edit === 'goal' || edit === 'paycheck'} onClose={close} title={edit === 'extra' ? 'Money for the plan' : edit === 'goal' ? 'Buffer goal' : 'Usual paycheck'}>
         <Field
           label="Amount"
-          hint={edit === 'extra' ? COPY.extraHint : edit === 'paycheck' ? 'Stays on this device. Leave it empty to remove it.' : undefined}
+          hint={edit === 'extra' ? COPY.extraHint(cur.symbol) : edit === 'paycheck' ? 'Stays on this device. Leave it empty to remove it.' : undefined}
         >
           <NumberInput pre={cur.symbol} value={text} onInput={setText} label="Amount" />
         </Field>

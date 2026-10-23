@@ -4,6 +4,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup, shot, unlockOnResult } from './helpers';
+import { revealEarly } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -12,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 test('without a code: the date and first step, nothing more, and a way to unlock', async ({ page }) => {
   await quickSetup(page, { unlock: false });
   await expect(page.getByTestId('debt-free-date')).toHaveText('July 2027');
-  await expect(page.getByTestId('first-step')).toContainText('Move $185.00. The extra $150 goes to Store card.'); // Store card's $35 bill is due before the next payday
+  await expect(page.getByTestId('first-step')).toContainText('Move $185. The extra $150 goes to Store card.'); // Store card's $35 bill is due before the next payday
   await shot(page, '17-calculator');
 
   // What the full planner adds, and how to get it
@@ -97,5 +98,6 @@ test('unlocking from the result screen opens the full planner', async ({ page })
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
+  await revealEarly(page);
   await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
 });

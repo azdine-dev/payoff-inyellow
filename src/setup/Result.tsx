@@ -131,11 +131,11 @@ export function Result() {
                 </>
               ) : (
                 <>
-                  Move {formatMoney(first.total, cur)}. The extra {formatMoneyAuto(first.amount, cur)} goes to <span class="hl">{first.target}</span>.
+                  Move {formatMoneyAuto(first.total, cur)}. The extra {formatMoneyAuto(first.amount, cur)} goes to <span class="hl">{first.target}</span>.
                 </>
               )
             ) : first.kind === 'setaside' ? (
-              <>Move {formatMoney(first.total, cur)}.</>
+              <>Move {formatMoneyAuto(first.total, cur)}.</>
             ) : (
               <>Nothing is due before your next payday.</>
             )}
@@ -146,9 +146,6 @@ export function Result() {
             </p>
           )}
           <p class="first-why">{r.rows[0]?.bufferFirst ? COPY.buffer : first.kind === 'debt' ? methodReason(s.method) : ''}</p>
-          <button type="button" class="link-light small" aria-label="How we got this step" onClick={() => setHow(true)}>
-            How we got this
-          </button>
         </section>
       )}
 

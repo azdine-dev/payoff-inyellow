@@ -30,7 +30,7 @@ export const FAQ: Faq[] = [
   },
   {
     q: 'I barely make enough. Will this work for me?',
-    a: 'If you can pay your minimums, the plan works at your speed. “Find your first $500” on the Safety net tab helps you find small amounts to start your buffer. The app can’t raise your income, and it makes every dollar count.',
+    a: 'If you can pay your minimums, the plan works at your speed. The “Find your first” list on the Safety net tab helps you find small amounts to start your buffer. The app can’t raise your income, and it makes every payment count.',
   },
   {
     q: 'Will the app tell me to borrow more?',

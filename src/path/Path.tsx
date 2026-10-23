@@ -3,7 +3,7 @@
  * The what-if and the payday list are bottom sheets. The method comparison shows only when the rule fires.
  */
 import { signal } from '@preact/signals';
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { compareMethods, type PayoffMethod } from '../engine';
 import { downloadText, planToCsv } from '../lib/csv';
 import { formatMoney } from '../lib/money';
@@ -15,10 +15,10 @@ import { isDebtFree } from '../state/debtFree';
 import { MILESTONE_LABELS, projectedDate, progressStats } from '../state/milestones';
 import { setMethod } from '../state/planActions';
 import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
-import { act, data, plan, today } from '../state/store';
+import { act, data, freshPayday, plan, today } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
 import { Chart } from '../progress/Chart';
-import { useCountUp } from '../ui/useCountUp';
+import { Count, useCountUp } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
 import { PaydayListSheet } from './PaydayListSheet';
 import { WhatIfSheet } from './WhatIfSheet';
@@ -65,7 +65,7 @@ export function Path() {
   const avoided = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
   const paydaysLeft = r.paydaysToDebtFree;
   const pct = Math.floor(stats.pct);
-  const shownPct = useCountUp(pct);
+  const shownPct = useCountUp(pct, 'path-pct');
 
   // Payday grid: 2 squares already yellow, then done and skipped paydays, then what is ahead
   const past = d.paydays;
@@ -97,6 +97,13 @@ export function Path() {
   }, [d, r]);
 
   const reachedList = d.milestones.filter((m) => m.id !== 'plan-made').sort((x, y) => x.reachedOn.localeCompare(y.reachedOn));
+
+  // The square of the payday just done fills yellow once
+  useEffect(() => {
+    if (freshPayday.value === null) return;
+    const t = setTimeout(() => (freshPayday.value = null), 900);
+    return () => clearTimeout(t);
+  }, [freshPayday.value]);
 
   const choose = (m: PayoffMethod) => act((db, x) => setMethod(db, x, m));
 
@@ -146,13 +153,13 @@ export function Path() {
         <div class="path-stats">
           <div>
             <p class="num path-stat" data-testid="paid-so-far">
-              {formatMoney(stats.paid, cur, { whole: true })}
+              <Count value={stats.paid} id="path-paid" format={(n) => formatMoney(n, cur, { whole: true })} />
             </p>
             <p class="muted small">paid</p>
           </div>
           <div>
             <p class="num path-stat" data-testid="to-go">
-              {formatMoney(stats.owed, cur, { whole: true })}
+              <Count value={stats.owed} id="path-owed" format={(n) => formatMoney(n, cur, { whole: true })} />
             </p>
             <p class="muted small">to go</p>
           </div>
@@ -193,7 +200,7 @@ export function Path() {
             </div>
           ))}
           {past.map((p) => (
-            <div key={p.id} class={`sq${p.status === 'done' ? ' on' : ' skipped'}`} role="listitem" aria-label={`${shortDate(p.date)}: ${p.status === 'done' ? 'paid' : 'skipped'}`} title={shortDate(p.date)}>
+            <div key={p.id} class={`sq${p.status === 'done' ? ' on' : ' skipped'}${freshPayday.value === p.number ? ' fill' : ''}`} role="listitem" aria-label={`${shortDate(p.date)}: ${p.status === 'done' ? 'paid' : 'skipped'}`} title={shortDate(p.date)}>
               {p.status === 'done' ? <CheckIcon /> : <span>skip</span>}
             </div>
           ))}

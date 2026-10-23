@@ -19,6 +19,9 @@ export const today = signal(todayISO());
 
 /** Milestones reached while the app is open (not the ones found when it starts). Today shows a short yellow moment for each. */
 export const freshMilestones = signal<string[]>([]);
+/** The payday number just done and the debts just paid off: Path and Debts play their small animation once */
+export const freshPayday = signal<number | null>(null);
+export const freshPaidDebts = signal<string[]>([]);
 
 /**
  * 'checking' while a stored code is being verified, 'locked' = calculator mode (no valid code),

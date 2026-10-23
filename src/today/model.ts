@@ -242,3 +242,23 @@ export function dailyCostLastMonth(data: Pick<AppData, 'paydays'>, today: string
     .sort((a, b) => Math.abs(diffDays(a.date, target)) - Math.abs(diffDays(b.date, target)));
   return near[0]?.dailyCost ?? null;
 }
+
+
+/** The paid card for a payday that is already done (after a reload, or coming back to Today): rebuilt from the logs. */
+export function paidFromLog(data: AppData, number: number): { date: string; total: number; rows: { key: string; label: string; amount: number }[] } | null {
+  const log = data.paydays.find((p) => p.number === number && p.status === 'done');
+  if (!log) return null;
+  const name = (id: string | null | undefined) => data.debts.find((x) => x.id === id)?.name ?? '';
+  const pays = data.payments.filter((p) => p.paydayNumber === number);
+  const rows: { key: string; label: string; amount: number }[] = [];
+  if (log.bills) for (const b of log.bills) rows.push({ key: `b${b.debtId}`, label: `${b.name} bill`, amount: b.amount });
+  for (const p of pays) {
+    if (p.kind === 'minimum' && !log.bills) rows.push({ key: p.id, label: `${name(p.debtId)} bill`, amount: p.amount });
+    if (p.kind === 'extra') rows.push({ key: p.id, label: `${name(p.debtId)}, extra`, amount: p.amount });
+  }
+  const fund = pays.filter((p) => p.kind === 'fund').reduce((sum, p) => sum + p.amount, 0);
+  if (fund > 0) rows.push({ key: 'yearly', label: 'Yearly bills pot', amount: fund });
+  const buffer = pays.filter((p) => p.kind === 'buffer').reduce((sum, p) => sum + p.amount, 0);
+  if (buffer > 0) rows.push({ key: 'buffer', label: 'Buffer', amount: buffer });
+  return { date: log.date, total: log.total, rows };
+}

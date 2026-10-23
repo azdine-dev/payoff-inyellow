@@ -1,5 +1,5 @@
 /** Debts tab: one card per debt, add, edit, archive, new charge, update from statement. */
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { growingDebts } from '../engine';
 import type { ChargeTag, Debt } from '../data/types';
 import { COPY } from '../lib/copy';
@@ -10,7 +10,8 @@ import { showNotice } from '../state/notice';
 import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
 import { toDebtInput, toPlanInput } from '../state/planInput';
-import { act, data, plan, today } from '../state/store';
+import { act, data, freshPaidDebts, plan, today } from '../state/store';
+import { Count } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
 
 type Mode = { kind: 'add' } | { kind: 'actions' | 'edit' | 'charge' | 'statement'; id: string } | null;
@@ -111,6 +112,13 @@ export function Debts() {
   const orderIndex = (id: string) => r.order.indexOf(id);
   const sorted = [...active].sort((a, b) => orderIndex(a.id) - orderIndex(b.id));
 
+  // The paid card turns yellow and the next debt slides in once, then it is just the screen
+  useEffect(() => {
+    if (!freshPaidDebts.value.length) return;
+    const t = setTimeout(() => (freshPaidDebts.value = []), 1200);
+    return () => clearTimeout(t);
+  }, [freshPaidDebts.value]);
+
   const close = () => {
     setMode(null);
     setText('');
@@ -142,7 +150,7 @@ export function Debts() {
     return (
       <section
         key={debt.id}
-        class={`card stack debt-card${index === 0 && !isPaid ? ' now' : ''}${isPaid ? ' paid' : ''}`}
+        class={`card stack debt-card${index === 0 && !isPaid ? ' now' : ''}${isPaid ? ' paid' : ''}${isPaid && freshPaidDebts.value.includes(debt.id) ? ' just-paid' : ''}${!isPaid && index === 0 && freshPaidDebts.value.length > 0 ? ' slide-in' : ''}`}
         aria-label={debt.name}
       >
         <div
@@ -171,7 +179,9 @@ export function Debts() {
               </div>
               <div class="row">
                 <h2>{debt.name}</h2>
-                <span class="num debt-left">{formatMoney(debt.balance, cur, { whole: true })}</span>
+                <span class="num debt-left">
+                  <Count value={debt.balance} id={`debt-${debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} />
+                </span>
               </div>
               <Bar pct={pct} label={`${debt.name} paid off`} />
               <p class="muted small num">

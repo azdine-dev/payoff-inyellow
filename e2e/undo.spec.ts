@@ -1,9 +1,10 @@
 /**
- * "I did it" can be undone until the next tap, and a payday that hasn't come yet is asked about once.
+ * Before the payday Today counts down, with a small "Mark it done early" link and no question asked.
+ * "I did it" can be undone for 10 seconds, and Today stays in the paid state until the next payday.
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { goTab, showPaydays } from './scenario';
+import { goTab, revealEarly, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026, the payday is Fri 23 Oct
@@ -11,51 +12,63 @@ test.beforeEach(async ({ page }) => {
 
 const didIt = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^I did it/ });
 
-test('a payday that is still ahead is asked about once, and "Not yet" changes nothing', async ({ page }) => {
+test('before the payday: a countdown and a small link, no question, and Undo covers a mistake', async ({ page }) => {
   await quickSetup(page);
+  await expect(page.getByTestId('countdown-card')).toContainText('Next payday is Fri 23 Oct');
+  await expect(didIt(page)).toHaveCount(0); // no active button yet
+  await page.getByRole('button', { name: 'Mark it done early' }).click();
   await didIt(page).click();
-  const dialog = page.getByRole('dialog', { name: 'Mark it done now?' });
-  await expect(dialog).toContainText('Your payday is Fri 23 Oct.');
-  await dialog.getByRole('button', { name: 'Not yet' }).click();
-  await expect(dialog).toHaveCount(0);
-  await expect(page.getByText('Fri 23 Oct is paid.')).toHaveCount(0);
-  await expect(didIt(page)).toBeVisible();
-
-  // Yes marks it done, and a later payday of the same kind is not asked again for this one
-  await didIt(page).click();
-  await dialog.getByRole('button', { name: 'Yes, mark it done' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0); // no confirm dialog
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByText('Fri 23 Oct is paid.')).toHaveCount(0);
+  await expect(page.getByTestId('countdown-card')).toBeVisible(); // back to counting down
 });
 
-test('Undo puts the balances, the payday and the logs back, and goes away after the next tap', async ({ page }) => {
+test('after "I did it" Today stays paid until the next payday, after a tab change and a reload', async ({ page }) => {
+  await quickSetup(page);
+  await revealEarly(page);
+  await didIt(page).click();
+  await expect(page.getByTestId('paid-card')).toBeVisible();
+
+  for (const how of ['tab', 'reload'] as const) {
+    if (how === 'tab') {
+      await goTab(page, 'Debts');
+      await goTab(page, 'Today');
+    } else await page.reload();
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+    await expect(page.getByTestId('paid-card')).toContainText('PAID');
+    await expect(page.getByTestId('greeting')).toHaveText('Done for this payday.');
+    await expect(page.getByTestId('countdown-card')).toBeVisible();
+    await expect(didIt(page)).toHaveCount(0); // never a new active button straight away
+  }
+});
+
+test('Undo puts the balances, the payday and the logs back', async ({ page }) => {
   await quickSetup(page);
 
   const owed = async () => {
     await goTab(page, 'Progress');
+    await page.waitForTimeout(400); // the number rolls for 200 ms
     const text = await page.getByTestId('to-go').innerText();
     await goTab(page, 'Today');
     return text;
   };
   const before = await owed();
 
+  await revealEarly(page);
   await didIt(page).click();
-  await page.getByRole('button', { name: 'Yes, mark it done' }).click();
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   expect(await owed()).not.toBe(before); // the balances moved
 
-  // Back to Today: the banner is gone with the tab, so pay again to get an Undo
-  await goTab(page, 'Plan');
-  await goTab(page, 'Today');
-  await page.getByRole('button', { name: 'Paid early? Show this payday' }).click(); // between paydays Today counts down
+  // Pay the next payday early too, to get an Undo again
+  await page.getByRole('button', { name: 'Mark it done early' }).click();
   await didIt(page).click();
-  await page.getByRole('button', { name: 'Yes, mark it done' }).click();
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByText('Fri 6 Nov is paid.')).toHaveCount(0);
-  await expect(page.getByTestId('countdown-card')).toBeVisible(); // Fri 23 Oct is still the last paid payday
-
-  // Undo again is not possible, and a second payday log was not left behind
+  await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible(); // the first one stays paid
   await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
   await goTab(page, 'Plan');
   await showPaydays(page, 'Done');
@@ -67,8 +80,8 @@ test('Undo puts the balances, the payday and the logs back, and goes away after 
 
 test('Undo stays for 10 seconds, then it is gone', async ({ page }) => {
   await quickSetup(page);
+  await revealEarly(page);
   await didIt(page).click();
-  await page.getByRole('button', { name: 'Yes, mark it done' }).click();
   await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0, { timeout: 13_000 });
 });

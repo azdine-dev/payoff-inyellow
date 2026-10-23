@@ -133,16 +133,23 @@ export function DebtsStep({ draft, set }: StepProps) {
   const update = (key: string, patch: Partial<DraftDebt>) => set({ debts: draft.debts.map((d) => (d.key === key ? { ...d, ...patch } : d)) });
   // Only the debt being filled in is open. The rest are one line each: tap one to change it.
   const [openKey, setOpenKey] = useState<string | null>(() => draft.debts.find((d) => !debtComplete(d))?.key ?? null);
-  const [tried, setTried] = useState(false);
+  const [tried, setTried] = useState<string[] | null>(null);
   const open = draft.debts.find((d) => d.key === openKey);
 
   const addAnother = () => {
     // The debt in front of you must be done first, so a half-filled one is never left behind as a one-line row
     if (open && !debtComplete(open) && (open.name.trim() || open.balance.trim() || open.min.trim() || open.apr.trim())) {
-      setTried(true);
+      const missing = [
+        !open.name.trim() && { label: 'name', at: 0 },
+        !open.balance.trim() && { label: 'balance', at: 1 },
+        !open.min.trim() && { label: 'monthly minimum', at: 3 },
+      ].filter(Boolean) as { label: string; at: number }[];
+      setTried(missing.map((m) => m.label));
+      // Put the cursor on the first missing field
+      setTimeout(() => document.querySelectorAll<HTMLInputElement>('fieldset.open-debt input')[missing[0]?.at ?? 0]?.focus(), 0);
       return;
     }
-    setTried(false);
+    setTried(null);
     const fresh = open && !debtComplete(open) ? open : emptyDebt();
     if (fresh !== open) set({ debts: [...draft.debts, fresh] });
     setOpenKey(fresh.key);
@@ -188,7 +195,7 @@ export function DebtsStep({ draft, set }: StepProps) {
           + Add another debt
         </button>
       )}
-      {tried && <Note>Finish this debt first: its name, balance and monthly minimum.</Note>}
+      {tried && tried.length > 0 && <Note>Finish this debt first. It still needs its {tried.join(' and ')}.</Note>}
     </div>
   );
 }

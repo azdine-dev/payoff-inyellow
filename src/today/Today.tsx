@@ -20,18 +20,30 @@ import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
 import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput } from '../state/planInput';
-import { useCountUp } from '../ui/useCountUp';
-import { act, applyUpdate, data, freshMilestones, getDB, plan, tab, today, updateDismissed, updateReady } from '../state/store';
+import type { AppData } from '../data/types';
+import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
+import { progressStats } from '../state/milestones';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
-import { afterPaySentence, betweenPaydays, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, mergedRows, whyFirst } from './model';
+import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, mergedRows, paidFromLog, whyFirst } from './model';
 
 interface JustPaid {
   date: string;
   total: number;
   rows: { key: string; label: string; amount: number }[];
+}
+
+/** The numbers on the other screens roll from what they were, not jump */
+function rememberBalances(d: AppData) {
+  for (const x of d.debts) rememberCount(`debt-${x.id}`, x.balance);
+  const st = progressStats(d);
+  rememberCount('path-owed', st.owed);
+  rememberCount('path-paid', st.paid);
+  rememberCount('path-pct', Math.floor(st.pct));
+  rememberCount('buffer', d.buffer.amount);
 }
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -52,7 +64,7 @@ function CountdownCard(props: { nextDate: string; onShow?: () => void }) {
         </p>
         {props.onShow && (
           <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={props.onShow}>
-            Paid early? Show this payday
+            Mark it done early
           </button>
         )}
       </div>
@@ -76,10 +88,8 @@ export function Today() {
   const [paidIds, setPaidIds] = useState<string[]>([]);
   const [skippedNote, setSkippedNote] = useState(false);
   const [closedMoments, setClosedMoments] = useState<Set<string>>(new Set());
-  // Undo lasts 10 seconds. "askedEarly" remembers the payday we already asked about.
+  // Undo lasts 10 seconds.
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
-  const [askEarly, setAskEarly] = useState(false);
-  const [askedEarly, setAskedEarly] = useState<string | null>(null);
   const [showEarly, setShowEarly] = useState(false);
   const [backedUp, setBackedUp] = useState(false);
   const [sheet, setSheet] = useState<'amount' | 'extra' | null>(null);
@@ -108,7 +118,7 @@ export function Today() {
   const bills = useMemo(() => billsForNextPayday(d), [d]);
   const { rows, total, noDueDay } = row ? mergedRows(row, d, bills) : { rows: [], total: 0, noDueDay: [] };
   const extra = row ? extraSummary(row, d) : null;
-  const shownTotal = useCountUp(total);
+  const shownTotal = useCountUp(total, 'today-total');
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
@@ -116,26 +126,33 @@ export function Today() {
   const active = activeDebts(d);
   const due = comingUp(d, today.value);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
-  const between = !justPaid && !showEarly && betweenPaydays(d, nextDate, nextPaydayNumber(s), today.value);
+  // Before the payday: a countdown. Done: the yellow card stays until the next payday, even after a reload.
+  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && !showEarly;
+  const paidView = justPaid ?? (countdownMode ? paidFromLog(d, nextPaydayNumber(s) - 1) : null);
+  const showEarlyCard = () => {
+    setShowEarly(true);
+    setJustPaid(null);
+    setUndo(null);
+    setPaidIds([]);
+  };
   const isPayday = nextDate === today.value;
   const doneCount = d.paydays.filter((p) => p.status === 'done').length;
 
-  const apply = async (confirmed = false) => {
+  const apply = async () => {
     if (busy) return;
-    // The payday is still ahead: ask once, in case the tap was by mistake
-    if (!confirmed && nextDate > today.value && askedEarly !== nextDate) {
-      setAskEarly(true);
-      return;
-    }
+    const paydayNumber = nextPaydayNumber(s);
     setBusy(true);
     setChecked(new Set(rows.map((x) => x.key)));
     navigator.vibrate?.(15); // a light tap, where the phone can
     await sleep(reducedMotion() ? 0 : 400); // the highlighter swipe (300 ms) and the boxes turning yellow
     const snapshot = rows.map((x) => ({ key: x.key, label: x.paidLabel, amount: x.amount }));
+    rememberBalances(d);
     const res = await didPayday(await getDB(), d, { planMoney: override });
     setUndo({ before: d, after: res.data });
     setJustPaid({ date: res.step.date, total, rows: snapshot });
     setPaidIds(res.newlyPaid);
+    freshPayday.value = res.step ? paydayNumber : null;
+    freshPaidDebts.value = res.newlyPaid;
     setSkippedNote(false);
     setBackedUp(false);
     data.value = res.data;
@@ -209,15 +226,17 @@ export function Today() {
       }
     } else {
       const owed = active.reduce((sum, x) => sum + x.balance, 0);
+      rememberBalances(d);
       const res = await extraPayment(await getDB(), d, Math.min(amount, owed), today.value);
       setPaidIds(res.newlyPaid);
+      freshPaidDebts.value = res.newlyPaid;
       data.value = res.data;
     }
     setSheet(null);
   };
 
   // ---------------------------------------------------------------- what the screen says
-  const greeting = justPaid
+  const greeting = paidView
     ? 'Done for this payday.'
     : !active.length
       ? 'You’re debt-free.'
@@ -264,9 +283,9 @@ export function Today() {
     <main class="screen with-tabs">
       <header class="today-head">
         <div class="stack" style={{ gap: 2 }}>
-          {justPaid ? (
+          {paidView ? (
             <p class="date-line" role="status">
-              <b>{shortDate(justPaid.date)} is paid.</b> Next payday: {shortDate(nextDate)}.
+              <b>{shortDate(paidView.date)} is paid.</b> Next payday: {shortDate(nextDate)}.
             </p>
           ) : (
             <p class="date-line">
@@ -365,19 +384,19 @@ export function Today() {
       )}
 
       {/* ------------------------------------------------ done: the yellow card, and what comes next */}
-      {justPaid && (
+      {paidView && (countdownMode || justPaid) && (
         <>
           <section class="paid-card" aria-label="Paid this payday" data-testid="paid-card">
             <div class="paid-top">
               <p class="pc-total num" data-testid="paid-total">
-                {money(justPaid.total)}
+                {money(paidView.total)}
               </p>
               <span class="paid-stamp">
                 <CheckIcon /> PAID
               </span>
             </div>
             <ul class="paid-rows">
-              {justPaid.rows.map((x) => (
+              {paidView.rows.map((x) => (
                 <li key={x.key}>
                   <CheckIcon />
                   <span>{x.label}</span>
@@ -404,7 +423,7 @@ export function Today() {
             )}
           </section>
 
-          <CountdownCard nextDate={nextDate} />
+          {countdownMode && <CountdownCard nextDate={nextDate} onShow={showEarlyCard} />}
 
           {showNudge && (
             <section class="nudge" aria-label="Save a copy" data-testid="backup-nudge">
@@ -453,15 +472,18 @@ export function Today() {
             <p class="muted small">Your plan starts on {shortDate(nextDate)}. Until then, keep paying your minimums.</p>
           )}
 
-          {between ? (
-            <CountdownCard nextDate={nextDate} onShow={() => setShowEarly(true)} />
+          {countdownMode ? (
+            paidView ? null : <CountdownCard nextDate={nextDate} onShow={showEarlyCard} />
           ) : (
             <section class={`payday-card${busy ? ' swiping' : ''}`} aria-labelledby="payday-title">
               <p id="payday-title" class="pc-label">
-                {missed > 0 ? 'Your last payday, move' : 'This payday, move'}
+                {missed > 0 ? 'Your last payday' : 'This payday'}
               </p>
-              <p class="pc-total num" data-testid="payday-total">
-                {money(shownTotal)}
+              <p class="pc-line">
+                <span class="pc-move">Move</span>
+                <span class="pc-total num" data-testid="payday-total">
+                  {money(shownTotal)}
+                </span>
               </p>
               {extra ? (
                 <p class="pc-sub" data-testid="extra-sentence">
@@ -544,7 +566,7 @@ export function Today() {
               <div class="row">
                 <h2 class="focus-name">{focus.debt.name}</h2>
                 <span class="num">
-                  <b>{formatMoney(focus.left, cur, { whole: true })}</b> left
+                  <b><Count value={focus.left} id={`focus-${focus.debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} /></b> left
                 </span>
               </div>
               <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
@@ -597,23 +619,6 @@ export function Today() {
         {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
       </p>
 
-      <Sheet open={askEarly} onClose={() => setAskEarly(false)} title="Mark it done now?">
-        <p>Your payday is {shortDate(nextDate)}. It hasn’t come yet.</p>
-        <button
-          type="button"
-          class="btn"
-          onClick={() => {
-            setAskEarly(false);
-            setAskedEarly(nextDate);
-            void apply(true);
-          }}
-        >
-          Yes, mark it done
-        </button>
-        <button type="button" class="link" onClick={() => { setAskEarly(false); setChecked(new Set()); }}>
-          Not yet
-        </button>
-      </Sheet>
 
       <Sheet open={dueDebtId !== null} onClose={() => setDueDebtId(null)} title={`Due day for ${d.debts.find((x) => x.id === dueDebtId)?.name ?? ''}`}>
         <Field label="Day of the month" hint="It’s on your statement.">

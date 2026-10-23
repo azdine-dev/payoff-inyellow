@@ -40,14 +40,18 @@ export async function goTab(page: Page, name: 'Today' | 'Path' | 'Debts' | 'Safe
   await nav.getByRole('button', { name: name === 'Money' ? 'Safety net' : name, exact: true }).click();
 }
 
-/** Taps "I did it". If the payday is still ahead, the app asks once: answer yes. */
-export async function tapDidIt(page: Page) {
+/** Before the payday Today shows a countdown: "Mark it done early" opens the payday card. Does nothing when the card is already there. */
+export async function revealEarly(page: Page) {
   const btn = page.getByRole('button', { name: /^I did it/ });
-  const early = page.getByRole('button', { name: 'Paid early? Show this payday' });
+  const early = page.getByRole('button', { name: 'Mark it done early' });
   await btn.or(early).first().waitFor();
   if (await early.isVisible()) await early.click();
-  await btn.click();
-  await page.getByRole('button', { name: 'Yes, mark it done' }).click({ timeout: 1500 }).catch(() => undefined);
+}
+
+/** Taps "I did it" (opening the payday card first when Today is counting down). No question is asked. */
+export async function tapDidIt(page: Page) {
+  await revealEarly(page);
+  await page.getByRole('button', { name: /^I did it/ }).click();
 }
 
 /** Taps "I did it" and waits for the payday to turn paid. */

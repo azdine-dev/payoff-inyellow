@@ -1,5 +1,5 @@
 /** Step 4 on a phone: backup and restore, calendar file, unlock code, appearance, schedule. */
-import { showPaydays, tapDidIt, goTab } from './scenario';
+import { showPaydays, tapDidIt, goTab, revealEarly } from './scenario';
 import { expect, test } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { FIXED, quickSetup, shot } from './helpers';
@@ -33,7 +33,8 @@ test('a backup restores the same plan on a fresh phone', async ({ page, browser 
   await expect(other.getByRole('dialog')).toContainText('2 debts, 1 payday logged, last paid Fri 23 Oct');
   await other.getByRole('button', { name: 'Restore it', exact: true }).click();
   await expect(other.getByTestId('debt-free-pill')).toHaveText(pill!);
-  await expect(other.getByTestId('greeting')).toContainText('Fri 6 Nov');
+  await expect(other.getByTestId('greeting')).toHaveText('Done for this payday.');
+  await expect(other.getByTestId('countdown-card')).toContainText('Fri 6 Nov');
   await ctx.close();
 });
 
@@ -94,6 +95,7 @@ test('dark mode and a larger text size apply at once and stay after a reload', a
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('button', { name: 'Today' }).click();
+  await revealEarly(page);
   await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
   await shot(page, '15-dark-today');
   // No sideways scrolling at the largest text size

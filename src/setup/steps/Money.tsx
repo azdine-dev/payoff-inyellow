@@ -32,7 +32,7 @@ export function MoneyStep({ draft, set }: StepProps) {
           {line}
         </p>
       )}
-      <Field label="How much can you put toward the plan each payday, on top of your minimums?" hint={COPY.extraHint}>
+      <Field label="How much can you put toward the plan each payday, on top of your minimums?" hint={COPY.extraHint(draft.currencySymbol || '$')}>
         <NumberInput pre={draft.currencySymbol} value={draft.extra} onInput={(v) => set({ extra: v })} label="Money for the plan each payday" />
       </Field>
       <div class="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8 }} role="group" aria-label="Quick amounts">

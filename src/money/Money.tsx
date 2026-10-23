@@ -86,7 +86,8 @@ export function Money() {
   const setIdeaAmount = (key: string, v: string) =>
     act((db, x) => saveFindMoney(db, x, items.map((i) => (i.key === key ? { ...i, amount: parseAmount(v) } : i))));
 
-  const shownBuffer = useCountUp(d.buffer.amount);
+  const findTitle = `Find your first ${formatMoney(500, cur, { whole: true })}`;
+  const shownBuffer = useCountUp(d.buffer.amount, 'buffer');
   const ready = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
   const perYearTotal = d.funds.reduce((sum, f) => sum + f.perYear, 0);
   const eachPayday = perYearTotal / PAYDAYS_PER_YEAR[s.frequency];
@@ -178,7 +179,7 @@ export function Money() {
 
       <button type="button" class="card find-row" onClick={() => setMode('find')}>
         <span class="stack" style={{ gap: 2, textAlign: 'left' }}>
-          <b>Find your first $500</b>
+          <b>{findTitle}</b>
           <span class="muted small">
             {items.length} small ideas, with a live total{total > 0 ? ` · ${formatMoney(total, cur, { whole: true })} so far` : ''}
           </span>
@@ -192,7 +193,7 @@ export function Money() {
         </p>
       )}
 
-      <Sheet open={mode === 'find'} onClose={close} title="Find your first $500">
+      <Sheet open={mode === 'find'} onClose={close} title={findTitle}>
         <div class="row">
           <span class="muted small">Tick what you do. Type what you think each one is worth.</span>
           <span class="num" style={{ fontWeight: 600 }} data-testid="find-total">

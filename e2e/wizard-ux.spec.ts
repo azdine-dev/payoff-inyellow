@@ -147,7 +147,7 @@ test('"How we got this" shows the plain math behind the date and the first step'
   await expect(page.getByTestId('first-step-parts')).toContainText('Yearly bills $42.31 · Buffer $107.69');
   await expect(page.getByTestId('first-step-parts')).toContainText('Car loan $285 (due 20 Oct)'); // the example starts Fri 16 Oct, so the car loan is the bill before the next payday
 
-  for (const name of ['How we got this date', 'How we got this step']) {
+  for (const name of ['How we got this date']) { // one link only
     await page.getByRole('button', { name }).click();
     const sheet = page.getByRole('dialog', { name: 'How we got this' });
     await expect(sheet).toContainText('Your minimums: $466 a month. Spread over 26 paydays a year, that is $215.08 each payday.');
@@ -333,6 +333,7 @@ test('ticking items on payday shows what is left, with a small ring that fills',
   await quickSetup(page);
   await addYearlyBills(page, [{ idea: 'Car repairs', amount: '600' }]); // a second row, so one tick does not finish the payday
   await goTab(page, 'Today');
+  await (await import('./scenario')).revealEarly(page);
   const money = (s: string) => Number(s.replace(/[^0-9.]/g, ''));
   const total = money((await page.getByRole('button', { name: /^I did it/ }).innerText()).split('·')[1]!);
   await expect(page.getByTestId('left-this-payday')).toHaveCount(0); // nothing ticked yet

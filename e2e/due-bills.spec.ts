@@ -5,7 +5,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, shot } from './helpers';
-import { goTab, near, runWizard, setDay, showPaydays, startPlan, tapDidIt } from './scenario';
+import { goTab, near, runWizard, setDay, showPaydays, startPlan, tapDidIt, revealEarly } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026
@@ -33,6 +33,7 @@ test('the Today card: bills due before the next payday, and the window moves wit
     extra: '150',
   });
   await startPlan(page);
+  await revealEarly(page);
 
   // Fri 23 Oct up to Fri 6 Nov: the car loan is due on 28 Oct, with its full monthly minimum
   await expect(page.getByRole('checkbox', { name: /Car loan.*Bill.*due Wed 28 Oct/ })).toBeVisible();
@@ -82,6 +83,7 @@ test('a debt with no due day: "Visa $96, add a due day", not counted, and the li
     extra: '150',
   });
   await startPlan(page);
+  await revealEarly(page);
 
   const noDay = page.getByTestId('no-due-day');
   await expect(noDay).toHaveCount(1);

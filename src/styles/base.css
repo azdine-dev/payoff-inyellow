@@ -1668,3 +1668,94 @@ a.btn {
 .ahead-dot.reached {
   background: var(--yellow);
 }
+
+/* "Move $185": the word, then the one big number */
+.pc-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.pc-move {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.6rem;
+}
+
+/* ---------- Small motion (max 600 ms; all of it is off with reduced motion) ---------- */
+
+/* A progress bar fills like a highlighter stroke */
+.bar > div,
+.bar.ink > span {
+  animation: stroke-in 500ms ease-out both;
+}
+
+@keyframes stroke-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* A debt paid off: the card turns yellow, the stamp lands, then the next debt slides in */
+.debt-card.paid.just-paid {
+  animation: paid-flash 500ms ease-out both;
+}
+
+@keyframes paid-flash {
+  from {
+    background: var(--card);
+  }
+  to {
+    background: var(--yellow);
+  }
+}
+
+.debt-card.slide-in {
+  animation: slide-in 450ms ease-out 350ms both;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(28px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* The payday just done: its square fills yellow */
+.sq.fill {
+  animation: sq-fill 500ms ease-out both;
+}
+
+@keyframes sq-fill {
+  from {
+    background: transparent;
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  to {
+    background: var(--yellow);
+    transform: none;
+  }
+}
+
+/* Switching tabs: a 150 ms fade */
+.screen {
+  animation: tab-fade 150ms ease-out;
+}
+
+@keyframes tab-fade {
+  from {
+    opacity: 0;
+  }
+}

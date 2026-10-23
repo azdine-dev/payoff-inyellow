@@ -7,8 +7,7 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { FIXED, shot, unlockOnResult } from './helpers';
-import {
-  addYearlyBills,
+import { addYearlyBills,
   closeSheet,
   expectBrandRules,
   expectBuffer,
@@ -22,8 +21,7 @@ import {
   setDay,
   startPlan,
   showPaydays,
-  tapDidIt,
-} from './scenario';
+  tapDidIt, revealEarly } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026
@@ -108,7 +106,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByTestId('tile-interest')).toContainText('$1,790'); // 1,789.83
     await expect(page.getByTestId('minimums-only')).toContainText(/Paying only minimums, it would take until [A-Z][a-z]+ 20\d\d\./);
     // New rule: only the bills due before the next payday (Medical bill $50 on 1 Nov, Store card $35 on 5 Nov)
-    await expect(page.getByTestId('first-step')).toHaveText('Move $235.00.');
+    await expect(page.getByTestId('first-step')).toHaveText('Move $235.');
     await expect(page.getByTestId('first-step-parts')).toContainText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');
     await shot(page, '20-sara-result');
     await startPlan(page);
@@ -127,6 +125,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
 
   // ---------------------------------------------------------------- part 4: Today before payday 1
   await test.step('Today before the first payday', async () => {
+    await revealEarly(page);
     await expect(pill).toHaveText('Debt-free by Oct 2028');
     // The bills due from Fri 23 Oct up to Fri 6 Nov, each with its full monthly minimum and its due date
     await expect(page.getByRole('checkbox', { name: /Medical bill.*due Sun 1 Nov/ })).toBeVisible();
@@ -518,6 +517,7 @@ test('Case B: a debt that grows, paid twice a month (15th and last day)', async 
 
   await test.step('First payday: the buffer comes first', async () => {
     await goTab(page, 'Today');
+    await revealEarly(page);
     // 31 Oct up to 15 Nov: Old card (3 Nov) and Phone plan (10 Nov). Student loan is due on the next payday itself.
     await expect(page.getByRole('checkbox', { name: /Old card.*due Tue 3 Nov/ })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: /Phone plan.*due Tue 10 Nov/ })).toBeVisible();
@@ -541,6 +541,7 @@ test('Case C: the well-known $8,000 at 24%', async ({ page }) => {
   });
   await expect(page.getByTestId('debt-free-date')).toHaveText('June 2031'); // 1 Jun 2031
   await startPlan(page);
+  await revealEarly(page);
   await expect(page.getByRole('checkbox', { name: /Card.*due Sun 1 Nov/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^I did it/ })).toContainText('$240');
   await goTab(page, 'Plan');

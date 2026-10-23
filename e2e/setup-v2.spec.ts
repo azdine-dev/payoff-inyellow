@@ -4,7 +4,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { FIXED, quickSetup, unlockOnResult } from './helpers';
-import { addYearlyBills, expectBrandRules, goTab } from './scenario';
+import { addYearlyBills, expectBrandRules, goTab, revealEarly } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -114,6 +114,7 @@ test('"Do these later" on Today: each item goes away once it is done', async ({ 
   await expect(page.getByTestId('later-card')).toHaveCount(0); // everything is done: the card is gone
 
   // The yearly bill is a real part of the plan now
+  await revealEarly(page);
   await expect(page.getByRole('checkbox', { name: /Yearly bills/ })).toBeVisible();
 });
 
@@ -145,7 +146,7 @@ test('the result screen: the chips are there, and "start on the 1st" moves the f
 
 test('the date on the result screen has no "set aside" wording left, and it names the extra', async ({ page }) => {
   await quickSetup(page, { unlock: false });
-  await expect(page.getByTestId('first-step')).toHaveText('Move $185.00. The extra $150 goes to Store card.');
+  await expect(page.getByTestId('first-step')).toHaveText('Move $185. The extra $150 goes to Store card.');
   await expect(page.getByTestId('minimums-only')).toContainText('Paying only minimums, it would take until');
   await expect(page.getByTestId('tile-sooner')).toContainText('months');
   await expect(page.getByTestId('tile-interest')).toContainText('less interest');

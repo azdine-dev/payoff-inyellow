@@ -36,5 +36,5 @@ export const COPY = {
   codeSaved: 'Code saved. Your full planner opens when setup is done.',
   codeRefused: 'This code looks incomplete. Copy it again, or tap the button in your purchase email.',
   codeEmpty: 'Paste your unlock code first.',
-  extraHint: 'Even $20 matters. You can change it any time.',
+  extraHint: (symbol: string) => `Even ${symbol}20 matters. You can change it any time.`,
 } as const;

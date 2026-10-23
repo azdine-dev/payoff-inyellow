@@ -3,7 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
-import { addYearlyBills, showPaydays, tapDidIt, goTab } from './scenario';
+import { addYearlyBills, showPaydays, tapDidIt, goTab, revealEarly } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult } from './helpers';
@@ -65,10 +65,11 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
     { idea: 'Gifts and holidays', amount: '500' },
   ]);
   await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028'); // same date as the Sheet (2028-10-06)
-  await expect(page.getByTestId('first-step')).toHaveText('Move $235.00.');
+  await expect(page.getByTestId('first-step')).toHaveText('Move $235.');
   await expect(page.getByTestId('first-step-parts')).toHaveText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');
   await shot(page, '04-result');
   await page.getByRole('button', { name: 'Start my plan' }).click();
+  await revealEarly(page);
 
   // Today: payday 1 of the fixture
   await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Oct 2028');
@@ -83,15 +84,15 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await expect(didIt).toBeVisible();
   await shot(page, '07-today');
 
-  await didIt.click();
-  await page.getByRole('button', { name: 'Yes, mark it done' }).click(); // the payday is still a week away
+  await didIt.click(); // the payday is still a week away: no question, Undo covers a mistake
   await expect(page.getByRole('status').filter({ hasText: 'Fri 23 Oct is paid.' })).toContainText('Next payday: Fri 6 Nov.');
   await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Oct 2028');
   await shot(page, '08-paid');
 
   // Everything stays after a reload (IndexedDB)
   await page.reload();
-  await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 6 Nov.');
+  await expect(page.getByTestId('greeting')).toHaveText('Done for this payday.'); // it stays paid until the next payday
+  await expect(page.getByTestId('countdown-card')).toContainText('Fri 6 Nov');
 });
 
 test('the wizard keeps what was typed after a reload', async ({ page }) => {
@@ -129,6 +130,7 @@ async function quickSetup(page: Page) {
 test('missed payday, extra payment and a different amount stay calm', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-15T10:00:00'));
   await quickSetup(page);
+  await revealEarly(page);
   await expect(page.getByRole('checkbox', { name: /Store card.*Extra \$150/ })).toBeVisible();
 
   // No due days were entered: the bills are listed but not counted, with a way to add the day
@@ -160,8 +162,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await shot(page, '09-missed');
   await page.getByRole('button', { name: 'I skipped it' }).click();
   await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();
-  await expect(page.getByTestId('payday-total')).toBeVisible();
-  await expect(page.getByText('Fri 6 Nov').first()).toBeVisible();
+  await expect(page.getByTestId('countdown-card')).toContainText('Fri 6 Nov');
 
   // Extra money pays off the focus debt
   await page.getByRole('button', { name: '+ Extra payment' }).click();
@@ -221,6 +222,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
 
   // Today refills the buffer first
   await page.getByRole('button', { name: 'Today' }).click();
+  await revealEarly(page);
   await expect(page.getByRole('checkbox', { name: /Buffer.*\$300 of \$500/ })).toBeVisible();
 });
 
