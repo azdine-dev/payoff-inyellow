@@ -3,7 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
-import { showPaydays, tapDidIt } from './scenario';
+import { showPaydays, tapDidIt, goTab } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult } from './helpers';
@@ -237,7 +237,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   expect(await pill.textContent()).not.toBe(before);
 
   // Use the buffer
-  await page.getByRole('button', { name: 'Money' }).click();
+  await goTab(page, 'Money');
   await expect(page.getByRole('heading', { name: 'Buffer' })).toBeVisible();
   await page.getByRole('button', { name: 'I used some of it' }).click();
   await page.getByRole('textbox', { name: 'Amount used' }).fill('200');
@@ -258,7 +258,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   const before = await pill.textContent();
 
   // Plan: the what-if shows a sooner date and "Apply to my plan" changes Today
-  await page.getByRole('button', { name: 'Plan' }).click();
+  await goTab(page, 'Plan');
   await expect(page.getByTestId('comparison')).toContainText(/Biggest interest first|PaidInYellow order/);
   await page.getByLabel('Add money each payday').fill('100');
   await expect(page.getByTestId('whatif-result')).toContainText('sooner');
@@ -277,7 +277,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
 
   // Plan: both paydays are paid and open to show their payments
-  await page.getByRole('button', { name: 'Plan' }).click();
+  await goTab(page, 'Plan');
   await showPaydays(page, 'Done');
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toBeVisible();
   await page.getByRole('button', { name: 'Fri 23 Oct, paid' }).click();
@@ -285,7 +285,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   await page.getByRole('button', { name: 'Close' }).click();
 
   // Progress: grid, milestones, planned vs actual
-  await page.getByRole('button', { name: 'Progress' }).click();
+  await goTab(page, 'Progress');
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
   await expect(page.getByRole('listitem', { name: 'Fri 23 Oct: paid' })).toBeVisible();
   await expect(page.getByRole('listitem', { name: 'Fri 6 Nov: paid' })).toBeVisible();

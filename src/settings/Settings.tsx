@@ -21,6 +21,7 @@ import { Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 import { FAQ, INSTALL_HELP } from './faq';
 import { downloadBackup } from '../state/backupActions';
 import { RestoreButton } from './Restore';
+import { pathView } from '../path/Path';
 import { SyncSection } from './SyncSection';
 import { syncOn } from '../sync/controller';
 
@@ -180,8 +181,8 @@ export function Settings() {
         {row('Payday check', ifThenText, 'ifthen')}
         <p class="muted small" style={{ marginTop: 8 }}>
           Your payoff order is on the{' '}
-          <button type="button" class="link small" onClick={() => (tab.value = 'plan')}>
-            Plan tab
+          <button type="button" class="link small" onClick={() => { pathView.value = 'plan'; tab.value = 'path'; }}>
+            Path tab
           </button>
           .
         </p>

@@ -10,7 +10,7 @@ import { syncMilestones } from './milestones';
 import { baselineFor, toPlanInput } from './planInput';
 
 export type View = 'loading' | 'setup' | 'result' | 'app';
-export type Tab = 'today' | 'plan' | 'debts' | 'progress' | 'money' | 'settings';
+export type Tab = 'today' | 'path' | 'debts' | 'safety' | 'settings';
 
 export const view = signal<View>('loading');
 export const tab = signal<Tab>('today');

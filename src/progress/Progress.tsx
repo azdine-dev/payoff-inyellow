@@ -1,5 +1,4 @@
 /** Progress (mockup screen 3): paid so far, chart, payday grid, milestones. */
-import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { CheckIcon } from '../ui/controls';
 import { Ring } from '../ui/Ring';
@@ -55,9 +54,7 @@ export function Progress() {
   };
 
   return (
-    <main class="screen with-tabs">
-      <h1>Progress</h1>
-      <StatusLine />
+    <>
 
       <section class="card stack" aria-label="Countdown" data-testid="countdown">
         {isDebtFree(d) ? (
@@ -65,7 +62,7 @@ export function Progress() {
         ) : paydaysLeft === null ? (
           <>
             <p class="countdown-number">A long way to go</p>
-            <p class="muted">More than 20 years at this pace. The what-if on the Plan tab can help.</p>
+            <p class="muted">More than 20 years at this pace. The what-if on the Path tab can help.</p>
           </>
         ) : paydaysLeft === 0 ? (
           <p class="countdown-number">Debt-free</p>
@@ -210,6 +207,6 @@ export function Progress() {
         </button>
         {shareMsg && <p class="small" role="status">{shareMsg}</p>}
       </section>
-    </main>
+    </>
   );
 }

@@ -3,11 +3,10 @@ import { Result } from '../setup/Result';
 import { Wizard } from '../setup/Wizard';
 import { boot, licenseState, tab, view, type Tab } from '../state/store';
 import { Debts } from '../debts/Debts';
-import { Plan } from '../plan/Plan';
+import { Path } from '../path/Path';
 import { Settings } from '../settings/Settings';
 import { applyAppearance } from '../lib/appearance';
 import { data } from '../state/store';
-import { Progress } from '../progress/Progress';
 import { Money } from '../money/Money';
 import { Today } from '../today/Today';
 import { handleLaunchFragment } from '../state/unlockLink';
@@ -17,51 +16,41 @@ import { NoticeBar } from '../ui/NoticeBar';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'today', label: 'Today' },
-  { id: 'plan', label: 'Plan' },
+  { id: 'path', label: 'Path' },
   { id: 'debts', label: 'Debts' },
-  { id: 'progress', label: 'Progress' },
-  { id: 'money', label: 'Money' },
+  { id: 'safety', label: 'Safety net' },
 ];
 
-/** Simple line icons, 24px, drawn in ink. The shape marked "fill" turns yellow on the tab you are on. */
+/** Inline stroke icons, 1.9px, in ink. The tab you are on gets a soft pill behind it (never yellow: yellow means paid). */
 function TabIcon(props: { id: Tab }) {
-  const common = { viewBox: '0 0 24 24', width: 24, height: 24, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round' as const, 'stroke-linejoin': 'round' as const, 'aria-hidden': true, class: 'tab-icon' };
+  const common = { viewBox: '0 0 24 24', width: 24, height: 24, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.9, 'stroke-linecap': 'round' as const, 'stroke-linejoin': 'round' as const, 'aria-hidden': true, class: 'tab-icon' };
   switch (props.id) {
-    case 'today': // a calendar page with today ticked
+    case 'today': // a card with a tick: what to do today
       return (
         <svg {...common}>
-          <rect class="fill" x="3.5" y="5" width="17" height="15.5" rx="3" />
-          <path d="M8 3v4M16 3v4M3.5 10h17" />
-          <path d="M8.8 15.2l2.2 2.2 4.4-4.6" />
+          <rect x="4.5" y="3.5" width="15" height="17" rx="3" />
+          <path d="M9 12.4l2.2 2.2 4-4.2" />
+          <path d="M9 7.5h6" />
         </svg>
       );
-    case 'plan': // a list of paydays
+    case 'path': // a flag: where you are heading
       return (
         <svg {...common}>
-          <rect class="fill" x="3.5" y="4" width="17" height="16.5" rx="3" />
-          <path d="M8 9h8M8 12.5h8M8 16h5" />
+          <path d="M6 21V4" />
+          <path d="M6 5h11.5l-2.3 3.6 2.3 3.6H6" />
         </svg>
       );
     case 'debts': // a card
       return (
         <svg {...common}>
-          <rect class="fill" x="2.8" y="5.5" width="18.4" height="13" rx="3" />
+          <rect x="2.8" y="5.5" width="18.4" height="13" rx="3" />
           <path d="M2.8 10h18.4M6.5 15h3" />
         </svg>
       );
-    case 'progress': // rising bars
+    default: // a shield: the safety net
       return (
         <svg {...common}>
-          <rect class="fill" x="4" y="12" width="4" height="8" rx="1.2" />
-          <rect class="fill" x="10" y="8" width="4" height="12" rx="1.2" />
-          <rect class="fill" x="16" y="4" width="4" height="16" rx="1.2" />
-        </svg>
-      );
-    default: // money: a coin
-      return (
-        <svg {...common}>
-          <circle class="fill" cx="12" cy="12" r="8.5" />
-          <path d="M14.6 9.2c-.5-.8-1.5-1.2-2.6-1.2-1.5 0-2.6.8-2.6 1.9 0 2.7 5.4 1.2 5.4 4 0 1.1-1.1 1.9-2.8 1.9-1.2 0-2.3-.5-2.8-1.4M12 6.5V8M12 16v1.5" />
+          <path d="M12 3.2l7 2.6v5.4c0 4.4-2.9 8-7 9.6-4.1-1.6-7-5.2-7-9.6V5.8z" />
         </svg>
       );
   }
@@ -81,7 +70,9 @@ function TabBar() {
               window.scrollTo(0, 0);
             }}
           >
-            <TabIcon id={t.id} />
+            <span class="tab-pill">
+              <TabIcon id={t.id} />
+            </span>
             {t.label}
           </button>
         ))}
@@ -133,11 +124,9 @@ function Screens() {
         <Today />
       ) : current === 'debts' ? (
         <Debts />
-      ) : current === 'plan' ? (
-        <Plan />
-      ) : current === 'progress' ? (
-        <Progress />
-      ) : current === 'money' ? (
+      ) : current === 'path' ? (
+        <Path />
+      ) : current === 'safety' ? (
         <Money />
       ) : (
         <Settings />

@@ -22,15 +22,15 @@ export const FAQ: Faq[] = [
   },
   {
     q: 'Which debt do I pay first?',
-    a: 'First your buffer fills, so a surprise bill doesn’t go back on a card. Then the extra goes to the smallest balance while you pay the minimums on the rest. A study of about 6,000 people in a debt program found that paying small debts first made people more likely to finish. You can switch to Biggest interest first on the Plan tab and see the difference in dollars.',
+    a: 'First your buffer fills, so a surprise bill doesn’t go back on a card. Then the extra goes to the smallest balance while you pay the minimums on the rest. A study of about 6,000 people in a debt program found that paying small debts first made people more likely to finish. You can switch to Biggest interest first on the Path tab and see the difference in dollars.',
   },
   {
     q: 'What happens when a surprise bill hits?',
-    a: 'On the Money tab, tap “I used some of it”. The buffer covers it and your plan refills it first. If a charge did go on a card, log it on the Debts tab and the plan updates.',
+    a: 'On the Safety net tab, tap “I used some of it”. The buffer covers it and your plan refills it first. If a charge did go on a card, log it on the Debts tab and the plan updates.',
   },
   {
     q: 'I barely make enough. Will this work for me?',
-    a: 'If you can pay your minimums, the plan works at your speed. “Find your first $500” on the Money tab helps you find small amounts to start your buffer. The app can’t raise your income, and it makes every dollar count.',
+    a: 'If you can pay your minimums, the plan works at your speed. “Find your first $500” on the Safety net tab helps you find small amounts to start your buffer. The app can’t raise your income, and it makes every dollar count.',
   },
   {
     q: 'Will the app tell me to borrow more?',

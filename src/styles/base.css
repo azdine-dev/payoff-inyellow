@@ -448,7 +448,7 @@ select {
   max-width: 480px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .tabbar button {
@@ -471,18 +471,22 @@ select {
   color: var(--ink);
 }
 
-.tabbar button .tab-icon .fill {
-  fill: none;
+/* The soft pill behind the icon. Always there, so nothing jumps; it only fills for the tab you are on. */
+.tab-pill {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 32px;
+  border-radius: 999px;
 }
 
 .tabbar button[aria-current='page'] {
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* Yellow only on the tab you are on */
-.tabbar button[aria-current='page'] .tab-icon .fill {
-  fill: var(--yellow);
+.tabbar button[aria-current='page'] .tab-pill {
+  background: var(--line);
 }
 
 /* Progress: the countdown and the ring */

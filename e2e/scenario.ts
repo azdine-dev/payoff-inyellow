@@ -27,8 +27,18 @@ export async function setDay(page: Page, iso: string) {
   await page.reload();
 }
 
-export async function goTab(page: Page, name: 'Today' | 'Plan' | 'Debts' | 'Progress' | 'Money') {
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name, exact: true }).click();
+/**
+ * Opens a tab. The four tabs are Today, Path, Debts and Safety net. "Plan" and "Progress" open Path on that view,
+ * and "Money" opens Safety net, so the older names still work in the scripts.
+ */
+export async function goTab(page: Page, name: 'Today' | 'Path' | 'Debts' | 'Safety net' | 'Plan' | 'Progress' | 'Money') {
+  const nav = page.getByRole('navigation', { name: 'Main' });
+  if (name === 'Plan' || name === 'Progress' || name === 'Path') {
+    await nav.getByRole('button', { name: 'Path', exact: true }).click();
+    if (name !== 'Path') await page.getByRole('group', { name: 'Path view' }).getByRole('button', { name, exact: true }).click();
+    return;
+  }
+  await nav.getByRole('button', { name: name === 'Money' ? 'Safety net' : name, exact: true }).click();
 }
 
 /** Taps "I did it". If the payday is still ahead, the app asks once: answer yes. */

@@ -1,4 +1,4 @@
-/** Money tab: buffer, yearly bills, "Find your first $500", debt share of pay. */
+/** Safety net tab (was Money): buffer, yearly bills, "Find your first $500", debt share of pay. */
 import { StatusLine } from '../ui/StatusLine';
 import { useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
@@ -92,7 +92,8 @@ export function Money() {
 
   return (
     <main class="screen with-tabs">
-      <h1>Money</h1>
+      <h1>Safety net</h1>
+      <p class="muted">So the next surprise bill stays off your cards.</p>
       <StatusLine />
 
       <section class="card stack" aria-labelledby="buffer-title">

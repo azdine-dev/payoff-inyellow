@@ -1,5 +1,5 @@
 /** Step 4 on a phone: backup and restore, calendar file, unlock code, appearance, schedule. */
-import { showPaydays, tapDidIt } from './scenario';
+import { showPaydays, tapDidIt, goTab } from './scenario';
 import { expect, test } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { FIXED, quickSetup, shot } from './helpers';
@@ -108,7 +108,7 @@ test('changing the pay schedule keeps history and moves the next payday', async 
   await expect(page.getByText('Every week, next Fri 13 Nov')).toBeVisible();
   await page.getByRole('button', { name: 'Back to Today' }).click();
   await expect(page.getByText('Fri 13 Nov').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Plan' }).click();
+  await goTab(page, 'Plan');
   await showPaydays(page, 'Done');
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toBeVisible();
 });
@@ -164,7 +164,7 @@ test('start over erases the plan and keeps the unlock code by default', async ({
   await page.getByRole('button', { name: 'Start my plan' }).click();
   await expect(page.getByRole('heading', { name: 'Next payday' })).toBeVisible();
   await expect(page.getByText('Fri 23 Oct').first()).toBeVisible(); // payday 1 again, nothing paid yet
-  await page.getByRole('button', { name: 'Plan' }).click();
+  await goTab(page, 'Plan');
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toHaveCount(0);
 });
 

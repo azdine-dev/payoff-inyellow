@@ -1,7 +1,7 @@
 /** Setup wizard: shorter and clearer. One debt open at a time, gentle checks, money step, currency, example. */
 import { expect, test } from '@playwright/test';
 import { FIXED } from './helpers';
-import { expectBrandRules } from './scenario';
+import { expectBrandRules, goTab } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -162,7 +162,7 @@ test('"How we got this" shows the plain math behind the date and the first step'
 test('the what-if shows each quick amount as a change, not a second plan', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   await quickSetup(page);
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Plan', exact: true }).click();
+  await goTab(page, 'Plan');
   const group = page.getByRole('group', { name: 'Quick what-ifs' });
   for (const amount of ['$25', '$50', '$100']) {
     await expect(group.getByRole('button', { name: `+${amount} each payday`, exact: false })).toContainText(/sooner|same date/);

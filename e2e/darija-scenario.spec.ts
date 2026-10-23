@@ -407,12 +407,12 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await other.getByRole('button', { name: 'Restore it', exact: true }).click();
     await expect(other.getByTestId('debt-free-pill')).toHaveText('Debt-free · Nov 2028');
     await expect(other.getByText('Fri 9 Apr').first()).toBeVisible();
-    await other.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Plan', exact: true }).click();
+    await goTab(other, 'Plan');
     await showPaydays(other, 'Done');
     await other.getByRole('button', { name: 'Fri 26 Mar, paid', exact: true }).click();
     await expect(other.getByTestId('debt-left-after')).toContainText(near(12495.65));
     await other.getByRole('button', { name: 'Close' }).click();
-    await other.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Money', exact: true }).click();
+    await goTab(other, 'Money');
     await expect(other.getByRole('region', { name: 'Buffer' })).toContainText('$500 of $500');
     await other.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Debts', exact: true }).click();
     await expect(other.getByRole('region', { name: 'Store card' })).toContainText('PAID');

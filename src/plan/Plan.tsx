@@ -1,6 +1,5 @@
 /** Plan: payday list, method switch, what-if, export. */
 import { isDebtFree } from '../state/debtFree';
-import { StatusLine } from '../ui/StatusLine';
 import { useMemo, useState } from 'preact/hooks';
 import { compareMethods, type PayoffMethod } from '../engine';
 import { downloadText, planToCsv } from '../lib/csv';
@@ -85,9 +84,7 @@ export function Plan() {
   const openedPayments = open?.kind === 'done' ? d.payments.filter((p) => p.paydayNumber === open.number) : [];
 
   return (
-    <main class="screen with-tabs">
-      <h1>Plan</h1>
-      <StatusLine />
+    <>
 
       <section class="card stack" aria-label="Debt-free date">
         {debtFree ? (
@@ -407,7 +404,7 @@ export function Plan() {
         </table>
         <p>{COPY.disclaimer}</p>
       </section>
-    </main>
+    </>
   );
 }
 

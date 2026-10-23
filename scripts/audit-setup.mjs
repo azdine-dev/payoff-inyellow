@@ -99,7 +99,7 @@ await snap('11-today');
 await mark('today');
 
 for (const tab of ['Plan', 'Debts', 'Progress', 'Money']) {
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: tab, exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: tab === 'Plan' || tab === 'Progress' ? 'Path' : tab === 'Money' ? 'Safety net' : tab, exact: true }).click();
   await page.waitForTimeout(300);
   await snap(`12-${tab.toLowerCase()}`);
 }
