@@ -23,6 +23,6 @@ for (const [title, list] of suites) {
   });
 }
 
-describe('the 6 brief fixtures', () => {
-  it('are all present', () => expect((fixtures as unknown as RefFixture[]).length).toBe(6));
+describe('the brief fixtures (the 6 of the brief and the no-due-day one)', () => {
+  it('are all present', () => expect((fixtures as unknown as RefFixture[]).length).toBe(7));
 });

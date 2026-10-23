@@ -52,8 +52,9 @@ export function chartData(
   const horizon = Math.min(240, Math.max(planMonths, minMonths ?? Math.ceil(planMonths * 1.6), 6));
   const series = minimumsOnlySeries(debts, horizon);
   const all = series.map((y, m) => ({ x: Math.round(m * 30.44), y }));
-  // Keep the chart readable: show up to 1.6x the plan, and say in words when minimums-only ends
-  const xMax = Math.max(planEnd, Math.min(all[all.length - 1]!.x, Math.round(planEnd * 1.6)), 1);
+  // The axis ends on your debt-free date (it used to run to 1.6x the plan, which put a date on the axis that meant nothing).
+  // The minimums-only line is cut there, and the legend says in words when it really ends.
+  const xMax = Math.max(planEnd, 1);
   const minimums = all.filter((p) => p.x <= xMax);
   const next = all.find((p) => p.x > xMax);
   const last = minimums[minimums.length - 1]!;

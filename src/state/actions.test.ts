@@ -50,11 +50,11 @@ describe('setup', () => {
     expect(data.debts.every((d) => d.startBalance === d.balance && d.id && d.updatedAt === 1000)).toBe(true);
   });
 
-  it('gives the same plan as the Sheet fixture', async () => {
+  it('gives the same plan as the reference fixture (v2, bills by due date)', async () => {
     const data = await completeSetup(db, sample, '2026-10-15');
     const r = simulatePlan(toPlanInput(data));
-    expect(r.debtFreeDate).toBe('2028-10-06');
-    expect(r.paydaysToDebtFree).toBe(52);
+    expect(r.debtFreeDate).toBe('2028-10-20'); // v1 said 2028-10-06 (52 paydays)
+    expect(r.paydaysToDebtFree).toBe(53);
   });
 
   it('"1st of next month" skips the paydays before it', () => {

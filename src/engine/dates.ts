@@ -131,3 +131,16 @@ export function paydayNumberOnOrAfter(
   }
   return null;
 }
+
+/** The first date in [from, to) on which a bill with this due day falls (clamped to the month's end), or null. */
+export function dueDateIn(dueDay: number, from: string, to: string): string | null {
+  const a = parseISO(from);
+  const b = parseISO(to);
+  const months = (b.y - a.y) * 12 + (b.m - a.m);
+  for (let i = 0; i <= months; i++) {
+    const m = addMonths({ y: a.y, m: a.m, d: 1 }, i);
+    const iso = toISO({ y: m.y, m: m.m, d: Math.min(dueDay, daysInMonth(m.y, m.m)) });
+    if (iso >= from && iso < to) return iso;
+  }
+  return null;
+}

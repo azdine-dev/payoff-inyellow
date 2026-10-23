@@ -1,5 +1,4 @@
 /** "How we got this": the plain math behind the date and the first step, in one sheet. */
-import { PAYDAYS_PER_YEAR } from '../engine';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
 import { data, plan } from '../state/store';
 import { methodReason } from '../today/model';
@@ -12,7 +11,6 @@ export function HowWeGotThis(props: { open: boolean; onClose: () => void }) {
   const s = d.settings;
   const cur = s.currency;
   const row = r.rows[0];
-  const ppy = PAYDAYS_PER_YEAR[s.frequency];
   const active = d.debts.filter((x) => x.status === 'active');
   const monthly = active.reduce((sum, x) => sum + x.minMonthly, 0);
   const minimums = row.debts.reduce((sum, x) => sum + x.minimum, 0);
@@ -25,7 +23,7 @@ export function HowWeGotThis(props: { open: boolean; onClose: () => void }) {
       <div class="stack" style={{ gap: 10 }} data-testid="how-we-got-this">
         <p class="muted small">The math, with your numbers. Nothing is hidden.</p>
         <p>
-          <b>Your minimums:</b> {formatMoneyAuto(monthly, cur)} a month. Spread over {ppy} paydays a year, that is {formatMoney(minimums, cur)} each payday.
+          <b>Your bills:</b> {formatMoneyAuto(monthly, cur)} a month in all. Each one is paid on the payday before its due day, so some paydays have more bills than others. This payday: {formatMoney(minimums, cur)}.
         </p>
         {yearly > 0 && (
           <p>
@@ -42,7 +40,7 @@ export function HowWeGotThis(props: { open: boolean; onClose: () => void }) {
           <b>Order:</b> {methodReason(s.method)}
         </p>
         <p>
-          <b>The date:</b> each payday we add a little interest to every debt, take off what you pay, and move on to the next payday. The date is when the last balance reaches zero. It changes if your numbers change.
+          <b>The date:</b> each payday we add a little interest to every debt, take off the bills that fall due before the next payday and your extra, and move on. The date is when the last balance reaches zero. It changes if your numbers change.
         </p>
         <button type="button" class="btn" onClick={props.onClose}>
           Close

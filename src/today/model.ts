@@ -210,9 +210,14 @@ export function betweenPaydays(data: AppData, nextDate: string, nextNumber: numb
 }
 
 /** "64% gone. After today, one payday left." for the focus debt. */
-export function focusSentence(pctGone: number, paydaysAfterToday: number | null): string {
+export function focusSentence(pctGone: number, paydaysAfterToday: number | null, isPayday = true): string {
   const gone = `${Math.floor(pctGone)}% gone.`;
   if (paydaysAfterToday === null) return `${gone} Not gone within 20 years at this pace.`;
+  if (!isPayday) {
+    // Not a payday: count the next payday too, with no "after today"
+    const left = paydaysAfterToday + 1;
+    return left === 1 ? `${gone} The next payday pays it off.` : `${gone} ${left} paydays left.`;
+  }
   if (paydaysAfterToday === 0) return `${gone} This payday pays it off.`;
   if (paydaysAfterToday === 1) return `${gone} After today, one payday left.`;
   return `${gone} After today, ${paydaysAfterToday} paydays left.`;

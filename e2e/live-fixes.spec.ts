@@ -1,7 +1,7 @@
 /** Found on the live app: the freeze, the paid state, the currency in the copy, "Add another", and the small animations. */
 import { expect, test, type Page } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, revealEarly, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, revealEarly, setDay, tapDidIt } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -38,7 +38,8 @@ test('1 · the same with two paydays marked early, and with a payday marked on t
   await quickSetup(page);
   await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
-  await tapDidIt(page); // the next one, early too
+  await setDay(page, '2026-11-04'); // 2 days before the next payday: early direct deposit
+  await tapDidIt(page);
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
   await goTab(page, 'Path');
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();

@@ -13,7 +13,9 @@ import { App } from './app/App';
 import { setApplyUpdate, updateReady } from './state/store';
 
 // Updates download quietly. Nothing reloads mid-payday: the buyer taps "Restart now" in Settings.
-const update = registerSW({ onNeedRefresh: () => (updateReady.value = true) });
+// "An update is ready" only when an older version was already running this page. A first open has nothing to update.
+const hadVersion = Boolean(navigator.serviceWorker?.controller);
+const update = registerSW({ onNeedRefresh: () => (updateReady.value = hadVersion) });
 setApplyUpdate(() => void update(true));
 
 render(<App />, document.getElementById('app')!);

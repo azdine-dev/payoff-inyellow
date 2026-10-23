@@ -1,18 +1,23 @@
-"""PaidInYellow payoff engine, reference version (v1).
+"""PaidInYellow payoff engine, reference version (v2: bills by due date).
 
-This is the exact model used by the Google Sheet bonus. Its results were checked
-cell by cell against the sheet (LibreOffice recalculation) in 4 scenarios with zero
-difference. The app engine must reproduce engine/fixtures.json.
+v2 replaces the v1 "average minimum per payday" with the real bills, so the plan is what the app
+shows on Today and what "I did it" applies. (v1 was the model of the Google Sheet bonus; the Sheet
+must be updated to v2 before it is sold next to the app.) The app engine must reproduce
+engine/fixtures.json.
 
 Model (one step per payday):
   ppy        = paydays per year: weekly 52, every 2 weeks 26, twice a month 24, monthly 12
   rate/payday = APR / ppy                      (simple per-payday interest)
-  min/payday  = monthly minimum * 12 / ppy     (money set aside for minimums)
+  bill        = the monthly minimum, paid in full on the payday before its due day: a debt whose due day
+                falls in [this payday, next payday) pays its bill (capped at what it owes). Every other
+                debt is not paid down by a minimum that payday (interest still accrues). A debt without a
+                due day has no bill.
   Each payday, money for the plan ("extra", plus any +/- for that payday) goes:
     1. yearly bills (sinking funds): sum(yearly costs) / ppy, capped at what is available
     2. buffer, until it reaches the buffer goal
     3. what is left goes to debts as extra, in payoff order; one focus debt gets it all,
-       overflow goes to the next debt. Minimums of paid-off debts roll into the extra.
+       overflow goes to the next debt. The bills of paid-off debts roll into the extra on the
+       paydays they would have been due (so the payday total stays the same).
   New charges on a payday are added to the focus debt (the debt that got the most extra,
   else the first debt in order).
   Payoff orders:
@@ -50,6 +55,15 @@ def payday_date(first, freq, n, other=None):
     y, mo = divmod(first.month - 1 + idx // 2, 12); y += first.year; mo += 1
     return datetime.date(y, mo, min(lo if idx % 2 == 0 else hi, calendar.monthrange(y, mo)[1]))
 
+def due_in(due_day, frm, to):
+    """True if a bill with this due day falls in [frm, to). The day is clamped to the month's end."""
+    y, m = frm.year, frm.month
+    while datetime.date(y, m, 1) < to:
+        d = datetime.date(y, m, min(due_day, calendar.monthrange(y, m)[1]))
+        if frm <= d < to: return True
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    return False
+
 def payoff_order(debts, method):
     def key(i):
         d = debts[i]; B, apr, mn = d['balance'], d['apr'], d['min']
@@ -81,11 +95,15 @@ def simulate(sc, max_paydays=520):
     names = [debts[i]['name'] for i in order]
     bal = [float(debts[i]['balance']) for i in order]
     apr = [debts[i]['apr'] / 100 for i in order]
-    mpp = [debts[i]['min'] * 12 / ppy for i in order]
+    mon = [debts[i]['min'] for i in order]
+    due = [debts[i].get('due_day') for i in order]
     rows, total_interest, paid_off = [], 0.0, {}
     for n in range(1, max_paydays + 1):
         if sum(bal) <= 0.005: break
         a, c = adj.get(n, 0), chg.get(n, 0)
+        date = payday_date(first, freq, n, sc.get('other_payday'))
+        nxt = payday_date(first, freq, n + 1, sc.get('other_payday'))
+        mpp = [m if (m > 0 and dd and due_in(dd, date, nxt)) else 0 for m, dd in zip(mon, due)]
         funds = min(funds_pp, max(0, extra + a))
         to_buf = min(max(0, goal - buffer), max(0, extra + a - funds)); buffer += to_buf
         grown = [b * (1 + r / ppy) for b, r in zip(bal, apr)]
@@ -98,7 +116,6 @@ def simulate(sc, max_paydays=520):
         focus = xs.index(max(xs)) if max(xs) > 0 else 0
         bal = [max(0, g - m - x) for g, m, x in zip(grown, mins, xs)]
         bal[focus] += c
-        date = payday_date(first, freq, n, sc.get('other_payday'))
         for k, b in enumerate(bal):
             if b <= 0.005 and names[k] not in paid_off: paid_off[names[k]] = date.isoformat()
         rows.append(dict(payday=n, date=date.isoformat(), minimums=round(sum(mins), 2), to_buffer=round(to_buf, 2),

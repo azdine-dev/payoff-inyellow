@@ -1,10 +1,10 @@
 /**
- * Before the payday Today counts down, with a small "Mark it done early" link and no question asked.
+ * No question is asked at "I did it". Today shows the card until the first one and from 2 days before each payday.
  * "I did it" can be undone for 10 seconds, and Today stays in the paid state until the next payday.
  */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { goTab, revealEarly, showPaydays } from './scenario';
+import { goTab, revealEarly, setDay, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026, the payday is Fri 23 Oct
@@ -59,13 +59,13 @@ test('Undo puts the balances, the payday and the logs back', async ({ page }) =>
   expect(await owed()).not.toBe(before); // the balances moved
 
   // Pay the next payday early too, to get an Undo again
-  await page.getByRole('button', { name: 'Mark it done early' }).click();
+  await setDay(page, '2026-11-04'); // 2 days before Fri 6 Nov: the card is there again
   await didIt(page).click();
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByText('Fri 6 Nov is paid.')).toHaveCount(0);
-  await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible(); // the first one stays paid
+  await expect(page.getByTestId('payday-total')).toBeVisible(); // 2 days before Fri 6 Nov the card is there again; the first payday stays paid (see the list below)
   await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
   await goTab(page, 'Plan');
   await showPaydays(page, 'Done');

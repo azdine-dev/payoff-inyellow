@@ -5,6 +5,7 @@
 import {
   dailyInterestCost,
   paydayNumberOnOrAfter,
+  paydayISO,
   payoffOrderIds,
   preparePlan,
   stepPayday,
@@ -179,8 +180,9 @@ export async function didPayday(
   const usual = plannedMoney(data);
   const planMoney = opts.planMoney ?? usual;
   const state = { balances: plan.ids.map((id) => byId.get(id)!.balance), buffer: data.buffer.amount, bufferGoal: s.bufferGoal };
-  const step = stepPayday(plan, state, planMoney, 0, number, date);
-  const usualStep = planMoney === usual ? step : stepPayday(plan, state, usual, 0, number, date);
+  const nextDate = paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + 2, s.otherPayday);
+  const step = stepPayday(plan, state, planMoney, 0, number, date, nextDate);
+  const usualStep = planMoney === usual ? step : stepPayday(plan, state, usual, 0, number, date, nextDate);
   // What the buyer saw and set aside: the bills due before the next payday + yearly bills + buffer + extra.
   // (The balances still move by the engine's step: its per-payday average decides the payoff date.)
   const bills = billsForNextPayday(data);

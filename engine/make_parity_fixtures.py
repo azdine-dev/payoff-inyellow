@@ -93,6 +93,8 @@ def random_scenario(rng, k):
         mn = rng.choice([0, money(rng, 10, 400), round(max(25, bal * rng.uniform(0.01, 0.04)), 2)])
         my = rng.choice([None, rng.randint(1, 6)])
         debts.append(debt('D%d' % i, bal, apr, mn, my))
+        # v2: bills by due date, so the due days vary (some debts have none: no bill)
+        debts[-1]['due_day'] = rng.choice([None, 1, 5, 12, 15, 20, 28, 30, 31, rng.randint(1, 31)])
     y, m = rng.randint(2026, 2030), rng.randint(1, 12)
     d = rng.choice([1, 15, 28, 29, 30, 31, rng.randint(1, 31)])
     d = min(d, [31, 29 if (y % 4 == 0 and y % 100 != 0) or y % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1])

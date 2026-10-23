@@ -121,9 +121,9 @@ describe('for the next payday', () => {
   it('the total is the bills + yearly bills + buffer + extra, and not the per-payday average', () => {
     const plan = simulatePlan(toPlanInput(data));
     const first = plan.rows[0]!;
-    expect(first.minimums).toBeCloseTo(215.08, 2); // the engine's average, kept for the payoff date
+    expect(first.minimums).toBeCloseTo(85, 2); // what the engine pays: the same two bills the buyer sees (Medical 50, Store card 35)
     expect(totalOf(billsForNextPayday(data), first)).toBe(235); // 85 + 42.31 + 107.69
-    expect(first.totalToSetAside).toBeCloseTo(365.08, 2); // unchanged inside the engine
+    expect(first.totalToSetAside).toBeCloseTo(235, 2); // and the engine's total is that same amount
   });
 
   it('a payday with a big bill, and a payday with none', () => {
@@ -173,8 +173,11 @@ describe('for the next payday', () => {
       ['Medical bill', 50, '2026-11-01'],
       ['Store card', 35, '2026-11-05'],
     ]);
-    // What is applied to the balances is still the engine's step
-    expect(r.step.debtLeft).toBeCloseTo(14638.02, 2);
+    // What is applied to the balances is the engine's step: the two bills shown, the extra and the interest. Visa and
+    // the Car loan have no bill this payday, so they only grow by interest.
+    expect(r.step.debtLeft).toBeCloseTo(14768.1, 2);
+    const visa = r.data.debts.find((d) => d.name === 'Visa')!;
+    expect(visa.balance).toBeGreaterThan(3200);
   });
 });
 

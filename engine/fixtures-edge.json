@@ -46,68 +46,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 23.08,
+     "minimums": 50,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 173.08,
-     "debt_left": 1126.92
+     "total_to_set_aside": 200.0,
+     "debt_left": 1100.0
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 23.08,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 173.08,
-     "debt_left": 1103.85
+     "total_to_set_aside": 150.0,
+     "debt_left": 1100.0
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 23.08,
+     "minimums": 50,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Medical",
-     "total_to_set_aside": 173.08,
-     "debt_left": 930.77
+     "total_to_set_aside": 200.0,
+     "debt_left": 900.0
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 23.08,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Medical",
-     "total_to_set_aside": 173.08,
-     "debt_left": 757.69
+     "total_to_set_aside": 150.0,
+     "debt_left": 750.0
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 23.08,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Medical",
-     "total_to_set_aside": 173.08,
-     "debt_left": 584.62
+     "total_to_set_aside": 150.0,
+     "debt_left": 600.0
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 23.08,
+     "minimums": 50,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Medical",
-     "total_to_set_aside": 173.08,
-     "debt_left": 411.54
+     "total_to_set_aside": 200.0,
+     "debt_left": 400.0
     }
    ]
   }
@@ -156,7 +156,7 @@
    ],
    "debt_free_date": "2027-02-26",
    "paydays_to_debt_free": 10,
-   "total_interest": 45.45,
+   "total_interest": 45.35,
    "paid_off_dates": {
     "Card": "2027-02-12",
     "Loan": "2027-02-26"
@@ -170,68 +170,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 18.46,
+     "minimums": 40,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1289.2
+     "total_to_set_aside": 190.0,
+     "debt_left": 1267.66
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 18.46,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1278.41
+     "total_to_set_aside": 150.0,
+     "debt_left": 1275.29
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 18.46,
+     "minimums": 40,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1117.64
+     "total_to_set_aside": 190.0,
+     "debt_left": 1092.98
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 18.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 955.75
+     "total_to_set_aside": 150.0,
+     "debt_left": 949.5
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 18.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 792.72
+     "total_to_set_aside": 150.0,
+     "debt_left": 804.92
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 18.46,
+     "minimums": 40,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 628.54
+     "total_to_set_aside": 190.0,
+     "debt_left": 619.23
     }
    ]
   }
@@ -280,7 +280,7 @@
    ],
    "debt_free_date": "2027-01-29",
    "paydays_to_debt_free": 8,
-   "total_interest": 9.2,
+   "total_interest": 8.92,
    "paid_off_dates": {
     "Card": "2026-12-04",
     "Mom": "2027-01-29"
@@ -294,46 +294,46 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 11.54,
+     "minimums": 25,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 161.54,
-     "debt_left": 891.23
+     "total_to_set_aside": 175.0,
+     "debt_left": 877.77
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 11.54,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 161.54,
-     "debt_left": 882.38
+     "total_to_set_aside": 150.0,
+     "debt_left": 880.33
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 11.54,
+     "minimums": 25,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 161.54,
-     "debt_left": 723.45
+     "total_to_set_aside": 175.0,
+     "debt_left": 707.92
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 11.54,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 161.54,
-     "debt_left": 563.05
+     "total_to_set_aside": 150.0,
+     "debt_left": 558.92
     },
     {
      "payday": 5,
@@ -341,10 +341,10 @@
      "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 161.54,
+     "extra": 150.0,
      "extra_goes_to": "Mom",
-     "total_to_set_aside": 161.54,
-     "debt_left": 401.51
+     "total_to_set_aside": 150.0,
+     "debt_left": 408.92
     },
     {
      "payday": 6,
@@ -352,10 +352,10 @@
      "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 161.54,
+     "extra": 175.0,
      "extra_goes_to": "Mom",
-     "total_to_set_aside": 161.54,
-     "debt_left": 239.97
+     "total_to_set_aside": 175.0,
+     "debt_left": 233.92
     }
    ]
   }
@@ -404,9 +404,9 @@
    ],
    "debt_free_date": "2027-12-31",
    "paydays_to_debt_free": 32,
-   "total_interest": 1071.38,
+   "total_interest": 1062.37,
    "paid_off_dates": {
-    "Phone": "2027-08-13",
+    "Phone": "2027-07-30",
     "Old card": "2027-12-31"
    },
    "minimums_only": {
@@ -418,68 +418,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.0,
+     "minimums": 130,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 210.0,
-     "debt_left": 5297.67
+     "total_to_set_aside": 280.0,
+     "debt_left": 5227.67
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.0,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 210.0,
-     "debt_left": 5295.48
+     "total_to_set_aside": 150.0,
+     "debt_left": 5284.86
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.0,
+     "minimums": 130,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Old card",
-     "total_to_set_aside": 210.0,
-     "debt_left": 5143.42
+     "total_to_set_aside": 280.0,
+     "debt_left": 5062.7
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.0,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Old card",
-     "total_to_set_aside": 210.0,
-     "debt_left": 4989.77
+     "total_to_set_aside": 150.0,
+     "debt_left": 4968.33
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 60.0,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Old card",
-     "total_to_set_aside": 210.0,
-     "debt_left": 4834.5
+     "total_to_set_aside": 150.0,
+     "debt_left": 4872.87
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 60.0,
+     "minimums": 130,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Old card",
-     "total_to_set_aside": 210.0,
-     "debt_left": 4677.6
+     "total_to_set_aside": 280.0,
+     "debt_left": 4646.31
     }
    ]
   }
@@ -532,7 +532,7 @@
    ],
    "debt_free_date": "2027-09-10",
    "paydays_to_debt_free": 24,
-   "total_interest": 488.92,
+   "total_interest": 482.98,
    "paid_off_dates": {
     "Store card": "2027-01-29",
     "Visa": "2027-09-10"
@@ -546,68 +546,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3814.37
+     "total_to_set_aside": 131.0,
+     "debt_left": 3743.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3788.49
+     "total_to_set_aside": 0.0,
+     "debt_left": 3777.76
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3762.38
+     "total_to_set_aside": 281.0,
+     "debt_left": 3681.01
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 130.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 190.46,
-     "debt_left": 3736.01
+     "total_to_set_aside": 130.0,
+     "debt_left": 3714.36
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 20.0,
      "to_yearly_bills": 0.0,
      "extra": 130.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3579.4
+     "total_to_set_aside": 150.0,
+     "debt_left": 3618.01
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3401.19
+     "total_to_set_aside": 281.0,
+     "debt_left": 3369.62
     }
    ]
   }
@@ -654,12 +654,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-07-16",
-   "paydays_to_debt_free": 20,
-   "total_interest": 367.55,
+   "debt_free_date": "2027-07-30",
+   "paydays_to_debt_free": 21,
+   "total_interest": 362.35,
    "paid_off_dates": {
     "Store card": "2026-12-04",
-    "Visa": "2027-07-16"
+    "Visa": "2027-07-30"
    },
    "minimums_only": {
     "never_ends": false,
@@ -670,68 +670,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3664.37
+     "total_to_set_aside": 281.0,
+     "debt_left": 3593.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3486.94
+     "total_to_set_aside": 150.0,
+     "debt_left": 3476.21
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3307.69
+     "total_to_set_aside": 281.0,
+     "debt_left": 3226.32
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3126.61
+     "total_to_set_aside": 150.0,
+     "debt_left": 3104.95
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 44.31,
+     "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 166.15,
+     "extra": 150.0,
      "extra_goes_to": "Visa",
-     "total_to_set_aside": 210.46,
-     "debt_left": 2943.68
+     "total_to_set_aside": 150.0,
+     "debt_left": 2982.3
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 44.31,
+     "minimums": 96.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 166.15,
+     "extra": 185.0,
      "extra_goes_to": "Visa",
-     "total_to_set_aside": 210.46,
-     "debt_left": 2759.15
+     "total_to_set_aside": 281.0,
+     "debt_left": 2727.57
     }
    ]
   }
@@ -778,12 +778,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-07-16",
-   "paydays_to_debt_free": 20,
-   "total_interest": 367.55,
+   "debt_free_date": "2027-07-30",
+   "paydays_to_debt_free": 21,
+   "total_interest": 362.35,
    "paid_off_dates": {
     "Store card": "2026-12-04",
-    "Visa": "2027-07-16"
+    "Visa": "2027-07-30"
    },
    "minimums_only": {
     "never_ends": false,
@@ -794,68 +794,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3664.37
+     "total_to_set_aside": 281.0,
+     "debt_left": 3593.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3486.94
+     "total_to_set_aside": 150.0,
+     "debt_left": 3476.21
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3307.69
+     "total_to_set_aside": 281.0,
+     "debt_left": 3226.32
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3126.61
+     "total_to_set_aside": 150.0,
+     "debt_left": 3104.95
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 44.31,
+     "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 166.15,
+     "extra": 150.0,
      "extra_goes_to": "Visa",
-     "total_to_set_aside": 210.46,
-     "debt_left": 2943.68
+     "total_to_set_aside": 150.0,
+     "debt_left": 2982.3
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 44.31,
+     "minimums": 96.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 166.15,
+     "extra": 185.0,
      "extra_goes_to": "Visa",
-     "total_to_set_aside": 210.46,
-     "debt_left": 2759.15
+     "total_to_set_aside": 281.0,
+     "debt_left": 2727.57
     }
    ]
   }
@@ -904,9 +904,9 @@
    ],
    "debt_free_date": "2030-05-31",
    "paydays_to_debt_free": 95,
-   "total_interest": 1866.98,
+   "total_interest": 1842.06,
    "paid_off_dates": {
-    "Store card": "2028-10-06",
+    "Store card": "2028-09-22",
     "Visa": "2030-05-31"
    },
    "minimums_only": {
@@ -918,68 +918,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3814.37
+     "total_to_set_aside": 131.0,
+     "debt_left": 3743.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3788.49
+     "total_to_set_aside": 0.0,
+     "debt_left": 3777.76
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3762.38
+     "total_to_set_aside": 131.0,
+     "debt_left": 3681.01
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3736.01
+     "total_to_set_aside": 0.0,
+     "debt_left": 3714.36
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3709.4
+     "total_to_set_aside": 0.0,
+     "debt_left": 3748.01
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 60.46,
-     "debt_left": 3682.54
+     "total_to_set_aside": 131.0,
+     "debt_left": 3650.97
     }
    ]
   }
@@ -1042,7 +1042,7 @@
     {
      "payday": 1,
      "date": "2027-01-31",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 300,
      "to_yearly_bills": 0.0,
      "extra": 0,
@@ -1053,7 +1053,7 @@
     {
      "payday": 2,
      "date": "2027-02-28",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 300.0,
@@ -1064,7 +1064,7 @@
     {
      "payday": 3,
      "date": "2027-03-31",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 300.0,
@@ -1166,7 +1166,7 @@
     {
      "payday": 1,
      "date": "2028-01-29",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 300,
      "to_yearly_bills": 0.0,
      "extra": 0,
@@ -1177,7 +1177,7 @@
     {
      "payday": 2,
      "date": "2028-02-29",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 300.0,
@@ -1188,7 +1188,7 @@
     {
      "payday": 3,
      "date": "2028-03-29",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 300.0,
@@ -1290,7 +1290,7 @@
     {
      "payday": 1,
      "date": "2027-02-28",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 300,
      "to_yearly_bills": 0.0,
      "extra": 0,
@@ -1301,7 +1301,7 @@
     {
      "payday": 2,
      "date": "2027-03-28",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 300.0,
@@ -1312,7 +1312,7 @@
     {
      "payday": 3,
      "date": "2027-04-28",
-     "minimums": 131.0,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 300.0,
@@ -1398,12 +1398,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-09-16",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-09-01",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-01-16",
-    "Visa": "2027-09-16"
+    "Visa": "2027-09-01"
    },
    "minimums_only": {
     "never_ends": false,
@@ -1414,68 +1414,68 @@
     {
      "payday": 1,
      "date": "2026-11-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2026-11-16",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2026-12-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2026-12-16",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2027-01-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-01-16",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -1524,7 +1524,7 @@
    ],
    "debt_free_date": "2027-11-30",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2027-03-30",
     "Visa": "2027-11-30"
@@ -1538,68 +1538,68 @@
     {
      "payday": 1,
      "date": "2027-01-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2027-01-30",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2027-02-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2027-02-28",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2027-03-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2027-03-30",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -1648,7 +1648,7 @@
    ],
    "debt_free_date": "2027-12-01",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2027-04-01",
     "Visa": "2027-12-01"
@@ -1662,68 +1662,68 @@
     {
      "payday": 1,
      "date": "2027-01-16",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2027-02-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2027-02-16",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2027-03-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2027-03-16",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2027-04-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -1770,12 +1770,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-12-15",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-11-30",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-04-15",
-    "Visa": "2027-12-15"
+    "Visa": "2027-11-30"
    },
    "minimums_only": {
     "never_ends": false,
@@ -1786,68 +1786,68 @@
     {
      "payday": 1,
      "date": "2027-01-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2027-02-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2027-02-28",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2027-03-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2027-03-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-04-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -1895,12 +1895,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-09-15",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-08-31",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-01-15",
-    "Visa": "2027-09-15"
+    "Visa": "2027-08-31"
    },
    "minimums_only": {
     "never_ends": false,
@@ -1911,68 +1911,68 @@
     {
      "payday": 1,
      "date": "2026-10-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2026-11-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2026-11-30",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2026-12-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2026-12-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-01-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -2022,7 +2022,7 @@
    ],
    "debt_free_date": "2027-09-30",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2027-01-31",
     "Visa": "2027-09-30"
@@ -2036,68 +2036,68 @@
     {
      "payday": 1,
      "date": "2026-11-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2026-11-30",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2026-12-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2026-12-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2027-01-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2027-01-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -2145,12 +2145,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-09-15",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-09-01",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-01-15",
-    "Visa": "2027-09-15"
+    "Visa": "2027-09-01"
    },
    "minimums_only": {
     "never_ends": false,
@@ -2161,68 +2161,68 @@
     {
      "payday": 1,
      "date": "2026-11-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2026-11-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2026-12-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2026-12-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2027-01-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-01-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -2272,7 +2272,7 @@
    ],
    "debt_free_date": "2027-10-01",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2027-02-01",
     "Visa": "2027-10-01"
@@ -2286,68 +2286,68 @@
     {
      "payday": 1,
      "date": "2026-11-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2026-12-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2026-12-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2027-01-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2027-01-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2027-02-01",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -2397,7 +2397,7 @@
    ],
    "debt_free_date": "2027-09-25",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2027-01-25",
     "Visa": "2027-09-25"
@@ -2411,68 +2411,68 @@
     {
      "payday": 1,
      "date": "2026-11-10",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2026-11-25",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2026-12-10",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2026-12-25",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2027-01-10",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2027-01-25",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -2520,12 +2520,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-10-10",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-09-25",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-02-10",
-    "Visa": "2027-10-10"
+    "Visa": "2027-09-25"
    },
    "minimums_only": {
     "never_ends": false,
@@ -2536,68 +2536,68 @@
     {
      "payday": 1,
      "date": "2026-11-25",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2026-12-10",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2026-12-25",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2027-01-10",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2027-01-25",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-02-10",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -2645,12 +2645,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2027-10-05",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-09-20",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-02-05",
-    "Visa": "2027-10-05"
+    "Visa": "2027-09-20"
    },
    "minimums_only": {
     "never_ends": false,
@@ -2661,68 +2661,68 @@
     {
      "payday": 1,
      "date": "2026-11-20",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2026-12-05",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2026-12-20",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2027-01-05",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2027-01-20",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-02-05",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -2770,12 +2770,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2028-01-15",
-   "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "debt_free_date": "2027-12-31",
+   "paydays_to_debt_free": 21,
+   "total_interest": 448.1,
    "paid_off_dates": {
     "Store card": "2027-05-15",
-    "Visa": "2028-01-15"
+    "Visa": "2027-12-31"
    },
    "minimums_only": {
     "never_ends": false,
@@ -2786,68 +2786,68 @@
     {
      "payday": 1,
      "date": "2027-02-28",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 281.0,
+     "debt_left": 3746.73
     },
     {
      "payday": 2,
      "date": "2027-03-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 150.0,
+     "debt_left": 3783.52
     },
     {
      "payday": 3,
      "date": "2027-03-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 281.0,
+     "debt_left": 3539.68
     },
     {
      "payday": 4,
      "date": "2027-04-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 150.0,
+     "debt_left": 3424.21
     },
     {
      "payday": 5,
      "date": "2027-04-30",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 281.0,
+     "debt_left": 3176.38
     },
     {
      "payday": 6,
      "date": "2027-05-15",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 3056.89
     }
    ]
   }
@@ -2897,7 +2897,7 @@
    ],
    "debt_free_date": "2027-11-30",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2027-03-31",
     "Visa": "2027-11-30"
@@ -2911,68 +2911,68 @@
     {
      "payday": 1,
      "date": "2027-01-30",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2027-01-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2027-02-28",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2027-02-28",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2027-03-30",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2027-03-31",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -3031,7 +3031,7 @@
    ],
    "debt_free_date": "2027-03-26",
    "paydays_to_debt_free": 12,
-   "total_interest": 39.54,
+   "total_interest": 39.45,
    "paid_off_dates": {
     "Small": "2027-01-01",
     "Card": "2027-01-29",
@@ -3046,68 +3046,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 18.46,
+     "minimums": 40,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1588.62
+     "total_to_set_aside": 190.0,
+     "debt_left": 1567.08
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 18.46,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1577.26
+     "total_to_set_aside": 150.0,
+     "debt_left": 1574.14
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 18.46,
+     "minimums": 40,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1415.91
+     "total_to_set_aside": 190.0,
+     "debt_left": 1391.25
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 18.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1253.44
+     "total_to_set_aside": 150.0,
+     "debt_left": 1247.19
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 18.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 1089.82
+     "total_to_set_aside": 150.0,
+     "debt_left": 1102.02
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 8.32,
+     "minimums": 20.54,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 160.14,
+     "extra": 169.46,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 168.46,
-     "debt_left": 925.06
+     "total_to_set_aside": 190.0,
+     "debt_left": 915.75
     }
    ]
   }
@@ -3156,7 +3156,7 @@
    ],
    "debt_free_date": "2028-12-29",
    "paydays_to_debt_free": 22,
-   "total_interest": 455.75,
+   "total_interest": 463.43,
    "paid_off_dates": {
     "Store card": "2028-04-29",
     "Visa": "2028-12-29"
@@ -3170,68 +3170,68 @@
     {
      "payday": 1,
      "date": "2028-02-14",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3812.23
+     "total_to_set_aside": 150.0,
+     "debt_left": 3877.73
     },
     {
      "payday": 2,
      "date": "2028-02-29",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3784.18
+     "total_to_set_aside": 281.0,
+     "debt_left": 3784.83
     },
     {
      "payday": 3,
      "date": "2028-03-14",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3605.84
+     "total_to_set_aside": 150.0,
+     "debt_left": 3672.0
     },
     {
      "payday": 4,
      "date": "2028-03-29",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3425.53
+     "total_to_set_aside": 281.0,
+     "debt_left": 3426.85
     },
     {
      "payday": 5,
      "date": "2028-04-14",
-     "minimums": 65.5,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3243.22
+     "total_to_set_aside": 150.0,
+     "debt_left": 3310.06
     },
     {
      "payday": 6,
      "date": "2028-04-29",
-     "minimums": 65.5,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 215.5,
-     "debt_left": 3058.89
+     "total_to_set_aside": 281.0,
+     "debt_left": 3060.89
     }
    ]
   }
@@ -3278,12 +3278,12 @@
     "Store card",
     "Visa"
    ],
-   "debt_free_date": "2029-02-16",
-   "paydays_to_debt_free": 52,
-   "total_interest": 496.21,
+   "debt_free_date": "2029-02-09",
+   "paydays_to_debt_free": 51,
+   "total_interest": 486.98,
    "paid_off_dates": {
-    "Store card": "2028-06-02",
-    "Visa": "2029-02-16"
+    "Store card": "2028-05-26",
+    "Visa": "2029-02-09"
    },
    "minimums_only": {
     "never_ends": false,
@@ -3294,68 +3294,68 @@
     {
      "payday": 1,
      "date": "2028-02-25",
-     "minimums": 30.23,
+     "minimums": 131,
      "to_buffer": 60.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 90.23,
-     "debt_left": 3827.18
+     "total_to_set_aside": 191.0,
+     "debt_left": 3726.41
     },
     {
      "payday": 2,
      "date": "2028-03-03",
-     "minimums": 30.23,
+     "minimums": 0,
      "to_buffer": 60.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 90.23,
-     "debt_left": 3814.31
+     "total_to_set_aside": 60.0,
+     "debt_left": 3743.3
     },
     {
      "payday": 3,
      "date": "2028-03-10",
-     "minimums": 30.23,
+     "minimums": 0,
      "to_buffer": 60.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 90.23,
-     "debt_left": 3801.37
+     "total_to_set_aside": 60.0,
+     "debt_left": 3760.27
     },
     {
      "payday": 4,
      "date": "2028-03-17",
-     "minimums": 30.23,
+     "minimums": 0,
      "to_buffer": 60.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 90.23,
-     "debt_left": 3788.37
+     "total_to_set_aside": 60.0,
+     "debt_left": 3777.31
     },
     {
      "payday": 5,
      "date": "2028-03-24",
-     "minimums": 30.23,
+     "minimums": 0,
      "to_buffer": 60.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 90.23,
-     "debt_left": 3775.31
+     "total_to_set_aside": 60.0,
+     "debt_left": 3794.43
     },
     {
      "payday": 6,
      "date": "2028-03-31",
-     "minimums": 30.23,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 60.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 90.23,
-     "debt_left": 3702.19
+     "total_to_set_aside": 191.0,
+     "debt_left": 3620.63
     }
    ]
   }
@@ -3394,7 +3394,7 @@
    ],
    "debt_free_date": null,
    "paydays_to_debt_free": null,
-   "total_interest": 250669.69,
+   "total_interest": 250341.56,
    "paid_off_dates": {},
    "minimums_only": {
     "never_ends": true,
@@ -3405,68 +3405,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 46.15,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 46.15,
-     "debt_left": 20069.19
+     "total_to_set_aside": 0.0,
+     "debt_left": 20115.35
     },
     {
      "payday": 2,
      "date": "2026-10-30",
-     "minimums": 46.15,
+     "minimums": 200,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 46.15,
-     "debt_left": 20138.78
+     "total_to_set_aside": 200.0,
+     "debt_left": 20031.36
     },
     {
      "payday": 3,
      "date": "2026-11-06",
-     "minimums": 46.15,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 46.15,
-     "debt_left": 20208.78
+     "total_to_set_aside": 0.0,
+     "debt_left": 20146.88
     },
     {
      "payday": 4,
      "date": "2026-11-13",
-     "minimums": 46.15,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 46.15,
-     "debt_left": 20279.17
+     "total_to_set_aside": 0.0,
+     "debt_left": 20263.08
     },
     {
      "payday": 5,
      "date": "2026-11-20",
-     "minimums": 46.15,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 46.15,
-     "debt_left": 20349.98
+     "total_to_set_aside": 0.0,
+     "debt_left": 20379.94
     },
     {
      "payday": 6,
      "date": "2026-11-27",
-     "minimums": 46.15,
+     "minimums": 200,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 46.15,
-     "debt_left": 20421.19
+     "total_to_set_aside": 200.0,
+     "debt_left": 20297.48
     }
    ]
   }
@@ -3518,7 +3518,7 @@
    ],
    "debt_free_date": "2027-09-10",
    "paydays_to_debt_free": 24,
-   "total_interest": 491.5,
+   "total_interest": 485.56,
    "paid_off_dates": {
     "Store card": "2027-01-29",
     "Visa": "2027-09-10"
@@ -3532,68 +3532,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3889.37
+     "total_to_set_aside": 281.0,
+     "debt_left": 3818.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3864.27
+     "total_to_set_aside": 150.0,
+     "debt_left": 3853.54
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3878.94
+     "total_to_set_aside": 281.0,
+     "debt_left": 3797.58
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 50.0,
      "to_yearly_bills": 0.0,
      "extra": 100.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3753.79
+     "total_to_set_aside": 150.0,
+     "debt_left": 3732.13
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3577.36
+     "total_to_set_aside": 150.0,
+     "debt_left": 3615.97
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3399.13
+     "total_to_set_aside": 281.0,
+     "debt_left": 3367.56
     }
    ]
   }
@@ -3645,7 +3645,7 @@
    ],
    "debt_free_date": "2027-08-13",
    "paydays_to_debt_free": 22,
-   "total_interest": 429.23,
+   "total_interest": 423.65,
    "paid_off_dates": {
     "Store card": "2027-01-01",
     "Visa": "2027-08-13"
@@ -3659,68 +3659,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3664.37
+     "total_to_set_aside": 281.0,
+     "debt_left": 3593.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3786.94
+     "total_to_set_aside": 150.0,
+     "debt_left": 3776.21
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3610.8
+     "total_to_set_aside": 281.0,
+     "debt_left": 3529.44
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3432.87
+     "total_to_set_aside": 150.0,
+     "debt_left": 3411.21
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3278.61
+     "total_to_set_aside": 150.0,
+     "debt_left": 3317.22
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Store card",
-     "total_to_set_aside": 210.46,
-     "debt_left": 3097.28
+     "total_to_set_aside": 281.0,
+     "debt_left": 3065.7
     }
    ]
   }
@@ -3799,10 +3799,10 @@
    ],
    "debt_free_date": "2027-05-21",
    "paydays_to_debt_free": 16,
-   "total_interest": 147.95,
+   "total_interest": 146.25,
    "paid_off_dates": {
     "D": "2026-12-04",
-    "B": "2027-01-15",
+    "B": "2027-01-01",
     "E": "2027-02-12",
     "A": "2027-04-23",
     "C": "2027-05-21"
@@ -3816,68 +3816,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 53.08,
+     "minimums": 115,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 203.08,
-     "debt_left": 2762.88
+     "total_to_set_aside": 265.0,
+     "debt_left": 2700.96
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 53.08,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 203.08,
-     "debt_left": 2725.58
+     "total_to_set_aside": 150.0,
+     "debt_left": 2716.39
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 53.08,
+     "minimums": 115,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "D",
-     "total_to_set_aside": 203.08,
-     "debt_left": 2538.08
+     "total_to_set_aside": 265.0,
+     "debt_left": 2466.92
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 53.08,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "D",
-     "total_to_set_aside": 203.08,
-     "debt_left": 2350.11
+     "total_to_set_aside": 150.0,
+     "debt_left": 2331.62
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 43.85,
+     "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 159.23,
+     "extra": 150.0,
      "extra_goes_to": "B",
-     "total_to_set_aside": 203.08,
-     "debt_left": 2161.45
+     "total_to_set_aside": 150.0,
+     "debt_left": 2195.91
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 43.85,
+     "minimums": 95.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 159.23,
+     "extra": 170.0,
      "extra_goes_to": "B",
-     "total_to_set_aside": 203.08,
-     "debt_left": 1971.38
+     "total_to_set_aside": 265.0,
+     "debt_left": 1944.15
     }
    ]
   }
@@ -3934,13 +3934,13 @@
     "Second",
     "Third"
    ],
-   "debt_free_date": "2027-03-12",
-   "paydays_to_debt_free": 11,
-   "total_interest": 71.1,
+   "debt_free_date": "2027-02-26",
+   "paydays_to_debt_free": 10,
+   "total_interest": 70.21,
    "paid_off_dates": {
     "First": "2027-01-01",
     "Second": "2027-01-29",
-    "Third": "2027-03-12"
+    "Third": "2027-02-26"
    },
    "minimums_only": {
     "never_ends": false,
@@ -3951,68 +3951,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 34.62,
+     "minimums": 75,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 184.62,
-     "debt_left": 1476.54
+     "total_to_set_aside": 225.0,
+     "debt_left": 1436.15
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 34.62,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 184.62,
-     "debt_left": 1452.9
+     "total_to_set_aside": 150.0,
+     "debt_left": 1446.83
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 34.62,
+     "minimums": 75,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "First",
-     "total_to_set_aside": 184.62,
-     "debt_left": 1279.09
+     "total_to_set_aside": 225.0,
+     "debt_left": 1232.59
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 34.62,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "First",
-     "total_to_set_aside": 184.62,
-     "debt_left": 1103.95
+     "total_to_set_aside": 150.0,
+     "debt_left": 1091.72
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 34.62,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "First",
-     "total_to_set_aside": 184.62,
-     "debt_left": 927.47
+     "total_to_set_aside": 150.0,
+     "debt_left": 949.76
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 30.61,
+     "minimums": 65.01,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 154.01,
+     "extra": 159.99,
      "extra_goes_to": "Second",
-     "total_to_set_aside": 184.62,
-     "debt_left": 749.63
+     "total_to_set_aside": 225.0,
+     "debt_left": 731.71
     }
    ]
   }
@@ -4071,7 +4071,7 @@
    ],
    "debt_free_date": "2027-02-26",
    "paydays_to_debt_free": 10,
-   "total_interest": 71.75,
+   "total_interest": 71.05,
    "paid_off_dates": {
     "Small": "2026-12-04",
     "Big": "2027-02-26",
@@ -4086,68 +4086,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 32.31,
+     "minimums": 70,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 182.31,
-     "debt_left": 1379.46
+     "total_to_set_aside": 220.0,
+     "debt_left": 1341.77
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 32.31,
+     "minimums": 0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 182.31,
-     "debt_left": 1358.78
+     "total_to_set_aside": 150.0,
+     "debt_left": 1353.11
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 32.31,
+     "minimums": 70,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Small",
-     "total_to_set_aside": 182.31,
-     "debt_left": 1187.96
+     "total_to_set_aside": 220.0,
+     "debt_left": 1144.56
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 32.31,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 150.0,
      "extra_goes_to": "Small",
-     "total_to_set_aside": 182.31,
-     "debt_left": 1015.62
+     "total_to_set_aside": 150.0,
+     "debt_left": 1004.19
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 23.08,
+     "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 159.23,
+     "extra": 150.0,
      "extra_goes_to": "Big",
-     "total_to_set_aside": 182.31,
-     "debt_left": 841.73
+     "total_to_set_aside": 150.0,
+     "debt_left": 862.52
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 23.08,
+     "minimums": 50.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 159.23,
+     "extra": 170.0,
      "extra_goes_to": "Big",
-     "total_to_set_aside": 182.31,
-     "debt_left": 666.28
+     "total_to_set_aside": 220.0,
+     "debt_left": 649.54
     }
    ]
   }
@@ -4196,7 +4196,7 @@
    ],
    "debt_free_date": "2027-01-15",
    "paydays_to_debt_free": 7,
-   "total_interest": 28.3,
+   "total_interest": 27.73,
    "paid_off_dates": {
     "Done": "2026-10-23",
     "Card": "2027-01-15"
@@ -4210,68 +4210,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 13.85,
+     "minimums": 30.0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
-     "extra": 11.54,
+     "extra": 25.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 175.38,
-     "debt_left": 780.77
+     "total_to_set_aside": 205.0,
+     "debt_left": 751.15
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 13.85,
+     "minimums": 0.0,
      "to_buffer": 150.0,
      "to_yearly_bills": 0.0,
-     "extra": 11.54,
-     "extra_goes_to": "Card",
-     "total_to_set_aside": 175.38,
-     "debt_left": 761.39
+     "extra": 0.0,
+     "extra_goes_to": "Buffer first",
+     "total_to_set_aside": 150.0,
+     "debt_left": 756.93
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 13.85,
+     "minimums": 30.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 161.54,
+     "extra": 175.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 175.38,
-     "debt_left": 591.86
+     "total_to_set_aside": 205.0,
+     "debt_left": 557.75
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 13.85,
+     "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 161.54,
+     "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 175.38,
-     "debt_left": 421.03
+     "total_to_set_aside": 150.0,
+     "debt_left": 412.04
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 13.85,
+     "minimums": 0.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 161.54,
+     "extra": 150.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 175.38,
-     "debt_left": 248.89
+     "total_to_set_aside": 150.0,
+     "debt_left": 265.21
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 13.85,
+     "minimums": 30.0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
-     "extra": 161.54,
+     "extra": 175.0,
      "extra_goes_to": "Card",
-     "total_to_set_aside": 175.38,
-     "debt_left": 75.41
+     "total_to_set_aside": 205.0,
+     "debt_left": 62.25
     }
    ]
   }
@@ -4330,7 +4330,7 @@
    ],
    "debt_free_date": "2027-11-05",
    "paydays_to_debt_free": 28,
-   "total_interest": 1056.98,
+   "total_interest": 1049.52,
    "paid_off_dates": {
     "G2": "2027-04-23",
     "Ok": "2027-06-18",
@@ -4345,68 +4345,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 62.31,
+     "minimums": 135,
      "to_buffer": 250.0,
      "to_yearly_bills": 0.0,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 312.31,
-     "debt_left": 7208.85
+     "total_to_set_aside": 385.0,
+     "debt_left": 7136.15
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 62.31,
+     "minimums": 0,
      "to_buffer": 50.0,
      "to_yearly_bills": 0.0,
      "extra": 200.0,
      "extra_goes_to": "G2",
-     "total_to_set_aside": 312.31,
-     "debt_left": 7017.85
+     "total_to_set_aside": 250.0,
+     "debt_left": 7006.82
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 62.31,
+     "minimums": 135,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 250.0,
      "extra_goes_to": "G2",
-     "total_to_set_aside": 312.31,
-     "debt_left": 6774.79
+     "total_to_set_aside": 385.0,
+     "debt_left": 6690.96
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 62.31,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 250.0,
      "extra_goes_to": "G2",
-     "total_to_set_aside": 312.31,
-     "debt_left": 6529.08
+     "total_to_set_aside": 250.0,
+     "debt_left": 6506.81
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 62.31,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 250.0,
      "extra_goes_to": "G2",
-     "total_to_set_aside": 312.31,
-     "debt_left": 6280.68
+     "total_to_set_aside": 250.0,
+     "debt_left": 6320.52
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 62.31,
+     "minimums": 135,
      "to_buffer": 0,
      "to_yearly_bills": 0.0,
      "extra": 250.0,
      "extra_goes_to": "G2",
-     "total_to_set_aside": 312.31,
-     "debt_left": 6029.58
+     "total_to_set_aside": 385.0,
+     "debt_left": 5997.08
     }
    ]
   }
@@ -4461,9 +4461,9 @@
    ],
    "debt_free_date": "2030-05-31",
    "paydays_to_debt_free": 95,
-   "total_interest": 1866.98,
+   "total_interest": 1842.06,
    "paid_off_dates": {
-    "Store card": "2028-10-06",
+    "Store card": "2028-09-22",
     "Visa": "2030-05-31"
    },
    "minimums_only": {
@@ -4475,68 +4475,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 20,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 80.46,
-     "debt_left": 3814.37
+     "total_to_set_aside": 151,
+     "debt_left": 3743.83
     },
     {
      "payday": 2,
      "date": "2026-11-06",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 20,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 80.46,
-     "debt_left": 3788.49
+     "total_to_set_aside": 20,
+     "debt_left": 3777.76
     },
     {
      "payday": 3,
      "date": "2026-11-20",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 20,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 80.46,
-     "debt_left": 3762.38
+     "total_to_set_aside": 151,
+     "debt_left": 3681.01
     },
     {
      "payday": 4,
      "date": "2026-12-04",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 20,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 80.46,
-     "debt_left": 3736.01
+     "total_to_set_aside": 20,
+     "debt_left": 3714.36
     },
     {
      "payday": 5,
      "date": "2026-12-18",
-     "minimums": 60.46,
+     "minimums": 0,
      "to_buffer": 0,
      "to_yearly_bills": 20,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 80.46,
-     "debt_left": 3709.4
+     "total_to_set_aside": 20,
+     "debt_left": 3748.01
     },
     {
      "payday": 6,
      "date": "2027-01-01",
-     "minimums": 60.46,
+     "minimums": 131,
      "to_buffer": 0,
      "to_yearly_bills": 20,
      "extra": 0,
      "extra_goes_to": "",
-     "total_to_set_aside": 80.46,
-     "debt_left": 3682.54
+     "total_to_set_aside": 151,
+     "debt_left": 3650.97
     }
    ]
   }
@@ -4591,7 +4591,7 @@
    ],
    "debt_free_date": "2027-08-27",
    "paydays_to_debt_free": 45,
-   "total_interest": 148.26,
+   "total_interest": 146.04,
    "paid_off_dates": {
     "Store": "2027-01-08",
     "Card": "2027-08-27"
@@ -4605,68 +4605,68 @@
     {
      "payday": 1,
      "date": "2026-10-23",
-     "minimums": 13.08,
+     "minimums": 0,
      "to_buffer": 25.44,
      "to_yearly_bills": 7.89,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 46.41,
-     "debt_left": 1325.86
+     "total_to_set_aside": 33.33,
+     "debt_left": 1338.94
     },
     {
      "payday": 2,
      "date": "2026-10-30",
-     "minimums": 13.08,
+     "minimums": 56.67,
      "to_buffer": 25.44,
      "to_yearly_bills": 7.89,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 46.41,
-     "debt_left": 1318.37
+     "total_to_set_aside": 90.0,
+     "debt_left": 1287.91
     },
     {
      "payday": 3,
      "date": "2026-11-06",
-     "minimums": 13.08,
+     "minimums": 0,
      "to_buffer": 25.44,
      "to_yearly_bills": 7.89,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 46.41,
-     "debt_left": 1310.84
+     "total_to_set_aside": 33.33,
+     "debt_left": 1293.33
     },
     {
      "payday": 4,
      "date": "2026-11-13",
-     "minimums": 13.08,
+     "minimums": 0,
      "to_buffer": 25.44,
      "to_yearly_bills": 7.89,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 46.41,
-     "debt_left": 1303.28
+     "total_to_set_aside": 33.33,
+     "debt_left": 1298.77
     },
     {
      "payday": 5,
      "date": "2026-11-20",
-     "minimums": 13.08,
+     "minimums": 0,
      "to_buffer": 25.44,
      "to_yearly_bills": 7.89,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 46.41,
-     "debt_left": 1295.68
+     "total_to_set_aside": 33.33,
+     "debt_left": 1304.23
     },
     {
      "payday": 6,
      "date": "2026-11-27",
-     "minimums": 13.08,
+     "minimums": 56.67,
      "to_buffer": 25.44,
      "to_yearly_bills": 7.89,
      "extra": 0,
      "extra_goes_to": "Buffer first",
-     "total_to_set_aside": 46.41,
-     "debt_left": 1288.05
+     "total_to_set_aside": 90.0,
+     "debt_left": 1253.04
     }
    ]
   }

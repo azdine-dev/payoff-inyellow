@@ -171,7 +171,7 @@ export function Settings() {
       </div>
 
       {updateReady.value && (
-        <section class="card soft row" role="status">
+        <section class="card row" role="status">
           <span>An update is ready.</span>
           <button type="button" class="link" onClick={applyUpdate}>
             Restart now

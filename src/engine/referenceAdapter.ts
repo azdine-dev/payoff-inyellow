@@ -93,6 +93,7 @@ export function fromReferenceInput(ref: RefInput): PlanInput {
       balance: debt.balance,
       apr: debt.apr,
       minMonthly: debt.min,
+      dueDay: debt.due_day ?? null,
       myOrder: debt.my_order ?? null,
     })),
     yearlyBills: (ref.yearly ?? []).map((b) => ({ perYear: b.per_year })),

@@ -9,7 +9,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import fixtures from '../../engine/fixtures.json';
-import { simulatePlan, ZERO } from '../engine';
+import { dueDateIn, paydayISO, simulatePlan, ZERO } from '../engine';
 import { pyRound } from '../engine/pymath';
 import { fromReferenceInput, type RefFixture } from '../engine/referenceAdapter';
 import { openAppDB, type PiyDB } from '../data/db';
@@ -28,7 +28,7 @@ function setupFrom(f: RefFixture): SetupValues {
     nextPayday: p.nextPayday,
     otherPayday: p.otherPayday ?? null,
     paycheckAmount: null,
-    debts: p.debts.map((d) => ({ name: d.name, type: '', balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, dueDay: null, autopay: false, myOrder: d.myOrder ?? null })),
+    debts: p.debts.map((d) => ({ name: d.name, type: '', balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, dueDay: d.dueDay ?? null, autopay: false, myOrder: d.myOrder ?? null })),
     bufferNow: p.bufferNow,
     bufferGoal: p.bufferGoal,
     extraPerPayday: p.extraPerPayday,
@@ -61,7 +61,7 @@ async function tapThrough(data: AppData) {
 describe('"I did it" on every payday gives the same result as one full simulation', () => {
   const withoutAdjustments = all.filter((f) => !Object.keys(f.input.adj ?? {}).length && !Object.keys(f.input.charges ?? {}).length);
 
-  it('covers the fixtures without +/- or charges', () => expect(withoutAdjustments.length).toBe(5));
+  it('covers the fixtures without +/- or charges', () => expect(withoutAdjustments.length).toBe(6));
 
   it.each(withoutAdjustments.map((f) => [f.name, f] as const))('%s', async (_name, f) => {
     const data = await completeSetup(db, setupFrom(f), '2026-10-15');
@@ -105,12 +105,23 @@ describe('rule 1: a paid debt stays in the plan, and its minimum rolls into the 
     const plan = toPlanInput(data);
     expect(plan.debts.find((d) => d.id === store.id)).toMatchObject({ balance: 0 });
 
-    const before = steps[paidAt - 1]!;
-    const first = (await didPayday(db, data)).step;
-    expect(first.totalToSetAside).toBeCloseTo(before.totalToSetAside, 6);
-    const minimumPerPayday = (store.minMonthly * 12) / 26;
-    expect(first.extra - before.extra).toBeGreaterThan(minimumPerPayday - 0.5);
-    expect(first.minimums).toBeLessThan(before.minimums - minimumPerPayday + 0.5);
+    // After the payoff the payday total keeps its size: what the paid debt's bill asked for goes into the extra,
+    // on the paydays before its due day, so total = every bill due (the paid one too) + the plan money.
+    const input = f.input;
+    const planMoney = input.extra;
+    let rolled = 0;
+    for (let k = 0; k < 4; k++) {
+      const done = await didPayday(db, data);
+      const step = done.step;
+      data = done.data;
+      const nextDate = paydayISO(toPlanInput(data).nextPayday, toPlanInput(data).frequency, (toPlanInput(data).paydayOffset ?? 0) + 1);
+      const nominal = input.debts.reduce((sum, d) => (d.due_day && dueDateIn(d.due_day, step.date, nextDate) ? sum + d.min : sum), 0);
+      expect(step.totalToSetAside).toBeCloseTo(nominal + planMoney, 6);
+      const storeBill = step.debts.find((d) => d.id === store.id)!;
+      expect(storeBill.minimum).toBe(0);
+      if (dueDateIn(5, step.date, nextDate)) rolled++;
+    }
+    expect(rolled).toBeGreaterThanOrEqual(1); // at least one payday where the paid debt's bill rolled into the extra
   });
 
   it('a paid debt is never announced again', async () => {

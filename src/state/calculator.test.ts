@@ -54,7 +54,7 @@ describe('"Change my numbers" starts from the current answers', () => {
     const draft = draftFromData(d);
     expect(draft.nextPayday).toBe('2026-11-06');
     expect(draft.bufferNow).toBe('326.92'); // 200 + (150 - 600/26)
-    expect(Number(draft.debts[1]!.balance)).toBeLessThan(640.5);
+    expect(Number(draft.debts[1]!.balance)).toBeGreaterThan(640.5); // no due day, so no bill: it only grew by interest
   });
 
   it('skips paid debts', async () => {

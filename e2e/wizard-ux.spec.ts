@@ -150,7 +150,7 @@ test('"How we got this" shows the plain math behind the date and the first step'
   for (const name of ['How we got this date']) { // one link only
     await page.getByRole('button', { name }).click();
     const sheet = page.getByRole('dialog', { name: 'How we got this' });
-    await expect(sheet).toContainText('Your minimums: $466 a month. Spread over 26 paydays a year, that is $215.08 each payday.');
+    await expect(sheet).toContainText('Your bills: $466 a month in all. Each one is paid on the payday before its due day, so some paydays have more bills than others. This payday: $285.00.');
     await expect(sheet).toContainText('Yearly bills: $1,100 a year, so $42.31 each payday.');
     await expect(sheet).toContainText('Buffer: $107.69 this payday. It comes first, until it reaches $500. You have $200 now.');
     await expect(sheet).toContainText('Extra for debts: $0.00 this payday. The buffer takes it first.');

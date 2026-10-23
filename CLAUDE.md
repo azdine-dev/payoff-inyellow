@@ -174,7 +174,7 @@ Each feature exists for a reason, so keep the reason when you build it. Details 
   - A bill is a debt whose due day falls from this payday (included) up to the next payday (not included). It shows its **full monthly minimum** and its due date, like "Car loan $285, due 28 Oct". The engine's per-payday average of the minimums is never shown.
   - Total this payday (the "I did it" amount, the first step on the result screen, the Plan list, the CSV and the print page) = those bills + yearly bills + buffer + extra.
   - A debt with a minimum but no due day shows as "Visa $96, add a due day" with a link that sets the day. It is not counted in the total until it has a due day (we can't tell which payday it belongs to).
-  - Pressing "I did it" still applies the engine's step to the balances, so the payoff date does not change.
+  - Pressing "I did it" applies exactly the amounts listed (bills to their debts, extra to the focus debt, buffer and yearly bills to their pots). The plan is simulated again from the new state.
 - Each line has a checkbox, plus one big button "I did it · $370" that ticks everything and turns it yellow.
 - Small links: "I got a different amount" (enter the real amount and the payday recalculates in the same order) and "+ Extra payment" (any extra money goes to the focus debt).
 - Focus debt card: "Store Card · 64% gone · $320 left · gone by Dec 2026".
@@ -238,6 +238,8 @@ Setup → debt-free date → first step only. The schedule, tracker, what-if and
 
 **Port `engine/engine_reference.py` exactly, then make `engine/fixtures.json` pass in your test runner before building any screen.** The app and the Google Sheet bonus must show the same numbers. If you think the model should change, ask Azeddin first and update the reference, the fixtures and the sheet together.
 
+**Model v2 (approved by Azeddin, 24 Oct 2026): bills by due date.** v1 set aside an even "monthly minimum × 12 / ppy" every payday and moved every balance by that average, so a balance went down on paydays when no bill was due. v2 pays the real bill. The reference, `fixtures.json`, `fixtures-edge.json`, `fixtures-random.json` and the app are v2. **The Google Sheet bonus is still v1 and must be rebuilt as v2 before it is sold next to the app** (its dates differ by up to 1 payday).
+
 The model, in one step per payday:
 - `ppy` = paydays per year: weekly 52, every 2 weeks 26, twice a month 24, monthly 12.
 - **Payday dates:**
@@ -246,11 +248,11 @@ The model, in one step per payday:
   - monthly: the same day each month, clamped to the month's end
   - twice a month: two fixed days of the month (`other_payday`; 31 means the last day), capped at the month's end, alternating. Without `other_payday`: a day up to the 15th pairs with day + 15, the last day of a month pairs with the 15th, any other day after the 15th pairs with day - 15. See `twice_a_month_days()` in the reference.
 - **Interest each payday:** `balance × APR / ppy`.
-- **Minimum set aside each payday:** `monthly minimum × 12 / ppy`, capped at what the debt owes. This average lives only inside the engine (for the payoff date). The screens show real bills by due date instead.
+- **Bills (v2):** a debt's bill is its full monthly minimum, paid on the payday before it falls due: a debt whose due day falls in [this payday, next payday) pays its bill that payday, capped at what it owes after interest. Every other debt is not paid down by a minimum that payday (interest still accrues, so its balance goes up). A debt without a due day (or with a 0 minimum) has no bill, so it only goes down when the extra reaches it. The due day is clamped to the month's end. This is exactly what Today lists, what "I did it" applies and what the Plan list shows.
 - **The order money goes each payday.** Available money is `money for the plan` plus any "+/- this payday".
   1. Yearly bills: `sum(yearly costs) / ppy`, capped at what's available.
   2. Buffer: until it reaches the goal.
-  3. Extra to debts: what's left, plus the minimums freed by paid-off debts (the rollover). It goes to debts in payoff order. The focus debt gets all of it, and any overflow goes to the next debt.
+  3. Extra to debts: what's left, plus the bills freed by paid-off debts (the rollover: a paid-off debt's bill is added to the extra on the paydays it would have been due). It goes to debts in payoff order. The focus debt gets all of it, and any overflow goes to the next debt.
 - **New charges:** added to the focus debt of that payday. The focus debt is the debt with the most extra that payday; if no debt got extra, it's the first debt in order.
 - **Payoff orders.** Ties always keep the order the debts were entered.
   - PaidInYellow order: debts that charge interest and whose monthly minimum is at or below their monthly interest go first (highest APR first among them), then the smallest balance first. A 0% debt never counts as growing, even with a $0 minimum.
@@ -264,9 +266,9 @@ The model, in one step per payday:
 **How the real state works in the app.** This was reasoned for the app; the sheet does the same thing with its "Paid" column.
 - The stored state is: current balances, buffer, yearly-bill savings, settings, and the logs (payments, charges, buffer uses).
 - The plan is always simulated **from the current state and the next payday**, so it never drifts.
-- "I did it" applies one engine step with the real numbers (including "+/- this payday" and new charges), saves the resulting balances and buffer, logs the payments, and advances the next payday.
-- Three rules keep the step-by-step app equal to one full simulation (checked with the reference; breaking any of them changes the debt-free date):
-  1. **Paid debts stay in the simulation with balance 0**, so their minimum keeps rolling into the extra. Never drop them. After the first debt is gone, the payday total must stay the same and the extra must grow by that debt's minimum.
+- "I did it" applies one engine step with the real numbers (including "+/- this payday" and new charges): each bill shown goes to its debt, the extra to the focus debt, the buffer and yearly-bill amounts to their pots, and interest accrues per payday as in the engine. A debt with no bill on that payday does not go down. It saves the resulting balances and buffer, logs the payments, and advances the next payday. The plan is then simulated again from the new state.
+- Three rules keep the step-by-step app equal to one full simulation (checked with the reference; breaking any of them changes the debt-free date). In v2 the full simulation and the app use the same step function with the same payday windows, so they match to the cent:
+  1. **Paid debts stay in the simulation with balance 0**, so their bill keeps rolling into the extra on the paydays it would have been due. Never drop them. After the first debt is gone, the payday total must stay (bills due + the plan money), and the extra must grow by that debt's bill on the paydays before its due day.
   2. **Store the payoff order** when the plan is made and keep it. Recompute it only when the user picks a payoff order again or adds or removes a debt. Re-sorting by current balances every payday makes the focus debt jump (it moved the debt-free date by 2 paydays in the twice-a-month fixture).
   3. **Payday dates come from the schedule** (the first payday of the plan plus a payday counter, and the two pay days for twice a month), never from "last payday + step". Twice a month breaks otherwise.
 - "Update from statement" overwrites a balance. "I used the buffer" lowers the buffer. Then the plan re-simulates.

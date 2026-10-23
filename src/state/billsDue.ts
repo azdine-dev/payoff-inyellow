@@ -1,12 +1,11 @@
 /**
  * Bills due between one payday and the next, as the buyer sees them on Today.
  *
- * The engine plans with an average ("minimum x 12 / paydays a year") to get the payoff date.
- * That average stays inside the engine. What the buyer sets aside on a payday is real:
- * the bills whose due day falls between this payday and the next one, each with its full
- * monthly minimum, plus yearly bills, plus buffer and extra.
+ * What the buyer sets aside on a payday is real, and it is also what the engine plans with and what
+ * "I did it" applies: the bills whose due day falls between this payday and the next one, each with its
+ * full monthly minimum, plus yearly bills, plus buffer and extra.
  */
-import { addMonths, daysInMonth, paydayISO, parseISO, toISO, ZERO, type PaydayStep, type PlanResult } from '../engine';
+import { dueDateIn, paydayISO, ZERO, type PaydayStep, type PlanResult } from '../engine';
 import type { AppData, Debt, Settings } from '../data/types';
 import { toCents } from '../lib/money';
 
@@ -45,18 +44,7 @@ export interface BillDebt {
   autopay: boolean;
 }
 
-/** The first date in [from, to) that a bill with this due day is due (clamped to the month's end), or null. */
-export function dueDateIn(dueDay: number, from: string, to: string): string | null {
-  const a = parseISO(from);
-  const b = parseISO(to);
-  const months = (b.y - a.y) * 12 + (b.m - a.m);
-  for (let i = 0; i <= months; i++) {
-    const m = addMonths({ y: a.y, m: a.m, d: 1 }, i);
-    const iso = toISO({ y: m.y, m: m.m, d: Math.min(dueDay, daysInMonth(m.y, m.m)) });
-    if (iso >= from && iso < to) return iso;
-  }
-  return null;
-}
+export { dueDateIn };
 
 /** What is asked for this month: the full minimum, never more than the debt itself. */
 export function billAmount(d: Pick<BillDebt, 'balance' | 'apr' | 'minMonthly'>): number {

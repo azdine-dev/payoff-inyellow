@@ -50,7 +50,7 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const reducedMotion = () => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
 /** "Next payday Fri 7 Nov · 14 days. Nothing to do until then." */
-function CountdownCard(props: { nextDate: string; onShow?: () => void }) {
+function CountdownCard(props: { nextDate: string }) {
   const days = Math.max(0, diffDays(today.value, props.nextDate));
   return (
     <section class="card countdown-card" data-testid="countdown-card">
@@ -62,11 +62,6 @@ function CountdownCard(props: { nextDate: string; onShow?: () => void }) {
         <p>
           Next payday is <b>{shortDate(props.nextDate)}</b>. Nothing to do until then.
         </p>
-        {props.onShow && (
-          <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={props.onShow}>
-            Mark it done early
-          </button>
-        )}
       </div>
     </section>
   );
@@ -90,7 +85,6 @@ export function Today() {
   const [closedMoments, setClosedMoments] = useState<Set<string>>(new Set());
   // Undo lasts 10 seconds.
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
-  const [showEarly, setShowEarly] = useState(false);
   const [backedUp, setBackedUp] = useState(false);
   const [sheet, setSheet] = useState<'amount' | 'extra' | 'redo' | null>(null);
   const [input, setInput] = useState('');
@@ -104,7 +98,6 @@ export function Today() {
   useEffect(() => {
     setChecked(new Set());
     setOverride(null);
-    setShowEarly(false);
   }, [s.paydayIndex]);
 
   useEffect(() => {
@@ -129,14 +122,8 @@ export function Today() {
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
   // Before the payday: a countdown. Done: the yellow card stays until the next payday, even after a reload.
   // The full card shows until the first "I did it", and when the payday is 2 days away or less (early direct deposit).
-  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && !showEarly && doneCount > 0 && diffDays(today.value, nextDate) > 2;
+  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && doneCount > 0 && diffDays(today.value, nextDate) > 2;
   const paidView = justPaid ?? (countdownMode ? paidFromLog(d, nextPaydayNumber(s) - 1) : null);
-  const showEarlyCard = () => {
-    setShowEarly(true);
-    setJustPaid(null);
-    setUndo(null);
-    setPaidIds([]);
-  };
   const isPayday = nextDate === today.value;
 
   const apply = async () => {
@@ -275,8 +262,8 @@ export function Today() {
     if (!focus) return null;
     const order = r.order.filter((id) => d.debts.find((x) => x.id === id)?.status === 'active');
     const next = order[order.indexOf(focus.debt.id) + 1];
-    const freed = (focus.debt.minMonthly * 12) / PAYDAYS_PER_YEAR[s.frequency];
-    return next && freed > 0 ? { amount: formatMoney(freed, cur), to: nameOf(next) } : null;
+    const bill = focus.debt.minMonthly; // its bill rolls into the extra on the paydays before it would have been due
+    return next && bill > 0 ? { amount: formatMoneyAuto(bill, cur), to: nameOf(next) } : null;
   })();
 
   const daily = dailyInterestCost(active);
@@ -345,7 +332,7 @@ export function Today() {
       </button>
 
       {updateReady.value && !updateDismissed.value && (
-        <section class="card soft row" role="status" data-testid="update-bar">
+        <section class="card row" role="status" data-testid="update-bar">
           <span>An update is ready.</span>
           <span class="row" style={{ gap: 14 }}>
             <button type="button" class="link small" onClick={applyUpdate}>
@@ -375,11 +362,11 @@ export function Today() {
               const debt = d.debts.find((x) => x.id === id);
               if (!debt) return null;
               // The minimum this debt took on each payday, which now goes on to the next one
-              const freed = (debt.minMonthly * 12) / PAYDAYS_PER_YEAR[s.frequency];
+              const freed = debt.minMonthly;
               return (
                 <p key={id} class="paid-moment-line">
                   {debt.name} is paid.{' '}
-                  {freed > 0 ? (focus ? `Its ${formatMoney(freed, cur)} per payday now goes to ${focus.debt.name}.` : 'That was your last debt.') : focus ? `Next up: ${focus.debt.name}.` : 'That was your last debt.'}
+                  {freed > 0 ? (focus ? `Its ${formatMoneyAuto(freed, cur)} bill now rolls into the extra for ${focus.debt.name}.` : 'That was your last debt.') : focus ? `Next up: ${focus.debt.name}.` : 'That was your last debt.'}
                 </p>
               );
             })}
@@ -440,7 +427,7 @@ export function Today() {
 
           <section class="card stack" style={{ gap: 10 }} data-testid="after-sentence">
             <p>
-              {afterPaySentence(focus ? { name: focus.debt.name, left: money(focus.left), goneBy: focus.goneBy } : null, untilGone, rollTo)}
+              {afterPaySentence(focus ? { name: focus.debt.name, left: formatMoney(focus.left, cur, { whole: true }), goneBy: focus.goneBy } : null, untilGone, rollTo)}
             </p>
             {focus && (
               <>
@@ -450,7 +437,7 @@ export function Today() {
             )}
           </section>
 
-          {countdownMode && <CountdownCard nextDate={nextDate} onShow={showEarlyCard} />}
+          {countdownMode && <CountdownCard nextDate={nextDate} />}
 
           {showNudge && (
             <section class="nudge" aria-label="Save a copy" data-testid="backup-nudge">
@@ -500,7 +487,7 @@ export function Today() {
           )}
 
           {countdownMode ? (
-            paidView ? null : <CountdownCard nextDate={nextDate} onShow={showEarlyCard} />
+            paidView ? null : <CountdownCard nextDate={nextDate} />
           ) : (
             <section class={`payday-card${busy ? ' swiping' : ''}`} aria-labelledby="payday-title">
               <p id="payday-title" class="pc-label">
@@ -598,7 +585,7 @@ export function Today() {
               </div>
               <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
               <p class="muted" data-testid="focus-sentence">
-                {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx)}
+                {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
               </p>
               <p class="muted small" data-testid="focus-why">
                 {whyFirst(s.method, growingNow.has(focus.debt.id))}
