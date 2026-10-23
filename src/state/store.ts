@@ -32,6 +32,8 @@ export const editSeed = signal<Draft | null>(null);
 
 /** A new version of the app is downloaded and waiting. Applied only when the buyer taps "Restart". */
 export const updateReady = signal(false);
+/** "Not now" on the update bar on Today: hidden until the app is opened again */
+export const updateDismissed = signal(false);
 export let applyUpdate: () => void = () => location.reload();
 export function setApplyUpdate(fn: () => void): void {
   applyUpdate = fn;

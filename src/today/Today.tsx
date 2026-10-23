@@ -20,7 +20,8 @@ import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
 import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput } from '../state/planInput';
-import { act, data, freshMilestones, getDB, plan, tab, today } from '../state/store';
+import { useCountUp } from '../ui/useCountUp';
+import { act, applyUpdate, data, freshMilestones, getDB, plan, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -107,6 +108,7 @@ export function Today() {
   const bills = useMemo(() => billsForNextPayday(d), [d]);
   const { rows, total, noDueDay } = row ? mergedRows(row, d, bills) : { rows: [], total: 0, noDueDay: [] };
   const extra = row ? extraSummary(row, d) : null;
+  const shownTotal = useCountUp(total);
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
@@ -303,6 +305,20 @@ export function Today() {
         <ChevronRight />
       </button>
 
+      {updateReady.value && !updateDismissed.value && (
+        <section class="card soft row" role="status" data-testid="update-bar">
+          <span>An update is ready.</span>
+          <span class="row" style={{ gap: 14 }}>
+            <button type="button" class="link small" onClick={applyUpdate}>
+              Restart now
+            </button>
+            <button type="button" class="link small" aria-label="Dismiss the update bar" onClick={() => (updateDismissed.value = true)}>
+              Not now
+            </button>
+          </span>
+        </section>
+      )}
+
       {backupReminder(d) && !justPaid && (
         <section class="card soft row" aria-label="Backup reminder">
           <span>Save a backup file. Takes 5 seconds.</span>
@@ -445,7 +461,7 @@ export function Today() {
                 {missed > 0 ? 'Your last payday, move' : 'This payday, move'}
               </p>
               <p class="pc-total num" data-testid="payday-total">
-                {money(total)}
+                {money(shownTotal)}
               </p>
               {extra ? (
                 <p class="pc-sub" data-testid="extra-sentence">

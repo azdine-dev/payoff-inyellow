@@ -17,6 +17,7 @@ import {
 import { minimumsPerPayday, PAYDAYS_PER_YEAR } from '../engine';
 import { activeDebts } from '../state/planInput';
 import { act, data, today } from '../state/store';
+import { useCountUp } from '../ui/useCountUp';
 import { Bar, Checkbox, ChevronRight, Field, Note, NumberInput, Sheet } from '../ui/controls';
 
 type Mode = 'use-buffer' | 'goal' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
@@ -85,6 +86,7 @@ export function Money() {
   const setIdeaAmount = (key: string, v: string) =>
     act((db, x) => saveFindMoney(db, x, items.map((i) => (i.key === key ? { ...i, amount: parseAmount(v) } : i))));
 
+  const shownBuffer = useCountUp(d.buffer.amount);
   const ready = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
   const perYearTotal = d.funds.reduce((sum, f) => sum + f.perYear, 0);
   const eachPayday = perYearTotal / PAYDAYS_PER_YEAR[s.frequency];
@@ -100,7 +102,7 @@ export function Money() {
         </p>
         <div class="row" style={{ justifyContent: 'flex-start', alignItems: 'baseline', gap: 10 }}>
           <span class="buffer-big num" data-testid="buffer-amount">
-            {money(d.buffer.amount, cur)}
+            {money(shownBuffer, cur)}
           </span>{' '}
           <span class="muted">
             of {formatMoney(s.bufferGoal, cur, { whole: true })}

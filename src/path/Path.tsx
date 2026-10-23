@@ -18,6 +18,7 @@ import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/
 import { act, data, plan, today } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
 import { Chart } from '../progress/Chart';
+import { useCountUp } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
 import { PaydayListSheet } from './PaydayListSheet';
 import { WhatIfSheet } from './WhatIfSheet';
@@ -64,6 +65,7 @@ export function Path() {
   const avoided = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
   const paydaysLeft = r.paydaysToDebtFree;
   const pct = Math.floor(stats.pct);
+  const shownPct = useCountUp(pct);
 
   // Payday grid: 2 squares already yellow, then done and skipped paydays, then what is ahead
   const past = d.paydays;
@@ -136,7 +138,7 @@ export function Path() {
       <section class="card stack" aria-label="Paid so far">
         <div class="row" style={{ alignItems: 'baseline' }}>
           <p class="path-pct num" data-testid="pct-gone">
-            {pct}%
+            {Math.round(shownPct)}%
           </p>
           <span class="muted">gone</span>
         </div>

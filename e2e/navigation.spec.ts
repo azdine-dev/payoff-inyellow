@@ -85,9 +85,9 @@ test('the active tab sits on a soft pill, and nothing in the tab bar is yellow',
 test('the old shortcuts still land on the right view', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('button', { name: 'Path tab' }).click(); // "Your payoff order is on the Path tab"
-  await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
-  await expect(page.getByText('Order: smallest first')).toBeVisible();
+  await page.getByRole('button', { name: 'Change Payoff order' }).click(); // the order is a row in Settings now
+  await expect(page.getByRole('radio', { name: /PaidInYellow order/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await goTab(page, 'Progress');
   await expect(page.getByTestId('whats-ahead')).toBeVisible();
   await goTab(page, 'Money');

@@ -448,8 +448,12 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   });
 
   await test.step('Dark mode and a larger text size: nothing cut off, still no red', async () => {
+    await page.getByRole('button', { name: 'Change Theme' }).click();
     await page.getByRole('radio', { name: 'Dark' }).click();
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
+    await page.getByRole('button', { name: 'Change Text size' }).click();
     await page.getByRole('radio', { name: 'Larger' }).click();
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe('20.8px');
     await expectBrandRules(page);

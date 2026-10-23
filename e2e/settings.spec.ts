@@ -22,7 +22,7 @@ test('a backup restores the same plan on a fresh phone', async ({ page, browser 
   const path = info.outputPath('backup.json');
   await download.saveAs(path);
   await expect(page.getByText('Saved. Keep the file somewhere safe')).toBeVisible();
-  await expect(page.getByTestId('last-backup')).toHaveText('Last saved Thu 15 Oct.');
+  await expect(page.getByTestId('last-backup')).toHaveText('Last saved today.');
 
   // A different phone: nothing there yet
   const ctx = await browser.newContext({ ...info.project.use });
@@ -64,6 +64,7 @@ test('an unlock code is checked on the phone', async ({ page }) => {
   await quickSetup(page, { unlock: false });
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText('The calendar file with your paydays and due dates comes with the full planner.')).toBeVisible();
+  await page.getByRole('button', { name: 'Open Unlock code' }).click();
   await page.getByRole('textbox', { name: 'Code' }).fill('hello');
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();
   await expect(page.getByText('This code looks incomplete.')).toBeVisible();
@@ -80,8 +81,12 @@ test('an unlock code is checked on the phone', async ({ page }) => {
 test('dark mode and a larger text size apply at once and stay after a reload', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Change Theme' }).click();
   await page.getByRole('radio', { name: 'Dark' }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await page.getByRole('button', { name: 'Change Text size' }).click();
   await page.getByRole('radio', { name: 'Larger' }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(31, 42, 68)');
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe('20.8px');
@@ -127,6 +132,7 @@ test('a calm backup reminder shows after 30 days and goes away once saved', asyn
 test('help answers and the support email are there', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Open Questions and answers' }).click();
   await page.getByText('What if I lose my device or clear my browser?').click();
   await expect(page.getByText('Save a backup from Settings once a month')).toBeVisible();
   await expect(page.getByRole('link', { name: 'support@paidinyellow.com' })).toHaveAttribute('href', 'mailto:support@paidinyellow.com');

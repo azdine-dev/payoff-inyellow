@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { buildBackup, backupFilename } from '../data/backup';
 import { eraseEverything } from '../data/erase';
 import type { TextSize, Theme } from '../data/types';
+import type { PayoffMethod } from '../engine';
 import { FREQUENCIES, otherPaydayFrom, twiceDays, twiceFromSchedule, twiceNotes, type TwicePair } from '../setup/draft';
 import { TwicePicker } from '../setup/TwicePicker';
 import { downloadText } from '../lib/csv';
@@ -12,8 +13,9 @@ import { HARDSHIP_SCRIPT_URL, SUPPORT_EMAIL, VIDEO_URL } from '../lib/config';
 import { cleanCode, verifyCode } from '../lib/license';
 import { CURRENCY_CHOICES, currencyFromCode, formatMoney, parseAmount, symbolFor } from '../lib/money';
 import { TEXT_SIZE_LABELS } from '../lib/appearance';
-import { shortDate, timeLabel, WEEKDAYS } from '../lib/today';
+import { diffDays, shortDate, timeLabel, WEEKDAYS } from '../lib/today';
 import { setBufferGoal, setPaycheck } from '../state/moneyActions';
+import { setMethod } from '../state/planActions';
 import { nextPaydayISO } from '../state/planInput';
 import { changeSchedule, clearLicense, markBackedUp, saveLicense, setAppearance, setCurrency, setExtraPerPayday, setIfThen } from '../state/settingsActions';
 import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, licenseState, tab, today, updateReady, view } from '../state/store';
@@ -21,11 +23,10 @@ import { Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 import { FAQ, INSTALL_HELP } from './faq';
 import { downloadBackup } from '../state/backupActions';
 import { RestoreButton } from './Restore';
-import { pathView } from '../path/Path';
 import { SyncSection } from './SyncSection';
 import { syncOn } from '../sync/controller';
 
-type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | null;
+type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | 'order' | 'theme' | 'text' | 'faq' | 'install' | 'code' | 'about' | null;
 
 const THEMES: { value: Theme; label: string }[] = [
   { value: 'auto', label: 'Match my device' },
@@ -134,10 +135,17 @@ export function Settings() {
   const theme = (v: Theme) => act((db, x) => setAppearance(db, x, v, x.settings.textSize));
   const size = (v: TextSize) => act((db, x) => setAppearance(db, x, x.settings.theme, v));
   const lastBackup = s.lastBackupAt ? new Date(s.lastBackupAt).toISOString().slice(0, 10) : null;
+  const backedUpAgo = (() => {
+    if (!lastBackup) return 'You haven’t saved a backup yet.';
+    const days = Math.max(0, diffDays(lastBackup, today.value));
+    return `Last saved ${days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`}.`;
+  })();
+  const choose = (m: PayoffMethod) => act((db, x) => setMethod(db, x, m));
+  const orderName = { paidinyellow: 'Smallest first', 'biggest-interest': 'Biggest interest first', 'my-order': 'My own order' }[s.method];
   const ifThenText = s.ifThen.day === 'payday' ? `Every payday at ${timeLabel(s.ifThen.time)}` : `${s.ifThen.day} at ${timeLabel(s.ifThen.time)}`;
   const freqLabel = FREQUENCIES.find((f) => f.value === s.frequency)?.label ?? '';
 
-  const row = (label: string, value: string, which: Exclude<Edit, null>) => (
+  const row = (label: string, value: string, which: Exclude<Edit, null>, action = 'Change') => (
     <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
       <span>
         <span class="muted small" style={{ display: 'block' }}>
@@ -147,8 +155,8 @@ export function Settings() {
           {value}
         </span>
       </span>
-      <button type="button" class="link small" aria-label={`Change ${label}`} onClick={() => open(which)}>
-        Change
+      <button type="button" class="link small" aria-label={`${action} ${label}`} onClick={() => open(which)}>
+        {action}
       </button>
     </div>
   );
@@ -177,159 +185,83 @@ export function Settings() {
         {row('Money for the plan each payday', formatMoney(s.extraPerPayday, cur, { whole: Number.isInteger(s.extraPerPayday) }), 'extra')}
         {row('Buffer goal', formatMoney(s.bufferGoal, cur, { whole: Number.isInteger(s.bufferGoal) }), 'goal')}
         {row('Usual paycheck', s.paycheckAmount ? formatMoney(s.paycheckAmount, cur, { whole: Number.isInteger(s.paycheckAmount) }) : 'Not set', 'paycheck')}
+        {row('Payoff order', orderName, 'order')}
         {row('Currency', cur.code ? `${cur.code} (${cur.symbol})` : cur.symbol, 'currency')}
-        {row('Payday check', ifThenText, 'ifthen')}
-        <p class="muted small" style={{ marginTop: 8 }}>
-          Your payoff order is on the{' '}
-          <button type="button" class="link small" onClick={() => { pathView.value = 'plan'; tab.value = 'path'; }}>
-            Path tab
-          </button>
-          .
-        </p>
+        {row('Payday reminder', ifThenText, 'ifthen')}
+        {licenseState.value !== 'unlocked' && (
+          <p class="muted small" style={{ borderTop: '1px dashed var(--line)', paddingTop: 10 }}>
+            The calendar file with your paydays and due dates comes with the full planner.
+          </p>
+        )}
+        {licenseState.value === 'unlocked' && (
+          <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+            <span>
+              <span class="muted small" style={{ display: 'block' }}>
+                Calendar file
+              </span>
+              <span style={{ fontWeight: 600 }}>Paydays, reminder and due dates</span>
+            </span>
+            <button type="button" class="link small" onClick={exportCalendar}>
+              Add to my calendar
+            </button>
+          </div>
+        )}
       </section>
 
       <section class="card stack" aria-labelledby="set-backup">
-        <h2 id="set-backup">Backup</h2>
+        <h2 id="set-backup">Keep it safe</h2>
         <p class="muted">Your plan lives only on this device. A backup file lets you restore it on this device or a new one.</p>
         <p class="small" data-testid="last-backup">
-          {lastBackup ? `Last saved ${shortDate(lastBackup)}.` : 'You haven’t saved a backup yet.'}
+          {backedUpAgo}
         </p>
         <button type="button" class="btn" onClick={saveBackup}>
           Back up my plan
         </button>
         {backupMsg && <Note>{backupMsg}</Note>}
         <RestoreButton />
-      </section>
-
-      {licenseState.value === 'unlocked' ? (
-        <section class="card stack" aria-labelledby="set-cal">
-          <h2 id="set-cal">Calendar</h2>
-          <p class="muted">
-            A calendar file with your paydays, your payday check at {timeLabel(s.ifThen.time)}, and each due date with a reminder 3 days before. It covers the next 12 months.
-          </p>
-          <button type="button" class="btn ghost" onClick={exportCalendar}>
-            Add to my calendar
+        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+          <span style={{ fontWeight: 600 }}>Put it on your phone</span>
+          <button type="button" class="link small" onClick={() => open('install')}>
+            {isInstalled() ? 'It’s installed' : 'How'}
           </button>
-          <p class="muted small">Events don’t change after you add them. Add the file again after big changes to your plan.</p>
-        </section>
-      ) : (
-        <section class="card stack" aria-labelledby="set-cal">
-          <h2 id="set-cal">Calendar</h2>
-          <p class="muted">The calendar file with your paydays and due dates comes with the full planner.</p>
-        </section>
-      )}
-
-      <section class="card stack" aria-labelledby="set-look">
-        <h2 id="set-look">Appearance</h2>
-        <div class="stack" role="radiogroup" aria-label="Theme" style={{ gap: 8 }}>
-          {THEMES.map((t) => (
-            <Choice key={t.value} checked={s.theme === t.value} onSelect={() => theme(t.value)} title={t.label} />
-          ))}
         </div>
-        <p class="label" style={{ marginTop: 6 }}>
-          Text size
-        </p>
-        <div class="stack" role="radiogroup" aria-label="Text size" style={{ gap: 8 }}>
-          {([0, 1, 2, 3] as TextSize[]).map((v) => (
-            <Choice key={v} checked={s.textSize === v} onSelect={() => size(v)} title={TEXT_SIZE_LABELS[v]} />
-          ))}
-        </div>
-      </section>
-
-      <section class="card stack" aria-labelledby="set-install">
-        <h2 id="set-install">Put it on your phone</h2>
-        {isInstalled() ? (
-          <p>It’s on your Home Screen. It opens like any other app and works without internet.</p>
-        ) : (
-          <>
-            {installPrompt.value && (
-              <button
-                type="button"
-                class="btn"
-                onClick={async () => {
-                  await installPrompt.value!.prompt();
-                  installPrompt.value = null;
-                }}
-              >
-                Install the app
-              </button>
-            )}
-            <p>
-              <b>iPhone:</b> {INSTALL_HELP.iphone}
-            </p>
-            <p>
-              <b>Android:</b> {INSTALL_HELP.android}
-            </p>
-          </>
-        )}
-        <p class="muted small">{INSTALL_HELP.why}</p>
-      </section>
-
-      <section class="card stack" aria-labelledby="set-code">
-        <h2 id="set-code">Unlock code</h2>
-        {s.license ? (
-          <>
-            <p data-testid="unlocked">Unlocked. Thank you.</p>
-            <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => act((db, x) => clearLicense(db, x))}>
-              Remove the code from this device
-            </button>
-          </>
-        ) : (
-          <>
-            <p class="muted">Your code came with your purchase. Paste it here. It’s checked on this device, with no internet needed.</p>
-            <Field label="Code">
-              <input type="text" autoCapitalize="off" autoCorrect="off" spellcheck={false} value={code} onInput={(e) => setCode((e.target as HTMLInputElement).value)} />
-            </Field>
-            {codeMsg && <Note>{codeMsg}</Note>}
-            <button type="button" class="btn ghost" onClick={checkCode}>
-              Unlock
-            </button>
-          </>
-        )}
       </section>
 
       <SyncSection />
 
-      <section class="card stack" aria-labelledby="set-help">
+      <section class="card" aria-labelledby="set-look">
+        <h2 id="set-look">Look</h2>
+        {row('Theme', THEMES.find((t) => t.value === s.theme)?.label ?? '', 'theme')}
+        {row('Text size', TEXT_SIZE_LABELS[s.textSize], 'text')}
+      </section>
+
+      <section class="card" aria-labelledby="set-help">
         <h2 id="set-help">Help</h2>
-        <div>
-          {FAQ.map((f) => (
-            <details key={f.q} class="faq">
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </details>
-          ))}
+        {row('Questions and answers', 'FAQ', 'faq', 'Open')}
+        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+          <span>
+            <span class="muted small" style={{ display: 'block' }}>
+              Email support
+            </span>
+            <span style={{ fontWeight: 600 }}>{SUPPORT_EMAIL}</span>
+          </span>
+          <a class="link small" href={`mailto:${SUPPORT_EMAIL}`}>
+            Write
+          </a>
         </div>
-        <p>
-          Still stuck? Email{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. A screenshot helps.
-        </p>
-        {VIDEO_URL && (
-          <a href={VIDEO_URL} target="_blank" rel="noopener">
-            {COPY.watchVideo}
-          </a>
-        )}
-        {HARDSHIP_SCRIPT_URL && (
-          <a href={HARDSHIP_SCRIPT_URL} target="_blank" rel="noopener">
-            What to say when you call your lenders
-          </a>
-        )}
+        {row('Unlock code', s.license ? 'Unlocked. Thank you.' : 'Not unlocked', 'code', 'Open')}
+        {row('About and disclaimer', 'Privacy, and what this is', 'about', 'Open')}
+        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+          <span style={{ fontWeight: 600 }}>Erase everything</span>
+          <button type="button" class="link small" onClick={() => { setAlsoCode(false); setErasing(true); }}>
+            Erase everything and start over
+          </button>
+        </div>
       </section>
 
-      <section class="card stack" aria-labelledby="set-over">
-        <h2 id="set-over">Start over</h2>
-        <p class="muted">Erase your plan from this device and begin again with a clean setup.</p>
-        <button type="button" class="btn ghost" onClick={() => { setAlsoCode(false); setErasing(true); }}>
-          Erase everything and start over
-        </button>
-      </section>
-
-      <section class="card stack" aria-labelledby="set-about">
-        <h2 id="set-about">About</h2>
-        <p>{syncOn.value ? COPY.privacySynced : COPY.privacy}</p>
-        <p class="muted">{COPY.disclaimer}</p>
-        <p class="muted small">PaidInYellow · one paycheck at a time</p>
-      </section>
+      <p class="muted small" style={{ textAlign: 'center' }}>
+        PaidInYellow · one paycheck at a time
+      </p>
 
       <Sheet open={erasing} onClose={() => setErasing(false)} title="Erase everything?">
         <p>
@@ -448,6 +380,131 @@ export function Settings() {
         </button>
         <button type="button" class="link" onClick={close}>
           Cancel
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'order'} onClose={close} title="Which debt first?">
+        <div class="stack" role="radiogroup" aria-label="Payoff order" style={{ gap: 8 }}>
+          <Choice checked={s.method === 'paidinyellow'} onSelect={() => choose('paidinyellow')} title="PaidInYellow order" sub="Smallest first. Debts that grow go first." />
+          <Choice checked={s.method === 'biggest-interest'} onSelect={() => choose('biggest-interest')} title="Biggest interest first" sub="Highest rate first." />
+          <Choice checked={s.method === 'my-order'} onSelect={() => choose('my-order')} title="My own order" sub="The order your debts are in on the Debts tab." />
+        </div>
+        <button type="button" class="btn" onClick={close}>
+          Done
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'theme'} onClose={close} title="Theme">
+        <div class="stack" role="radiogroup" aria-label="Theme" style={{ gap: 8 }}>
+          {THEMES.map((t) => (
+            <Choice key={t.value} checked={s.theme === t.value} onSelect={() => theme(t.value)} title={t.label} />
+          ))}
+        </div>
+        <button type="button" class="btn" onClick={close}>
+          Done
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'text'} onClose={close} title="Text size">
+        <div class="stack" role="radiogroup" aria-label="Text size" style={{ gap: 8 }}>
+          {([0, 1, 2, 3] as TextSize[]).map((v) => (
+            <Choice key={v} checked={s.textSize === v} onSelect={() => size(v)} title={TEXT_SIZE_LABELS[v]} />
+          ))}
+        </div>
+        <button type="button" class="btn" onClick={close}>
+          Done
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'faq'} onClose={close} title="Questions and answers">
+        <div>
+          {FAQ.map((f) => (
+            <details key={f.q} class="faq">
+              <summary>{f.q}</summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+        <p>
+          Still stuck? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. A screenshot helps.
+        </p>
+        {VIDEO_URL && (
+          <a href={VIDEO_URL} target="_blank" rel="noopener">
+            {COPY.watchVideo}
+          </a>
+        )}
+        {HARDSHIP_SCRIPT_URL && (
+          <a href={HARDSHIP_SCRIPT_URL} target="_blank" rel="noopener">
+            What to say when you call your lenders
+          </a>
+        )}
+        <button type="button" class="link" onClick={close}>
+          Close
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'install'} onClose={close} title="Put it on your phone">
+        {isInstalled() ? (
+          <p>It’s on your Home Screen. It opens like any other app and works without internet.</p>
+        ) : (
+          <>
+            {installPrompt.value && (
+              <button
+                type="button"
+                class="btn"
+                onClick={async () => {
+                  await installPrompt.value!.prompt();
+                  installPrompt.value = null;
+                }}
+              >
+                Install the app
+              </button>
+            )}
+            <p>
+              <b>iPhone:</b> {INSTALL_HELP.iphone}
+            </p>
+            <p>
+              <b>Android:</b> {INSTALL_HELP.android}
+            </p>
+          </>
+        )}
+        <p class="muted small">{INSTALL_HELP.why}</p>
+        <button type="button" class="link" onClick={close}>
+          Close
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'code'} onClose={close} title="Unlock code">
+        {s.license ? (
+          <>
+            <p data-testid="unlocked">Unlocked. Thank you.</p>
+            <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => act((db, x) => clearLicense(db, x))}>
+              Remove the code from this device
+            </button>
+          </>
+        ) : (
+          <>
+            <p class="muted">Your code came with your purchase. Paste it here. It’s checked on this device, with no internet needed.</p>
+            <Field label="Code">
+              <input type="text" autoCapitalize="off" autoCorrect="off" spellcheck={false} value={code} onInput={(e) => setCode((e.target as HTMLInputElement).value)} />
+            </Field>
+            {codeMsg && <Note>{codeMsg}</Note>}
+            <button type="button" class="btn ghost" onClick={checkCode}>
+              Unlock
+            </button>
+          </>
+        )}
+        <button type="button" class="link" onClick={close}>
+          Close
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'about'} onClose={close} title="About and disclaimer">
+        <p>{syncOn.value ? COPY.privacySynced : COPY.privacy}</p>
+        <p class="muted">{COPY.disclaimer}</p>
+        <p class="muted small">PaidInYellow · one paycheck at a time</p>
+        <button type="button" class="link" onClick={close}>
+          Close
         </button>
       </Sheet>
     </main>
