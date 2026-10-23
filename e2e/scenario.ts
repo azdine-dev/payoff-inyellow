@@ -43,7 +43,11 @@ export async function goTab(page: Page, name: 'Today' | 'Path' | 'Debts' | 'Safe
 
 /** Taps "I did it". If the payday is still ahead, the app asks once: answer yes. */
 export async function tapDidIt(page: Page) {
-  await page.getByRole('button', { name: /^I did it/ }).click();
+  const btn = page.getByRole('button', { name: /^I did it/ });
+  const early = page.getByRole('button', { name: 'Paid early? Show this payday' });
+  await btn.or(early).first().waitFor();
+  if (await early.isVisible()) await early.click();
+  await btn.click();
   await page.getByRole('button', { name: 'Yes, mark it done' }).click({ timeout: 1500 }).catch(() => undefined);
 }
 

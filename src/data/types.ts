@@ -146,6 +146,8 @@ export interface PaydayLog extends Meta {
   plannedTotal?: number;
   /** Total debt left after this payday */
   debtLeft?: number;
+  /** What the debt cost per day (interest) when this payday was done, for "last month $3.48" on Today */
+  dailyCost?: number;
   /** The bills that were due between this payday and the next, as shown on Today */
   bills?: { debtId: string; name: string; amount: number; due: string }[];
 }

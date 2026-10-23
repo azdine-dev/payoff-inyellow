@@ -3,6 +3,7 @@
  * returns the new AppData. The screens call these through store.ts.
  */
 import {
+  dailyInterestCost,
   paydayNumberOnOrAfter,
   payoffOrderIds,
   preparePlan,
@@ -230,7 +231,7 @@ export async function didPayday(
     }
   }
 
-  const log: PaydayLog = { id: `payday-${number}`, updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
+  const log: PaydayLog = { id: `payday-${number}`, updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, dailyCost: dailyInterestCost(activeDebts(data)), bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
   // One-off money planned for this payday is used now
   const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1);
   const settings: Settings = { ...s, oneOffs, paydayIndex: s.paydayIndex + 1, updatedAt: now };

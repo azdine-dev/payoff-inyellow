@@ -33,7 +33,7 @@ test('a backup restores the same plan on a fresh phone', async ({ page, browser 
   await expect(other.getByRole('dialog')).toContainText('2 debts, 1 payday logged, last paid Fri 23 Oct');
   await other.getByRole('button', { name: 'Restore it', exact: true }).click();
   await expect(other.getByTestId('debt-free-pill')).toHaveText(pill!);
-  await expect(other.getByText('Fri 6 Nov')).toBeVisible();
+  await expect(other.getByTestId('greeting')).toContainText('Fri 6 Nov');
   await ctx.close();
 });
 

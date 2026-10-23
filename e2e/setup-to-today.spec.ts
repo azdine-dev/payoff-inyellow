@@ -71,14 +71,14 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await page.getByRole('button', { name: 'Start my plan' }).click();
 
   // Today: payday 1 of the fixture
-  await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free · Oct 2028');
+  await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Oct 2028');
   // The bills due before the next payday, each with its full monthly minimum and its due date
-  await expect(page.getByRole('checkbox', { name: 'Medical bill $50, due 1 Nov' })).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: 'Store card $35, due 5 Nov' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Medical bill.*due Sun 1 Nov/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Store card.*due Thu 5 Nov/ })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Visa|Car loan/ })).toHaveCount(0); // due after the next payday, or before this one
   await expect(page.getByText(/Minimums due/)).toHaveCount(0); // the per-payday average stays inside the engine
   await expect(page.getByRole('checkbox', { name: /Yearly bills.*\$42\.31/ })).toBeVisible();
-  await expect(page.getByRole('checkbox', { name: /Buffer \(\$200 of \$500\).*\$107\.69/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Buffer.*\$200 of \$500.*\$107\.69/ })).toBeVisible();
   const didIt = page.getByRole('button', { name: 'I did it · $235' }); // 85 + 42.31 + 107.69
   await expect(didIt).toBeVisible();
   await shot(page, '07-today');
@@ -86,13 +86,12 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await didIt.click();
   await page.getByRole('button', { name: 'Yes, mark it done' }).click(); // the payday is still a week away
   await expect(page.getByRole('status').filter({ hasText: 'Fri 23 Oct is paid.' })).toContainText('Next payday: Fri 6 Nov.');
-  await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free · Oct 2028');
+  await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Oct 2028');
   await shot(page, '08-paid');
 
   // Everything stays after a reload (IndexedDB)
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Next payday' })).toBeVisible();
-  await expect(page.getByText('Fri 6 Nov')).toBeVisible();
+  await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 6 Nov.');
 });
 
 test('the wizard keeps what was typed after a reload', async ({ page }) => {
@@ -130,7 +129,7 @@ async function quickSetup(page: Page) {
 test('missed payday, extra payment and a different amount stay calm', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-15T10:00:00'));
   await quickSetup(page);
-  await expect(page.getByRole('checkbox', { name: /Extra →.*Store card.*\$150/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Store card.*Extra \$150/ })).toBeVisible();
 
   // No due days were entered: the bills are listed but not counted, with a way to add the day
   await expect(page.getByText('Visa $96,')).toBeVisible();
@@ -151,7 +150,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await expect(page.getByRole('dialog')).toContainText('It’s on your statement.');
   await page.getByRole('textbox', { name: 'Day of the month' }).fill('5');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('checkbox', { name: 'Store card $35, due 5 Nov' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Store card.*due Thu 5 Nov/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$185'); // 35 + 150
 
   // The payday goes by without a check
@@ -161,8 +160,8 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await shot(page, '09-missed');
   await page.getByRole('button', { name: 'I skipped it' }).click();
   await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Next payday' })).toBeVisible();
-  await expect(page.locator('#payday-title + span')).toHaveText('Fri 6 Nov');
+  await expect(page.getByTestId('payday-total')).toBeVisible();
+  await expect(page.getByText('Fri 6 Nov').first()).toBeVisible();
 
   // Extra money pays off the focus debt
   await page.getByRole('button', { name: '+ Extra payment' }).click();
@@ -222,7 +221,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
 
   // Today refills the buffer first
   await page.getByRole('button', { name: 'Today' }).click();
-  await expect(page.getByRole('checkbox', { name: /Buffer \(\$300 of \$500\)/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Buffer.*\$300 of \$500/ })).toBeVisible();
 });
 
 test('plan and progress: what-if applies, paid paydays turn yellow, milestones are kept', async ({ page }) => {

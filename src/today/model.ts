@@ -3,7 +3,7 @@ import { ZERO, type PaydayStep, type PlanResult } from '../engine';
 import type { AppData, Debt } from '../data/types';
 import { formatMoney, formatMoneyAuto, toCents } from '../lib/money';
 import { totalOf, type BillsWindow } from '../state/billsDue';
-import { dayMonth, diffDays, nextDueDate, shortDate } from '../lib/today';
+import { addDaysISO, dayMonth, diffDays, monthYear, nextDueDate, shortDate } from '../lib/today';
 
 export interface PaydayLine {
   key: string;
@@ -132,4 +132,113 @@ export function comingUp(data: AppData, today: string): DueItem[] {
 
 export function dueLine(i: DueItem, data: AppData): string {
   return `${i.name} due ${shortDate(i.date)} · ${formatMoney(i.amount, data.settings.currency, { whole: Number.isInteger(i.amount) })}${i.autopay ? ' (autopay)' : ''}`;
+}
+
+
+// ------------------------------------------------------------------ the payday card (docs/ux-v2/ux-v2.md section 3)
+
+export interface PayRow {
+  key: string;
+  kind: 'debt' | 'yearly' | 'buffer';
+  /** "Store Card" */
+  title: string;
+  /** "Bill $35 + extra $250 · due Sun 2 Nov" */
+  sub: string;
+  /** What the card says once it is paid: "Store Card, bill + extra" */
+  paidLabel: string;
+  /** Rounded to cents, so the total always equals the sum of the rows */
+  amount: number;
+  debtId?: string;
+}
+
+/**
+ * One row per debt (its bill and its extra together), then the yearly bills pot, then the buffer. The amounts
+ * add up to the total of the payday exactly: bills + yearly bills + buffer + extra.
+ */
+export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): { rows: PayRow[]; total: number; noDueDay: BillsWindow['noDueDay'] } {
+  const debts = debtMap(data);
+  const cur = data.settings.currency;
+  const money = (n: number) => formatMoneyAuto(n, cur);
+  const extras = new Map<string, number>();
+  for (const d of row.debts) if (toCents(d.extra) > 0) extras.set(d.id, toCents(d.extra));
+
+  const rows: PayRow[] = [];
+  const done = new Set<string>();
+  for (const b of bills.due) {
+    const extra = extras.get(b.debtId) ?? 0;
+    done.add(b.debtId);
+    const auto = b.autopay ? ' · autopay' : '';
+    rows.push({
+      key: `debt-${b.debtId}`,
+      kind: 'debt',
+      title: b.name,
+      sub: extra > 0 ? `Bill ${money(b.amount)} + extra ${money(extra)} · due ${shortDate(b.due)}${auto}` : `Bill, due ${shortDate(b.due)}${auto}`,
+      paidLabel: extra > 0 ? `${b.name}, bill + extra` : `${b.name} bill`,
+      amount: toCents(b.amount) + extra,
+      debtId: b.debtId,
+    });
+  }
+  for (const d of row.debts) {
+    const extra = extras.get(d.id);
+    if (!extra || done.has(d.id)) continue;
+    const name = debts.get(d.id)?.name ?? '';
+    rows.push({ key: `debt-${d.id}`, kind: 'debt', title: name, sub: `Extra ${money(extra)}`, paidLabel: `${name}, extra`, amount: extra, debtId: d.id });
+  }
+  if (toCents(row.toYearlyBills) > 0) {
+    const names = data.funds.map((f) => f.name);
+    const shown = names.length > 3 ? `${names.slice(0, 3).join(', ')}…` : names.join(', ');
+    rows.push({ key: 'yearly', kind: 'yearly', title: 'Yearly bills pot', sub: shown, paidLabel: 'Yearly bills pot', amount: toCents(row.toYearlyBills) });
+  }
+  if (toCents(row.toBuffer) > 0) {
+    const sub = `${formatMoney(data.buffer.amount, data.settings.currency, { whole: true })} of ${formatMoney(data.settings.bufferGoal, data.settings.currency, { whole: true })}`;
+    rows.push({ key: 'buffer', kind: 'buffer', title: 'Buffer', sub, paidLabel: 'Buffer', amount: toCents(row.toBuffer) });
+  }
+  return { rows, total: totalOf(bills, row), noDueDay: bills.noDueDay };
+}
+
+/** "The extra $250 goes to Store Card": the extra that goes to debts this payday, and where. Null when the buffer takes it. */
+export function extraSummary(row: PaydayStep, data: AppData): { amount: number; target: string } | null {
+  const amount = row.debts.reduce((sum, d) => sum + toCents(d.extra), 0);
+  if (amount <= 0 || !row.extraGoesTo) return null;
+  return { amount, target: debtMap(data).get(row.extraGoesTo)?.name ?? '' };
+}
+
+/** True when the payday that matters is far enough ahead that the last one is done: the card is a countdown, not a button. */
+export function betweenPaydays(data: AppData, nextDate: string, nextNumber: number, today: string): boolean {
+  if (nextDate <= today) return false;
+  return data.paydays.some((p) => p.number === nextNumber - 1 && p.status === 'done');
+}
+
+/** "64% gone. After today, one payday left." for the focus debt. */
+export function focusSentence(pctGone: number, paydaysAfterToday: number | null): string {
+  const gone = `${Math.floor(pctGone)}% gone.`;
+  if (paydaysAfterToday === null) return `${gone} Not gone within 20 years at this pace.`;
+  if (paydaysAfterToday === 0) return `${gone} This payday pays it off.`;
+  if (paydaysAfterToday === 1) return `${gone} After today, one payday left.`;
+  return `${gone} After today, ${paydaysAfterToday} paydays left.`;
+}
+
+/**
+ * The sentence after "I did it": "Store Card has $35 left. It's gone next payday. Then its $16.15 rolls to Visa."
+ * `paydaysUntilGone` counts from the next payday (0 = the next payday pays it off). Null focus = every debt is paid.
+ */
+export function afterPaySentence(
+  focus: { name: string; left: string; goneBy: string | null } | null,
+  paydaysUntilGone: number | null,
+  rollover: { amount: string; to: string } | null,
+): string {
+  if (!focus) return 'That was your last payment. You’re debt-free.';
+  if (paydaysUntilGone === 0) {
+    return `${focus.name} has ${focus.left} left. It’s gone next payday.${rollover ? ` Then its ${rollover.amount} rolls to ${rollover.to}.` : ''}`;
+  }
+  return `${focus.name} has ${focus.left} left.${focus.goneBy ? ` It’s gone by ${monthYear(focus.goneBy)}.` : ''}`;
+}
+
+/** What the debt cost per day about a month ago, from the paydays done then. Null until there is one. */
+export function dailyCostLastMonth(data: Pick<AppData, 'paydays'>, today: string): number | null {
+  const target = addDaysISO(today, -30);
+  const near = data.paydays
+    .filter((p) => p.status === 'done' && p.dailyCost !== undefined && p.date <= addDaysISO(today, -21) && p.date >= addDaysISO(today, -45))
+    .sort((a, b) => Math.abs(diffDays(a.date, target)) - Math.abs(diffDays(b.date, target)));
+  return near[0]?.dailyCost ?? null;
 }

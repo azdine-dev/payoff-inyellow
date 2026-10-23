@@ -517,6 +517,398 @@ select {
   font-size: 1.5rem;
 }
 
+/* ---------- Today (ux-v2 sections 3 and 4) ---------- */
+
+.today-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.date-line {
+  color: var(--gray);
+  font-size: 1rem;
+}
+
+.today-h1 {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.round-btn {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+/* "Debt-free by Mar 2028 >": a button to Path. The month is the one key word, on yellow. */
+.pill-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* The payday card: ink, one total, one button */
+.payday-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--pc-bg);
+  color: var(--pc-fg);
+  border-radius: 28px;
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payday-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pc-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.pc-total {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.pc-sub {
+  font-size: 1.05rem;
+}
+
+.pc-rows {
+  margin-top: 6px;
+  background: rgba(244, 240, 230, 0.08);
+  border-radius: 18px;
+  padding: 0 14px;
+}
+
+.pc-rows .check {
+  min-height: 68px;
+  padding: 10px 0;
+  color: var(--pc-fg);
+  border-top: 1px solid rgba(244, 240, 230, 0.14);
+}
+
+.pc-rows .check:first-child {
+  border-top: none;
+}
+
+.pc-rows .check .box {
+  border-color: var(--pc-fg);
+  background: #fff;
+}
+
+.pc-rows .check[aria-checked='true'] .box {
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.pc-rows .check .box svg {
+  color: var(--on-yellow);
+}
+
+.pc-title {
+  display: block;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.pc-rowsub {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.pc-amount {
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.pc-nodue {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid rgba(244, 240, 230, 0.14);
+}
+
+.pc-note {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.pc-left {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.pc-btn {
+  min-height: 56px;
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  background: var(--pc-fg);
+  color: #1f2a44;
+  font-weight: 700;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.pc-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pc-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.pc-links {
+  justify-content: space-between;
+}
+
+.payday-card .link {
+  color: var(--pc-fg);
+}
+
+/* The highlighter swipe (300 ms): yellow runs across the card, and the words turn ink as it passes */
+.payday-card.swiping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--yellow);
+  transform-origin: left center;
+  animation: swipe 300ms ease-out forwards;
+}
+
+.payday-card.swiping {
+  animation: ink-text 300ms ease-out forwards;
+}
+
+@keyframes swipe {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ink-text {
+  to {
+    color: var(--on-yellow);
+  }
+}
+
+/* Done: the card is yellow, with a stamp */
+.paid-card {
+  background: var(--yellow);
+  color: var(--on-yellow);
+  border: 1.5px solid var(--on-yellow);
+  border-radius: 28px;
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.paid-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.paid-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 2.5px solid var(--on-yellow);
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  transform: rotate(-4deg);
+  animation: stamp 220ms ease-out;
+}
+
+.paid-stamp svg {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes stamp {
+  from {
+    transform: rotate(-4deg) scale(1.6);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-4deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.paid-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paid-rows li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+}
+
+.paid-rows li > span:nth-child(2) {
+  flex: 1;
+}
+
+.paid-rows li svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.paid-card .link {
+  align-self: flex-start;
+  color: var(--on-yellow);
+  font-weight: 700;
+}
+
+.countdown-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.days-tile {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background: var(--pc-bg);
+  color: var(--pc-fg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.days-tile b {
+  font-family: var(--font-head);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.days-tile span {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1.5px dashed var(--ink);
+  border-radius: 20px;
+  padding: 16px 18px;
+}
+
+.btn.small {
+  width: auto;
+  min-height: 44px;
+  padding: 0 18px;
+  flex: none;
+}
+
+.focus-name {
+  font-family: var(--font-head);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.tile-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.tile-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+}
+
+.tile-btn {
+  cursor: pointer;
+}
+
+.tile-val {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+/* People who ask for less motion get the finished state at once */
+@media (prefers-reduced-motion: reduce) {
+  .payday-card.swiping::after,
+  .payday-card.swiping,
+  .paid-stamp {
+    animation: none;
+  }
+
+  .payday-card.swiping::after {
+    transform: none;
+  }
+}
+
 /* A debt reached zero: the whole screen is yellow (paid), with the rollover said in words */
 .paid-moment {
   position: fixed;

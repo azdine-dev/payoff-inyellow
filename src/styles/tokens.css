@@ -9,6 +9,8 @@
   --line: #e2dccd;
   --on-ink: #f4f0e6; /* text on ink buttons */
   --on-yellow: #1f2a44; /* text sitting on a yellow swipe */
+  --pc-bg: #1f2a44; /* the payday card on Today */
+  --pc-fg: #f4f0e6;
 
   --radius: 16px;
   --radius-sm: 10px;
@@ -32,6 +34,7 @@
   --gray: #c9c4b8;
   --line: #3a4766;
   --on-ink: #1f2a44;
+  --pc-bg: #2a3654;
   color-scheme: dark;
 }
 
@@ -45,6 +48,7 @@
     --gray: #c9c4b8;
     --line: #3a4766;
     --on-ink: #1f2a44;
+    --pc-bg: #2a3654;
     color-scheme: dark;
   }
 }

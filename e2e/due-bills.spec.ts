@@ -35,7 +35,7 @@ test('the Today card: bills due before the next payday, and the window moves wit
   await startPlan(page);
 
   // Fri 23 Oct up to Fri 6 Nov: the car loan is due on 28 Oct, with its full monthly minimum
-  await expect(page.getByRole('checkbox', { name: 'Car loan $285, due 28 Oct' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Car loan.*Bill.*due Wed 28 Oct/ })).toBeVisible();
   await expect(page.getByText(/Minimums due/)).toHaveCount(0); // not the per-payday average (131.54)
   await expect(page.getByRole('button', { name: 'I did it · $435' })).toBeVisible(); // 285 + 150 extra
   await shot(page, '32-today-bills');
@@ -54,7 +54,7 @@ test('the Today card: bills due before the next payday, and the window moves wit
 
   // Fri 20 Nov up to Fri 4 Dec: the next car loan bill, due 28 Nov
   await setDay(page, '2026-11-20');
-  await expect(page.getByRole('checkbox', { name: 'Car loan $285, due 28 Nov' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Car loan.*Bill.*due Sat 28 Nov/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'I did it · $435' })).toBeVisible();
 
   // The Plan tab shows the same figures for the paydays ahead
@@ -100,7 +100,7 @@ test('a debt with no due day: "Visa $96, add a due day", not counted, and the li
   // Visa is due on the 30th: before the next payday (6 Nov), so it counts now
   await page.getByRole('textbox', { name: 'Day of the month' }).fill('30');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('checkbox', { name: 'Visa $96, due 30 Oct' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Visa.*due Fri 30 Oct/ })).toBeVisible();
   await expect(noDay).toHaveCount(0);
   await expect(page.getByText('Not counted until you add a due day.')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'I did it · $531' })).toBeVisible(); // 96 + 285 + 150

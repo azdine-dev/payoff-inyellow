@@ -1,4 +1,9 @@
-/** Today (mockup screen 2): one clear step every payday. */
+/**
+ * Today (docs/ux-v2/ux-v2.md sections 3 and 4, mockups 03 and 04): what do I move this payday?
+ * One ink card with one total and one button. "I did it" flips it to yellow with a PAID stamp, and Undo
+ * is there for 10 seconds. Between paydays the card is a calm countdown, so there is never a button
+ * with nothing to do.
+ */
 import { syncOn } from '../sync/controller';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { dailyInterestCost, growingDebts, PAYDAYS_PER_YEAR, planNeedsHelp, simulatePlan } from '../engine';
@@ -6,25 +11,60 @@ import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount, toCents } from '../lib/money';
-import { dayMonth, relativeDay, shortDate, shortMonthYear } from '../lib/today';
+import { dayMonth, diffDays, relativeDay, shortDate, shortMonthYear, weekdayName } from '../lib/today';
+import { pathView } from '../path/Path';
 import { didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { biggerNote, billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
-import { activeDebts, nextPaydayISO, toDebtInput, toPlanInput } from '../state/planInput';
+import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, freshMilestones, getDB, plan, tab, today } from '../state/store';
-import { Bar, Checkbox, Field, GearIcon, Note, NumberInput, Sheet, Wordmark } from '../ui/controls';
+import { Bar, Checkbox, CheckIcon, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
-import { StatusLine } from '../ui/StatusLine';
 import { LaterCard } from './LaterCard';
-import { comingUp, dueLine, focusDebt, paydayLines, payThisPayday, whyFirst } from './model';
+import { afterPaySentence, betweenPaydays, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, mergedRows, whyFirst } from './model';
 
 interface JustPaid {
   date: string;
   total: number;
+  rows: { key: string; label: string; amount: number }[];
+}
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+const reducedMotion = () => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+
+function ChevronRight() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.5 5.5L16 12l-6.5 6.5" />
+    </svg>
+  );
+}
+
+/** "Next payday Fri 7 Nov · 14 days. Nothing to do until then." */
+function CountdownCard(props: { nextDate: string; onShow?: () => void }) {
+  const days = Math.max(0, diffDays(today.value, props.nextDate));
+  return (
+    <section class="card countdown-card" data-testid="countdown-card">
+      <div class="days-tile">
+        <b class="num">{days}</b>
+        <span>{days === 1 ? 'day' : 'days'}</span>
+      </div>
+      <div class="stack" style={{ gap: 4 }}>
+        <p>
+          Next payday is <b>{shortDate(props.nextDate)}</b>. Nothing to do until then.
+        </p>
+        {props.onShow && (
+          <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={props.onShow}>
+            Paid early? Show this payday
+          </button>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export function Today() {
@@ -32,6 +72,7 @@ export function Today() {
   const s = d.settings;
   const cur = s.currency;
   const nextDate = nextPaydayISO(s);
+  const money = (n: number) => formatMoneyAuto(n, cur);
 
   // "I got a different amount" for this payday only (null = the usual amount)
   const [override, setOverride] = useState<number | null>(null);
@@ -42,10 +83,12 @@ export function Today() {
   const [paidIds, setPaidIds] = useState<string[]>([]);
   const [skippedNote, setSkippedNote] = useState(false);
   const [closedMoments, setClosedMoments] = useState<Set<string>>(new Set());
-  // "Undo" lasts until the next tap. "askedEarly" remembers the payday we already asked about.
+  // Undo lasts 10 seconds. "askedEarly" remembers the payday we already asked about.
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [askEarly, setAskEarly] = useState(false);
   const [askedEarly, setAskedEarly] = useState<string | null>(null);
+  const [showEarly, setShowEarly] = useState(false);
+  const [backedUp, setBackedUp] = useState(false);
   const [sheet, setSheet] = useState<'amount' | 'extra' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
@@ -58,20 +101,30 @@ export function Today() {
   useEffect(() => {
     setChecked(new Set());
     setOverride(null);
+    setShowEarly(false);
   }, [s.paydayIndex]);
+
+  useEffect(() => {
+    if (!undo) return;
+    const t = setTimeout(() => setUndo(null), 10_000);
+    return () => clearTimeout(t);
+  }, [undo]);
 
   const r = useMemo(() => (override === null ? plan.value! : simulatePlan(toPlanInput(d, override))), [d, override]);
   const row = r.rows[0];
   const bills = useMemo(() => billsForNextPayday(d), [d]);
-  const { lines, total, noDueDay } = row ? paydayLines(row, d, bills) : { lines: [], total: 0, noDueDay: [] };
+  const { rows, total, noDueDay } = row ? mergedRows(row, d, bills) : { rows: [], total: 0, noDueDay: [] };
+  const extra = row ? extraSummary(row, d) : null;
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
   const growingNow = new Set(growingDebts(d.debts.filter((x) => x.status === 'active').map(toDebtInput)));
-  const payAmount = focus ? payThisPayday(row, bills, focus.debt.id) : 0;
   const active = activeDebts(d);
   const due = comingUp(d, today.value);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
+  const between = !justPaid && !showEarly && betweenPaydays(d, nextDate, nextPaydayNumber(s), today.value);
+  const isPayday = nextDate === today.value;
+  const doneCount = d.paydays.filter((p) => p.status === 'done').length;
 
   const apply = async (confirmed = false) => {
     if (busy) return;
@@ -81,13 +134,16 @@ export function Today() {
       return;
     }
     setBusy(true);
-    setChecked(new Set(lines.map((l) => l.key)));
-    await new Promise((res) => setTimeout(res, 650)); // let the boxes turn yellow first
+    setChecked(new Set(rows.map((x) => x.key)));
+    navigator.vibrate?.(15); // a light tap, where the phone can
+    await sleep(reducedMotion() ? 0 : 400); // the highlighter swipe (300 ms) and the boxes turning yellow
+    const snapshot = rows.map((x) => ({ key: x.key, label: x.paidLabel, amount: x.amount }));
     const res = await didPayday(await getDB(), d, { planMoney: override });
     setUndo({ before: d, after: res.data });
-    setJustPaid({ date: res.step.date, total });
+    setJustPaid({ date: res.step.date, total, rows: snapshot });
     setPaidIds(res.newlyPaid);
     setSkippedNote(false);
+    setBackedUp(false);
     data.value = res.data;
     setBusy(false);
   };
@@ -96,11 +152,11 @@ export function Today() {
     const next = new Set(checked);
     next.has(key) ? next.delete(key) : next.add(key);
     setChecked(next);
-    if (lines.length && next.size === lines.length) void apply();
+    if (rows.length && next.size === rows.length) void apply();
   };
 
   // What is ticked so far, and what is left of this payday
-  const doneCents = lines.filter((l) => checked.has(l.key)).reduce((sum, l) => sum + l.amount, 0);
+  const doneCents = rows.filter((x) => checked.has(x.key)).reduce((sum, x) => sum + x.amount, 0);
   const leftCents = Math.max(0, toCents(total - doneCents));
   const doneShare = total > 0 ? (doneCents / total) * 100 : 0;
 
@@ -155,7 +211,7 @@ export function Today() {
       if (diff !== 0) {
         // The rest of the plan keeps its order: nothing is added on top of the next payday
         const move = dateMoveSentence(plan.value!, simulatePlan(toPlanInput(d, amount)));
-        showNotice('info', `You have ${formatMoneyAuto(Math.abs(diff), cur)} ${diff < 0 ? 'less' : 'more'} for the plan this payday. ${move}`);
+        showNotice('info', `You have ${money(Math.abs(diff))} ${diff < 0 ? 'less' : 'more'} for the plan this payday. ${move}`);
       }
     } else {
       const owed = active.reduce((sum, x) => sum + x.balance, 0);
@@ -166,25 +222,96 @@ export function Today() {
     setSheet(null);
   };
 
-  const pill = r.debtFreeDate ? `Debt-free · ${shortMonthYear(r.debtFreeDate)}` : active.length ? 'More than 20 years' : 'Debt-free';
+  // ---------------------------------------------------------------- what the screen says
+  const greeting = justPaid
+    ? 'Done for this payday.'
+    : !active.length
+      ? 'You’re debt-free.'
+      : missed > 0
+        ? 'Welcome back.'
+        : isPayday
+          ? 'Hi, it’s payday.'
+          : `Next payday is ${shortDate(nextDate)}.`;
+
+  const goneLabel = (iso: string | null) => (iso ? (diffDays(today.value, iso) <= 100 ? shortDate(iso) : shortMonthYear(iso)) : null);
+  // Paydays left for the focus debt after the one on the card (0 = this payday pays it off)
+  const focusIdx = focus ? r.rows.findIndex((x) => x.debts.some((y) => y.id === focus.debt.id && y.balanceAfter <= 0.005)) : -1;
+  // After "I did it": the plan is already the new one, so row 0 is the next payday
+  const untilGone = focusIdx < 0 ? null : focusIdx;
+  const rollTo = (() => {
+    if (!focus) return null;
+    const order = r.order.filter((id) => d.debts.find((x) => x.id === id)?.status === 'active');
+    const next = order[order.indexOf(focus.debt.id) + 1];
+    const freed = (focus.debt.minMonthly * 12) / PAYDAYS_PER_YEAR[s.frequency];
+    return next && freed > 0 ? { amount: formatMoney(freed, cur), to: nameOf(next) } : null;
+  })();
+
+  const daily = dailyInterestCost(active);
+  const lastMonth = dailyCostLastMonth(d, today.value);
+  const bufferFull = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
+  const showNudge = justPaid && (doneCount === 1 || doneCount % 4 === 0);
+
+  const moments = d.milestones
+    .filter((m) => freshMilestones.value.includes(m.id) && !closedMoments.has(m.id))
+    .map((m) => {
+      const firstExtra = d.payments.find((p) => p.kind === 'extra');
+      const text = momentText(m.id, focus?.debt.name ?? null, firstExtra?.debtId ? nameOf(firstExtra.debtId) : null);
+      return text ? (
+        <section key={m.id} class="card row" data-testid="milestone-moment" role="status" style={{ background: 'var(--yellow)', borderColor: 'var(--yellow)', color: 'var(--on-yellow)' }}>
+          <span style={{ fontWeight: 600 }}>{text}</span>
+          <button type="button" class="link small" style={{ color: 'var(--on-yellow)' }} onClick={() => setClosedMoments(new Set([...closedMoments, m.id]))}>
+            OK
+          </button>
+        </section>
+      ) : null;
+    });
 
   return (
-    <main class="screen with-tabs" onClickCapture={(e) => !(e.target as HTMLElement).closest('[data-undo]') && undo && setUndo(null)}>
-      <header class="row" style={{ flexWrap: 'wrap' }}>
-        <Wordmark />
-        <div class="row" style={{ gap: 4, flexWrap: 'wrap', marginLeft: 'auto' }}>
-          <span class="pill" data-testid="debt-free-pill">
-            {pill}
-          </span>
-          <button type="button" class="link" aria-label="Settings" style={{ width: 44, display: 'grid', placeItems: 'center' }} onClick={() => (tab.value = 'settings')}>
-            <GearIcon />
-          </button>
+    <main class="screen with-tabs">
+      <header class="today-head">
+        <div class="stack" style={{ gap: 2 }}>
+          {justPaid ? (
+            <p class="date-line" role="status">
+              <b>{shortDate(justPaid.date)} is paid.</b> Next payday: {shortDate(nextDate)}.
+            </p>
+          ) : (
+            <p class="date-line">
+              {weekdayName(today.value)} {dayMonth(today.value)}
+              {isPayday && active.length > 0 ? ' · payday' : ''}
+            </p>
+          )}
+          <h1 class="today-h1" data-testid="greeting">
+            {greeting}
+          </h1>
         </div>
+        <button type="button" class="round-btn" aria-label="Settings" onClick={() => (tab.value = 'settings')}>
+          <GearIcon />
+        </button>
       </header>
 
-      <StatusLine />
+      <button
+        type="button"
+        class="pill-link"
+        data-testid="debt-free-pill"
+        aria-label={r.debtFreeDate ? `Debt-free by ${shortMonthYear(r.debtFreeDate)}. Open your path.` : undefined}
+        onClick={() => {
+          pathView.value = 'progress';
+          tab.value = 'path';
+        }}
+      >
+        {r.debtFreeDate ? (
+          <>
+            Debt-free by <span class="hl">{shortMonthYear(r.debtFreeDate)}</span>
+          </>
+        ) : active.length ? (
+          'More than 20 years'
+        ) : (
+          'Debt-free'
+        )}
+        <ChevronRight />
+      </button>
 
-      {backupReminder(d) && (
+      {backupReminder(d) && !justPaid && (
         <section class="card soft row" aria-label="Backup reminder">
           <span>Save a backup file. Takes 5 seconds.</span>
           <button type="button" class="link" onClick={() => void downloadBackup()}>
@@ -216,36 +343,7 @@ export function Today() {
         </div>
       )}
 
-      {d.milestones
-        .filter((m) => freshMilestones.value.includes(m.id) && !closedMoments.has(m.id))
-        .map((m) => {
-          const firstExtra = d.payments.find((p) => p.kind === 'extra');
-          const text = momentText(m.id, focus?.debt.name ?? null, firstExtra?.debtId ? nameOf(firstExtra.debtId) : null);
-          return text ? (
-            <section key={m.id} class="card row" data-testid="milestone-moment" role="status" style={{ background: 'var(--yellow)', borderColor: 'var(--yellow)', color: 'var(--on-yellow)' }}>
-              <span style={{ fontWeight: 600 }}>{text}</span>
-              <button type="button" class="link small" style={{ color: 'var(--on-yellow)' }} onClick={() => setClosedMoments(new Set([...closedMoments, m.id]))}>
-                OK
-              </button>
-            </section>
-          ) : null;
-        })}
-
-      {justPaid && (
-        <section class="card soft row" role="status">
-          <span>
-            <b>{shortDate(justPaid.date)} is paid.</b> Next payday: {shortDate(nextDate)}.
-          </span>
-          <span class="num" style={{ fontWeight: 600 }}>
-            {formatMoney(justPaid.total, cur)}
-          </span>
-          {undo && (
-            <button type="button" class="link small" data-undo onClick={doUndo}>
-              Undo
-            </button>
-          )}
-        </section>
-      )}
+      {moments}
 
       {skippedNote && (
         <section class="card soft" role="status">
@@ -258,164 +356,235 @@ export function Today() {
         </section>
       )}
 
-      {!active.length ? (
+      {/* ------------------------------------------------ done: the yellow card, and what comes next */}
+      {justPaid && (
+        <>
+          <section class="paid-card" aria-label="Paid this payday" data-testid="paid-card">
+            <div class="paid-top">
+              <p class="pc-total num" data-testid="paid-total">
+                {money(justPaid.total)}
+              </p>
+              <span class="paid-stamp">
+                <CheckIcon /> PAID
+              </span>
+            </div>
+            <ul class="paid-rows">
+              {justPaid.rows.map((x) => (
+                <li key={x.key}>
+                  <CheckIcon />
+                  <span>{x.label}</span>
+                  <span class="num">{money(x.amount)}</span>
+                </li>
+              ))}
+            </ul>
+            {undo && (
+              <button type="button" class="link" data-undo onClick={doUndo}>
+                Undo
+              </button>
+            )}
+          </section>
+
+          <section class="card stack" style={{ gap: 10 }} data-testid="after-sentence">
+            <p>
+              {afterPaySentence(focus ? { name: focus.debt.name, left: money(focus.left), goneBy: focus.goneBy } : null, untilGone, rollTo)}
+            </p>
+            {focus && (
+              <>
+                <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
+                <p class="muted small num">{Math.floor(focus.pctGone)}% gone</p>
+              </>
+            )}
+          </section>
+
+          <CountdownCard nextDate={nextDate} />
+
+          {showNudge && (
+            <section class="nudge" aria-label="Save a copy" data-testid="backup-nudge">
+              <span>{backedUp ? 'Saved. Keep the file somewhere safe.' : 'Your plan lives only on this device. Save a copy.'}</span>
+              {!backedUp && (
+                <button
+                  type="button"
+                  class="btn small"
+                  onClick={async () => {
+                    await downloadBackup();
+                    setBackedUp(true);
+                  }}
+                >
+                  Save backup
+                </button>
+              )}
+            </section>
+          )}
+        </>
+      )}
+
+      {/* ------------------------------------------------ not done yet: the card, or the countdown */}
+      {!justPaid && !active.length && (
         <section class="card stack">
-          <h2 style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem' }}>
-            You're <span class="hl-big">debt-free</span>
-          </h2>
           <p>Every debt is paid. Keep your buffer and your yearly bills going, so a surprise bill stays off the cards.</p>
         </section>
-      ) : (
-        row && (
-          <>
-            {missed > 0 && (
-              <section class="card stack" style={{ gap: 4 }}>
-                <p>
-                  Your payday on <b>{shortDate(nextDate)}</b> went by. Did you do it?
-                </p>
-                <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
-                  <span class="muted small">Tick it below if you did.</span>
-                  <button type="button" class="link" onClick={skip}>
-                    I skipped it
-                  </button>
-                </div>
-              </section>
-            )}
+      )}
 
-            {s.startMode === 'next-month' && d.paydays.length === 0 && missed === 0 && (
-              <p class="muted small">Your plan starts on {shortDate(nextDate)}. Until then, keep paying your minimums.</p>
-            )}
-
-            <section class="card" aria-labelledby="payday-title">
-              <div class="row">
-                <h2 id="payday-title">{missed > 0 ? 'Last payday' : 'Next payday'}</h2>
-                <span class="muted">{shortDate(nextDate)}</span>
+      {!justPaid && active.length > 0 && row && (
+        <>
+          {missed > 0 && (
+            <section class="card stack" style={{ gap: 4 }}>
+              <p>
+                Your payday on <b>{shortDate(nextDate)}</b> went by. Did you do it?
+              </p>
+              <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
+                <span class="muted small">Tick it below if you did.</span>
+                <button type="button" class="link" onClick={skip}>
+                  I skipped it
+                </button>
               </div>
-              <div style={{ marginTop: 6 }}>
-                {lines.map((l, i) => (
-                  <div key={l.key} style={{ borderTop: i ? '1px dashed var(--line)' : 'none' }}>
-                    <Checkbox
-                      checked={checked.has(l.key)}
-                      onToggle={() => toggle(l.key)}
-                      label={l.due ? l.label : undefined}
-                      right={
-                        l.inline ? (
-                          l.due && (
-                            <span class="muted small" data-testid="due-in" style={{ whiteSpace: 'nowrap' }}>
-                              {relativeDay(today.value, l.due)}
-                            </span>
-                          )
-                        ) : (
-                          <span class="num" style={{ fontWeight: 600 }}>
-                            {formatMoneyAuto(l.amount, cur)}
-                          </span>
-                        )
-                      }
-                    >
-                      {l.label} {l.highlight && <span class="hl">{l.highlight}</span>}
-                    </Checkbox>
-                  </div>
+            </section>
+          )}
+
+          {s.startMode === 'next-month' && d.paydays.length === 0 && missed === 0 && (
+            <p class="muted small">Your plan starts on {shortDate(nextDate)}. Until then, keep paying your minimums.</p>
+          )}
+
+          {between ? (
+            <CountdownCard nextDate={nextDate} onShow={() => setShowEarly(true)} />
+          ) : (
+            <section class={`payday-card${busy ? ' swiping' : ''}`} aria-labelledby="payday-title">
+              <p id="payday-title" class="pc-label">
+                {missed > 0 ? 'Your last payday, move' : 'This payday, move'}
+              </p>
+              <p class="pc-total num" data-testid="payday-total">
+                {money(total)}
+              </p>
+              {extra ? (
+                <p class="pc-sub" data-testid="extra-sentence">
+                  The extra <b>{money(extra.amount)}</b> goes to <span class="hl">{extra.target}</span>
+                </p>
+              ) : row.bufferFirst ? (
+                <p class="pc-sub" data-testid="buffer-first">
+                  Extra goes to your buffer until it reaches {money(s.bufferGoal)}.
+                </p>
+              ) : null}
+
+              <div class="pc-rows">
+                {rows.map((x) => (
+                  <Checkbox
+                    key={x.key}
+                    checked={checked.has(x.key)}
+                    onToggle={() => toggle(x.key)}
+                    right={<span class="num pc-amount">{money(x.amount)}</span>}
+                  >
+                    <span class="pc-title">{x.title}</span>
+                    <span class="pc-rowsub">{x.sub}</span>
+                  </Checkbox>
                 ))}
                 {noDueDay.map((b) => (
-                  <div key={`nd-${b.debtId}`} data-testid="no-due-day" style={{ borderTop: lines.length ? '1px dashed var(--line)' : 'none', minHeight: 44, display: 'flex', alignItems: 'center', paddingLeft: 34 }}>
+                  <div key={`nd-${b.debtId}`} class="pc-nodue" data-testid="no-due-day">
                     <span>
-                      {b.name} {formatMoneyAuto(b.amount, cur)},{' '}
+                      {b.name} {money(b.amount)},{' '}
                       <button type="button" class="link" style={{ display: 'inline' }} onClick={() => openDue(b.debtId)}>
                         add a due day
                       </button>
                     </span>
                   </div>
                 ))}
-                {noDueDay.length > 0 && (
-                  <p class="muted small" style={{ margin: '0 0 8px 34px' }}>
-                    Not counted until you add a due day.
-                  </p>
-                )}
               </div>
-              {row && biggerNote(bills, row, (n) => formatMoneyAuto(n, cur), dayMonth) && (
-                <p class="muted small" data-testid="bigger-note" style={{ margin: '0 0 8px 34px' }}>
-                  {biggerNote(bills, row, (n) => formatMoneyAuto(n, cur), dayMonth)}
-                </p>
-              )}
-              {row.bufferFirst && (
-                <p class="muted small" data-testid="buffer-first" style={{ margin: '0 0 8px 34px' }}>
-                  Extra goes to your buffer until it reaches {formatMoneyAuto(s.bufferGoal, cur)}.
+              {noDueDay.length > 0 && <p class="pc-note">Not counted until you add a due day.</p>}
+              {biggerNote(bills, row, (n) => money(n), dayMonth) && (
+                <p class="pc-note" data-testid="bigger-note">
+                  {biggerNote(bills, row, (n) => money(n), dayMonth)}
                 </p>
               )}
               {override !== null && (
-                <p class="muted small" style={{ margin: '4px 0 8px' }}>
-                  This payday uses {formatMoneyAuto(override, cur)} for the plan instead of {formatMoneyAuto(s.extraPerPayday, cur)}.{' '}
+                <p class="pc-note">
+                  This payday uses {money(override)} for the plan instead of {money(s.extraPerPayday)}.{' '}
                   <button type="button" class="link small" onClick={() => setOverride(null)}>
                     Use the usual amount
                   </button>
                 </p>
               )}
-              {checked.size > 0 && (
-                <div class="row" style={{ justifyContent: 'flex-start', gap: 12, margin: '10px 0 0 34px' }} data-testid="left-this-payday" role="status">
-                  <Ring pct={doneShare} size={44} label="Done this payday" showText={false} />
+              {checked.size > 0 && !busy && (
+                <div class="row pc-left" data-testid="left-this-payday" role="status">
+                  <Ring pct={doneShare} size={44} label="Done this payday" showText={false} onDark />
                   <span>
                     Left this payday: <b class="num">{formatMoney(leftCents, cur)}</b>
                   </span>
                 </div>
               )}
-              <button type="button" class={`btn${busy ? ' done' : ''}`} style={{ marginTop: 10 }} onClick={() => void apply()} disabled={busy}>
-                {COPY.didIt} · <span class="num">{formatMoneyAuto(total, cur)}</span>
+
+              <button type="button" class="pc-btn" onClick={() => void apply()} disabled={busy}>
+                <CheckIcon /> {COPY.didIt} · <span class="num">{money(total)}</span>
               </button>
-              <div class="row" style={{ marginTop: 4 }}>
+              <div class="row pc-links">
                 <button type="button" class="link small" onClick={() => openSheet('amount')}>
                   {COPY.differentAmount}
                 </button>
-                <button type="button" class="link small" onClick={() => openSheet('extra')}>
-                  {COPY.extraPayment}
+                <button type="button" class="link small" onClick={() => void skip()}>
+                  Skip this payday
                 </button>
               </div>
             </section>
-          </>
-        )
-      )}
+          )}
 
-      <NeedsHelp reasons={reasons} />
+          <NeedsHelp reasons={reasons} />
 
-      {focus && (
-        <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">
-          <div class="row">
-            <h2>{focus.debt.name}</h2>
-            <span class="num" style={{ fontWeight: 600 }}>
-              {Math.floor(focus.pctGone)}% gone
-            </span>
+          {focus && (
+            <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">
+              <div class="row">
+                <span class="label">Focus debt</span>
+                {goneLabel(focus.goneBy) && <span class="muted small">gone by {goneLabel(focus.goneBy)}</span>}
+              </div>
+              <div class="row">
+                <h2 class="focus-name">{focus.debt.name}</h2>
+                <span class="num">
+                  <b>{formatMoney(focus.left, cur, { whole: true })}</b> left
+                </span>
+              </div>
+              <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
+              <p class="muted" data-testid="focus-sentence">
+                {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx)}
+              </p>
+              <p class="muted small" data-testid="focus-why">
+                {whyFirst(s.method, growingNow.has(focus.debt.id))}
+              </p>
+              <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => openSheet('extra')}>
+                {COPY.extraPayment}
+              </button>
+            </section>
+          )}
+
+          <div class="tile-row">
+            <div class="card tile-card" data-testid="daily-cost">
+              <p class="muted small">Your debt costs</p>
+              <p class="tile-val num">{formatMoney(daily, cur)} a day</p>
+              <p class="muted small">{lastMonth !== null ? `Last month ${formatMoney(lastMonth, cur)}` : 'It drops as balances go down.'}</p>
+            </div>
+            <button type="button" class="card tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
+              <p class="muted small">Safety net</p>
+              <p class="tile-val num">{bufferFull ? `${money(d.buffer.amount)} ready` : `${money(d.buffer.amount)} of ${money(s.bufferGoal)}`}</p>
+              <p class="muted small">{bufferFull ? 'Goal reached' : 'Filling first'}</p>
+            </button>
           </div>
-          <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
-          <p class="muted small">{formatMoney(focus.left, cur, { whole: true })} left</p>
-          <p style={{ fontWeight: 600 }} data-testid="focus-action">
-            {payAmount > 0 ? (
-              <>
-                Pay this payday: <span class="num">{formatMoneyAuto(payAmount, cur)}</span>
-              </>
-            ) : (
-              <>Pay this payday: nothing yet</>
-            )}
-            {focus.goneBy ? ` · gone by ${shortMonthYear(focus.goneBy)}` : ''}
-          </p>
-          <p class="muted small" data-testid="focus-why">
-            {whyFirst(s.method, growingNow.has(focus.debt.id))}
-          </p>
-        </section>
+
+          {due.length > 0 && (
+            <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up">
+              <p class="label">Coming up</p>
+              {due.map((i) => (
+                <div key={`${i.name}-${i.date}`} class="row">
+                  <span>
+                    {shortDate(i.date)} · {i.name}
+                    {i.autopay ? ' (autopay)' : ''} <span class="muted small">{relativeDay(today.value, i.date)}</span>
+                  </span>
+                  <span class="num">{money(i.amount)}</span>
+                </div>
+              ))}
+            </section>
+          )}
+
+          <LaterCard />
+        </>
       )}
 
-      {active.length > 0 && (
-        <p class="card">
-          Your debt costs you <b class="num">{formatMoney(dailyInterestCost(active), cur)} a day</b>. It drops as balances go down.
-        </p>
-      )}
-
-      {due.length > 0 && (
-        <p class="muted small">
-          Coming up · {due.map((i) => `${dueLine(i, d)} (${relativeDay(today.value, i.date)})`).join(' · ')}
-        </p>
-      )}
-
-      <LaterCard />
-
+      <p class="hand">{COPY.slogan}</p>
       <p class="footer-note">
         {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
       </p>
@@ -453,10 +622,7 @@ export function Today() {
 
       <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' ? COPY.differentAmount : 'Extra payment'}>
         {sheet === 'amount' ? (
-          <Field
-            label="How much can go to the plan this payday?"
-            hint={`Usually ${formatMoneyAuto(s.extraPerPayday, cur)}. Your minimums stay the same, and the rest follows the same order.`}
-          >
+          <Field label="How much can go to the plan this payday?" hint={`Usually ${money(s.extraPerPayday)}. Your minimums stay the same, and the rest follows the same order.`}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Money for the plan this payday" />
           </Field>
         ) : (

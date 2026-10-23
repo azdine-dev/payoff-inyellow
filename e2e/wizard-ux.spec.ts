@@ -184,15 +184,18 @@ test('every main tab has the same header line, and the paydays left count down a
   const line = page.getByTestId('status-line');
   const left = async () => Number((await line.innerText()).match(/(\d+) paydays? left/)![1]);
 
+  await goTab(page, 'Plan');
   const first = await line.innerText();
   expect(first).toMatch(/^Debt-free [A-Z][a-z]{2} 20\d\d · \d+ paydays left$/);
-  for (const tab of ['Plan', 'Debts', 'Progress', 'Money', 'Today'] as const) {
+  for (const tab of ['Debts', 'Progress', 'Money', 'Plan'] as const) {
     await goTab(page, tab);
     await expect(line).toHaveText(first);
   }
   const before = await left();
+  await goTab(page, 'Today');
   await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
+  await goTab(page, 'Plan');
   expect(await left()).toBe(before - 1);
   await goTab(page, 'Progress');
   expect(await left()).toBe(before - 1);
@@ -202,9 +205,8 @@ test('each bill on Today says how soon it is due, and the checkbox name stays sh
   const { quickSetup } = await import('./helpers');
   await quickSetup(page); // today is Thu 15 Oct; the first payday is Fri 23 Oct
   // Medical-style due days are not in the quick setup: Store card is due the 5th, Visa the 12th (after Nov payday?)
-  const bills = page.getByRole('checkbox', { name: /due \d+ \w+$/ });
+  const bills = page.getByRole('checkbox', { name: /Bill.*due \w{3} \d+ \w+/ });
   await expect(bills.first()).toBeVisible();
-  await expect(page.getByTestId('due-in').first()).toHaveText(/^(today|tomorrow|in \d+ days)$/);
   // The spoken name is the plain label, without the extra words
   const name = (await bills.first().getAttribute('aria-label')) ?? '';
   expect(name).not.toMatch(/in \d+ days|tomorrow/);
@@ -303,8 +305,8 @@ test('the focus debt card says what to pay this payday, when it is gone, and why
   await quickSetup(page); // Store card (due the 5th) is the smallest balance
   const focus = page.getByRole('region', { name: 'Focus debt' });
   await expect(focus).toContainText('Store card');
-  await expect(page.getByTestId('focus-action')).toContainText(/Pay this payday: \$\d[\d,.]*( · gone by [A-Z][a-z]{2} 20\d\d)?/);
-  await expect(page.getByTestId('focus-action')).toContainText('· gone by');
+  await expect(page.getByTestId('focus-sentence')).toContainText(/\d+% gone\./);
+  await expect(focus).toContainText('gone by');
   await expect(page.getByTestId('focus-why')).toHaveText('Smallest balance, so it disappears first.');
 });
 
@@ -341,13 +343,16 @@ test('Quick add: a debt needs only a name, a balance and a rate, and carries a s
 
 test('ticking items on payday shows what is left, with a small ring that fills', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
+  const { addYearlyBills, goTab } = await import('./scenario');
   await quickSetup(page);
+  await addYearlyBills(page, [{ idea: 'Car repairs', amount: '600' }]); // a second row, so one tick does not finish the payday
+  await goTab(page, 'Today');
   const money = (s: string) => Number(s.replace(/[^0-9.]/g, ''));
   const total = money((await page.getByRole('button', { name: /^I did it/ }).innerText()).split('·')[1]!);
   await expect(page.getByTestId('left-this-payday')).toHaveCount(0); // nothing ticked yet
 
-  const extra = page.getByRole('checkbox', { name: /Extra →/ });
-  const extraAmount = money((await extra.innerText()).match(/\$[\d,.]+/)![0]);
+  const extra = page.locator('.pc-rows').getByRole('checkbox').filter({ hasText: 'Store card' });
+  const extraAmount = money((await extra.innerText()).match(/\$[\d,.]+/g)!.at(-1)!);
   await extra.click();
   const left = page.getByTestId('left-this-payday');
   await expect(left).toContainText(`Left this payday: $${(total - extraAmount).toFixed(2)}`);

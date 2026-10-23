@@ -20,7 +20,6 @@ test('archiving every debt gives the same debt-free state on every screen, with 
   await goTab(page, 'Today');
   await expect(page.getByRole('heading', { name: /debt-free/ })).toBeVisible();
   await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free');
-  await expect(line).toHaveText('Debt-free');
 
   await goTab(page, 'Plan');
   await expect(page.getByText('You’re debt-free. Every debt is paid or archived')).toBeVisible();

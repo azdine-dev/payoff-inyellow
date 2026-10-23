@@ -87,6 +87,15 @@ await page.getByTestId('debt-free-pill').waitFor({ timeout: 5000 }).catch(() => 
 await page.waitForTimeout(Number(process.env.PIY_PAUSE ?? 0)); // a person takes longer than a script
 await snap('11-today');
 await mark('today');
+await page.evaluate(() => window.scrollTo(0, 0));
+await snap('11-today-top');
+// The "I did it" moment (the payday is still ahead, so the app asks once)
+await page.getByTestId('notice').getByRole('button', { name: 'OK' }).click({ timeout: 1500 }).catch(() => undefined);
+await page.getByRole('button', { name: /^I did it/ }).click();
+await page.getByRole('button', { name: 'Yes, mark it done' }).click({ timeout: 1500 }).catch(() => undefined);
+await page.getByTestId('paid-card').waitFor({ timeout: 5000 }).catch(() => undefined);
+await page.waitForTimeout(500);
+await snap('11b-paid');
 
 for (const tab of ['Plan', 'Debts', 'Progress', 'Money']) {
   await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: tab === 'Plan' || tab === 'Progress' ? 'Path' : tab === 'Money' ? 'Safety net' : tab, exact: true }).click();
