@@ -118,6 +118,15 @@ export function Result() {
 
       <NeedsHelp reasons={reasons} />
 
+      {!example && bills.noDueDay.length > 0 && (
+        <section class="card stack" style={{ gap: 4 }} data-testid="no-due-day-note">
+          <p>
+            <b>{bills.noDueDay.map((b) => b.name).join(', ')}</b> {bills.noDueDay.length === 1 ? 'has' : 'have'} no due day yet. We can’t place {bills.noDueDay.length === 1 ? 'its bill' : 'their bills'} on a payday, so {bills.noDueDay.length === 1 ? 'it isn’t' : 'they aren’t'} in this plan yet.
+          </p>
+          <p class="muted small">Add the day on Today after you start. Your date updates at once.</p>
+        </section>
+      )}
+
       {first && (
         <section class="first-card" data-testid="first-card">
           <p class="first-label">

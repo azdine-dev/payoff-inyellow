@@ -152,3 +152,20 @@ test('the date on the result screen has no "set aside" wording left, and it name
   await expect(page.getByTestId('tile-interest')).toContainText('less interest');
   await expect(page.getByText(/set aside/i)).toHaveCount(0);
 });
+
+test('a debt without a due day is named on the result screen, calmly', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
+  await page.getByLabel('Your next payday').fill('2026-10-23');
+  await page.getByRole('button', { name: /^Continue$/ }).click();
+  const card = page.locator('fieldset');
+  await card.getByLabel('Name').fill('Visa');
+  await card.getByLabel('Balance').fill('3200');
+  await card.getByLabel('Monthly minimum').fill('96');
+  await next(page).click();
+  await page.getByLabel('Money for the plan each payday').fill('100');
+  await page.getByLabel('Buffer now').fill('500');
+  await next(page).click();
+  await expect(page.getByTestId('no-due-day-note')).toContainText('Visa has no due day yet');
+  await expectBrandRules(page);
+});

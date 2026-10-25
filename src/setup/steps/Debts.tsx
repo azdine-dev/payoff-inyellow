@@ -93,7 +93,7 @@ function DebtCard(props: {
         <Field label="Monthly minimum">
           <NumberInput pre={props.symbol} value={d.min} onInput={(v) => props.onChange({ min: v })} label="Monthly minimum" />
         </Field>
-        <Field label="Due day (recommended)" hint="It’s on your statement.">
+        <Field label="Due day (recommended)" hint="It’s on your statement. Without it we can’t plan this bill.">
           <input type="text" inputMode="numeric" maxLength={2} value={d.dueDay} onInput={(e) => props.onChange({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
         </Field>
       </div>
