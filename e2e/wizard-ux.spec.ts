@@ -23,7 +23,7 @@ test('a finished debt becomes one line, and only one debt is open at a time', as
   await card.getByLabel('Balance').fill('3200');
   await card.getByLabel('Interest rate').fill('22.9');
   await card.getByLabel('Monthly minimum').fill('96');
-  await card.getByLabel('Due day (recommended)').fill('12');
+  await card.getByLabel('Due day').fill('12');
   await page.getByRole('button', { name: 'Add another' }).click();
 
   await expect(page.getByTestId('debt-summary')).toHaveCount(1);
@@ -35,6 +35,7 @@ test('a finished debt becomes one line, and only one debt is open at a time', as
   await card.getByLabel('Balance').fill('640');
   await card.getByLabel('Interest rate').fill('26.99');
   await card.getByLabel('Monthly minimum').fill('35');
+  await card.getByLabel('Due day').fill('5');
   await page.getByRole('button', { name: 'Add another' }).click();
   await expect(page.getByTestId('debt-summary')).toHaveCount(2);
   await expect(card).toHaveCount(1);
@@ -53,6 +54,7 @@ test('a number that looks like a typo is asked about, and never blocks', async (
   await card.getByLabel('Balance').fill('$3,200');
   await card.getByLabel('Interest rate').fill('2290');
   await card.getByLabel('Monthly minimum').fill('96');
+  await card.getByLabel('Due day').fill('12');
   await expect(card).toContainText('Is 2290% right? Most cards are 15-30%.');
   // It is only a question: Continue still works, and the pasted "$3,200" was understood
   await next(page).click();
@@ -74,6 +76,7 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
     await card.getByLabel('Balance').fill(balance);
     await card.getByLabel('Interest rate').fill(apr);
     await card.getByLabel('Monthly minimum').fill(min);
+    await card.getByLabel('Due day').fill('10');
   };
   await add('Visa', '3200', '22.9', '96');
   await page.getByRole('button', { name: 'Add another' }).click();
@@ -85,7 +88,7 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await next(page).click(); // debts
 
   await expect(page.getByRole('heading', { name: 'Money for the plan' })).toBeVisible();
-  await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month, about $215 each payday.');
+  await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month.');
   const field = page.getByLabel('Money for the plan each payday');
   await page.getByRole('button', { name: '$100' }).click();
   await expect(field).toHaveValue('100');
@@ -305,7 +308,7 @@ test('Quick add: a debt needs only a name, a balance and a rate, and carries a s
   const dialog = page.getByRole('dialog', { name: 'Add a debt' });
   // Only three fields to begin with
   await expect(dialog.getByLabel('Monthly minimum')).toHaveCount(0);
-  await expect(dialog.getByLabel('Due day (recommended)')).toHaveCount(0);
+  await expect(dialog.getByLabel('Due day')).toHaveCount(0);
   await dialog.getByLabel('Name').fill('Phone bill');
   await dialog.getByRole('textbox', { name: 'Balance' }).fill('400');
   await dialog.getByRole('textbox', { name: 'Interest rate' }).fill('0');

@@ -1,28 +1,38 @@
 /**
- * Parity with the reference engine (and so with the Google Sheet).
- * Dates must match exactly; amounts to the cent.
+ * Parity with engine_v2.py (the model of the Google Sheet too).
+ * Debt-free date exactly; interest and the first four paydays to the cent; the generated fixtures also check
+ * the debt left on each of the first 60 paydays.
  */
 import { describe, expect, it } from 'vitest';
-import fixtures from '../../engine/fixtures.json';
-import edge from '../../engine/fixtures-edge.json';
-import random from '../../engine/fixtures-random.json';
+import fixtures from '../../engine/fixtures_v2.json';
+import edge from '../../engine/fixtures_v2_edge.json';
+import random from '../../engine/fixtures_v2_random.json';
 import { runAsReference, type RefFixture } from './referenceAdapter';
 
 const suites: [string, RefFixture[]][] = [
-  ['engine/fixtures.json (checked against the Sheet)', fixtures as unknown as RefFixture[]],
-  ['engine/fixtures-edge.json', edge as unknown as RefFixture[]],
-  ['engine/fixtures-random.json', random as unknown as RefFixture[]],
+  ['engine/fixtures_v2.json (the 7 of the Sheet)', fixtures as unknown as RefFixture[]],
+  ['engine/fixtures_v2_edge.json', edge as unknown as RefFixture[]],
+  ['engine/fixtures_v2_random.json', random as unknown as RefFixture[]],
 ];
 
 for (const [title, list] of suites) {
   describe(title, () => {
     it('is not empty', () => expect(list.length).toBeGreaterThan(0));
     it.each(list.map((f) => [f.name, f] as const))('%s', (_name, f) => {
-      expect(runAsReference(f.input)).toEqual(f.expected);
+      const { owed_60: wantOwed, ...want } = f.expect;
+      const { owed_60: gotOwed, ...got } = runAsReference(f.input);
+      expect(got).toEqual(want);
+      if (wantOwed) expect(gotOwed.slice(0, wantOwed.length)).toEqual(wantOwed);
     });
   });
 }
 
-describe('the brief fixtures (the 6 of the brief and the no-due-day one)', () => {
-  it('are all present', () => expect((fixtures as unknown as RefFixture[]).length).toBe(7));
+describe('the fixtures of the Sheet', () => {
+  it('are all 7 present, and the classic $8,000 at 24% is 56 months and $5,315.34', () => {
+    const list = fixtures as unknown as RefFixture[];
+    expect(list.map((f) => f.name)).toEqual(['karim', 'sara', 'growing_avalanche', 'growing_piy', 'twice_month', 'monthly_custom', 'eight_k']);
+    const eight = runAsReference(list.find((f) => f.name === 'eight_k')!.input);
+    expect(eight.paydays).toBe(56);
+    expect(eight.interest).toBe(5315.34);
+  });
 });

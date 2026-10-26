@@ -1,6 +1,6 @@
 /**
  * Small helpers that reproduce Python's number behaviour, so the TypeScript engine
- * returns the same numbers as engine/engine_reference.py (and the Google Sheet).
+ * returns the same numbers as engine/engine_v2.py (and the Google Sheet).
  */
 
 /**

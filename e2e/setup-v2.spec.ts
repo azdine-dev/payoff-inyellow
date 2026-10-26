@@ -36,6 +36,7 @@ test('four steps, each with its own label and bar, and Back keeps what was typed
   await card.getByLabel('Name').fill('Visa');
   await card.getByLabel('Balance').fill('3200');
   await card.getByLabel('Monthly minimum').fill('96');
+  await card.getByLabel('Due day').fill('12');
   await next(page).click();
 
   await expect(page.getByLabel('Step 3 of 4')).toBeVisible();
@@ -70,6 +71,7 @@ test('an empty rate uses 24%, marks the debt, and Today offers to add the real o
   await card.getByLabel('Name').fill('Visa');
   await card.getByLabel('Balance').fill('3200');
   await card.getByLabel('Monthly minimum').fill('96');
+  await card.getByLabel('Due day').fill('12');
   await expect(card).toContainText('Don’t know the rate? Leave it. We’ll use 24% and remind you.');
   await next(page).click(); // not blocked
   await page.getByLabel('Money for the plan each payday').fill('100');
@@ -153,7 +155,7 @@ test('the date on the result screen has no "set aside" wording left, and it name
   await expect(page.getByText(/set aside/i)).toHaveCount(0);
 });
 
-test('a debt without a due day is named on the result screen, calmly', async ({ page }) => {
+test('a debt with a minimum cannot start the plan without its due day, and the note says so calmly', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
@@ -163,9 +165,10 @@ test('a debt without a due day is named on the result screen, calmly', async ({ 
   await card.getByLabel('Balance').fill('3200');
   await card.getByLabel('Monthly minimum').fill('96');
   await next(page).click();
-  await page.getByLabel('Money for the plan each payday').fill('100');
-  await page.getByLabel('Buffer now').fill('500');
-  await next(page).click();
-  await expect(page.getByTestId('no-due-day-note')).toContainText('Visa has no due day yet');
+  await expect(page.getByText('Visa: add the due day.')).toBeVisible();
+  await expect(page.getByLabel('Step 2 of 4')).toBeVisible(); // still on the debts step
   await expectBrandRules(page);
+  await card.getByLabel('Due day').fill('12');
+  await next(page).click();
+  await expect(page.getByLabel('Step 3 of 4')).toBeVisible();
 });

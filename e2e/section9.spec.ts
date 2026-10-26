@@ -48,7 +48,7 @@ test('a date in another year shows its year', async ({ page }) => {
   await card.getByLabel('Balance').fill('3000');
   await card.getByLabel('Interest rate').fill('20');
   await card.getByLabel('Monthly minimum').fill('90');
-  await card.getByLabel('Due day (recommended)').fill('9');
+  await card.getByLabel('Due day').fill('9');
   await page.getByRole('button', { name: 'That’s all of them' }).click(); // debts
   await page.getByLabel('Money for the plan each payday').fill('100');
   await page.getByRole('button', { name: 'See my plan' }).click();

@@ -66,6 +66,7 @@ test.describe('in pounds', () => {
     await card.getByLabel('Name').fill('Visa');
     await card.getByLabel('Balance').fill('3200');
     await card.getByLabel('Monthly minimum').fill('96');
+    await card.getByLabel('Due day').fill('12');
     await page.getByRole('button', { name: /^(Continue|That’s all of them)$/ }).click();
     await expect(page.getByText('Even £20 matters. You can change it any time.')).toBeVisible();
     await expect(page.getByText(/\$/)).toHaveCount(0);

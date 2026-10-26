@@ -35,9 +35,11 @@ function grows(d: DraftDebt): boolean {
   return bal > 0 && apr > 0 && min !== null && min <= (bal * apr) / 1200;
 }
 
-/** Name, balance and minimum are there. The rate may be empty (24% is used, "rate missing"). The due day is recommended. */
+/** Name, balance and minimum are there, and the due day when there is a minimum. The rate may be empty (24% is used, "rate missing"). */
 export function debtComplete(d: DraftDebt): boolean {
-  return d.name.trim() !== '' && parseAmount(d.balance) !== null && parseAmount(d.min) !== null && (d.apr.trim() === '' || parseAmount(d.apr) !== null);
+  const min = parseAmount(d.min);
+  const dueOk = min === null || min <= 0 || d.dueDay.trim() !== '';
+  return d.name.trim() !== '' && parseAmount(d.balance) !== null && min !== null && dueOk && (d.apr.trim() === '' || parseAmount(d.apr) !== null);
 }
 
 const plain = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -93,7 +95,7 @@ function DebtCard(props: {
         <Field label="Monthly minimum">
           <NumberInput pre={props.symbol} value={d.min} onInput={(v) => props.onChange({ min: v })} label="Monthly minimum" />
         </Field>
-        <Field label="Due day (recommended)" hint="It’s on your statement. Without it we can’t plan this bill.">
+        <Field label="Due day" hint="It’s on your statement. The plan needs it to place the bill.">
           <input type="text" inputMode="numeric" maxLength={2} value={d.dueDay} onInput={(e) => props.onChange({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
         </Field>
       </div>
@@ -143,6 +145,7 @@ export function DebtsStep({ draft, set }: StepProps) {
         !open.name.trim() && { label: 'name', at: 0 },
         !open.balance.trim() && { label: 'balance', at: 1 },
         !open.min.trim() && { label: 'monthly minimum', at: 3 },
+        open.min.trim() !== '' && (parseAmount(open.min) ?? 0) > 0 && !open.dueDay.trim() && { label: 'due day', at: 4 },
       ].filter(Boolean) as { label: string; at: number }[];
       setTried(missing.map((m) => m.label));
       // Put the cursor on the first missing field

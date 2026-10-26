@@ -7,7 +7,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:reference": "python engine/engine_reference.py engine/fixtures.json",
+    "test:reference": "python engine/check_fixtures.py",
     "fixtures:parity": "python engine/make_parity_fixtures.py",
     "typecheck": "tsc --noEmit",
     "dev": "vite",

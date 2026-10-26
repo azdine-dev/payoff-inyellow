@@ -38,7 +38,7 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean } = {}) {
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
     await card.getByLabel('Monthly minimum').fill(d.min);
-    await card.getByLabel('Due day (recommended)').fill(d.due);
+    await card.getByLabel('Due day').fill(d.due);
   }
   await next.click();
   // 3 Money

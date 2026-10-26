@@ -206,6 +206,8 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
         // The rate can be left empty: 24% is used and the debt is marked "rate missing"
         if (d.apr.trim() && (apr === null || apr < 0 || apr > 10000)) notes.push(`${name}: add the interest rate, like 22.9, or leave it empty.`);
         if (min === null || min < 0) notes.push(`${name}: add the monthly minimum. Type 0 if there is none.`);
+        // The due day is what places the bill on a payday, so a debt with a minimum can't start the plan without it
+        if (!d.dueDay.trim() && min !== null && min > 0) notes.push(`${name}: add the due day. It’s on your statement, and the plan needs it to place the bill.`);
         if (d.dueDay.trim()) {
           const day = Number(d.dueDay);
           if (!Number.isInteger(day) || day < 1 || day > 31) notes.push(`${name}: the due day is a day of the month, from 1 to 31.`);

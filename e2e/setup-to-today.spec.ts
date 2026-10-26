@@ -46,7 +46,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
     await card.getByLabel('Monthly minimum').fill(d.min);
-    await card.getByLabel('Due day (recommended)').fill(d.due);
+    await card.getByLabel('Due day').fill(d.due);
   }
   await shot(page, '02-debts');
   await next.click();
@@ -104,7 +104,7 @@ test('the wizard keeps what was typed after a reload', async ({ page }) => {
   await expect(page.getByRole('radio', { name: 'Every week' })).toHaveAttribute('aria-checked', 'true');
 });
 
-/** Fast setup: two debts without due days, buffer already full. */
+/** Fast setup: two debts, buffer already full. */
 async function quickSetup(page: Page) {
   await page.goto('/');
   const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
@@ -118,6 +118,7 @@ async function quickSetup(page: Page) {
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
     await card.getByLabel('Monthly minimum').fill(d.min);
+    await card.getByLabel('Due day').fill(d.due);
   }
   await next.click();
   await page.getByLabel('Money for the plan each payday').fill('150');
@@ -131,28 +132,17 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await page.clock.setFixedTime(new Date('2026-10-15T10:00:00'));
   await quickSetup(page);
   await revealEarly(page);
-  await expect(page.getByRole('checkbox', { name: /Store card.*Extra \$150/ })).toBeVisible();
-
-  // No due days were entered: the bills are listed but not counted, with a way to add the day
-  await expect(page.getByText('Visa $96,')).toBeVisible();
-  await expect(page.getByText('Store card $35,')).toBeVisible();
-  await expect(page.getByText('Not counted until you add a due day.')).toBeVisible();
-  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$150');
+  // Store card is due on the 5th (before the next payday): its bill and the extra are one row. Visa is due on the 12th: next payday.
+  await expect(page.getByRole('checkbox', { name: /Store card.*Bill \$35 \+ extra \$150.*due Thu 5 Nov/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Visa/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$185');
 
   // A different amount for this payday only
   await page.getByRole('button', { name: 'I got a different amount' }).click();
   await page.getByLabel('Money for the plan this payday').fill('250');
   await page.getByRole('button', { name: 'Update this payday' }).click();
-  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$250');
+  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$285'); // 35 + 250
   await page.getByRole('button', { name: 'Use the usual amount' }).click();
-  await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$150');
-
-  // Add Store card's due day (the 5th): it is due 5 Nov, before the next payday, so it counts now
-  await page.getByRole('button', { name: 'add a due day' }).last().click();
-  await expect(page.getByRole('dialog')).toContainText('It’s on your statement.');
-  await page.getByRole('textbox', { name: 'Day of the month' }).fill('5');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('checkbox', { name: /Store card.*due Thu 5 Nov/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$185'); // 35 + 150
 
   // The payday goes by without a check

@@ -8,17 +8,39 @@
  */
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import fixtures from '../../engine/fixtures.json';
+import fixtures from '../../engine/fixtures_v2.json';
 import { dueDateIn, paydayISO, simulatePlan, ZERO } from '../engine';
 import { pyRound } from '../engine/pymath';
-import { fromReferenceInput, type RefFixture } from '../engine/referenceAdapter';
+import { fromReferenceInput, type RefFixture, type RefInput } from '../engine/referenceAdapter';
 import { openAppDB, type PiyDB } from '../data/db';
 import type { AppData } from '../data/types';
 import { completeSetup, didPayday, type PaydayDone, type SetupValues } from './actions';
 import { addDebt, logCharge } from './debtActions';
 import { activeDebts, toPlanInput } from './planInput';
 
-const all = fixtures as unknown as RefFixture[];
+const sheet = fixtures as unknown as RefFixture[];
+
+/** Two longer stories, in the reference format: Sara (4 debts, every 2 weeks) and a debt that grows (twice a month) */
+const sara: RefInput = {
+  freq: 'biweekly', first_payday: '2026-10-23', money: 150, buffer: 200, goal: 500, yearly: [600, 500],
+  debts: [
+    { name: 'Visa', balance: 3200, apr: 22.9, min: 96, due: 12 },
+    { name: 'Store card', balance: 640, apr: 26.99, min: 35, due: 5 },
+    { name: 'Car loan', balance: 9800, apr: 7.5, min: 285, due: 20 },
+    { name: 'Medical bill', balance: 1150, apr: 0, min: 50, due: 1 },
+  ],
+};
+const grows: RefInput = {
+  freq: 'twice', first_payday: '2026-10-31', second_day: 15, money: 120, buffer: 0, goal: 800, yearly: [600, 500],
+  debts: [
+    { name: 'Old card', balance: 5200, apr: 29.99, min: 90, due: 3 },
+    { name: 'Phone plan', balance: 400, apr: 0, min: 40, due: 10 },
+    { name: 'Student loan', balance: 18000, apr: 5.5, min: 210, due: 15 },
+    { name: 'Mom', balance: 1000, apr: 0, min: 0, due: 1 },
+  ],
+};
+const story = (name: string, input: RefInput): RefFixture => ({ name, input, expect: undefined as never });
+const all: RefFixture[] = [story('sara_story', sara), story('twice_a_month_debt_that_grows', grows), ...sheet];
 
 function setupFrom(f: RefFixture): SetupValues {
   const p = fromReferenceInput(f.input);
@@ -59,18 +81,25 @@ async function tapThrough(data: AppData) {
 }
 
 describe('"I did it" on every payday gives the same result as one full simulation', () => {
-  const withoutAdjustments = all.filter((f) => !Object.keys(f.input.adj ?? {}).length && !Object.keys(f.input.charges ?? {}).length);
+  const withoutAdjustments = all.filter((f) => !['adjust', 'charges', 'buffer_used'].some((k) => Object.keys((f.input as unknown as Record<string, object>)[k] ?? {}).length));
 
-  it('covers the fixtures without +/- or charges', () => expect(withoutAdjustments.length).toBe(6));
+  it('covers the fixtures without +/- or charges', () => expect(withoutAdjustments.length).toBe(8)); // 6 of the Sheet + the 2 stories
 
   it.each(withoutAdjustments.map((f) => [f.name, f] as const))('%s', async (_name, f) => {
     const data = await completeSetup(db, setupFrom(f), '2026-10-15');
     const { steps, paidOff, data: end } = await tapThrough(data);
+    const full = simulatePlan(fromReferenceInput(f.input));
+    const names = Object.fromEntries(f.input.debts.map((d, i) => [`d${i}`, d.name]));
 
-    expect(steps.length).toBe(f.expected.paydays_to_debt_free);
-    expect(steps[steps.length - 1]!.date).toBe(f.expected.debt_free_date);
-    expect(pyRound(steps.reduce((s, x) => s + x.interest, 0), 2)).toBe(f.expected.total_interest);
-    expect(paidOff).toEqual(f.expected.paid_off_dates);
+    expect(steps.length).toBe(full.paydaysToDebtFree);
+    expect(steps[steps.length - 1]!.date).toBe(full.debtFreeDate);
+    expect(pyRound(steps.reduce((s, x) => s + x.interest, 0), 2)).toBe(pyRound(full.totalInterest, 2));
+    expect(paidOff).toEqual(Object.fromEntries(Object.entries(full.paidOff).map(([id, date]) => [names[id]!, date])));
+    if (f.expect) {
+      expect(steps.length).toBe(f.expect.paydays);
+      expect(steps[steps.length - 1]!.date).toBe(f.expect.debt_free);
+      expect(pyRound(steps.reduce((s, x) => s + x.interest, 0), 2)).toBe(f.expect.interest);
+    }
     expect(end.debts.every((x) => x.status === 'paid' && x.balance === 0)).toBe(true);
   });
 
@@ -108,14 +137,14 @@ describe('rule 1: a paid debt stays in the plan, and its minimum rolls into the 
     // After the payoff the payday total keeps its size: what the paid debt's bill asked for goes into the extra,
     // on the paydays before its due day, so total = every bill due (the paid one too) + the plan money.
     const input = f.input;
-    const planMoney = input.extra;
+    const planMoney = input.money;
     let rolled = 0;
     for (let k = 0; k < 4; k++) {
       const done = await didPayday(db, data);
       const step = done.step;
       data = done.data;
       const nextDate = paydayISO(toPlanInput(data).nextPayday, toPlanInput(data).frequency, (toPlanInput(data).paydayOffset ?? 0) + 1);
-      const nominal = input.debts.reduce((sum, d) => (d.due_day && dueDateIn(d.due_day, step.date, nextDate) ? sum + d.min : sum), 0);
+      const nominal = input.debts.reduce((sum, d) => (d.due && dueDateIn(d.due, step.date, nextDate) ? sum + d.min : sum), 0);
       expect(step.totalToSetAside).toBeCloseTo(nominal + planMoney, 6);
       const storeBill = step.debts.find((d) => d.id === store.id)!;
       expect(storeBill.minimum).toBe(0);
@@ -180,7 +209,7 @@ describe('rule 3: payday dates come from the schedule', () => {
 
 describe('a zero balance is zero', () => {
   it('nothing left means no active debts', async () => {
-    const f = all[4]!;
+    const f = all.find((x) => x.name === 'eight_k')!;
     const data = await completeSetup(db, setupFrom(f), '2026-10-15');
     const { data: end } = await tapThrough(data);
     expect(end.debts.reduce((s, d) => s + d.balance, 0)).toBeLessThanOrEqual(ZERO);

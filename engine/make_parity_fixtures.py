@@ -1,17 +1,86 @@
-"""Writes parity fixtures for the app engine. The expected values come from the
-reference engine (engine_reference.py), so the TypeScript port must match them exactly.
+"""Writes parity fixtures for the app engine. The expected values come from engine_v2.py, so the TypeScript
+port must match them exactly.
 
-  engine/fixtures-edge.json    named edge cases (CLAUDE.md section 6, Tests)
-  engine/fixtures-random.json  seeded random scenarios
+  engine/fixtures_v2_edge.json    named edge cases (CLAUDE.md section 6, Tests)
+  engine/fixtures_v2_random.json  seeded random scenarios
+
+The scenarios are written in the older field names below and converted to the engine_v2 format by to_v2().
+A scenario is dropped when the app's payday dates and engine_v2's would differ (twice a month, starting on the
+last day of a short month: the app keeps "last day", engine_v2 keeps the literal day) or when there is nothing
+to pay (the app shows "debt-free" there instead of a plan).
 
 Run: python engine/make_parity_fixtures.py
 """
-import copy, json, os, random, sys
+import calendar, copy, datetime as dt, json, os, random, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from engine_reference import simulate  # noqa: E402
+import engine_v2 as v2  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+FREQ_V2 = {'Every week': 'weekly', 'Every 2 weeks': 'biweekly', 'Twice a month': 'twice', 'Every month': 'monthly'}
+METHOD_V2 = {'PaidInYellow order': 'piy', 'Biggest interest first': 'avalanche', 'My own order': 'custom'}
+
+
+def app_payday(first, freq, n, other=None):
+    """The payday dates the app uses (n = 1 for the first payday)."""
+    if freq == 'Every week': return first + dt.timedelta(7 * (n - 1))
+    if freq == 'Every 2 weeks': return first + dt.timedelta(14 * (n - 1))
+    if freq == 'Every month':
+        y, mo = divmod(first.month - 1 + n - 1, 12); y += first.year; mo += 1
+        return dt.date(y, mo, min(first.day, calendar.monthrange(y, mo)[1]))
+    d = 31 if first.day == calendar.monthrange(first.year, first.month)[1] else first.day
+    if not other or other == d:
+        other = d + 15 if d <= 15 else (15 if d == 31 else d - 15)
+    lo, hi = min(d, other), max(d, other)
+    idx = n - 1 + (0 if d == lo else 1)
+    y, mo = divmod(first.month - 1 + idx // 2, 12); y += first.year; mo += 1
+    return dt.date(y, mo, min(lo if idx % 2 == 0 else hi, calendar.monthrange(y, mo)[1]))
+
+
+def to_v2(s):
+    """Old field names -> engine_v2 input (JSON-friendly: ISO date, string keys by payday index from 0)."""
+    y, m, d = s['next_payday']
+    out = dict(freq=FREQ_V2[s['freq']], first_payday=dt.date(y, m, d).isoformat(), money=s['extra'],
+               buffer=s['buffer_now'], goal=s['buffer_goal'], yearly=[b['per_year'] for b in s.get('yearly', [])])
+    if METHOD_V2[s['method']] != 'piy': out['method'] = METHOD_V2[s['method']]
+    if s.get('other_payday'): out['second_day'] = s['other_payday']
+    out['debts'] = []
+    for x in s['debts']:
+        item = dict(name=x['name'], balance=x['balance'], apr=x['apr'], min=x['min'], due=x.get('due_day'))
+        if x.get('my_order') is not None: item['my_order'] = x['my_order']
+        out['debts'].append(item)
+    for old, new in (('adj', 'adjust'), ('charges', 'charges')):
+        if s.get(old): out[new] = {str(int(k) - 1): v for k, v in s[old].items()}
+    return out
+
+
+def run(inp):
+    """engine_v2.simulate on a JSON-style input."""
+    s = copy.deepcopy(inp)
+    s['first_payday'] = dt.date.fromisoformat(s['first_payday'])
+    for key in ('adjust', 'charges', 'buffer_used', 'yearly_paid'):
+        if key in s: s[key] = {int(k): v for k, v in s[key].items()}
+    return v2.simulate(s)
+
+
+def expect_of(r):
+    return dict(order=r['order'], debt_free=r['debt_free'].isoformat() if r['debt_free'] else None, paydays=r['paydays'],
+                interest=r['interest'],
+                first_paydays=[dict(date=x['date'].isoformat(), bills=round(x['bills'], 2), extra=round(x['extra'], 2),
+                                    total_move=round(x['total_move'], 2), owed=round(x['owed'], 2)) for x in r['rows'][:4]],
+                owed_60=[round(x['owed'], 2) for x in r['rows'][:60]])
+
+
+def usable(old):
+    if sum(x['balance'] for x in old['debts']) <= 0.005: return False
+    y, m, d = old['next_payday']; first = dt.date(y, m, d)
+    inp = to_v2(old); second = inp.get('second_day')
+    for n in range(1, 80):
+        a = app_payday(first, old['freq'], n, old.get('other_payday'))
+        b = v2.payday(inp['freq'], first, n - 1, second)
+        if a != b: return False
+    return True
 
 
 def debt(name, balance, apr, mn, my_order=None):
@@ -109,18 +178,23 @@ def random_scenario(rng, k):
 
 
 def build(cases):
-    out = []
-    for name, inp in cases:
-        out.append(dict(name=name, input=inp, expected=simulate(inp)))
-    return out
+    out, dropped = [], 0
+    for name, old in cases:
+        if not usable(old):
+            dropped += 1
+            continue
+        inp = to_v2(old)
+        out.append(dict(name=name, input=inp, expect=expect_of(run(inp))))
+    return out, dropped
 
 
 if __name__ == '__main__':
     rng = random.Random(20261015)
-    edge = build(EDGE)
-    rand = build([random_scenario(rng, k) for k in range(200)])
-    with open(os.path.join(HERE, 'fixtures-edge.json'), 'w') as f:
+    edge, d1 = build(EDGE)
+    rand, d2 = build([random_scenario(rng, k) for k in range(240)])
+    rand = rand[:200]
+    with open(os.path.join(HERE, 'fixtures_v2_edge.json'), 'w') as f:
         json.dump(edge, f, indent=1)
-    with open(os.path.join(HERE, 'fixtures-random.json'), 'w') as f:
+    with open(os.path.join(HERE, 'fixtures_v2_random.json'), 'w') as f:
         json.dump(rand, f, separators=(',', ':'))
-    print('wrote %d edge and %d random fixtures' % (len(edge), len(rand)))
+    print('wrote %d edge (%d dropped) and %d random (%d dropped of 240) fixtures' % (len(edge), d1, len(rand), d2))

@@ -4,7 +4,6 @@ import {
   compareMethods,
   dailyInterestCost,
   growingDebts,
-  minimumsPerPayday,
   planNeedsHelp,
   preparePlan,
   simulatePlan,
@@ -153,11 +152,6 @@ describe('screen helpers', () => {
   it('daily interest cost: sum(balance x APR) / 365', () => {
     expect(pyRound(dailyInterestCost([visa, store]), 2)).toBe(pyRound((3200 * 0.229 + 640 * 0.2699) / 365, 2));
     expect(dailyInterestCost([])).toBe(0);
-  });
-
-  it('minimums per payday: monthly x 12 / ppy, skipping paid debts', () => {
-    expect(minimumsPerPayday([visa, store], 'biweekly')).toBeCloseTo((131 * 12) / 26, 9);
-    expect(minimumsPerPayday([{ ...visa, balance: 0 }, store], 'monthly')).toBe(35);
   });
 
   it('flags debts that grow, but not a 0% debt with no minimum', () => {

@@ -11,15 +11,15 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026
 });
 
-test('setup asks for the due day, recommended, with where to find it', async ({ page }) => {
+test('setup needs the due day, and says where to find it', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  await expect(page.getByLabel('Due day (recommended)')).toBeVisible();
-  await expect(page.getByText('It’s on your statement. Without it we can’t plan this bill.')).toBeVisible();
+  await expect(page.getByLabel('Due day')).toBeVisible();
+  await expect(page.getByText('It’s on your statement. The plan needs it to place the bill.')).toBeVisible();
   await expect(page.getByLabel('Due day (optional)')).toHaveCount(0);
   await shot(page, '31-due-day-setup');
 });
@@ -75,14 +75,22 @@ test('a debt with no due day: "Visa $96, add a due day", not counted, and the li
   await runWizard(page, {
     frequency: 'Every 2 weeks',
     nextPayday: '2026-10-23',
-    debts: [
-      { name: 'Visa', balance: '3,200', apr: '22.9', min: '96' }, // no due day
-      { name: 'Car loan', balance: '9,800', apr: '7.5', min: '285', due: '28' },
-    ],
+    debts: [{ name: 'Car loan', balance: '9,800', apr: '7.5', min: '285', due: '28' }],
     bufferNow: '500',
     extra: '150',
   });
   await startPlan(page);
+  // Setup needs a due day for every bill. A debt added later from the Debts tab can still be without one.
+  await goTab(page, 'Debts');
+  await page.getByRole('button', { name: 'Add a debt' }).click();
+  const add = page.getByRole('dialog', { name: 'Add a debt' });
+  await add.getByLabel('Name').fill('Visa');
+  await add.getByRole('textbox', { name: 'Balance' }).fill('3200');
+  await add.getByRole('textbox', { name: 'Interest rate' }).fill('22.9');
+  await add.getByRole('button', { name: 'Add minimum and due day now' }).click();
+  await add.getByLabel('Monthly minimum').fill('96');
+  await add.getByRole('button', { name: 'Save' }).click();
+  await goTab(page, 'Today');
   await revealEarly(page);
 
   const noDay = page.getByTestId('no-due-day');

@@ -15,8 +15,8 @@ Everything here comes from the research and design work done in the PaidInYellow
 | Path | What it is |
 |---|---|
 | `CLAUDE.md` | This brief. |
-| `engine/engine_reference.py` | Reference payoff engine in Python. It's the exact model used by the Google Sheet. The app engine is a port of it. |
-| `engine/fixtures.json` | 6 test scenarios with the correct outputs. 4 were checked cell by cell against the Google Sheet. 2 are the classic "$8,000 at 24%" checks (56 months / $5,315 interest and 17 months / $1,500). Run `python3 engine/engine_reference.py engine/fixtures.json` and all 6 should pass. |
+| `engine/engine_v2.py` | Reference payoff engine in Python (v2, "real bills"). The Google Sheet bonus implements exactly this model, and the app engine is a port of it. |
+| `engine/fixtures_v2.json` | 7 scenarios with the correct outputs (karim, sara, growing_avalanche, growing_piy, twice_month, monthly_custom, eight_k), the same 7 the Sheet matches to the cent. `eight_k` is the classic $8,000 at 24% with a $240 minimum: 56 months and $5,315.34. `fixtures_v2_edge.json` (named edge cases) and `fixtures_v2_random.json` (200 seeded random scenarios) are generated from `engine_v2.py` by `make_parity_fixtures.py`. Run `python engine/check_fixtures.py` and all should pass. |
 | `docs/app-test-scenario-darija.docx` | Azeddin's hands-on test of the finished app (Darija): one story with the exact numbers each screen must show. Use it as the Playwright end-to-end script too. |
 | `brand/` | Logo files (SVG + PNG): wordmark for light backgrounds, wordmark for dark backgrounds, transparent wordmark, pay-stub icon, "p" icon, lockup, logo board, palette image. |
 | `mockups/01-core-app-screens.png` | Approved look for 3 app screens: setup result, Today, Progress. Match this style. |
@@ -152,7 +152,7 @@ Each feature exists for a reason, so keep the reason when you build it. Details 
 1. **Welcome.** "You pay every month, but the balance never goes down. Let's fix that, one paycheck at a time." Second line: "You're not bad at math. The math was hidden from you." Link: "Watch the 3-minute video".
 2. **Currency.** Auto-detected from the phone's region; editable. Any symbol works.
 3. **Pay schedule.** How often you get paid (Every week / Every 2 weeks / Twice a month / Every month) and your next payday. Twice a month also asks for the two pay days: "1st and 15th", "15th and last day", or two custom days (one date can't tell the schedule apart). Optional: usual paycheck amount.
-4. **Debts.** Quick add: name, balance, interest rate %, monthly minimum, due day; the type is optional. The due day is recommended, not optional: label "Due day (recommended)", hint "It's on your statement". It can still be left empty (see Today). Show an "Add another" button. Allow unlimited debts.
+4. **Debts.** Quick add: name, balance, interest rate %, monthly minimum, due day; the type is optional. The due day is required when the debt has a minimum, because it places the bill on a payday: label "Due day", hint "It's on your statement". A debt added later from the Debts tab can still be left without one (see Today). Show an "Add another" button, which keeps an unfinished debt open and names the missing field. Allow unlimited debts.
 5. **Buffer.** "How much do you have set aside for surprises?" plus the goal (default $500).
 6. **Money for the plan.** "How much can you put toward the plan each payday, on top of your minimums?" Hint: "Even $20 matters. You can change it any time."
 7. **Yearly bills** (optional, skippable). Car repairs, gifts and holidays, insurance renewals, school. Each takes an amount per year and the month it's needed.
@@ -171,7 +171,7 @@ Each feature exists for a reason, so keep the reason when you build it. Details 
 **Today** (home):
 - Debt-free pill at the top ("Debt-free · Mar 2028").
 - Next payday card listing what to pay or move, in this order: the **bills due before the next payday**, yearly bills, buffer, and extra → focus debt (the focus debt name is highlighted).
-  - A bill is a debt whose due day falls from this payday (included) up to the next payday (not included). It shows its **full monthly minimum** and its due date, like "Car loan $285, due 28 Oct". The engine's per-payday average of the minimums is never shown.
+  - A bill is a debt whose due day falls from this payday (included) up to the next payday (not included). It shows its **full monthly minimum** and its due date, like "Car loan $285, due 28 Oct".
   - Total this payday (the "I did it" amount, the first step on the result screen, the Plan list, the CSV and the print page) = those bills + yearly bills + buffer + extra.
   - A debt with a minimum but no due day shows as "Visa $96, add a due day" with a link that sets the day. It is not counted in the total until it has a due day (we can't tell which payday it belongs to).
   - Pressing "I did it" applies exactly the amounts listed (bills to their debts, extra to the focus debt, buffer and yearly bills to their pots). The plan is simulated again from the new state.
@@ -236,9 +236,9 @@ Setup → debt-free date → first step only. The schedule, tracker, what-if and
 
 ## 6. The engine (most important part)
 
-**Port `engine/engine_reference.py` exactly, then make `engine/fixtures.json` pass in your test runner before building any screen.** The app and the Google Sheet bonus must show the same numbers. If you think the model should change, ask Azeddin first and update the reference, the fixtures and the sheet together.
+**Port `engine/engine_v2.py` exactly, then make `engine/fixtures_v2.json` pass in your test runner before building any screen.** The app and the Google Sheet bonus show the same numbers (the Sheet implements exactly this model and matches `engine_v2.py` to the cent on the 7 fixtures). If you think the model should change, ask Azeddin first and update the reference, the fixtures and the Sheet together.
 
-**Model v2 (approved by Azeddin, 24 Oct 2026): bills by due date.** v1 set aside an even "monthly minimum × 12 / ppy" every payday and moved every balance by that average, so a balance went down on paydays when no bill was due. v2 pays the real bill. The reference, `fixtures.json`, `fixtures-edge.json`, `fixtures-random.json` and the app are v2. **The Google Sheet bonus is still v1 and must be rebuilt as v2 before it is sold next to the app** (its dates differ by up to 1 payday).
+**Model v2, "real bills" (approved by Azeddin, 24 Oct 2026).** v1 set aside an *average* minimum every payday (`monthly minimum × 12 / ppy`), so after "I did it" a balance moved by an amount the user never paid. v2 moves balances by exactly what the user pays. The averaging code is gone from the engine and the screens: there is no "average vs real bill" difference and no "estimate" note.
 
 The model, in one step per payday:
 - `ppy` = paydays per year: weekly 52, every 2 weeks 26, twice a month 24, monthly 12.
@@ -246,14 +246,14 @@ The model, in one step per payday:
   - weekly: +7 days
   - every 2 weeks: +14 days
   - monthly: the same day each month, clamped to the month's end
-  - twice a month: two fixed days of the month (`other_payday`; 31 means the last day), capped at the month's end, alternating. Without `other_payday`: a day up to the 15th pairs with day + 15, the last day of a month pairs with the 15th, any other day after the 15th pairs with day - 15. See `twice_a_month_days()` in the reference.
+  - twice a month: two fixed days of the month (`other_payday`; 31 means the last day), capped at the month's end, alternating. Without `other_payday`: a day up to the 15th pairs with day + 15, the last day of a month pairs with the 15th, any other day after the 15th pairs with day - 15. See `other_payday()` and `payday()` in `engine_v2.py`. One edge differs on purpose: when the first payday is the last day of a short month (say 30 Nov), the app keeps "last day" for every month, where `engine_v2.py` keeps the literal day.
 - **Interest each payday:** `balance × APR / ppy`.
-- **Bills (v2):** a debt's bill is its full monthly minimum, paid on the payday before it falls due: a debt whose due day falls in [this payday, next payday) pays its bill that payday, capped at what it owes after interest. Every other debt is not paid down by a minimum that payday (interest still accrues, so its balance goes up). A debt without a due day (or with a 0 minimum) has no bill, so it only goes down when the extra reaches it. The due day is clamped to the month's end. This is exactly what Today lists, what "I did it" applies and what the Plan list shows.
+- **Bills (v2).** Each payday, a debt's full monthly minimum is due when its due day (clamped to the month's end) falls in `[this payday, next payday)`. The bill is `min(minimum due, balance after interest and charges)`. A debt with no due date in the window gets no bill that payday: its balance only gains interest. A debt without a due day, or with a 0 minimum, has no bill at all, so it only goes down when the extra reaches it. In the app the due day is required at setup for any debt with a minimum, and Today keeps "Visa $96, add a due day" for a debt added later without one. This is exactly what Today lists, what "I did it" applies and what the Plan list shows.
 - **The order money goes each payday.** Available money is `money for the plan` plus any "+/- this payday".
   1. Yearly bills: `sum(yearly costs) / ppy`, capped at what's available.
   2. Buffer: until it reaches the goal.
-  3. Extra to debts: what's left, plus the bills freed by paid-off debts (the rollover: a paid-off debt's bill is added to the extra on the paydays it would have been due). It goes to debts in payoff order. The focus debt gets all of it, and any overflow goes to the next debt.
-- **New charges:** added to the focus debt of that payday. The focus debt is the debt with the most extra that payday; if no debt got extra, it's the first debt in order.
+  3. Extra to debts: `rest + rollover`, where `rollover = sum(minimum due) - sum(bills paid)`. So a paid-off debt's minimum keeps rolling into the extra on the paydays its bill would have fallen. The extra goes to debts in payoff order: the focus debt gets all it can take, and any overflow goes to the next debt.
+- **New charges** go to the first debt in payoff order that still has a balance, after this payday's interest and before its bill. Buffer money used on a payday (`buffer_used`) lowers the buffer, and the plan refills it first.
 - **Payoff orders.** Ties always keep the order the debts were entered.
   - PaidInYellow order: debts that charge interest and whose monthly minimum is at or below their monthly interest go first (highest APR first among them), then the smallest balance first. A 0% debt never counts as growing, even with a $0 minimum.
   - Biggest interest first: highest APR first (ties: smaller balance).
@@ -274,7 +274,11 @@ The model, in one step per payday:
 - "Update from statement" overwrites a balance. "I used the buffer" lowers the buffer. Then the plan re-simulates.
 - A skipped payday: the next payday moves forward, nothing is applied, and the date updates calmly.
 
-**Tests.** A test that applies "I did it" step by step to the end must give the same debt-free date and interest as one full simulation, for every fixture without +/- or charges. Unit tests on the engine with all 6 fixtures (dates must match exactly; amounts to the cent). Add edge cases: zero debts, a 0% debt, a debt with a 0 minimum, a minimum that doesn't cover interest, a negative "+/-", a buffer already above the goal, Feb 28/29 and the 31st for monthly and twice-a-month dates.
+**Tests.**
+- All 7 fixtures in `engine/fixtures_v2.json` must match: debt-free date exactly, total interest and the first four paydays (bills, extra, total, debt left) to the cent. The generated edge and random fixtures must match too, with the debt left on each of the first 60 paydays.
+- A test that applies "I did it" step by step to the end must give the same debt-free date, interest and paid-off dates as one full simulation, for every fixture without +/- or charges.
+- Edge cases covered by `fixtures_v2_edge.json`: a 0% debt, a debt with a 0 minimum, a minimum that doesn't cover interest, a negative "+/-", a buffer already above the goal, Feb 28/29 and the 31st for monthly and twice-a-month dates.
+- The Darija test scenario's expected numbers come from `engine_v2.py`, since bills land by due date.
 
 ---
 
@@ -306,7 +310,7 @@ The model, in one step per payday:
 
 ## 9. Build order and definition of done
 
-1. Engine port + the 6 fixtures passing, plus the edge cases.
+1. Engine port + the fixtures of `engine/fixtures_v2.json` passing, plus the edge cases.
 2. Setup wizard, result screen and Today: the smallest usable app.
 3. Debts, Plan, Progress, Money.
 4. Backup / import, .ics, unlock code, PWA install, dark mode, text size.

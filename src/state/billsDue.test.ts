@@ -4,8 +4,11 @@ import { simulatePlan } from '../engine';
 import { openAppDB, type PiyDB } from '../data/db';
 import type { AppData } from '../data/types';
 import { completeSetup, didPayday, type SetupValues } from './actions';
-import { biggerNote, billAmount, billsBetween, billsForNextPayday, billsForPlanRow, dueDateIn, totalOf, type BillDebt } from './billsDue';
+import { billsBetween, billsForNextPayday, billsForPlanRow, dueDateIn, totalOf, type BillDebt } from './billsDue';
 import { toPlanInput } from './planInput';
+
+/** What the engine pays each debt on this payday: its full minimum, never more than the balance */
+const paidOf = (debts: BillDebt[]) => new Map(debts.map((d) => [d.id, Math.min(d.minMonthly, d.balance)]));
 
 const debt = (name: string, dueDay: number | null, minMonthly: number, balance = 1000, apr = 0, autopay = false): BillDebt => ({
   id: name,
@@ -44,7 +47,7 @@ describe('dueDateIn: the date in [from, to) a bill is due', () => {
 
 describe('billsBetween', () => {
   it('lists the debts due in the window, each with its full monthly minimum, in date order', () => {
-    const w = billsBetween([debt('Car loan', 28, 285), debt('Visa', 12, 96), debt('Phone', 25, 40)], '2026-10-23', '2026-11-06');
+    const w = billsBetween([debt('Car loan', 28, 285), debt('Visa', 12, 96), debt('Phone', 25, 40)], '2026-10-23', '2026-11-06', paidOf([debt('Car loan', 28, 285), debt('Visa', 12, 96), debt('Phone', 25, 40)]));
     expect(w.due.map((b) => [b.name, b.amount, b.due])).toEqual([
       ['Phone', 40, '2026-10-25'],
       ['Car loan', 285, '2026-10-28'],
@@ -54,29 +57,30 @@ describe('billsBetween', () => {
   });
 
   it('shows a debt with no due day, but does not count it', () => {
-    const w = billsBetween([debt('Visa', null, 96), debt('Car loan', 28, 285)], '2026-10-23', '2026-11-06');
+    const w = billsBetween([debt('Visa', null, 96), debt('Car loan', 28, 285)], '2026-10-23', '2026-11-06', paidOf([debt('Visa', null, 96), debt('Car loan', 28, 285)]));
     expect(w.noDueDay).toEqual([{ debtId: 'Visa', name: 'Visa', amount: 96 }]);
     expect(w.total).toBe(285);
   });
 
   it('leaves out paid debts and debts with no minimum', () => {
-    const w = billsBetween([debt('Paid', 25, 50, 0), debt('Mom', 25, 0), debt('Mom no day', null, 0), debt('Real', 26, 30)], '2026-10-23', '2026-11-06');
+    const w = billsBetween([debt('Paid', 25, 50, 0), debt('Mom', 25, 0), debt('Mom no day', null, 0), debt('Real', 26, 30)], '2026-10-23', '2026-11-06', paidOf([debt('Paid', 25, 50, 0), debt('Mom', 25, 0), debt('Mom no day', null, 0), debt('Real', 26, 30)]));
     expect(w.due.map((b) => b.name)).toEqual(['Real']);
     expect(w.noDueDay).toEqual([]);
   });
 
-  it('asks for less than the minimum when the debt is nearly paid', () => {
-    expect(billAmount({ balance: 13.22, apr: 26.99, minMonthly: 35 })).toBe(13.52);
-    expect(billAmount({ balance: 500, apr: 20, minMonthly: 35 })).toBe(35);
+  it('lists what the engine pays, which is less than the minimum when the debt is nearly paid', () => {
+    const nearly = debt('Store card', 5, 35, 13.22, 26.99);
+    const w = billsBetween([nearly], '2026-10-23', '2026-11-06', new Map([['Store card', 13.28]]));
+    expect(w.due.map((b) => [b.name, b.amount])).toEqual([['Store card', 13.28]]);
   });
 
   it('keeps the order entered for debts due on the same day, and marks autopay', () => {
-    const w = billsBetween([debt('B', 25, 10, 100, 0, true), debt('A', 25, 20)], '2026-10-23', '2026-11-06');
+    const w = billsBetween([debt('B', 25, 10, 100, 0, true), debt('A', 25, 20)], '2026-10-23', '2026-11-06', paidOf([debt('B', 25, 10, 100, 0, true), debt('A', 25, 20)]));
     expect(w.due.map((b) => [b.name, b.autopay])).toEqual([['B', true], ['A', false]]);
   });
 
   it('an empty window is fine', () => {
-    expect(billsBetween([debt('Visa', 12, 96)], '2026-10-23', '2026-11-06')).toEqual({ due: [], noDueDay: [], total: 0 });
+    expect(billsBetween([debt('Visa', 12, 96)], '2026-10-23', '2026-11-06', paidOf([debt('Visa', 12, 96)]))).toEqual({ due: [], noDueDay: [], total: 0 });
   });
 });
 
@@ -181,19 +185,3 @@ describe('for the next payday', () => {
   });
 });
 
-describe('biggerNote', () => {
-  const money = (n: number) => `$${n}`;
-  const day = (iso: string) => iso.slice(5);
-  const step = { debts: [{ minimum: 100 }, { minimum: 115.08 }] } as unknown as Parameters<typeof biggerNote>[1];
-  const bill = (name: string, amount: number, due: string) => ({ debtId: name, name, amount, due, autopay: false });
-
-  it('says nothing when the payday is the usual size or smaller', () => {
-    expect(biggerNote({ due: [bill('Visa', 96, '2026-11-12')], noDueDay: [], total: 96 }, step, money, day)).toBeNull();
-    expect(biggerNote({ due: [bill('Visa', 215.5, '2026-11-12')], noDueDay: [], total: 215.5 }, step, money, day)).toBeNull();
-  });
-
-  it('names the biggest bills when the payday is bigger', () => {
-    const bills = { due: [bill('Visa', 96, '2026-11-12'), bill('Car loan', 285, '2026-11-20'), bill('Store card', 35, '2026-11-05')], noDueDay: [], total: 416 };
-    expect(biggerNote(bills, step, money, day)).toBe('Bigger this time: Car loan $285 is due 11-20 and Visa $96 is due 11-12.');
-  });
-});

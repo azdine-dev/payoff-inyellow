@@ -69,17 +69,12 @@ import { minimumsLine } from './Money';
 describe('the minimums line on the money step', () => {
   const sara = ['96', '35', '285', '50'].map((min, i) => debt({ key: `k${i}`, name: `D${i}`, balance: '1000', apr: '10', min }));
 
-  it("Sara's minimums: $466 a month, about $215 each payday (every 2 weeks)", () => {
-    expect(minimumsLine({ debts: sara, frequency: 'biweekly', currencySymbol: '$' })).toBe('Your minimums: $466 a month, about $215 each payday.');
+  it("Sara's minimums: $466 a month", () => {
+    expect(minimumsLine({ debts: sara, currencySymbol: '$' })).toBe('Your minimums: $466 a month.');
   });
 
-  it('follows the pay schedule', () => {
-    expect(minimumsLine({ debts: sara, frequency: 'weekly', currencySymbol: '$' })).toBe('Your minimums: $466 a month, about $108 each payday.');
-    expect(minimumsLine({ debts: sara, frequency: 'monthly', currencySymbol: '$' })).toBe('Your minimums: $466 a month, about $466 each payday.');
-  });
-
-  it('has no line until a debt has a minimum, and skips the payday part without a schedule', () => {
-    expect(minimumsLine({ debts: [debt({})], frequency: 'biweekly', currencySymbol: '$' })).toBeNull();
-    expect(minimumsLine({ debts: sara, frequency: '', currencySymbol: '€' })).toBe('Your minimums: €466 a month.');
+  it('has no line until a debt has a minimum, and uses the symbol you chose', () => {
+    expect(minimumsLine({ debts: [debt({})], currencySymbol: '$' })).toBeNull();
+    expect(minimumsLine({ debts: sara, currencySymbol: '€' })).toBe('Your minimums: €466 a month.');
   });
 });

@@ -157,7 +157,7 @@ export async function runWizard(page: Page, c: WizardConfig) {
     await card.getByLabel('Balance').fill(d.balance);
     await card.getByLabel('Interest rate').fill(d.apr);
     await card.getByLabel('Monthly minimum').fill(d.min);
-    if (d.due) await card.getByLabel('Due day (recommended)').fill(d.due);
+    if (d.due) await card.getByLabel('Due day').fill(d.due);
   }
   await next.click();
   await page.getByLabel('Money for the plan each payday').fill(c.extra);

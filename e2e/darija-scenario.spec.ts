@@ -63,7 +63,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
       await card.getByLabel('Balance').fill(d.balance);
       await card.getByLabel('Interest rate').fill(d.apr);
       await card.getByLabel('Monthly minimum').fill(d.min);
-      await card.getByLabel('Due day (recommended)').fill(d.due);
+      await card.getByLabel('Due day').fill(d.due);
     }
     await expect(page.getByTestId('debt-summary')).toHaveCount(3); // the three before it are one line each
     await expect(page.getByTestId('debt-summary').first()).toContainText('Visa');
@@ -73,7 +73,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   });
 
   await test.step('3 Money: 150 for the plan, 200 in the buffer, the goal is 500 from the start', async () => {
-    await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month, about $215 each payday.');
+    await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month.');
     await expect(page.getByText('Even $20 matters. You can change it any time.')).toBeVisible();
     await page.getByRole('button', { name: '$150', exact: true }).click();
     await expect(page.getByLabel('Money for the plan each payday')).toHaveValue('150');
