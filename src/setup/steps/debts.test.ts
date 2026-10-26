@@ -11,10 +11,12 @@ describe('a debt added so far, as one line', () => {
     expect(debtRow(d, '$', 0)).toEqual({ name: 'Store Card', sub: '26.99% · $35 a month · due the 2nd', amount: '$890' });
   });
 
-  it('works without a due day, with pasted dollars and commas, and with cents', () => {
-    const d = debt({ name: 'Visa', balance: '$1,234.56', apr: '24.99', min: '65' });
+  it('needs a due day when there is a minimum, and understands pasted dollars, commas and cents', () => {
+    const d = debt({ name: 'Visa', balance: '$1,234.56', apr: '24.99', min: '65', dueDay: '8' });
     expect(debtComplete(d)).toBe(true);
-    expect(debtRow(d, '$', 1)).toEqual({ name: 'Visa', sub: '24.99% · $65 a month', amount: '$1,234.56' });
+    expect(debtComplete({ ...d, dueDay: '' })).toBe(false);
+    expect(debtComplete({ ...d, dueDay: '', min: '0' })).toBe(true);
+    expect(debtRow(d, '$', 1)).toEqual({ name: 'Visa', sub: '24.99% · $65 a month · due the 8th', amount: '$1,234.56' });
   });
 
   it('an empty rate says "rate missing" and still counts as complete', () => {

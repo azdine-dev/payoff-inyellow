@@ -40,7 +40,7 @@ describe('the four steps', () => {
   });
 
   it('step 2 lets the rate stay empty (24% is used and the debt is marked)', () => {
-    const d = { ...newDraft(), debts: [{ key: 'a', name: 'Visa', type: '', balance: '3200', apr: '', min: '96', dueDay: '', autopay: false }] };
+    const d = { ...newDraft(), debts: [{ key: 'a', name: 'Visa', type: '', balance: '3200', apr: '', min: '96', dueDay: '12', autopay: false }] };
     expect(stepNotes(1, d, '2026-10-15')).toEqual([]);
     const v = toSetupValues({ ...d, frequency: 'biweekly', nextPayday: '2026-10-23' });
     expect(v.debts[0]).toMatchObject({ apr: 24, rateMissing: true });
@@ -50,6 +50,13 @@ describe('the four steps', () => {
     expect(typed.debts[0]).not.toHaveProperty('rateMissing');
     // a typo is still asked about
     expect(stepNotes(1, { ...d, debts: [{ ...d.debts[0]!, apr: 'abc' }] }, '2026-10-15').join(' ')).toContain('interest rate');
+  });
+
+  it('step 2 needs the due day of a debt that has a minimum, and not of one that has none', () => {
+    const d = { ...newDraft(), debts: [{ key: 'a', name: 'Visa', type: '', balance: '3200', apr: '22.9', min: '96', dueDay: '', autopay: false }] };
+    expect(stepNotes(1, d, '2026-10-15')).toEqual(['Visa: add the due day. It’s on your statement, and the plan needs it to place the bill.']);
+    expect(stepNotes(1, { ...d, debts: [{ ...d.debts[0]!, dueDay: '12' }] }, '2026-10-15')).toEqual([]);
+    expect(stepNotes(1, { ...d, debts: [{ ...d.debts[0]!, min: '0' }] }, '2026-10-15')).toEqual([]); // no minimum, no bill
   });
 
   it('step 3 asks for the buffer goal and the money for the plan', () => {
