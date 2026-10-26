@@ -5,7 +5,8 @@
  * "I did it" applies: the bills whose due day falls between this payday and the next one, each with its
  * full monthly minimum, plus yearly bills, plus buffer and extra.
  */
-import { dueDateIn, paydayISO, ZERO, type PaydayStep, type PlanResult } from '../engine';
+import { dueDateIn, paydayISO, simulatePlan, ZERO, type PaydayStep, type PlanResult } from '../engine';
+import { toPlanInput } from './planInput';
 import type { AppData, Debt, Settings } from '../data/types';
 import { toCents } from '../lib/money';
 
@@ -46,27 +47,26 @@ export interface BillDebt {
 
 export { dueDateIn };
 
-/** What is asked for this month: the full minimum, never more than the debt itself. */
-export function billAmount(d: Pick<BillDebt, 'balance' | 'apr' | 'minMonthly'>): number {
-  return toCents(Math.min(d.minMonthly, d.balance * (1 + d.apr / 1200)));
-}
-
-/** Bills due from `from` (this payday, included) up to `to` (the next payday, not included). */
-export function billsBetween(debts: readonly BillDebt[], from: string, to: string): BillsWindow {
+/**
+ * Bills due from `from` (this payday, included) up to `to` (the next payday, not included).
+ * `paid` is what the engine pays each debt on this payday (its bill, never more than the debt owes after interest):
+ * the screens list exactly those amounts, so what Today shows is what "I did it" applies.
+ */
+export function billsBetween(debts: readonly BillDebt[], from: string, to: string, paid: ReadonlyMap<string, number>): BillsWindow {
   const due: BillDue[] = [];
   const noDueDay: BillNoDay[] = [];
   for (const d of debts) {
     if (d.balance <= ZERO || d.minMonthly <= 0) continue;
-    const amount = billAmount(d);
     if (!d.dueDay) {
-      noDueDay.push({ debtId: d.id, name: d.name, amount });
+      noDueDay.push({ debtId: d.id, name: d.name, amount: toCents(d.minMonthly) });
       continue;
     }
     const date = dueDateIn(d.dueDay, from, to);
-    if (date) due.push({ debtId: d.id, name: d.name, amount, due: date, autopay: d.autopay });
+    const amount = toCents(paid.get(d.id) ?? 0);
+    if (date && amount > 0) due.push({ debtId: d.id, name: d.name, amount, due: date, autopay: d.autopay });
   }
   due.sort((x, y) => x.due.localeCompare(y.due)); // stable: debts due the same day keep the order entered
-  return { due, noDueDay, total: toCents(due.reduce((s, b) => s + b.amount, 0)) };
+  return { due, noDueDay, total: toCents(due.reduce((sum, b) => sum + b.amount, 0)) };
 }
 
 const toBillDebt = (d: Debt, balance = d.balance): BillDebt => ({
@@ -86,31 +86,18 @@ export function paydayAhead(s: Settings, ahead: number): string {
 
 /** The bills for the next payday: due from that payday up to the one after it. */
 export function billsForNextPayday(data: AppData): BillsWindow {
-  const s = data.settings;
-  const debts = data.debts.filter((d) => d.status === 'active').map((d) => toBillDebt(d));
-  return billsBetween(debts, paydayAhead(s, 0), paydayAhead(s, 1));
+  return billsForPlanRow(data, simulatePlan(toPlanInput(data)), 0);
 }
 
-/** The bills for the i-th payday of the plan (0 = next), using each debt's balance at that point. */
+/** The bills for the i-th payday of the plan (0 = next), as the engine pays them. */
 export function billsForPlanRow(data: AppData, result: PlanResult, i: number): BillsWindow {
   const s = data.settings;
   const row = result.rows[i];
   if (!row) return { due: [], noDueDay: [], total: 0 };
   const before = new Map(row.debts.map((x) => [x.id, x.balanceBefore]));
+  const paid = new Map(row.debts.map((x) => [x.id, x.minimum]));
   const debts = data.debts.filter((d) => d.status !== 'archived').map((d) => toBillDebt(d, before.get(d.id) ?? 0));
-  return billsBetween(debts, paydayAhead(s, i), paydayAhead(s, i + 1));
-}
-
-/**
- * When the bills due before a payday add up to more than the usual even share of the minimums, say which
- * ones, in one sentence. Null when the payday is not bigger (by at least one currency unit).
- */
-export function biggerNote(bills: BillsWindow, step: Pick<PaydayStep, 'debts'>, money: (n: number) => string, day: (iso: string) => string): string | null {
-  const usual = step.debts.reduce((s, d) => s + d.minimum, 0);
-  if (bills.total - usual < 1) return null;
-  const top = [...bills.due].sort((a, b) => b.amount - a.amount).slice(0, 2);
-  if (!top.length) return null;
-  return `Bigger this time: ${top.map((b) => `${b.name} ${money(b.amount)} is due ${day(b.due)}`).join(' and ')}.`;
+  return billsBetween(debts, paydayAhead(s, i), paydayAhead(s, i + 1), paid);
 }
 
 /**

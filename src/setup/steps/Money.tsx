@@ -1,5 +1,4 @@
 /** Money: what goes toward the plan each payday, and the buffer. One screen. */
-import { PAYDAYS_PER_YEAR } from '../../engine';
 import { COPY } from '../../lib/copy';
 import { parseAmount } from '../../lib/money';
 import { Field, NumberInput } from '../../ui/controls';
@@ -9,15 +8,11 @@ import type { StepProps } from '../Wizard';
 const EXTRA_CHIPS = [20, 50, 100, 150];
 const whole = (symbol: string, n: number) => `${symbol}${Math.round(n).toLocaleString('en-US')}`;
 
-/** "Your minimums: $466 a month, about $215 each payday." Null until a debt has a minimum. */
-export function minimumsLine(draft: Pick<Draft, 'debts' | 'frequency' | 'currencySymbol'>): string | null {
+/** "Your minimums: $466 a month." Null until a debt has a minimum. */
+export function minimumsLine(draft: Pick<Draft, 'debts' | 'currencySymbol'>): string | null {
   const monthly = filledDebts(draft as Draft).reduce((s, d) => s + Math.max(0, parseAmount(d.min) ?? 0), 0);
   if (monthly <= 0) return null;
-  const ppy = draft.frequency ? PAYDAYS_PER_YEAR[draft.frequency] : null;
-  const sym = draft.currencySymbol;
-  return ppy
-    ? `Your minimums: ${whole(sym, monthly)} a month, about ${whole(sym, (monthly * 12) / ppy)} each payday.`
-    : `Your minimums: ${whole(sym, monthly)} a month.`;
+  return `Your minimums: ${whole(draft.currencySymbol, monthly)} a month.`;
 }
 
 export function MoneyStep({ draft, set }: StepProps) {

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
 import { dayMonth, monthYear, shortDate } from '../lib/today';
-import { biggerNote, billsForPlanRow, totalOf } from '../state/billsDue';
+import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { data, plan } from '../state/store';
 import { CheckIcon, Sheet } from '../ui/controls';
 
@@ -134,7 +134,6 @@ function Body() {
                   {g.items.map(({ row, i }) => {
                     const key = `ahead-${i}`;
                     const bills = rowBills[i]!;
-                    const bigger = biggerNote(bills, row, (n) => formatMoneyAuto(n, cur), dayMonth);
                     return (
                       <li key={row.date + i}>
                         <button type="button" class="pd" aria-expanded={open === key} aria-label={`${shortDate(row.date)}, to come`} onClick={() => toggle(key)}>
@@ -149,11 +148,6 @@ function Body() {
                           {row.toBuffer > 0.004 && <span class="tag">Buffer</span>}
                           {row.toYearlyBills > 0.004 && <span class="tag">Yearly bill</span>}
                         </div>
-                        {bigger && (
-                          <p class="muted small" data-testid="bigger-note" style={{ margin: '0 0 6px 40px' }}>
-                            {bigger}
-                          </p>
-                        )}
                         {open === key && (
                           <div class="stack pd-detail" style={{ gap: 6 }} role="group" aria-label={`${shortDate(row.date)} details`}>
                             {bills.due.map((b) => line('', b.amount, `b${b.debtId}`, `${b.name}, due ${dayMonth(b.due)}`))}

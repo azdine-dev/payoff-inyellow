@@ -144,3 +144,15 @@ export function dueDateIn(dueDay: number, from: string, to: string): string | nu
   }
   return null;
 }
+
+/** How many due dates of a bill (day of month, clamped to the month's end) fall in [start, end). Ported from engine_v2.py. */
+export function dueCount(dueDay: number, start: string, end: string): number {
+  const a = parseISO(start);
+  let n = 0;
+  for (let off = 0; off < 3; off++) {
+    const m = addMonths({ y: a.y, m: a.m, d: 1 }, off);
+    const iso = toISO({ y: m.y, m: m.m, d: Math.min(dueDay, daysInMonth(m.y, m.m)) });
+    if (iso >= start && iso < end) n++;
+  }
+  return n;
+}

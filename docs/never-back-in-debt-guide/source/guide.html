@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Never Back in Debt · PaidInYellow</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Caveat:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F0E6; --card:#FBF9F3; --ink:#1F2A44; --yellow:#FFE14D; --gray:#5C5A55; --line:#E2DCCD;
+  --w:8.5in; --h:11in; --pad:0.6in;
+  --head:'Bricolage Grotesque','Inter Display','Inter',sans-serif;
+  --body:'Inter',sans-serif;
+  --hand:'Caveat','Lora',serif;
+}
+@page{ size: var(--w) var(--h); margin:0 }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:var(--w);height:var(--h);padding:var(--pad);background:var(--paper);position:relative;overflow:hidden;page-break-after:always;break-after:page;display:flex;flex-direction:column;gap:20px}
+.page:last-child{page-break-after:auto;break-after:auto}
+h1,h2,h3{font-family:var(--head);margin:0;letter-spacing:-0.01em}
+h1{font-size:44px;font-weight:800;line-height:1.05}
+h2{font-size:40px;font-weight:800;line-height:1.08}
+h3{font-size:19px;font-weight:700}
+p{margin:0;font-size:15px;line-height:1.55}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray)}
+.hl{background:var(--yellow);padding:0 .18em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.muted{color:var(--gray)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.ink{background:var(--ink);color:var(--paper);border-radius:16px;padding:16px 18px}
+.row{display:flex;gap:14px}
+.grow{flex:1}
+.chip{display:inline-block;border:1px solid var(--ink);border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:600}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.steps li{display:block;position:relative;padding-left:38px;min-height:26px;font-size:15px;line-height:1.55;counter-increment:s}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:13px;background:var(--ink);color:var(--paper);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.fill{border-bottom:1.5px solid var(--ink);min-height:30px;flex:1}
+.label{font-size:12px;font-weight:600;margin-bottom:4px}
+.field{display:flex;align-items:flex-end;gap:10px;font-size:15px}
+.field .fill{min-height:32px}
+table.write{width:100%;border-collapse:collapse;font-size:14px}
+table.write th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);font-weight:700;padding:0 6px 6px}
+table.write td{border-top:1px solid var(--line);height:42px;padding:0 6px}
+table.write tr:last-child td{border-bottom:1px solid var(--line)}
+.box{width:20px;height:20px;border:1.5px solid var(--ink);border-radius:5px;display:inline-block;flex:0 0 20px}
+.hand{font-family:var(--hand);font-weight:700;font-size:24px;color:var(--gray);line-height:1.1}
+.footer{margin-top:auto;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--gray);border-top:1px solid var(--line);padding-top:10px}
+.done{flex-shrink:0;display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px dashed var(--ink);border-radius:14px;padding:12px 16px}
+.done .big{width:44px;height:44px;border:2px solid var(--ink);border-radius:10px;flex:0 0 44px}
+.day-head{display:flex;justify-content:space-between;align-items:flex-start}
+.daynum{font-family:var(--head);font-weight:800;font-size:15px;background:var(--ink);color:var(--paper);border-radius:10px;padding:6px 12px}
+.why{font-size:17px;line-height:1.5}
+.logo{font-family:var(--head);font-weight:800;font-size:20px}
+.logo span{background:var(--yellow);padding:0 4px;border-radius:3px}
+.cols2{columns:2;column-gap:28px}
+.cols2 .item{break-inside:avoid;display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;margin-bottom:11px}
+.group{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin:4px 0 8px;break-after:avoid}
+.boxes7{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.boxes7 div{aspect-ratio:1;border:2px solid var(--ink);border-radius:10px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:11px;font-weight:700}
+.bar10{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.bar10 div{height:48px;border:1.5px solid var(--ink);border-radius:6px;font-size:9.5px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;color:var(--gray)}
+.cut{border:2px dashed var(--gray);border-radius:16px;padding:18px 20px;background:var(--card)}
+.small{font-size:12.5px}
+</style>
+
+<style>
+.script{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;font-size:15.5px;line-height:1.65}
+.script .say{font-weight:600}
+.script .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);display:block;margin-bottom:6px}
+.blank{display:inline-block;border-bottom:1.5px solid var(--ink);min-width:110px;height:1em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.flow{display:flex;flex-direction:column;gap:12px;flex:1;justify-content:space-evenly}
+.card .flow{flex:none}
+table.write.offers td{height:60px;font-size:14.5px}
+.flow .stepc{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.flow .num{flex:0 0 34px;height:34px;border-radius:17px;background:var(--ink);color:var(--paper);font-weight:800;font-family:var(--head);display:flex;align-items:center;justify-content:center;font-size:16px}
+.flow .stepc p{font-size:15px}
+.flow .stepc b{font-size:15.5px}
+ul.plain{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14.5px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<!-- 1 COVER -->
+<section class="page" style="justify-content:space-between">
+  <div class="logo">paid in <span>yellow</span></div>
+  <div style="display:flex;flex-direction:column;gap:22px">
+    <div class="kicker">Pack 1 · The Paycheck Payoff System</div>
+    <h1 style="font-size:72px">Never Back<br>in <span class="hl">Debt</span></h1>
+    <p style="font-size:19px;max-width:5.3in">What to do when a surprise bill lands, what to say when you call a lender, and how to stay out once you're free.</p>
+  </div>
+  <div class="hand" style="font-size:30px">one paycheck at a time</div>
+</section>
+
+<!-- 2 WHY PEOPLE FALL BACK -->
+<section class="page">
+  <div class="kicker">Start here</div>
+  <h2>Why people fall back</h2>
+  <p class="why">Most people who slide back into debt didn't fail. Something happened, and there was no plan for it. These are the four we see most.</p>
+  <div class="two">
+    <div class="card"><h3>1 · A surprise bill</h3><p style="margin-top:6px">A car repair or a doctor's bill, and there's no cash, so it goes on a card.</p><p class="muted small" style="margin-top:8px">This guide: page 3</p></div>
+    <div class="card"><h3>2 · The ritual stops</h3><p style="margin-top:6px">One busy payday gets skipped, then two. The plan is still there, nobody is following it.</p><p class="muted small" style="margin-top:8px">This guide: page 12</p></div>
+    <div class="card"><h3>3 · An old card comes back out</h3><p style="margin-top:6px">A paid-off card sits in the wallet or a shopping app, and it gets used "just this once".</p><p class="muted small" style="margin-top:8px">This guide: page 10</p></div>
+    <div class="card"><h3>4 · An offer that sounds like help</h3><p style="margin-top:6px">A new loan, a transfer offer or a skip-a-payment deal that adds cost later.</p><p class="muted small" style="margin-top:8px">This guide: page 9</p></div>
+  </div>
+  <div class="ink">
+    <h3 style="color:var(--paper)">How to use this guide</h3>
+    <p style="color:var(--paper);margin-top:6px;opacity:.9">You don't need to read it all now. Read pages 2 and 3 today. Keep the rest for the day you need it: a surprise bill, a call to a lender, or the day your last debt is gone.</p>
+  </div>
+  <div class="card">
+    <h3>A note before you start</h3>
+    <p style="margin-top:6px">This is a planning guide, not financial or legal advice. Rules differ by country and by state. When something is serious, talk to a nonprofit credit counselor (NFCC.org in the US) or a legal aid office.</p>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>2</span></div>
+</section>
+
+<!-- 3 SURPRISE BILL PROTOCOL -->
+<section class="page">
+  <div class="kicker">Keep this page</div>
+  <h2>The surprise bill protocol</h2>
+  <p class="why">When a bill lands that you didn't plan for, follow these steps in order. Stop at the first one that covers it.</p>
+  <div class="flow">
+    <div class="stepc"><div class="num">1</div><div><b>Breathe, then check the date.</b><p style="margin-top:3px">Is it due today, or in two weeks? Most bills give you time. Time is what you need to avoid a card.</p></div></div>
+    <div class="stepc"><div class="num">2</div><div><b>Check if it's a yearly bill in disguise.</b><p style="margin-top:3px">Car repair, gifts, school? Pay it from that pot on Safety net and tap <b>I paid this bill</b>.</p></div></div>
+    <div class="stepc"><div class="num">3</div><div><b>Pay it from your buffer.</b><p style="margin-top:3px">That's what it's for. Tap <b>I used some of it</b>. Your plan refills the buffer before any extra goes to debt.</p></div></div>
+    <div class="stepc"><div class="num">4</div><div><b>Not enough? Ask the provider for time.</b><p style="margin-top:3px">Doctors, hospitals, garages and utilities often accept a payment plan. Ask for one with no interest and no fees. Get it in writing. Script on page 4.</p></div></div>
+    <div class="stepc"><div class="num">5</div><div><b>Still short? Cut this payday's extra.</b><p style="margin-top:3px">Tap <b>I got a different amount</b> and use the extra for the bill. Your minimums still get paid. The date moves a little, that's all.</p></div></div>
+    <div class="stepc"><div class="num">6</div><div><b>If it has to go on a card, log it calmly.</b><p style="margin-top:3px">Debts, then <b>Add a new charge or fee</b>, tagged <b>Emergency</b>. The plan updates. This is a wobble, not a failure.</p></div></div>
+  </div>
+  <div class="hand">That's what the buffer is for. Nothing went on a card.</div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>3</span></div>
+</section>
+
+<!-- 4 MEDICAL & PROVIDER BILLS -->
+<section class="page">
+  <div class="kicker">Surprise bills</div>
+  <h2>Medical bills and other big bills</h2>
+  <p class="why">Big bills from hospitals, doctors and repair shops can often be lowered or spread out. You only have to ask.</p>
+  <div class="card">
+    <h3>Before you pay a medical bill (US)</h3>
+    <ul class="plain">
+      <li><b>Ask for an itemized bill.</b> Check every line. Errors and double charges are common.</li>
+      <li><b>Check what insurance paid.</b> Compare the bill with your insurer's explanation of benefits.</li>
+      <li><b>Ask about financial assistance.</b> Nonprofit hospitals must have a written financial assistance policy. Ask for the application, even if you think you earn too much.</li>
+      <li><b>Ask for a discount for paying the balance yourself.</b> Many providers have one.</li>
+    </ul>
+  </div>
+  <div class="script">
+    <span class="tag">Script · asking a provider for a payment plan</span>
+    <span class="say">"Hi, I'm calling about bill number <span class="blank"></span>. I want to pay it, and I can't pay it all at once. Can we set up a payment plan with no interest and no fees? I can pay <span class="blank"></span> each month. Could you send me that agreement in writing?"</span>
+  </div>
+  <div class="script">
+    <span class="tag">Script · asking about financial assistance</span>
+    <span class="say">"Hi, I'd like to apply for your financial assistance program for bill number <span class="blank"></span>. Can you send me the application, and can you pause the bill while I apply?"</span>
+  </div>
+  <div class="card">
+    <h3>Watch out for</h3>
+    <p style="margin-top:6px">A medical credit card or a loan offered at the front desk. It can start at 0% and add all the interest later if you miss one payment. Ask the provider for their own plan instead.</p>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>4</span></div>
+</section>
+
+<!-- 5 BEFORE YOU CALL -->
+<section class="page">
+  <div class="kicker">Talking to lenders</div>
+  <h2>Before you call</h2>
+  <p class="why">Calling a lender feels scary. It's a normal call to them, and they hear it every day. A little preparation makes it calm.</p>
+  <div class="card">
+    <h3>Have this ready</h3>
+    <ul class="plain">
+      <li>The account number and your latest statement.</li>
+      <li>What you can actually pay each month. Look at the app for the real number.</li>
+      <li>One sentence on why: "My hours were cut", "I had a medical bill", or "I want to pay this off faster."</li>
+      <li>A pen and the call log below.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Three calm rules</h3>
+    <ul class="plain">
+      <li><b>Be polite and short.</b> The person on the phone wants to help you.</li>
+      <li><b>Ask, then wait.</b> If the first answer is no, ask: "Is there anyone else who could look at this?"</li>
+      <li><b>Get it in writing.</b> Ask them to send any new terms by email or letter before you agree.</li>
+    </ul>
+  </div>
+  <h3>Call log</h3>
+  <table class="write">
+    <tr><th style="width:80px">Date</th><th style="width:120px">Lender</th><th style="width:110px">Who I spoke to</th><th>What they agreed</th><th style="width:70px">In writing</th></tr>
+    <tr><td></td><td></td><td></td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td><span class="box"></span></td></tr>
+  </table>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>5</span></div>
+</section>
+
+<!-- 6 SCRIPTS 1-2 -->
+<section class="page">
+  <div class="kicker">Scripts you can read word for word</div>
+  <h2>When money is tight</h2>
+  <div class="script">
+    <span class="tag">Script 1 · asking about a hardship program</span>
+    <p class="muted small" style="margin-bottom:8px">Use it when you can't pay the minimum, or you know you won't be able to soon. Call before you miss a payment if you can.</p>
+    <span class="say">"Hi, I'm calling about my account ending in <span class="blank" style="min-width:70px"></span>. <span class="blank"></span> happened, and I'm having trouble making my payments. Do you have a hardship program? I'd like to know if you can lower my interest rate or my minimum payment for a few months."</span>
+    <p class="muted small" style="margin-top:10px">Ask before you agree: How long does it last? What's the rate and the payment? Will my account be closed or frozen? Is there a fee? Please send it in writing.</p>
+  </div>
+  <div class="script">
+    <span class="tag">Script 2 · setting up a payment arrangement</span>
+    <p class="muted small" style="margin-bottom:8px">Use it when you've already fallen behind.</p>
+    <span class="say">"Hi, my account ending in <span class="blank" style="min-width:70px"></span> is behind, and I want to get it back on track. I can pay <span class="blank"></span> on <span class="blank"></span>, and <span class="blank"></span> each month after that. Can we set that up, and can you stop the late fees while I'm paying?"</span>
+    <p class="muted small" style="margin-top:10px">Only promise an amount the app shows you can keep paying. A smaller promise you keep is better than a bigger one you miss.</p>
+  </div>
+  <div class="card">
+    <h3>If the plan still can't work</h3>
+    <p style="margin-top:6px">If your minimums are more than the money you have, that happens, and there are people whose job is to help. A nonprofit credit counselor (NFCC.org in the US) can talk to your lenders with you and help you make a plan. Avoid anyone who asks for a big fee upfront or offers a new loan to fix it.</p>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>6</span></div>
+</section>
+
+<!-- 7 SCRIPTS 3-5 -->
+<section class="page">
+  <div class="kicker">Scripts you can read word for word</div>
+  <h2>To pay less and pay easier</h2>
+  <div class="script">
+    <span class="tag">Script 3 · asking for a lower interest rate</span>
+    <span class="say">"Hi, I've been a customer for <span class="blank" style="min-width:60px"></span> years and I'm paying this card down every month. My rate is <span class="blank" style="min-width:60px"></span>%. Can you lower it? Is there anyone else who can review my account if you can't?"</span>
+    <p class="muted small" style="margin-top:10px">If they say yes, type the new rate in the app (Debts, then Edit). Your date moves sooner.</p>
+  </div>
+  <div class="script">
+    <span class="tag">Script 4 · moving your due date closer to payday</span>
+    <span class="say">"Hi, I get paid on <span class="blank"></span>. Could you move my payment due date to <span class="blank" style="min-width:70px"></span>, a few days after my payday, so I never pay late?"</span>
+    <p class="muted small" style="margin-top:10px">Many card companies let you change this online. Update the due day in the app afterward.</p>
+  </div>
+  <div class="script">
+    <span class="tag">Script 5 · asking to remove a late fee</span>
+    <span class="say">"Hi, I was charged a late fee on <span class="blank"></span>. I usually pay on time, and I've made the payment now. Could you remove the fee as a courtesy?"</span>
+  </div>
+  <div class="card">
+    <h3>Things to say no to on the call</h3>
+    <ul class="plain">
+      <li>A new card, a higher limit or a balance transfer offer.</li>
+      <li>"Skip a payment" offers. Interest usually keeps adding while you skip.</li>
+      <li>Anything you can't read in writing first.</li>
+    </ul>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>7</span></div>
+</section>
+
+<!-- 8 COLLECTORS -->
+<section class="page">
+  <div class="kicker">If it has gone further</div>
+  <h2>If a debt collector calls</h2>
+  <p class="why">A collector's call can feel frightening. In the US you have clear rights, and you can slow everything down.</p>
+  <div class="flow">
+    <div class="stepc"><div class="num">1</div><div><b>Don't agree to anything on the first call.</b><p style="margin-top:3px">Take their name, company, phone number and the amount they say you owe.</p></div></div>
+    <div class="stepc"><div class="num">2</div><div><b>Ask for it in writing.</b><p style="margin-top:3px">Collectors must give you a written notice with the debt's details. You can dispute it in writing within 30 days of getting that notice.</p></div></div>
+    <div class="stepc"><div class="num">3</div><div><b>Check it's really yours.</b><p style="margin-top:3px">Compare it with your own records. Is the amount right? Is it even your debt?</p></div></div>
+    <div class="stepc"><div class="num">4</div><div><b>Only pay what's in a written agreement.</b><p style="margin-top:3px">Never give bank details on a call you didn't expect. Pay the company directly, and keep every receipt.</p></div></div>
+  </div>
+  <div class="script">
+    <span class="tag">Script · first call from a collector</span>
+    <span class="say">"Thank you for calling. Please send me the details of this debt in writing. I'll review it and get back to you. What's your name and your company's address?"</span>
+  </div>
+  <div class="card">
+    <p>The US Consumer Financial Protection Bureau has free sample letters for disputing a debt or asking a collector to stop calling: <b>consumerfinance.gov</b>. If a collector threatens you or lies, you can report it there.</p>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>8</span></div>
+</section>
+
+<!-- 9 OFFERS TO AVOID -->
+<section class="page">
+  <div class="kicker">Offers that sound like help</div>
+  <h2>Ways back into debt</h2>
+  <p class="why">These offers come by mail, email and ads, often right when you're stressed. Each one moves the debt around or adds cost later. PaidInYellow never suggests them.</p>
+  <table class="write offers" style="font-size:14px">
+    <tr><th style="width:190px">The offer</th><th>What usually happens</th></tr>
+    <tr><td><b>Balance transfer card</b></td><td>The debt moves, a fee is added, and the low rate ends. Many people end up with two cards to pay.</td></tr>
+    <tr><td><b>Consolidation loan</b></td><td>The cards look empty, so they get used again. Now there's a loan and new card debt.</td></tr>
+    <tr><td><b>Payday or cash advance loan</b></td><td>Very high cost for a short time. One often leads to the next.</td></tr>
+    <tr><td><b>Debt settlement company</b></td><td>Big fees, and they may tell you to stop paying, which brings late fees and collection calls.</td></tr>
+    <tr><td><b>Buy now, pay later</b></td><td>Small payments that are easy to stack and easy to forget.</td></tr>
+    <tr><td><b>Skip a payment</b></td><td>Interest keeps adding while you skip. The debt grows.</td></tr>
+    <tr><td><b>A higher credit limit</b></td><td>More room to spend, the same paycheck.</td></tr>
+  </table>
+  <div class="ink">
+    <h3 style="color:var(--paper)">One question to ask</h3>
+    <p style="color:var(--paper);margin-top:6px;opacity:.9">"Does this get me out of debt, or does it move the debt somewhere else?" If it moves it, say no thank you and open your plan.</p>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>9</span></div>
+</section>
+
+<!-- 10 AFTER A DEBT IS GONE -->
+<section class="page">
+  <div class="kicker">Each time a debt hits zero</div>
+  <h2>After a debt is gone</h2>
+  <p class="why">The day a debt hits zero is a good day. Celebrate it, and then do these four things so it stays at zero.</p>
+  <div class="flow">
+    <div class="stepc"><div class="num">1</div><div><b>Celebrate, small and free.</b><p style="margin-top:3px">Color the PAID stamp on your tracker. Tell one person. Share the progress picture from the app: it shows percentages, never amounts.</p></div></div>
+    <div class="stepc"><div class="num">2</div><div><b>Put the card out of reach.</b><p style="margin-top:3px">Take it out of your wallet. Delete it from shopping sites, apps and your phone's wallet. Put it somewhere boring.</p></div></div>
+    <div class="stepc"><div class="num">3</div><div><b>Keep paying the same amount each payday.</b><p style="margin-top:3px">The old minimum now joins the extra for the next debt. The app does this for you. Don't lower your payday amount.</p></div></div>
+    <div class="stepc"><div class="num">4</div><div><b>Check the statement once.</b><p style="margin-top:3px">Make sure the balance really is zero, with no last interest charge. If there is one, pay it and update the app.</p></div></div>
+  </div>
+  <div class="row">
+    <div class="card grow"><div class="field">Debt gone <div class="fill"></div></div><div class="field" style="margin-top:12px">Date <div class="fill"></div></div></div>
+    <div class="card grow"><div class="field">Debt gone <div class="fill"></div></div><div class="field" style="margin-top:12px">Date <div class="fill"></div></div></div>
+  </div>
+  <div class="hand">PAID. One down.</div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>10</span></div>
+</section>
+
+<!-- 11 WHEN YOU'RE FREE -->
+<section class="page">
+  <div class="kicker">The day after the last payment</div>
+  <h2>When you're debt-free</h2>
+  <p class="why">You'll have a payday amount that used to go to debt. Give it a job before it disappears into spending.</p>
+  <div class="flow">
+    <div class="stepc"><div class="num">1</div><div><b>Grow the buffer.</b><p style="margin-top:3px">Starter buffer first, then one month of essentials, then three. Keep it in a plain separate account or envelope.</p></div></div>
+    <div class="stepc"><div class="num">2</div><div><b>Fully fund your yearly bills.</b><p style="margin-top:3px">So nothing that comes once a year ever goes on a card again.</p></div></div>
+    <div class="stepc"><div class="num">3</div><div><b>Pick one goal of your own.</b><p style="margin-top:3px">A car paid in cash, a trip home, a course, a gift for your family. Save for it the same way: a little every payday.</p></div></div>
+    <div class="stepc"><div class="num">4</div><div><b>Keep the payday ritual.</b><p style="margin-top:3px">Ten minutes, every payday. It's the habit that got you here, and it keeps you here.</p></div></div>
+  </div>
+  <div class="card">
+    <h3>My debt-free payday plan</h3>
+    <table class="write" style="margin-top:8px">
+      <tr><th>Where it goes now</th><th style="width:140px">Each payday</th></tr>
+      <tr><td>Buffer</td><td></td></tr>
+      <tr><td>Yearly bills</td><td></td></tr>
+      <tr><td>My goal: <span class="blank"></span></td><td></td></tr>
+      <tr><td>Something fun, guilt-free</td><td></td></tr>
+    </table>
+  </div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>11</span></div>
+</section>
+
+<!-- 12 WARNING SIGNS -->
+<section class="page">
+  <div class="kicker">Check once a month</div>
+  <h2>Early warning signs</h2>
+  <p class="why">Falling back usually starts quietly. Tick any that are true this month. One tick is a nudge, not a problem.</p>
+  <div class="card">
+    <div class="flow" style="gap:12px">
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>I skipped a payday ritual, or two.</div>
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>I used a card for something that wasn't an emergency.</div>
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>My buffer is lower and I haven't refilled it.</div>
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>I'm avoiding opening the app or my statements.</div>
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>A yearly bill surprised me.</div>
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>I started a buy now, pay later plan.</div>
+      <div style="display:flex;gap:12px;align-items:center;font-size:15px"><span class="box"></span>My debt-free date moved later twice in a row.</div>
+    </div>
+  </div>
+  <div class="ink">
+    <h3 style="color:var(--paper)">Ticked one or more? The reset</h3>
+    <ol style="margin:8px 0 0;padding-left:20px;color:var(--paper);display:flex;flex-direction:column;gap:6px;font-size:14.5px;line-height:1.5">
+      <li>Open the app today. Log anything new: charges, the buffer you used.</li>
+      <li>Read your new date. It moved a little. It didn't disappear.</li>
+      <li>Do the ritual on your next payday. Never miss twice.</li>
+      <li>Stuck for a while? Do the 7-Day Debt Reset again. It works the second time too.</li>
+    </ol>
+  </div>
+  <div class="hand">Life happens. Never miss twice.</div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>12</span></div>
+</section>
+
+<!-- 13 PROMISE -->
+<section class="page">
+  <div class="kicker">Our side of the deal</div>
+  <h2>The PaidInYellow <span class="hl">Promise</span></h2>
+  <p class="why">You're trusting us with something hard. Here is what we promise in return.</p>
+  <div class="flow">
+    <div class="stepc"><div class="num">1</div><div><b>Your debt-free date in 15 minutes, or your money back.</b><p style="margin-top:3px">If you can't get your date from the app in 15 minutes, email us within 30 days and we'll refund you.</p></div></div>
+    <div class="stepc"><div class="num">2</div><div><b>One price. No subscription, ever.</b><p style="margin-top:3px">You bought it once. Updates to Pack 1 are included.</p></div></div>
+    <div class="stepc"><div class="num">3</div><div><b>Your numbers stay yours.</b><p style="margin-top:3px">No account, no bank login. Your plan stays on your device. If you turn on sync, your numbers are locked on your phone before they leave it, and our server can't read them.</p></div></div>
+    <div class="stepc"><div class="num">4</div><div><b>We'll never sell you more debt.</b><p style="margin-top:3px">No loans, no balance transfers, no card offers, no affiliate links. Not in the app, not in our emails.</p></div></div>
+    <div class="stepc"><div class="num">5</div><div><b>A real person answers.</b><p style="margin-top:3px">Email support@paidinyellow.com. We usually reply within one business day.</p></div></div>
+    <div class="stepc"><div class="num">6</div><div><b>No shame, ever.</b><p style="margin-top:3px">No red numbers, no guilt. A missed payday gets a new date and a calm next step.</p></div></div>
+  </div>
+  <div class="hand">one paycheck at a time</div>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>13</span></div>
+</section>
+
+<!-- 14 SUMMARY CARD -->
+<section class="page">
+  <div class="kicker">Cut out and keep</div>
+  <h2>The one-page version</h2>
+  <div class="row" style="flex:1">
+    <div class="cut grow" style="display:flex;flex-direction:column;gap:10px;border:2px dashed var(--gray);border-radius:16px;padding:18px 20px;background:var(--card)">
+      <div class="logo" style="font-size:15px">paid in <span>yellow</span></div>
+      <h3 style="font-size:20px">A surprise bill</h3>
+      <ol class="steps" style="flex:1;justify-content:space-evenly"><li>Check the date</li><li>Yearly bills pot?</li><li>Buffer</li><li>Ask the provider for a plan</li><li>Cut this payday's extra</li><li>Last resort: card, logged as Emergency</li></ol>
+    </div>
+    <div class="cut grow" style="display:flex;flex-direction:column;gap:10px;border:2px dashed var(--gray);border-radius:16px;padding:18px 20px;background:var(--card)">
+      <div class="logo" style="font-size:15px">paid in <span>yellow</span></div>
+      <h3 style="font-size:20px">Calling a lender</h3>
+      <ol class="steps" style="flex:1;justify-content:space-evenly"><li>Statement and account number ready</li><li>Know what you can pay</li><li>Polite, short, ask</li><li>No new credit</li><li>Get it in writing</li><li>Write it in the call log</li></ol>
+    </div>
+  </div>
+  <div class="ink">
+    <p style="color:var(--paper)"><b>Need more help?</b> Nonprofit credit counseling: NFCC.org. Collector problems: consumerfinance.gov. PaidInYellow support: support@paidinyellow.com.</p>
+  </div>
+  <p class="small muted">PaidInYellow is a planning tool, not financial or legal advice. Rules differ by country and state. Figures in the app are estimates based on what you enter.</p>
+  <div class="footer"><span>Never Back in Debt · PaidInYellow</span><span>14</span></div>
+</section>
+
+</body>
+</html>

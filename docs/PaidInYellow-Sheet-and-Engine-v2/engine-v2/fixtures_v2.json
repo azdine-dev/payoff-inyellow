@@ -1,0 +1,513 @@
+[
+ {
+  "name": "karim",
+  "input": {
+   "freq": "biweekly",
+   "first_payday": "2026-10-30",
+   "money": 100,
+   "buffer": 300,
+   "goal": 500,
+   "yearly": [
+    240
+   ],
+   "debts": [
+    {
+     "name": "Card A",
+     "balance": 500,
+     "apr": 24,
+     "min": 25,
+     "due": 10
+    },
+    {
+     "name": "Card B",
+     "balance": 1200,
+     "apr": 18,
+     "min": 40,
+     "due": 20
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Card A",
+    "Card B"
+   ],
+   "debt_free": "2027-06-11",
+   "paydays": 17,
+   "interest": 123.0,
+   "first_paydays": [
+    {
+     "date": "2026-10-30",
+     "bills": 25,
+     "extra": 0.0,
+     "total_move": 125.0,
+     "owed": 1687.92
+    },
+    {
+     "date": "2026-11-13",
+     "bills": 40,
+     "extra": 0.0,
+     "total_move": 140.0,
+     "owed": 1660.72
+    },
+    {
+     "date": "2026-11-27",
+     "bills": 25,
+     "extra": 72.31,
+     "total_move": 125.0,
+     "owed": 1576.02
+    },
+    {
+     "date": "2026-12-11",
+     "bills": 40,
+     "extra": 90.77,
+     "total_move": 140.0,
+     "owed": 1457.07
+    }
+   ]
+  }
+ },
+ {
+  "name": "sara",
+  "input": {
+   "freq": "biweekly",
+   "first_payday": "2026-10-30",
+   "money": 150,
+   "buffer": 200,
+   "goal": 500,
+   "yearly": [
+    260
+   ],
+   "debts": [
+    {
+     "name": "Medical",
+     "balance": 350,
+     "apr": 0,
+     "min": 50,
+     "due": 12
+    },
+    {
+     "name": "Store Card",
+     "balance": 600,
+     "apr": 26.99,
+     "min": 30,
+     "due": 5
+    },
+    {
+     "name": "Visa",
+     "balance": 2400,
+     "apr": 24.99,
+     "min": 72,
+     "due": 20
+    },
+    {
+     "name": "Car loan",
+     "balance": 7800,
+     "apr": 7.9,
+     "min": 260,
+     "due": 15
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Medical",
+    "Store Card",
+    "Visa",
+    "Car loan"
+   ],
+   "debt_free": "2028-03-31",
+   "paydays": 38,
+   "interest": 926.43,
+   "first_paydays": [
+    {
+     "date": "2026-10-30",
+     "bills": 80,
+     "extra": 0.0,
+     "total_move": 230.0,
+     "owed": 11123.0
+    },
+    {
+     "date": "2026-11-13",
+     "bills": 332,
+     "extra": 0.0,
+     "total_move": 482.0,
+     "owed": 10844.04
+    },
+    {
+     "date": "2026-11-27",
+     "bills": 30,
+     "extra": 120.0,
+     "total_move": 180.0,
+     "owed": 10745.96
+    },
+    {
+     "date": "2026-12-11",
+     "bills": 382,
+     "extra": 140.0,
+     "total_move": 532.0,
+     "owed": 10275.92
+    }
+   ]
+  }
+ },
+ {
+  "name": "growing_avalanche",
+  "input": {
+   "freq": "weekly",
+   "first_payday": "2026-11-06",
+   "money": 60,
+   "buffer": 500,
+   "goal": 500,
+   "method": "avalanche",
+   "debts": [
+    {
+     "name": "Dept card",
+     "balance": 1200,
+     "apr": 29.99,
+     "min": 25,
+     "due": 25
+    },
+    {
+     "name": "Visa",
+     "balance": 900,
+     "apr": 19.9,
+     "min": 35,
+     "due": 3
+    },
+    {
+     "name": "Phone",
+     "balance": 300,
+     "apr": 0,
+     "min": 0,
+     "due": null
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Dept card",
+    "Visa",
+    "Phone"
+   ],
+   "debt_free": "2027-07-02",
+   "paydays": 35,
+   "interest": 156.08,
+   "first_paydays": [
+    {
+     "date": "2026-11-06",
+     "bills": 0.0,
+     "extra": 60.0,
+     "total_move": 60.0,
+     "owed": 2350.36
+    },
+    {
+     "date": "2026-11-13",
+     "bills": 0.0,
+     "extra": 60.0,
+     "total_move": 60.0,
+     "owed": 2300.44
+    },
+    {
+     "date": "2026-11-20",
+     "bills": 25.0,
+     "extra": 60.0,
+     "total_move": 85.0,
+     "owed": 2225.21
+    },
+    {
+     "date": "2026-11-27",
+     "bills": 35.0,
+     "extra": 60.0,
+     "total_move": 95.0,
+     "owed": 2139.55
+    }
+   ]
+  }
+ },
+ {
+  "name": "growing_piy",
+  "input": {
+   "freq": "weekly",
+   "first_payday": "2026-11-06",
+   "money": 60,
+   "buffer": 500,
+   "goal": 500,
+   "debts": [
+    {
+     "name": "Dept card",
+     "balance": 1200,
+     "apr": 29.99,
+     "min": 25,
+     "due": 25
+    },
+    {
+     "name": "Visa",
+     "balance": 900,
+     "apr": 19.9,
+     "min": 35,
+     "due": 3
+    },
+    {
+     "name": "Small",
+     "balance": 150,
+     "apr": 12,
+     "min": 15,
+     "due": 31
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Dept card",
+    "Small",
+    "Visa"
+   ],
+   "debt_free": "2027-06-11",
+   "paydays": 32,
+   "interest": 165.04,
+   "first_paydays": [
+    {
+     "date": "2026-11-06",
+     "bills": 0,
+     "extra": 60.0,
+     "total_move": 60.0,
+     "owed": 2200.71
+    },
+    {
+     "date": "2026-11-13",
+     "bills": 0,
+     "extra": 60.0,
+     "total_move": 60.0,
+     "owed": 2151.13
+    },
+    {
+     "date": "2026-11-20",
+     "bills": 25,
+     "extra": 60.0,
+     "total_move": 85.0,
+     "owed": 2076.26
+    },
+    {
+     "date": "2026-11-27",
+     "bills": 50,
+     "extra": 60.0,
+     "total_move": 110.0,
+     "owed": 1975.94
+    }
+   ]
+  }
+ },
+ {
+  "name": "twice_month",
+  "input": {
+   "freq": "twice",
+   "first_payday": "2026-10-31",
+   "money": 120,
+   "buffer": 0,
+   "goal": 500,
+   "yearly": [
+    600,
+    300
+   ],
+   "debts": [
+    {
+     "name": "A",
+     "balance": 3000,
+     "apr": 22.9,
+     "min": 90,
+     "due": 28
+    },
+    {
+     "name": "B",
+     "balance": 800,
+     "apr": 15,
+     "min": 30,
+     "due": 31
+    },
+    {
+     "name": "C",
+     "balance": 5000,
+     "apr": 9,
+     "min": 150,
+     "due": 1
+    }
+   ],
+   "adjust": {
+    "2": -50,
+    "5": 80
+   },
+   "charges": {
+    "3": 120
+   },
+   "buffer_used": {
+    "6": 150
+   }
+  },
+  "expect": {
+   "order": [
+    "B",
+    "A",
+    "C"
+   ],
+   "debt_free": "2028-11-30",
+   "paydays": 51,
+   "interest": 1434.6,
+   "first_paydays": [
+    {
+     "date": "2026-10-31",
+     "bills": 180,
+     "extra": 0.0,
+     "total_move": 300.0,
+     "owed": 8672.38
+    },
+    {
+     "date": "2026-11-15",
+     "bills": 90,
+     "extra": 0.0,
+     "total_move": 210.0,
+     "owed": 8634.37
+    },
+    {
+     "date": "2026-11-30",
+     "bills": 180,
+     "extra": 0.0,
+     "total_move": 250.0,
+     "owed": 8505.89
+    },
+    {
+     "date": "2026-12-15",
+     "bills": 90,
+     "extra": 0.0,
+     "total_move": 210.0,
+     "owed": 8587.02
+    }
+   ]
+  }
+ },
+ {
+  "name": "monthly_custom",
+  "input": {
+   "freq": "monthly",
+   "first_payday": "2027-01-31",
+   "money": 300,
+   "buffer": 100,
+   "goal": 1000,
+   "method": "custom",
+   "debts": [
+    {
+     "name": "Loan",
+     "balance": 6000,
+     "apr": 11,
+     "min": 180,
+     "due": 5,
+     "my_order": 2
+    },
+    {
+     "name": "Card",
+     "balance": 2500,
+     "apr": 21,
+     "min": 75,
+     "due": 28,
+     "my_order": 1
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Card",
+    "Loan"
+   ],
+   "debt_free": "2028-07-31",
+   "paydays": 19,
+   "interest": 1007.45,
+   "first_paydays": [
+    {
+     "date": "2027-01-31",
+     "bills": 180,
+     "extra": 0.0,
+     "total_move": 480.0,
+     "owed": 8418.75
+    },
+    {
+     "date": "2027-02-28",
+     "bills": 330,
+     "extra": 0.0,
+     "total_move": 630.0,
+     "owed": 8187.12
+    },
+    {
+     "date": "2027-03-31",
+     "bills": 255,
+     "extra": 0.0,
+     "total_move": 555.0,
+     "owed": 8027.49
+    },
+    {
+     "date": "2027-04-30",
+     "bills": 255,
+     "extra": 300.0,
+     "total_move": 555.0,
+     "owed": 7566.12
+    }
+   ]
+  }
+ },
+ {
+  "name": "eight_k",
+  "input": {
+   "freq": "monthly",
+   "first_payday": "2026-11-01",
+   "money": 0,
+   "buffer": 0,
+   "goal": 0,
+   "debts": [
+    {
+     "name": "Card",
+     "balance": 8000,
+     "apr": 24,
+     "min": 240,
+     "due": 1
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Card"
+   ],
+   "debt_free": "2031-06-01",
+   "paydays": 56,
+   "interest": 5315.34,
+   "first_paydays": [
+    {
+     "date": "2026-11-01",
+     "bills": 240,
+     "extra": 0.0,
+     "total_move": 240.0,
+     "owed": 7920.0
+    },
+    {
+     "date": "2026-12-01",
+     "bills": 240,
+     "extra": 0.0,
+     "total_move": 240.0,
+     "owed": 7838.4
+    },
+    {
+     "date": "2027-01-01",
+     "bills": 240,
+     "extra": 0.0,
+     "total_move": 240.0,
+     "owed": 7755.17
+    },
+    {
+     "date": "2027-02-01",
+     "bills": 240,
+     "extra": 0.0,
+     "total_move": 240.0,
+     "owed": 7670.27
+    }
+   ]
+  }
+ }
+]

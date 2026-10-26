@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The 7-Day Debt Reset · PaidInYellow</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Caveat:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F0E6; --card:#FBF9F3; --ink:#1F2A44; --yellow:#FFE14D; --gray:#5C5A55; --line:#E2DCCD;
+  --w:8.5in; --h:11in; --pad:0.6in;
+  --head:'Bricolage Grotesque','Inter Display','Inter',sans-serif;
+  --body:'Inter',sans-serif;
+  --hand:'Caveat','Lora',serif;
+}
+@page{ size: var(--w) var(--h); margin:0 }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:var(--w);height:var(--h);padding:var(--pad);background:var(--paper);position:relative;overflow:hidden;page-break-after:always;break-after:page;display:flex;flex-direction:column;gap:20px}
+.page:last-child{page-break-after:auto;break-after:auto}
+h1,h2,h3{font-family:var(--head);margin:0;letter-spacing:-0.01em}
+h1{font-size:44px;font-weight:800;line-height:1.05}
+h2{font-size:40px;font-weight:800;line-height:1.08}
+h3{font-size:19px;font-weight:700}
+p{margin:0;font-size:15px;line-height:1.55}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gray)}
+.hl{background:var(--yellow);padding:0 .18em;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.muted{color:var(--gray)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.ink{background:var(--ink);color:var(--paper);border-radius:16px;padding:16px 18px}
+.row{display:flex;gap:14px}
+.grow{flex:1}
+.chip{display:inline-block;border:1px solid var(--ink);border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:600}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.steps li{display:block;position:relative;padding-left:38px;min-height:26px;font-size:15px;line-height:1.55;counter-increment:s}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:13px;background:var(--ink);color:var(--paper);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.fill{border-bottom:1.5px solid var(--ink);min-height:30px;flex:1}
+.label{font-size:12px;font-weight:600;margin-bottom:4px}
+.field{display:flex;align-items:flex-end;gap:10px;font-size:15px}
+.field .fill{min-height:32px}
+table.write{width:100%;border-collapse:collapse;font-size:14px}
+table.write th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);font-weight:700;padding:0 6px 6px}
+table.write td{border-top:1px solid var(--line);height:42px;padding:0 6px}
+table.write tr:last-child td{border-bottom:1px solid var(--line)}
+.box{width:20px;height:20px;border:1.5px solid var(--ink);border-radius:5px;display:inline-block;flex:0 0 20px}
+.hand{font-family:var(--hand);font-weight:700;font-size:24px;color:var(--gray);line-height:1.1}
+.footer{margin-top:auto;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--gray);border-top:1px solid var(--line);padding-top:10px}
+.done{flex-shrink:0;display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px dashed var(--ink);border-radius:14px;padding:12px 16px}
+.done .big{width:44px;height:44px;border:2px solid var(--ink);border-radius:10px;flex:0 0 44px}
+.day-head{display:flex;justify-content:space-between;align-items:flex-start}
+.daynum{font-family:var(--head);font-weight:800;font-size:15px;background:var(--ink);color:var(--paper);border-radius:10px;padding:6px 12px}
+.why{font-size:17px;line-height:1.5}
+.logo{font-family:var(--head);font-weight:800;font-size:20px}
+.logo span{background:var(--yellow);padding:0 4px;border-radius:3px}
+.cols2{columns:2;column-gap:28px}
+.cols2 .item{break-inside:avoid;display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;margin-bottom:11px}
+.group{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin:4px 0 8px;break-after:avoid}
+.boxes7{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.boxes7 div{aspect-ratio:1;border:2px solid var(--ink);border-radius:10px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:11px;font-weight:700}
+.bar10{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.bar10 div{height:48px;border:1.5px solid var(--ink);border-radius:6px;font-size:9.5px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;color:var(--gray)}
+.cut{border:2px dashed var(--gray);border-radius:16px;padding:18px 20px;background:var(--card)}
+.small{font-size:12.5px}
+</style>
+</head>
+<body>
+
+<!-- 1 COVER -->
+<section class="page" style="justify-content:space-between">
+  <div class="logo">paid in <span>yellow</span></div>
+  <div style="display:flex;flex-direction:column;gap:22px">
+    <div class="kicker">Pack 1 · The Paycheck Payoff System</div>
+    <h1 style="font-size:72px">The 7-Day<br><span class="hl">Debt Reset</span></h1>
+    <p style="font-size:19px;max-width:5.2in">Seven small steps, about 15 minutes a day. At the end you have a plan for every payday and a buffer between you and the next surprise bill.</p>
+    <div class="boxes7" style="max-width:5.4in">
+      <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div>
+    </div>
+    <p class="muted small">Color a box each day you finish.</p>
+  </div>
+  <div class="hand" style="font-size:30px">one paycheck at a time</div>
+</section>
+
+<!-- 2 HOW IT WORKS -->
+<section class="page">
+  <div class="kicker">Before you start</div>
+  <h2>How this works</h2>
+  <p class="why">One page a day. The PaidInYellow app does the math. You do one small thing and color a box.</p>
+  <div class="row">
+    <div class="card grow">
+      <h3>You need</h3>
+      <ul class="steps" style="margin-top:10px">
+        <li>Your card and loan statements, or your banking app.</li>
+        <li>The PaidInYellow app open on your phone.</li>
+        <li>A pen and a yellow highlighter.</li>
+      </ul>
+    </div>
+    <div class="card grow">
+      <h3>Three rules</h3>
+      <ul class="steps" style="margin-top:10px">
+        <li>Do today's page only. Tomorrow can wait.</li>
+        <li>Missed a day? Do it tomorrow. Life happens. Never miss twice.</li>
+        <li>Rough numbers are fine. You can fix them later.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ink">
+    <h3 style="color:var(--paper)">What changes in 7 days</h3>
+    <p style="margin-top:8px;color:var(--paper)">Today you may not know when this ends. In a week you will know your debt-free date, what to pay on your next payday, where your surprise money lives, and you will have made your first planned payment.</p>
+  </div>
+  <div class="card">
+    <h3>A note on money words</h3>
+    <p style="margin-top:6px">We write <b>$</b> in this workbook. Read it as your own currency. <b>Minimum</b> is the smallest payment your statement asks for. <b>Rate</b> is the interest rate, shown as APR on your statement. <b>Buffer</b> is money set aside for surprises.</p>
+  </div>
+  <div class="card" style="flex:1">
+    <h3>Your seven boxes</h3>
+    <p class="muted small" style="margin-top:4px">Each day page ends with a box. Color it when you finish. Seven yellow boxes is a finished Reset.</p>
+    <div class="boxes7" style="margin-top:14px;max-width:5in"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div></div>
+  </div>
+  <div class="hand">You're not bad at math. The math was hidden from you.</div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>2</span></div>
+</section>
+
+<!-- 3 AT A GLANCE -->
+<section class="page">
+  <div class="kicker">Your week</div>
+  <h2>Seven days at a glance</h2>
+  <table class="write" style="font-size:13.5px">
+    <tr><th style="width:60px">Day</th><th>What you do</th><th style="width:80px">Time</th><th style="width:60px">Done</th></tr>
+    <tr><td><b>1</b></td><td>See everything you owe, and your debt-free date</td><td>20 min</td><td><span class="box"></span></td></tr>
+    <tr><td><b>2</b></td><td>Find your first $500</td><td>15 min</td><td><span class="box"></span></td></tr>
+    <tr><td><b>3</b></td><td>Give your buffer a home</td><td>15 min</td><td><span class="box"></span></td></tr>
+    <tr><td><b>4</b></td><td>Meet your plan</td><td>10 min</td><td><span class="box"></span></td></tr>
+    <tr><td><b>5</b></td><td>Set your 10-minute payday ritual</td><td>10 min</td><td><span class="box"></span></td></tr>
+    <tr><td><b>6</b></td><td>List the bills that aren't really surprises</td><td>15 min</td><td><span class="box"></span></td></tr>
+    <tr><td><b>7</b></td><td>Make your first planned payment and color your first box</td><td>10 min</td><td><span class="box"></span></td></tr>
+  </table>
+  <div class="card">
+    <h3>I start on</h3>
+    <div class="row" style="margin-top:12px">
+      <div class="field grow">Date <div class="fill"></div></div>
+      <div class="field grow">My next payday <div class="fill"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Why I'm doing this</h3>
+    <p class="muted small" style="margin-top:4px">One sentence. Who or what is it for?</p>
+    <div class="fill" style="margin-top:18px"></div>
+    <div class="fill" style="margin-top:14px"></div>
+    <div class="fill" style="margin-top:14px"></div>
+  </div>
+  <div class="card" style="flex:1">
+    <h3>What I'm worried about</h3>
+    <p class="muted small" style="margin-top:4px">Write it down so it stops spinning in your head. You'll look at it again on Day 7.</p>
+  </div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>3</span></div>
+</section>
+
+<!-- 4 DAY 1 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 1 of 7 · about 20 minutes</div><h2>See everything</h2></div>
+    <div class="daynum">Day 1</div>
+  </div>
+  <p class="why">Today you only look. No fixing yet. Most people never write it all down in one place, and that's why it feels endless.</p>
+  <ol class="steps">
+    <li>Open every statement or banking app: cards, store cards, loans, buy now pay later, medical bills, money from family.</li>
+    <li>Write each one below. The rate and minimum are on the statement.</li>
+    <li>Type them into the app. It takes 4 short steps and shows your debt-free date.</li>
+  </ol>
+  <table class="write">
+    <tr><th>Name</th><th style="width:95px">Balance</th><th style="width:70px">Rate %</th><th style="width:85px">Minimum</th><th style="width:70px">Due day</th></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <div class="row">
+    <div class="card grow">
+      <div class="label">My debt-free date, from the app</div>
+      <div style="border:2px solid var(--ink);border-radius:10px;height:48px;margin-top:6px"></div>
+      <p class="muted small" style="margin-top:6px">Highlight it in yellow.</p>
+    </div>
+    <div class="card grow">
+      <div class="label">How I feel, in one word</div>
+      <div class="fill" style="margin-top:22px"></div>
+    </div>
+  </div>
+  <div class="done"><div class="big"></div><div><b>Day 1 done.</b> Color the box.<div class="hand" style="font-size:20px;margin-top:2px">Looking is the bravest step. You just took it.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>4</span></div>
+</section>
+
+<!-- 5 DAY 2 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 2 of 7 · about 15 minutes</div><h2>Find your first $500</h2></div>
+    <div class="daynum">Day 2</div>
+  </div>
+  <p class="why">More than 1 in 3 adults couldn't cover a $400 surprise with cash. Your first $500 is what keeps the next surprise off your cards. It goes to your buffer first.</p>
+  <ol class="steps">
+    <li>Read the 30 ideas on the next page. Tick the ones that fit your life.</li>
+    <li>Pick your best 5 and write what each could bring in.</li>
+    <li>Do one of them today, even a small one.</li>
+  </ol>
+  <table class="write">
+    <tr><th>My idea</th><th style="width:110px">About how much</th><th style="width:70px">Done</th></tr>
+    <tr><td></td><td>$</td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td><span class="box"></span></td></tr>
+  </table>
+  <div class="ink row" style="align-items:center">
+    <div class="grow"><h3 style="color:var(--paper)">If I do all five</h3><p style="color:var(--paper);opacity:.85;margin-top:4px">Add them up. It's often closer to $500 than people expect.</p></div>
+    <div style="border:2px solid var(--paper);border-radius:10px;width:150px;height:52px;display:flex;align-items:center;padding-left:12px;font-weight:700;font-size:20px">$</div>
+  </div>
+  <div class="card"><p><b>In the app:</b> Safety net, then <b>Find your first $500</b>. Tick what you do and the total adds itself up.</p></div>
+  <div class="done"><div class="big"></div><div><b>Day 2 done.</b> Color the box.<div class="hand" style="font-size:20px;margin-top:2px">Small money is still money.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>5</span></div>
+</section>
+
+<!-- 6 THIRTY WAYS -->
+<section class="page">
+  <div class="kicker">Day 2 · the list</div>
+  <h2>30 ways to find money</h2>
+  <p class="muted">Tick what fits. No loans, no new cards, nothing that costs you later.</p>
+  <div class="cols2" style="margin-top:6px">
+    <div class="group">Spend less</div>
+    <div class="item"><span class="box"></span>Pause 2 subscriptions for a month</div>
+    <div class="item"><span class="box"></span>Cancel one streaming service</div>
+    <div class="item"><span class="box"></span>Call your phone company for a cheaper plan</div>
+    <div class="item"><span class="box"></span>Ask your internet provider for a better price</div>
+    <div class="item"><span class="box"></span>Compare car or home insurance quotes</div>
+    <div class="item"><span class="box"></span>Eat from the pantry and freezer for a week</div>
+    <div class="item"><span class="box"></span>Skip takeout for two weeks</div>
+    <div class="item"><span class="box"></span>Make coffee at home this month</div>
+    <div class="item"><span class="box"></span>Shop with a list and stick to it</div>
+    <div class="item"><span class="box"></span>Switch to store brands for a month</div>
+    <div class="item"><span class="box"></span>Delete saved cards from shopping sites and apps</div>
+    <div class="item"><span class="box"></span>Unsubscribe from store emails</div>
+    <div class="group" style="margin-top:12px">Sell or return</div>
+    <div class="item"><span class="box"></span>Sell 3 things you don't use</div>
+    <div class="item"><span class="box"></span>Sell clothes you haven't worn in a year</div>
+    <div class="item"><span class="box"></span>Sell old phones, tablets or consoles</div>
+    <div class="item"><span class="box"></span>Sell kids' gear they've outgrown</div>
+    <div class="item"><span class="box"></span>Sell furniture or tools you don't need</div>
+    <div class="item"><span class="box"></span>Return something you haven't used</div>
+    <div class="item"><span class="box"></span>Sell gift cards you won't use</div>
+    <div class="group" style="margin-top:12px">Earn a little more</div>
+    <div class="item"><span class="box"></span>Pick up extra hours or a shift</div>
+    <div class="item"><span class="box"></span>Babysit or pet sit for neighbors</div>
+    <div class="item"><span class="box"></span>Yard work, moving help or snow shoveling</div>
+    <div class="item"><span class="box"></span>Deliver or drive on weekends</div>
+    <div class="item"><span class="box"></span>Sell a skill: tutoring, repairs, hair, cleaning</div>
+    <div class="item"><span class="box"></span>Ask about overtime or a better-paid shift</div>
+    <div class="group" style="margin-top:12px">Money already yours</div>
+    <div class="item"><span class="box"></span>Use gift cards you forgot about</div>
+    <div class="item"><span class="box"></span>Search your name at missingmoney.com (US unclaimed money)</div>
+    <div class="item"><span class="box"></span>Claim refunds for late or broken orders</div>
+    <div class="item"><span class="box"></span>Send cash back and rebates straight to your buffer</div>
+    <div class="item"><span class="box"></span>Put any surprise money, like a tax refund, on the plan</div>
+  </div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>6</span></div>
+</section>
+
+<!-- 7 DAY 3 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 3 of 7 · about 15 minutes</div><h2>Give your buffer a home</h2></div>
+    <div class="daynum">Day 3</div>
+  </div>
+  <p class="why">The buffer is money for surprises, so a car repair or a doctor's bill doesn't go back on a card. It's the step most plans skip, and the one that keeps you out of debt.</p>
+  <ol class="steps">
+    <li>Choose a home for it: a plain separate account at your bank or credit union, or an envelope at home.</li>
+    <li>Name it so you know what it's for: <b>Surprises</b> or <b>Buffer</b>.</li>
+    <li>Put in what you can today, even $10.</li>
+    <li>Type the amount in the app, on Safety net.</li>
+  </ol>
+  <div class="card">
+    <div class="row">
+      <div class="field grow">My buffer lives <div class="fill"></div></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <div class="field grow">Today I put in $ <div class="fill"></div></div>
+      <div class="field grow">My goal $ <div class="fill"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Color $50 at a time</h3>
+    <div class="bar10" style="margin-top:12px">
+      <div>50</div><div>100</div><div>150</div><div>200</div><div>250</div><div>300</div><div>350</div><div>400</div><div>450</div><div>500</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Keep it boring</h3>
+    <ul class="steps" style="margin-top:8px">
+      <li>No card linked to it, so it's not easy to spend.</li>
+      <li>Use it only for real surprises: repairs, medical, an urgent trip.</li>
+      <li>Used some? That's what it's for. Tap <b>I used some of it</b> and your plan refills it first.</li>
+    </ul>
+  </div>
+  <div class="done"><div class="big"></div><div><b>Day 3 done.</b> Color the box.<div class="hand" style="font-size:20px;margin-top:2px">A buffer turns a crisis into an errand.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>7</span></div>
+</section>
+
+<!-- 8 DAY 4 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 4 of 7 · about 10 minutes</div><h2>Meet your plan</h2></div>
+    <div class="daynum">Day 4</div>
+  </div>
+  <p class="why">The app pays your smallest debt first, unless one grows even with its minimum. A study of about 6,000 people in a debt program found that clearing small balances first made people more likely to finish.</p>
+  <ol class="steps">
+    <li>Open <b>Path</b>. Find your debt-free date and the first debt to go.</li>
+    <li>Tap <b>What if I add more?</b> Add $20 each payday and watch the date move.</li>
+    <li>Leave the slider where it feels honest. Tap <b>Use this in my plan</b> only if you can keep it up.</li>
+  </ol>
+  <div class="card">
+    <div class="field">My first debt to go <div class="fill"></div> gone by <div class="fill" style="max-width:130px"></div></div>
+    <div class="field" style="margin-top:14px">With $20 more each payday, my date becomes <div class="fill"></div></div>
+    <div class="field" style="margin-top:14px">My debts, in the order the app pays them <div class="fill"></div></div>
+    <div class="fill" style="margin-top:14px"></div>
+  </div>
+  <div class="ink">
+    <h3 style="color:var(--paper)">Why one debt at a time</h3>
+    <p style="color:var(--paper);margin-top:6px;opacity:.9">Every debt gets its minimum. All the extra goes to one debt until it's gone. Then its minimum joins the extra for the next one. The amount you pay each payday stays the same, but it clears debts faster and faster.</p>
+  </div>
+  <div class="card" style="flex:1;display:flex;flex-direction:column">
+    <h3>My why, in a picture</h3>
+    <p class="muted small" style="margin-top:4px">Draw it, write it or stick a photo here. Look at it on payday.</p>
+    <div style="flex:1"></div>
+  </div>
+  <div class="done"><div class="big"></div><div><b>Day 4 done.</b> Color the box.<div class="hand" style="font-size:20px;margin-top:2px">You can see the end now.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>8</span></div>
+</section>
+
+<!-- 9 DAY 5 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 5 of 7 · about 10 minutes</div><h2>Your 10-minute payday ritual</h2></div>
+    <div class="daynum">Day 5</div>
+  </div>
+  <p class="why">People who decide when and where they'll act follow through far more often. So we decide now, once.</p>
+  <div class="ink">
+    <p style="font-size:18px;line-height:1.8;color:var(--paper)">When I get paid on <span style="display:inline-block;border-bottom:2px solid var(--paper);width:140px"></span>, I open PaidInYellow at <span style="display:inline-block;border-bottom:2px solid var(--paper);width:90px"></span> at <span style="display:inline-block;border-bottom:2px solid var(--paper);width:140px"></span>.</p>
+    <p class="small" style="color:var(--paper);opacity:.8;margin-top:4px">day · time · place (kitchen table, car before work, lunch break)</p>
+  </div>
+  <div class="card">
+    <h3>The ritual, every payday</h3>
+    <ol class="steps" style="margin-top:10px">
+      <li>Open <b>Today</b>. It shows one amount to move.</li>
+      <li>Pay the bills on the list in your banking app.</li>
+      <li>Move the buffer and yearly bills money to their home.</li>
+      <li>Send the extra to the debt the app names.</li>
+      <li>Tap <b>I did it</b>. Watch it turn yellow. Done until next payday.</li>
+    </ol>
+  </div>
+  <ol class="steps">
+    <li>Fill in the sentence above.</li>
+    <li>In the app, add the <b>Payday reminder</b>. It goes into your phone's calendar.</li>
+    <li>Cut out the ritual card on page 13 and keep it in your wallet or on the fridge.</li>
+  </ol>
+  <div class="card" style="flex:1">
+    <h3>Practice run</h3>
+    <div class="field" style="margin-top:12px">I tried the ritual on <div class="fill"></div> It took <div class="fill" style="max-width:70px"></div> minutes</div>
+    <div class="field" style="margin-top:14px">One thing that would make it easier <div class="fill"></div></div>
+  </div>
+  <div class="done"><div class="big"></div><div><b>Day 5 done.</b> Color the box.<div class="hand" style="font-size:20px;margin-top:2px">Ten minutes, every payday. That's the whole job.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>9</span></div>
+</section>
+
+<!-- 10 DAY 6 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 6 of 7 · about 15 minutes</div><h2>Bills that aren't surprises</h2></div>
+    <div class="daynum">Day 6</div>
+  </div>
+  <p class="why">Some bills come every year, just not every month. When they land all at once, they go on a card. A little each payday stops that.</p>
+  <div class="card">
+    <p class="small muted">Ideas: car repairs · car registration · gifts and holidays · birthdays · school costs · insurance renewals · pet care · doctor and dentist · a trip home · home repairs</p>
+  </div>
+  <table class="write">
+    <tr><th>Bill</th><th style="width:110px">Per year</th><th style="width:120px">Month needed</th><th style="width:90px">In app</th></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+    <tr><td></td><td>$</td><td></td><td><span class="box"></span></td></tr>
+  </table>
+  <ol class="steps">
+    <li>List every bill like this you can think of. Guess the yearly amount if you need to.</li>
+    <li>Add your top two or three in the app: <b>Safety net</b>, then <b>Add a bill</b>.</li>
+    <li>The app sets aside a small amount each payday. You don't have to work it out.</li>
+  </ol>
+  <div class="card">
+    <h3>Not sure about a yearly amount?</h3>
+    <p style="margin-top:6px">Look back at last year in your banking app. What did you spend on it in total? Use that number.</p>
+  </div>
+  <div class="done"><div class="big"></div><div><b>Day 6 done.</b> Color the box.<div class="hand" style="font-size:20px;margin-top:2px">Planned money is calm money.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>10</span></div>
+</section>
+
+<!-- 11 DAY 7 -->
+<section class="page">
+  <div class="day-head">
+    <div style="display:flex;flex-direction:column;gap:8px"><div class="kicker">Day 7 of 7 · about 10 minutes</div><h2>First payment, first <span class="hl">yellow</span></h2></div>
+    <div class="daynum">Day 7</div>
+  </div>
+  <p class="why">Today you do the ritual for real. If your payday isn't today, do it on your payday and come back to color the box.</p>
+  <ol class="steps">
+    <li>Follow your ritual card: open Today, pay, move, send the extra.</li>
+    <li>Tap <b>I did it</b> and watch it turn yellow.</li>
+    <li>Color the box below, and the first square on your tracker.</li>
+  </ol>
+  <div class="card">
+    <div class="row">
+      <div class="field grow">Date <div class="fill"></div></div>
+      <div class="field grow">Total moved $ <div class="fill"></div></div>
+    </div>
+    <div class="field" style="margin-top:14px">The extra went to <div class="fill"></div></div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px">
+    <div style="width:130px;height:130px;border:3px solid var(--ink);border-radius:20px"></div>
+    <h3>My first planned payment</h3>
+    <p class="muted small">Color it yellow. This is what paid looks like.</p>
+  </div>
+  <div class="ink">
+    <h3 style="color:var(--paper)">You finished the Reset</h3>
+    <p style="color:var(--paper);margin-top:6px;opacity:.9">A week ago you may not have known when this would end. Now you have a date, a buffer with a home, a payday ritual and your first payment done. From here, it's ten minutes each payday. Turn back to page 3 and read what you were worried about. Does it feel the same now?</p>
+  </div>
+  <div class="done"><div class="big"></div><div><b>Day 7 done.</b> Color the last box on the cover too.<div class="hand" style="font-size:20px;margin-top:2px">One down. Keep going, one paycheck at a time.</div></div></div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>11</span></div>
+</section>
+
+<!-- 12 WOBBLE -->
+<section class="page">
+  <div class="kicker">Keep this page</div>
+  <h2>Wobble? Reset.</h2>
+  <p class="why">A bad week, a charge on the card, a missed payday. It happens to almost everyone who gets out of debt. A wobble only becomes a fall if you stop.</p>
+  <ol class="steps">
+    <li>Breathe. Don't open every statement in a panic.</li>
+    <li>Open the app. Put a new charge on its debt (<b>Debts</b>, then <b>Add a new charge or fee</b>), or tap <b>Skip this payday</b>.</li>
+    <li>Read your new date. It moved a little. It didn't disappear.</li>
+    <li>On your next payday, do the ritual. Never miss twice.</li>
+  </ol>
+  <div class="card">
+    <div class="label">What happened</div>
+    <div class="fill"></div><div class="fill" style="margin-top:12px"></div>
+    <div class="label" style="margin-top:16px">What I'll do on my next payday</div>
+    <div class="fill"></div><div class="fill" style="margin-top:12px"></div>
+    <div class="label" style="margin-top:16px">One thing that would make it easier next time</div>
+    <div class="fill"></div>
+  </div>
+  <div class="card">
+    <h3>If the plan can't work right now</h3>
+    <p style="margin-top:6px">If your minimums are more than the money you have, that happens, and there are people whose job is to help. Call each lender and ask about a hardship program. In the US, a nonprofit credit counselor (NFCC.org) can help you make a plan. Avoid anyone who offers a new loan to fix it.</p>
+  </div>
+  <div class="hand" style="font-size:28px">Life happens. Never miss twice.</div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>12</span></div>
+</section>
+
+<!-- 13 RITUAL CARDS -->
+<section class="page">
+  <div class="kicker">Cut out and keep</div>
+  <h2>Your payday ritual card</h2>
+  <p class="muted">Two copies: one for your wallet, one for the fridge.</p>
+  <div class="row" style="margin-top:8px">
+    <div class="cut grow" style="display:flex;flex-direction:column;gap:10px">
+      <div class="logo" style="font-size:15px">paid in <span>yellow</span></div>
+      <h3 style="font-size:20px">Payday · 10 minutes</h3>
+      <ol class="steps">
+        <li>Open Today</li>
+        <li>Pay the bills listed</li>
+        <li>Move buffer and yearly bills money</li>
+        <li>Send the extra to the named debt</li>
+        <li>Tap I did it</li>
+      </ol>
+      <p class="small">When I get paid on ________, I open it at ______.</p>
+    </div>
+    <div class="cut grow" style="display:flex;flex-direction:column;gap:10px">
+      <div class="logo" style="font-size:15px">paid in <span>yellow</span></div>
+      <h3 style="font-size:20px">Payday · 10 minutes</h3>
+      <ol class="steps">
+        <li>Open Today</li>
+        <li>Pay the bills listed</li>
+        <li>Move buffer and yearly bills money</li>
+        <li>Send the extra to the named debt</li>
+        <li>Tap I did it</li>
+      </ol>
+      <p class="small">When I get paid on ________, I open it at ______.</p>
+    </div>
+  </div>
+  <div class="cut" style="display:flex;flex-direction:column;gap:10px">
+    <h3 style="font-size:20px">When a surprise bill lands</h3>
+    <ol class="steps">
+      <li>Pay it from the buffer, not a card.</li>
+      <li>Tap <b>I used some of it</b> on Safety net.</li>
+      <li>The plan refills the buffer first. Nothing else to do.</li>
+    </ol>
+  </div>
+  <div class="hand" style="text-align:center;margin-top:8px">one paycheck at a time</div>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>13</span></div>
+</section>
+
+<!-- 14 WHAT'S NEXT -->
+<section class="page">
+  <div class="kicker">After the Reset</div>
+  <h2>What's next</h2>
+  <div class="card">
+    <h3>Every payday</h3>
+    <p style="margin-top:6px">Do the 10-minute ritual. Check your date on Path once a month. When a statement arrives, use <b>Update from my statement</b> on Debts so the numbers match your real balance.</p>
+  </div>
+  <div class="card">
+    <h3>Debt-Free Tracker Kit</h3>
+    <p style="margin-top:6px">Print a tracker and color a square for every payday and every $100 paid. It's in your Pack 1 download.</p>
+  </div>
+  <div class="card">
+    <h3>Never Back in Debt Guide</h3>
+    <p style="margin-top:6px">What to do when a surprise bill lands, how to talk to your lenders, and how to stay out once you're free. Also in your download.</p>
+  </div>
+  <div class="card">
+    <h3>Save a backup</h3>
+    <p style="margin-top:6px">Your plan lives only on your phone. Once a month, tap <b>Save backup</b> in the app and keep the file somewhere safe, like your email or cloud drive.</p>
+  </div>
+  <div class="ink">
+    <h3 style="color:var(--paper)">Stuck on something?</h3>
+    <p style="color:var(--paper);margin-top:6px;opacity:.9">Email support@paidinyellow.com. A screenshot helps. A real person answers.</p>
+  </div>
+  <p class="small muted" style="margin-top:auto">PaidInYellow is a planning tool, not financial advice. Figures are estimates based on what you enter. We never suggest loans, balance transfers or new credit. The study mentioned on page 8 is Gal and McShane (2012). The $400 figure is from the Federal Reserve's 2025 survey of household economics.</p>
+  <div class="footer"><span>The 7-Day Debt Reset · PaidInYellow</span><span>14</span></div>
+</section>
+
+</body>
+</html>

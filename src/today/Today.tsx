@@ -14,7 +14,7 @@ import { formatMoney, formatMoneyAuto, parseAmount, toCents } from '../lib/money
 import { dayMonth, diffDays, relativeDay, shortDate, shortMonthYear, weekdayName } from '../lib/today';
 import { pathView } from '../path/Path';
 import { changeablePayday, changePaid, didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
-import { biggerNote, billsForNextPayday } from '../state/billsDue';
+import { billsForNextPayday } from '../state/billsDue';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
@@ -533,11 +533,6 @@ export function Today() {
                 ))}
               </div>
               {noDueDay.length > 0 && <p class="pc-note">Not counted until you add a due day.</p>}
-              {biggerNote(bills, row, (n) => money(n), dayMonth) && (
-                <p class="pc-note" data-testid="bigger-note">
-                  {biggerNote(bills, row, (n) => money(n), dayMonth)}
-                </p>
-              )}
               {override !== null && (
                 <p class="pc-note">
                   This payday uses {money(override)} for the plan instead of {money(s.extraPerPayday)}.{' '}

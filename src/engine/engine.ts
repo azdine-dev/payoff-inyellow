@@ -1,7 +1,7 @@
 /**
- * PaidInYellow payoff engine. An exact port of engine/engine_reference.py (v2: bills by due date).
- * If the model should change, update the reference, engine/fixtures.json and the Sheet together,
- * after Azeddin agrees.
+ * PaidInYellow payoff engine v2 ("real bills"). A port of engine/engine_v2.py, which the Google Sheet
+ * bonus implements too. If the model should change, update the reference, engine/fixtures_v2.json and the
+ * Sheet together, after Azeddin agrees.
  *
  * One step per payday. Each debt's real bill (its full monthly minimum) is paid on the payday before it falls
  * due: a debt with a due day in [this payday, next payday) pays its bill, any other debt is not paid down by
@@ -16,7 +16,7 @@
  *
  * All amounts keep full precision. Round only for display.
  */
-import { dueDateIn, type Frequency, paydayISO } from './dates';
+import { dueCount, type Frequency, paydayISO } from './dates';
 import { pyRound, pySum } from './pymath';
 
 export type { Frequency } from './dates';
@@ -82,8 +82,10 @@ export interface PlanInput {
   yearlyBills?: YearlyBillInput[];
   /** "+/- this payday", keyed by payday number (1 = next payday) */
   adjustments?: Record<number, number>;
-  /** New charges, keyed by payday number. They land on that payday's focus debt. */
+  /** New charges, keyed by payday number. They land on the first debt in payoff order that still has a balance. */
   charges?: Record<number, number>;
+  /** Buffer money used on a payday (keyed by payday number): the buffer is lower after it and refills first. */
+  bufferUsed?: Record<number, number>;
   maxPaydays?: number;
 }
 
@@ -256,10 +258,12 @@ export interface StepState {
 }
 
 /**
- * One payday, exactly like one row of the reference.
- * `planMoney` is extraPerPayday plus any "+/- this payday".
- * `date` is this payday and `nextDate` the next one: the bills due in [date, nextDate) are paid now.
- * "I did it" uses this same step with the real numbers.
+ * One payday, exactly like one row of engine_v2.py. `planMoney` is extraPerPayday plus any "+/- this payday".
+ * `date` is this payday and `nextDate` the next one: a debt's full monthly minimum is paid now when its due
+ * date falls in [date, nextDate). "I did it" uses this same step with the real numbers.
+ *
+ * Order of the money: yearly bills, then the buffer up to its goal, then the extra (what is left plus the
+ * rollover of bills that were due but not paid because the debt is paid off or nearly) to debts in payoff order.
  */
 export function stepPayday(
   plan: PreparedPlan,
@@ -269,36 +273,45 @@ export function stepPayday(
   payday = 1,
   date = '',
   nextDate = '',
+  bufferUsed = 0,
 ): PaydayStep {
   const { ppy, rates } = plan;
   const bal = state.balances;
-  // The bill each debt pays on this payday: its full monthly minimum when its due day falls before the next payday
-  const mpp = plan.minMonthly.map((m, i) => {
+
+  const funds = Math.min(plan.yearlyPerPayday, Math.max(planMoney, 0));
+  const toBuffer = Math.min(Math.max(state.bufferGoal - state.buffer, 0), Math.max(planMoney - funds, 0));
+  const bufferAfter = state.buffer + toBuffer - bufferUsed;
+
+  // A new charge goes to the first debt in payoff order that still has a balance, after interest and before the bill
+  const chargeAt = Math.max(0, bal.findIndex((b) => b > ZERO));
+  const pre = bal.map((b, i) => b * (1 + rates[i]! / ppy) + (i === chargeAt ? charge : 0));
+  const interest = pySum(bal.map((b, i) => (b * rates[i]!) / ppy));
+
+  // The bill each debt owes on this payday, and what it can pay: never more than it owes now
+  const dueMin = plan.minMonthly.map((m, i) => {
     const day = plan.dueDays[i];
-    return m > 0 && day && date && nextDate && dueDateIn(day, date, nextDate) !== null ? m : 0;
+    return day && m && date && nextDate ? m * dueCount(day, date, nextDate) : 0;
   });
-
-  const funds = Math.min(plan.yearlyPerPayday, Math.max(0, planMoney));
-  const toBuffer = Math.min(Math.max(0, state.bufferGoal - state.buffer), Math.max(0, planMoney - funds));
-  const bufferAfter = state.buffer + toBuffer;
-
-  const grown = bal.map((b, i) => b * (1 + rates[i]! / ppy));
-  const interest = pySum(grown.map((g, i) => g - bal[i]!));
-  const mins = grown.map((g, i) => Math.min(g, mpp[i]!));
-  const minimums = pySum(mins);
-  // Leftover plan money plus the bills freed by paid-off debts (the rollover)
-  const pot = Math.max(0, planMoney - funds - toBuffer) + pySum(mpp) - minimums;
+  const bills = pre.map((g, i) => Math.min(dueMin[i]!, g));
+  const rollover = pySum(dueMin) - pySum(bills);
+  const pool = Math.max(planMoney - funds - toBuffer, 0) + rollover;
 
   const xs: number[] = [];
-  for (let i = 0; i < grown.length; i++) {
-    xs.push(Math.min(grown[i]! - mins[i]!, Math.max(0, pot - pySum(xs))));
+  let used = 0;
+  for (let i = 0; i < pre.length; i++) {
+    const x = Math.min(Math.max(pre[i]! - bills[i]!, 0), Math.max(pool - used, 0));
+    xs.push(x);
+    used += x;
   }
   const maxExtra = xs.length ? Math.max(...xs) : 0;
   const focus = maxExtra > 0 ? xs.indexOf(maxExtra) : 0;
 
-  const after = grown.map((g, i) => Math.max(0, g - mins[i]! - xs[i]!));
-  if (after.length) after[focus] = after[focus]! + charge;
+  const after = pre.map((g, i) => {
+    const left = Math.max(g - bills[i]! - xs[i]!, 0);
+    return left < ZERO ? 0 : left;
+  });
 
+  const minimums = pySum(bills);
   const extra = pySum(xs);
   const focusId = plan.ids[focus] ?? null;
   return {
@@ -311,8 +324,8 @@ export function stepPayday(
     debts: plan.ids.map((id, i) => ({
       id,
       balanceBefore: bal[i]!,
-      interest: grown[i]! - bal[i]!,
-      minimum: mins[i]!,
+      interest: (bal[i]! * rates[i]!) / ppy,
+      minimum: bills[i]!,
       extra: xs[i]!,
       balanceAfter: after[i]!,
     })),
@@ -335,6 +348,8 @@ export function simulatePlan(input: PlanInput): PlanResult {
   const maxPaydays = input.maxPaydays ?? MAX_PAYDAYS;
   const adj = input.adjustments ?? {};
   const chg = input.charges ?? {};
+  const used = input.bufferUsed ?? {};
+  const offset = input.paydayOffset ?? 0;
 
   let balances = plan.ids.map((id) => byId.get(id)!.balance);
   let buffer = input.bufferNow;
@@ -343,9 +358,10 @@ export function simulatePlan(input: PlanInput): PlanResult {
   const paidOff: Record<string, string> = {};
 
   for (let n = 1; n <= maxPaydays; n++) {
+    // Nothing left to pay: no row (engine_v2.py still makes one for an empty plan; the app shows "debt-free" instead)
     if (pySum(balances) <= ZERO) break;
-    const date = paydayISO(input.nextPayday, input.frequency, (input.paydayOffset ?? 0) + n, input.otherPayday);
-    const nextDate = paydayISO(input.nextPayday, input.frequency, (input.paydayOffset ?? 0) + n + 1, input.otherPayday);
+    const date = paydayISO(input.nextPayday, input.frequency, offset + n, input.otherPayday);
+    const nextDate = paydayISO(input.nextPayday, input.frequency, offset + n + 1, input.otherPayday);
     const row = stepPayday(
       plan,
       { balances, buffer, bufferGoal: input.bufferGoal },
@@ -354,6 +370,7 @@ export function simulatePlan(input: PlanInput): PlanResult {
       n,
       date,
       nextDate,
+      used[n] ?? 0,
     );
     totalInterest += row.interest;
     buffer = row.bufferAfter;
@@ -365,7 +382,6 @@ export function simulatePlan(input: PlanInput): PlanResult {
   }
 
   const last = rows[rows.length - 1];
-  // Same test as the reference: the rounded debt left is zero
   const done = last !== undefined && pyRound(last.debtLeft, 2) <= ZERO;
   return {
     order: plan.ids,
@@ -385,15 +401,6 @@ export function simulatePlan(input: PlanInput): PlanResult {
 /** "Your debt costs you $X a day": sum(balance x APR) / 365, on current balances. */
 export function dailyInterestCost(debts: readonly Pick<DebtInput, 'balance' | 'apr'>[]): number {
   return pySum(debts.map((d) => (d.balance * d.apr) / 100)) / 365;
-}
-
-/** Total minimums set aside each payday (monthly minimum x 12 / ppy). */
-export function minimumsPerPayday(
-  debts: readonly Pick<DebtInput, 'minMonthly' | 'balance'>[],
-  frequency: Frequency,
-): number {
-  const ppy = PAYDAYS_PER_YEAR[frequency];
-  return pySum(debts.filter((d) => d.balance > ZERO).map((d) => (d.minMonthly * 12) / ppy));
 }
 
 /**
@@ -453,7 +460,9 @@ export function planNeedsHelp(
   paycheckAmount?: number | null,
 ): NeedsHelpReason[] {
   const reasons: NeedsHelpReason[] = [];
-  if (paycheckAmount != null && minimumsPerPayday(input.debts, input.frequency) > paycheckAmount) {
+  // The minimums are due every month: compare them with what a month of paychecks brings in
+  const monthlyMinimums = pySum(input.debts.filter((d) => d.balance > ZERO).map((d) => d.minMonthly));
+  if (paycheckAmount != null && monthlyMinimums > (paycheckAmount * PAYDAYS_PER_YEAR[input.frequency]) / 12) {
     reasons.push('minimums-over-paycheck');
   }
   if (input.debts.some((d) => d.balance > ZERO) && result.debtFreeDate === null) {

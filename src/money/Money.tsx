@@ -14,7 +14,7 @@ import {
   useBuffer,
   type FundFields,
 } from '../state/moneyActions';
-import { minimumsPerPayday, PAYDAYS_PER_YEAR } from '../engine';
+import { PAYDAYS_PER_YEAR } from '../engine';
 import { activeDebts } from '../state/planInput';
 import { act, data, today } from '../state/store';
 import { useCountUp } from '../ui/useCountUp';
@@ -46,8 +46,9 @@ export function Money() {
   const total = items.reduce((sum, i) => sum + (i.done ? i.amount ?? 0 : 0), 0);
   const potential = items.reduce((sum, i) => sum + (i.amount ?? 0), 0);
 
-  const perPayday = minimumsPerPayday(activeDebts(d), s.frequency) + s.extraPerPayday;
-  const share = s.paycheckAmount && s.paycheckAmount > 0 ? (perPayday / s.paycheckAmount) * 100 : null;
+  // Over a year: twelve months of minimums plus the plan money on every payday, against a year of paychecks
+  const yearToDebt = activeDebts(d).reduce((sum, x) => sum + x.minMonthly * 12, 0) + s.extraPerPayday * PAYDAYS_PER_YEAR[s.frequency];
+  const share = s.paycheckAmount && s.paycheckAmount > 0 ? (yearToDebt / (s.paycheckAmount * PAYDAYS_PER_YEAR[s.frequency])) * 100 : null;
 
   const fund = typeof mode === 'object' && mode ? d.funds.find((f) => f.id === mode.fund) : undefined;
 
