@@ -50,7 +50,7 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const reducedMotion = () => typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
 /** "Next payday Fri 7 Nov · 14 days. Nothing to do until then." */
-function CountdownCard(props: { nextDate: string }) {
+function CountdownCard(props: { nextDate: string; onEarly?: () => void }) {
   const days = Math.max(0, diffDays(today.value, props.nextDate));
   return (
     <section class="card countdown-card" data-testid="countdown-card">
@@ -62,6 +62,11 @@ function CountdownCard(props: { nextDate: string }) {
         <p>
           Next payday is <b>{shortDate(props.nextDate)}</b>. Nothing to do until then.
         </p>
+        {props.onEarly && (
+          <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={props.onEarly}>
+            Mark it done early
+          </button>
+        )}
       </div>
     </section>
   );
@@ -79,6 +84,8 @@ export function Today() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [justPaid, setJustPaid] = useState<JustPaid | null>(null);
+  // "Mark it done early": opens the payday card while Today is counting down (no question is asked, Undo covers a mistake)
+  const [showEarly, setShowEarly] = useState(false);
   // Debts that reached zero with the last payment: shown as a full-screen moment until "Next payday"
   const [paidIds, setPaidIds] = useState<string[]>([]);
   const [skippedNote, setSkippedNote] = useState(false);
@@ -98,6 +105,7 @@ export function Today() {
   useEffect(() => {
     setChecked(new Set());
     setOverride(null);
+    setShowEarly(false);
   }, [s.paydayIndex]);
 
   useEffect(() => {
@@ -122,7 +130,13 @@ export function Today() {
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
   // Before the payday: a countdown. Done: the yellow card stays until the next payday, even after a reload.
   // The full card shows until the first "I did it", and when the payday is 2 days away or less (early direct deposit).
-  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && doneCount > 0 && diffDays(today.value, nextDate) > 2;
+  const countdownMode = active.length > 0 && Boolean(row) && nextDate > today.value && !showEarly && doneCount > 0 && diffDays(today.value, nextDate) > 2;
+  const markEarly = () => {
+    setShowEarly(true);
+    setJustPaid(null);
+    setUndo(null);
+    setPaidIds([]);
+  };
   const paidView = justPaid ?? (countdownMode ? paidFromLog(d, nextPaydayNumber(s) - 1) : null);
   const isPayday = nextDate === today.value;
 
@@ -437,7 +451,7 @@ export function Today() {
             )}
           </section>
 
-          {countdownMode && <CountdownCard nextDate={nextDate} />}
+          {countdownMode && <CountdownCard nextDate={nextDate} onEarly={markEarly} />}
 
           {showNudge && (
             <section class="nudge" aria-label="Save a copy" data-testid="backup-nudge">
@@ -487,7 +501,7 @@ export function Today() {
           )}
 
           {countdownMode ? (
-            paidView ? null : <CountdownCard nextDate={nextDate} />
+            paidView ? null : <CountdownCard nextDate={nextDate} onEarly={markEarly} />
           ) : (
             <section class={`payday-card${busy ? ' swiping' : ''}`} aria-labelledby="payday-title">
               <p id="payday-title" class="pc-label">

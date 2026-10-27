@@ -29,7 +29,7 @@ test('after the first one: a countdown, but the card again when the payday is 2 
   await page.clock.setFixedTime(new Date('2026-11-03T10:00:00'));
   await page.reload();
   await expect(page.getByTestId('countdown-card')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Mark it done early' })).toHaveCount(0); // no link: from 2 days before the card is there
+  await expect(page.getByRole('button', { name: 'Mark it done early' })).toBeVisible(); // a small link, no question
   await expect(didIt(page)).toHaveCount(0);
 
   // 2 days away: early direct deposit, so the card is there

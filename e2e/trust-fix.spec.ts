@@ -56,13 +56,17 @@ test('the Path chart ends on the debt-free date, not on a later month', async ({
   await expect(chart).toContainText(new RegExp(`Now[\\s\\S]*${month}`)); // the last label on the axis is that same month
 });
 
-test('no "Mark it done early" link: the card shows until the first "I did it" and from 2 days before each payday', async ({ page }) => {
+test('the card shows until the first "I did it" and from 2 days before each payday; in between, a countdown with "Mark it done early"', async ({ page }) => {
   await quickSetup(page);
   await tapDidIt(page);
   await expect(page.getByTestId('paid-card')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('countdown-card')).toBeVisible(); // 8 days to go
-  await expect(page.getByText('Mark it done early')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Mark it done early' })).toBeVisible();
+  await page.getByRole('button', { name: 'Mark it done early' }).click(); // no confirm dialog
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
   await setDay(page, '2026-11-04'); // 2 days before Fri 6 Nov
+  await expect(page.getByTestId('countdown-card')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^I did it/ })).toBeVisible();
 });

@@ -40,10 +40,13 @@ export async function goTab(page: Page, name: 'Today' | 'Path' | 'Debts' | 'Safe
   await nav.getByRole('button', { name: name === 'Money' ? 'Safety net' : name, exact: true }).click();
 }
 
-/** Waits for the payday card (its "I did it" button). Between paydays Today counts down, so move the clock to 2 days before first. */
+/** Waits for the payday card. While Today counts down, "Mark it done early" opens it (the card is there anyway before the first "I did it" and from 2 days before each payday). */
 export async function revealEarly(page: Page) {
-  // There is no link any more: the card is there before the first "I did it" and from 2 days before each payday.
-  await page.getByRole('button', { name: /^I did it/ }).waitFor();
+  const btn = page.getByRole('button', { name: /^I did it/ });
+  const early = page.getByRole('button', { name: 'Mark it done early' });
+  await btn.or(early).first().waitFor();
+  if (await early.isVisible()) await early.click();
+  await btn.waitFor();
 }
 
 /** Taps "I did it" (opening the payday card first when Today is counting down). No question is asked. */
