@@ -1896,6 +1896,10 @@ a.btn {
     padding-left: 104px;
   }
 
+  /* No tabs in calculator mode, so no room for the side menu either */
+  .app-shell.no-nav {
+    padding-left: 0;
+  }
   .tabbar {
     top: 0;
     right: auto;

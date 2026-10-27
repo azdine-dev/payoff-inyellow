@@ -137,7 +137,16 @@ function Screens() {
 
   // Calculator mode (no valid unlock code): the result is home. Settings stays open for the
   // unlock code, backup and help. The tracker, plan and the rest wait behind the code.
-  if (licenseState.value === 'locked') return current === 'settings' ? <Settings /> : <Result />;
+  // (Settings sits in the same wrapper in both cases, so unlocking from there does not close the sheet you are in.)
+  if (licenseState.value === 'locked') {
+    return current === 'settings' ? (
+      <div class="app-shell no-nav">
+        <Settings />
+      </div>
+    ) : (
+      <Result />
+    );
+  }
 
   return (
     <div class="app-shell">
