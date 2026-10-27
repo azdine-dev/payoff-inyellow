@@ -10,7 +10,7 @@ import { showNotice } from '../state/notice';
 import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
 import { toDebtInput, toPlanInput } from '../state/planInput';
-import { act, data, freshPaidDebts, plan, today } from '../state/store';
+import { act, data, freshPaidDebts, openDebtId, plan, today } from '../state/store';
 import { Count } from '../ui/useCountUp';
 import { CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
@@ -112,6 +112,14 @@ export function Debts() {
   const current = mode && mode.kind !== 'add' ? d.debts.find((x) => x.id === mode.id) : undefined;
   const orderIndex = (id: string) => r.order.indexOf(id);
   const sorted = [...active].sort((a, b) => orderIndex(a.id) - orderIndex(b.id));
+
+  // Tapped on another screen (the focus debt card on Today): open that debt's sheet
+  useEffect(() => {
+    if (!openDebtId.value) return;
+    const id = openDebtId.value;
+    openDebtId.value = null;
+    if (d.debts.some((x) => x.id === id)) setMode({ kind: 'actions', id });
+  }, [openDebtId.value]);
 
   // The paid card turns yellow and the next debt slides in once, then it is just the screen
   useEffect(() => {

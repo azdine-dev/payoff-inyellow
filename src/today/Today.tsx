@@ -23,7 +23,7 @@ import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput 
 import type { AppData } from '../data/types';
 import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
-import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, tab, today, updateDismissed, updateReady } from '../state/store';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -582,17 +582,28 @@ export function Today() {
 
           {focus && (
             <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">
-              <div class="row">
-                <span class="label">Focus debt</span>
-                {goneLabel(focus.goneBy) && <span class="muted small">gone by {goneLabel(focus.goneBy)}</span>}
-              </div>
-              <div class="row">
-                <h2 class="focus-name">{focus.debt.name}</h2>
-                <span class="num">
-                  <b><Count value={focus.left} id={`focus-${focus.debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} /></b> left
+              {/* The name, the balance and the bar are one door to this debt on the Debts tab */}
+              <button
+                type="button"
+                class="door-btn"
+                aria-label={`${focus.debt.name}, open in Debts`}
+                onClick={() => {
+                  openDebtId.value = focus.debt.id;
+                  tab.value = 'debts';
+                }}
+              >
+                <span class="row">
+                  <span class="label">Focus debt</span>
+                  {goneLabel(focus.goneBy) && <span class="muted small">gone by {goneLabel(focus.goneBy)}</span>}
                 </span>
-              </div>
-              <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
+                <span class="row">
+                  <span class="focus-name">{focus.debt.name}</span>
+                  <span class="num">
+                    <b><Count value={focus.left} id={`focus-${focus.debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} /></b> left
+                  </span>
+                </span>
+                <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
+              </button>
               <p class="muted" data-testid="focus-sentence">
                 {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
               </p>

@@ -172,7 +172,7 @@ test('debts and money: a new charge moves the date, the buffer refills first', a
   const before = await pill.textContent();
 
   // Log a charge on Visa
-  await page.getByRole('button', { name: 'Debts' }).click();
+  await page.getByRole('button', { name: 'Debts', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Visa' })).toContainText('$3,200');
   await page.getByRole('button', { name: 'Visa, options' }).click();
   await page.getByRole('button', { name: 'Add a new charge or fee' }).click();

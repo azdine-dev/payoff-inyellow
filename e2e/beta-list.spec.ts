@@ -178,3 +178,29 @@ test.describe('Part 5 · wide screens', () => {
     await expect(page.getByRole('heading', { name: 'Your path' })).toHaveCount(0);
   });
 });
+
+test.describe('Part 6 · every number is a door', () => {
+  test('the debt-free pill opens Path, the focus debt card opens that debt, the safety net tile opens Safety net', async ({ page }) => {
+    await quickSetup(page);
+    await page.getByTestId('debt-free-pill').click();
+    await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
+
+    await goTab(page, 'Today');
+    await page.getByRole('button', { name: 'Store card, open in Debts' }).click();
+    await expect(page.getByRole('heading', { name: 'Debts', exact: true })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Store card' })).toBeVisible(); // that debt's sheet is open
+    await page.getByRole('button', { name: 'Close' }).click();
+
+    await goTab(page, 'Today');
+    await page.getByTestId('safety-tile').click();
+    await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
+  });
+
+  test('the focus debt card keeps its "+ Extra payment" link, and it is not inside the door', async ({ page }) => {
+    await quickSetup(page);
+    const door = page.getByRole('button', { name: 'Store card, open in Debts' });
+    await expect(door.getByRole('button')).toHaveCount(0); // no button inside a button
+    await page.getByRole('button', { name: '+ Extra payment' }).click();
+    await expect(page.getByRole('dialog', { name: 'Extra payment' })).toBeVisible();
+  });
+});
