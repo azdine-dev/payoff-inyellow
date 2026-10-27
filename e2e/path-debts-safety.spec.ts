@@ -39,7 +39,7 @@ test('Path: what-if and the payday list are bottom sheets, and "Use this in my p
 
   await page.getByRole('button', { name: 'What if I add more?' }).click();
   const sheet = page.getByRole('dialog', { name: 'What if I add more?' });
-  await sheet.getByRole('button', { name: /^\+\$100 each payday/ }).click();
+  await sheet.getByLabel('Add money each payday').fill('100');
   await expect(sheet.getByTestId('whatif-result')).toContainText('sooner');
   await sheet.getByRole('button', { name: 'Use this in my plan' }).click();
   await sheet.getByRole('button', { name: 'Close' }).click();

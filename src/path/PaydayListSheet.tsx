@@ -136,7 +136,7 @@ function Body() {
                     const bills = rowBills[i]!;
                     return (
                       <li key={row.date + i}>
-                        <button type="button" class="pd" aria-expanded={open === key} aria-label={`${shortDate(row.date)}, to come`} onClick={() => toggle(key)}>
+                        <button type="button" class={`pd${i === 0 ? ' current' : ''}`} aria-current={i === 0 ? 'step' : undefined} aria-expanded={open === key} aria-label={`${shortDate(row.date)}, to come`} onClick={() => toggle(key)}>
                           <span class="pd-box" />
                           <span class="pd-date">{shortDate(row.date)}</span>
                           <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : bills.due.length ? 'Bills due' : 'Nothing due'}</span>

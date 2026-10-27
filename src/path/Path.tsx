@@ -9,19 +9,20 @@ import { downloadText, planToCsv } from '../lib/csv';
 import { formatMoney } from '../lib/money';
 import { makeMilestoneImage, shareImage } from '../lib/shareImage';
 import { chartData } from '../lib/series';
-import { addDaysISO, diffDays, monthYear, shortDate, shortMonthYear } from '../lib/today';
+import { addDaysISO, diffDays, monthsBetween, monthYear, shortDate, shortMonthYear } from '../lib/today';
 import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { isDebtFree } from '../state/debtFree';
 import { MILESTONE_LABELS, projectedDate, progressStats } from '../state/milestones';
 import { setMethod } from '../state/planActions';
 import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
-import { act, data, freshPayday, plan, today } from '../state/store';
+import { act, data, freshPayday, plan, tab, today } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
 import { Chart } from '../progress/Chart';
 import { Count, useCountUp } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
 import { PaydayListSheet } from './PaydayListSheet';
 import { WhatIfSheet } from './WhatIfSheet';
+import { countdownText, readCountdownMode, saveCountdownMode, type CountdownMode } from './countdown';
 import { COPY } from '../lib/copy';
 
 /** Kept for the Settings and Today links that open Path on a given view. */
@@ -40,6 +41,8 @@ interface Ahead {
   key: string;
   title: string;
   when: string;
+  /** Without "next payday", for the Next milestone card */
+  short: string;
   kind: 'next' | 'later' | 'end';
 }
 
@@ -54,7 +57,13 @@ export function Path() {
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
   const debtFree = isDebtFree(d);
 
-  const [sheet, setSheet] = useState<'whatif' | 'list' | 'order' | 'export' | null>(null);
+  const [sheet, setSheet] = useState<'whatif' | 'list' | 'order' | 'export' | 'paid' | 'interest' | null>(null);
+  const [cmode, setCmode] = useState<CountdownMode>(readCountdownMode);
+  const toggleCountdown = () => {
+    const next: CountdownMode = cmode === 'months' ? 'years' : 'months';
+    setCmode(next);
+    saveCountdownMode(next);
+  };
   const [shareMsg, setShareMsg] = useState('');
   const close = () => setSheet(null);
 
@@ -91,8 +100,9 @@ export function Path() {
     items.sort((a, b) => a.date.localeCompare(b.date) || Number(a.end) - Number(b.end));
     return items.slice(0, 5).map((it, i) => {
       const near = diffDays(today.value, it.date) <= 92;
-      const when = it.end ? monthYear(it.date) : near ? `${shortDate(it.date, today.value)}${it.date === nextPayday ? ' · next payday' : ''}` : `around ${shortMonthYear(it.date)}`;
-      return { key: `${it.title}-${it.date}`, title: it.title, when, kind: it.end ? 'end' : i === 0 ? 'next' : 'later' };
+      const short = it.end ? monthYear(it.date) : near ? shortDate(it.date, today.value) : `around ${shortMonthYear(it.date)}`;
+      const when = near && !it.end && it.date === nextPayday ? `${short} · next payday` : short;
+      return { key: `${it.title}-${it.date}`, title: it.title, when, short, kind: it.end ? 'end' : i === 0 ? 'next' : 'later' };
     });
   }, [d, r]);
 
@@ -116,6 +126,7 @@ export function Path() {
   const thisMonth = past.filter((p) => p.status === 'done' && p.date.startsWith(month));
   const actual = thisMonth.reduce((sum, p) => sum + p.total, 0);
   const planned = thisMonth.reduce((sum, p) => sum + (p.plannedTotal ?? p.total), 0);
+  const paidCount = counted.filter((x) => x.status === 'paid').length;
 
   const share = async () => {
     setShareMsg('');
@@ -140,50 +151,53 @@ export function Path() {
             'More than 20 years at this pace'
           )}
         </p>
+        {!debtFree && r.debtFreeDate && (
+          <button type="button" class="countdown-toggle" data-testid="countdown-toggle" aria-label="Time left. Tap to switch between months and years." onClick={toggleCountdown}>
+            {countdownText(monthsBetween(today.value, r.debtFreeDate), cmode)}
+          </button>
+        )}
       </header>
+
+      <div class="path-tiles" role="group" aria-label="Your numbers">
+        <button type="button" class="tile-sm" onClick={() => (tab.value = 'debts')}>
+          <span class="tile-label">Owed now</span>
+          <span class="tile-val num" data-testid="to-go">
+            <Count value={stats.owed} id="path-owed" format={(n) => formatMoney(n, cur, { whole: true })} />
+          </span>
+        </button>
+        <button type="button" class="tile-sm" onClick={() => setSheet('list')}>
+          <span class="tile-label">Debt-free date</span>
+          <span class="tile-val" data-testid="tile-date">
+            {debtFree ? 'Debt-free' : r.debtFreeDate ? shortMonthYear(r.debtFreeDate) : '20+ years'}
+          </span>
+        </button>
+        <button type="button" class="tile-sm" onClick={() => setSheet('paid')}>
+          <span class="tile-label">Paid off so far</span>
+          <span class="tile-val num" data-testid="paid-so-far">
+            <Count value={stats.paid} id="path-paid" format={(n) => formatMoney(n, cur, { whole: true })} />
+          </span>
+        </button>
+        <button type="button" class="tile-sm" onClick={() => setSheet('interest')}>
+          <span class="tile-label">{mo.neverEnds || (avoided !== null && avoided >= 1) ? 'Interest you avoid' : 'Interest ahead'}</span>
+          <span class="tile-val num" data-testid="interest-avoided">
+            {mo.neverEnds ? 'Never ends' : avoided !== null && avoided >= 1 ? formatMoney(avoided, cur, { whole: true }) : formatMoney(r.totalInterest, cur, { whole: true })}
+          </span>
+        </button>
+      </div>
 
       <section class="card stack" aria-label="Paid so far">
         <div class="row" style={{ alignItems: 'baseline' }}>
-          <p class="path-pct num" data-testid="pct-gone">
-            {Math.round(shownPct)}%
-          </p>
-          <span class="muted">gone</span>
+          <span class="row" style={{ justifyContent: 'flex-start', alignItems: 'baseline', gap: 8 }}>
+            <span class="path-pct num" data-testid="pct-gone">
+              {Math.round(shownPct)}%
+            </span>
+            <span class="muted">gone</span>
+          </span>
+          <span class="muted small num" data-testid="debts-paid">
+            Debts paid {paidCount} of {counted.length}
+          </span>
         </div>
         <Bar pct={stats.pct} label="Debt paid off" />
-        <div class="path-stats">
-          <div>
-            <p class="num path-stat" data-testid="paid-so-far">
-              <Count value={stats.paid} id="path-paid" format={(n) => formatMoney(n, cur, { whole: true })} />
-            </p>
-            <p class="muted small">paid</p>
-          </div>
-          <div>
-            <p class="num path-stat" data-testid="to-go">
-              <Count value={stats.owed} id="path-owed" format={(n) => formatMoney(n, cur, { whole: true })} />
-            </p>
-            <p class="muted small">to go</p>
-          </div>
-          <div>
-            {mo.neverEnds ? (
-              <>
-                <p class="path-stat">Never ends</p>
-                <p class="muted small">with minimums only</p>
-              </>
-            ) : avoided !== null && avoided >= 1 ? (
-              <>
-                <p class="num path-stat" data-testid="interest-avoided">
-                  {formatMoney(avoided, cur, { whole: true })}
-                </p>
-                <p class="muted small">interest avoided</p>
-              </>
-            ) : (
-              <>
-                <p class="num path-stat">{formatMoney(r.totalInterest, cur, { whole: true })}</p>
-                <p class="muted small">interest ahead</p>
-              </>
-            )}
-          </div>
-        </div>
       </section>
 
       <section class="card stack" aria-labelledby="grid-title">
@@ -220,6 +234,17 @@ export function Path() {
       {debtFree && (
         <section class="card">
           <p>You’re debt-free. Every debt is paid or archived, so there is nothing left to plan.</p>
+        </section>
+      )}
+
+      {!debtFree && timeline.length > 0 && (
+        <section class="card stack" aria-label="Next milestone" data-testid="next-milestone">
+          <p class="label">Next milestone</p>
+          <p>
+            <b>
+              Next: {timeline[0]!.title} · {timeline[0]!.short}
+            </b>
+          </p>
         </section>
       )}
 
@@ -319,7 +344,7 @@ export function Path() {
 
       {thisMonth.length > 0 && (
         <p class="card num" data-testid="planned-vs-actual">
-          This month you paid <b>{formatMoney(actual, cur, { whole: true })}</b> of <b>{formatMoney(planned, cur, { whole: true })}</b> planned.
+          This month: <b>{formatMoney(actual, cur, { whole: true })}</b> of <b>{formatMoney(planned, cur, { whole: true })}</b> planned
         </p>
       )}
 
@@ -337,6 +362,49 @@ export function Path() {
 
       <WhatIfSheet open={sheet === 'whatif'} onClose={close} />
       <PaydayListSheet open={sheet === 'list'} onClose={close} />
+
+      <Sheet open={sheet === 'paid'} onClose={close} title="Paid off so far">
+        <p class="num path-stat">
+          {formatMoney(stats.paid, cur, { whole: true })} <span class="muted small">of {formatMoney(stats.start, cur, { whole: true })}</span>
+        </p>
+        <ul class="ahead-list">
+          {counted.map((x) => (
+            <li key={x.id}>
+              <span class={`ahead-dot${x.status === 'paid' ? ' reached' : ''}`} aria-hidden="true" />
+              <span class="stack" style={{ gap: 0 }}>
+                <b>{x.name}</b>
+                <span class="muted small">{x.status === 'paid' ? 'PAID' : `${Math.floor(x.startBalance > 0 ? (1 - x.balance / x.startBalance) * 100 : 100)}% gone`}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <button type="button" class="btn" onClick={close}>
+          Close
+        </button>
+      </Sheet>
+
+      <Sheet open={sheet === 'interest'} onClose={close} title="Interest you avoid">
+        <div class="row">
+          <span>With your plan</span>
+          <span class="num">{formatMoney(r.totalInterest, cur, { whole: true })}</span>
+        </div>
+        <div class="row">
+          <span>Paying only minimums</span>
+          <span class="num">{mo.neverEnds || mo.totalInterest === null ? 'Never ends' : formatMoney(mo.totalInterest, cur, { whole: true })}</span>
+        </div>
+        {avoided !== null && avoided >= 1 && (
+          <div class="row" style={{ borderTop: '1px solid var(--ink)', paddingTop: 6, fontWeight: 600 }}>
+            <span>You avoid</span>
+            <span class="num">{formatMoney(avoided, cur, { whole: true })}</span>
+          </div>
+        )}
+        <p class="muted small">
+          {mo.neverEnds ? 'With the minimums alone, some debt never ends. Your plan ends it.' : 'Interest is what the debt costs you on top of what you borrowed. A bigger payment each payday cuts it.'}
+        </p>
+        <button type="button" class="btn" onClick={close}>
+          Close
+        </button>
+      </Sheet>
 
       <Sheet open={sheet === 'order'} onClose={close} title="Which debt first?">
         <div class="stack" role="radiogroup" aria-label="Payoff order" style={{ gap: 8 }}>

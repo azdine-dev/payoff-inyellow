@@ -163,22 +163,19 @@ test('"How we got this" shows the plain math behind the date and the first step'
   }
 });
 
-test('the what-if shows each quick amount as a change, not a second plan', async ({ page }) => {
+test('"Pay a bit more?" shows four amounts, each with what it changes and a Use this button', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   await quickSetup(page);
   await goTab(page, 'Plan');
   await page.getByRole('button', { name: 'What if I add more?' }).click();
-  const group = page.getByRole('group', { name: 'Quick what-ifs' });
-  for (const amount of ['$25', '$50', '$100']) {
-    await expect(group.getByRole('button', { name: `+${amount} each payday`, exact: false })).toContainText(/sooner|same date/);
+  const rows = page.getByTestId('more-row');
+  await expect(rows).toHaveCount(4);
+  for (const [i, amount] of ['$20', '$50', '$100', '$200'].entries()) {
+    await expect(rows.nth(i)).toContainText(`+${amount} each payday`);
+    await expect(rows.nth(i)).toContainText(/(same month|sooner)/);
+    await expect(rows.nth(i).getByRole('button', { name: /^Use +/ })).toBeVisible();
   }
-  await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
-  await expect(group.getByRole('button', { name: /^\+\$50 each payday/ })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByLabel('Add money each payday')).toHaveValue('50'); // the slider follows
-  await expect(page.getByTestId('whatif-result')).toContainText('instead of');
-  // Tapping it again puts it back
-  await group.getByRole('button', { name: /^\+\$50 each payday/ }).click();
-  await expect(page.getByLabel('Add money each payday')).toHaveValue('0');
+  await expect(page.getByLabel('Add money each payday')).toBeVisible(); // the slider stays below the table
 });
 
 test('Path says the date and the paydays left, and they count down at "I did it"', async ({ page }) => {
@@ -277,7 +274,7 @@ test('the what-if shows three small cards and says nothing changes until you app
   await page.getByRole('button', { name: 'What if I add more?' }).click();
   await expect(page.getByText('Try it here first. Nothing changes until you tap Use this in my plan.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Use this in my plan' })).toBeDisabled();
-  await page.getByRole('button', { name: /^\+\$100 each payday/ }).click();
+  await page.getByLabel('Add money each payday').fill('100');
   const cards = page.getByTestId('whatif-result').locator('.card.mini');
   await expect(cards).toHaveCount(3);
   await expect(cards.nth(0)).toContainText(/Debt-free\s+[A-Z][a-z]+ 20\d\d\s+instead of [A-Z][a-z]+ 20\d\d/);

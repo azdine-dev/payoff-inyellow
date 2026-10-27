@@ -1759,3 +1759,104 @@ a.btn {
     opacity: 0;
   }
 }
+
+/* ---------- Path, beta list ---------- */
+
+/* Four small tiles: each one is a door to where the number lives */
+.path-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tile-sm {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 84px;
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tile-label {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--gray);
+}
+
+.tile-val {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.05rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.countdown-toggle {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.more-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.more-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 8px 0;
+  border-top: 1px dashed var(--line);
+}
+
+/* Payday list: paid rows are yellow and crossed out, the next payday has an ink outline */
+.pd.on {
+  background: var(--yellow);
+  color: var(--on-yellow);
+  border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-top: 4px;
+}
+
+.pd.on .pd-date,
+.pd.on .pd-amt {
+  text-decoration: line-through;
+}
+
+.pd.on .pd-note {
+  color: var(--on-yellow);
+  font-weight: 700;
+}
+
+.pd.current {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  border-radius: 10px;
+  padding-left: 8px;
+  padding-right: 8px;
+}

@@ -255,6 +255,6 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   await expect(page.getByRole('listitem', { name: 'Fri 23 Oct: paid' })).toBeVisible();
   await expect(page.getByRole('listitem', { name: 'Fri 6 Nov: paid' })).toBeVisible();
   await expect(page.getByRole('listitem', { name: 'Plan made' })).toBeVisible();
-  await expect(page.getByTestId('planned-vs-actual')).toContainText('This month you paid');
+  await expect(page.getByTestId('planned-vs-actual')).toContainText('This month:');
   await shot(page, '14-progress');
 });
