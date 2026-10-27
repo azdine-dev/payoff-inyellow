@@ -54,9 +54,14 @@ export async function editDebt(db: PiyDB, data: AppData, id: string, f: DebtFiel
 }
 
 /** "Update from statement": the real balance replaces the stored one. */
-export async function updateBalance(db: PiyDB, data: AppData, id: string, balance: number, now = Date.now()): Promise<AppData> {
+export async function updateBalance(db: PiyDB, data: AppData, id: string, balance: number, now = Date.now(), today = todayISO()): Promise<AppData> {
   const debt = data.debts.find((d) => d.id === id)!;
-  return editDebt(db, data, id, { ...debt, balance }, now);
+  const to = balance <= ZERO ? 0 : balance;
+  // The change is written down for the debt's History list
+  const statements = Math.abs(to - debt.balance) > ZERO ? [...(debt.statements ?? []), { date: today, from: debt.balance, to }] : debt.statements;
+  return commit(db, data, {
+    debts: [{ ...debt, balance: to, startBalance: Math.max(debt.startBalance, to), status: statusFor(to, debt.status), ...(statements ? { statements } : {}), updatedAt: now }],
+  });
 }
 
 /** "Log a new charge or fee": the balance goes up and the plan updates. A paid debt becomes active again. */

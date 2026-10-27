@@ -102,8 +102,9 @@ test.describe('5 · small animations', () => {
 
   test('bars, tab fade and sheets: named, and never longer than 600 ms', async ({ page }) => {
     await quickSetup(page);
-    await goTab(page, 'Debts');
+    await goTab(page, 'Path');
     const bar = await anim(page, '.bar > div');
+    await goTab(page, 'Debts');
     expect(bar.name).toBe('stroke-in');
     expect(bar.ms).toBeLessThanOrEqual(600);
     const fade = await anim(page, 'main.screen');
@@ -151,8 +152,9 @@ test.describe('5 · small animations', () => {
   test('reduced motion turns all of it off', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await quickSetup(page);
-    await goTab(page, 'Debts');
+    await goTab(page, 'Path');
     for (const selector of ['.bar > div', 'main.screen']) expect((await anim(page, selector)).name).toBe('none');
+    await goTab(page, 'Debts');
     await page.getByRole('button', { name: 'Store card, options' }).click();
     expect((await anim(page, '.sheet')).name).toBe('none');
     await expectBrandRules(page);

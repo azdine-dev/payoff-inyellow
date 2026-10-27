@@ -86,3 +86,61 @@ test.describe('Part 3 · Path', () => {
     await expect(paid).toContainText('Paid'); // never color alone
   });
 });
+
+test.describe('Part 4 · Debts', () => {
+  test('each card has a progress ring and its gone-by date', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Debts');
+    for (const name of ['Store card', 'Visa']) {
+      const card = page.getByRole('region', { name });
+      await expect(card.getByRole('progressbar', { name: `${name} paid off` })).toBeVisible();
+      await expect(card).toContainText(/gone by /);
+    }
+    await expect(page.locator('.debt-card .bar')).toHaveCount(0); // the ring replaced the bar
+  });
+
+  test('a paid debt moves to the bottom, yellow, crossed out, with the PAID stamp', async ({ page }) => {
+    await quickSetup(page);
+    await page.getByRole('button', { name: '+ Extra payment' }).click();
+    await page.getByRole('textbox', { name: 'Extra payment' }).fill('640');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByRole('button', { name: /Next payday|Done/ }).click();
+    await goTab(page, 'Debts');
+    const paid = page.getByRole('region', { name: 'Store card' });
+    await expect(paid).toContainText('PAID');
+    await page.waitForTimeout(900); // the card turns yellow over half a second
+    expect((await paid.evaluate((el) => getComputedStyle(el).backgroundColor)).replace(/\s/g, '')).toBe('rgb(255,225,77)');
+    expect(await paid.locator('h2').evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('line-through');
+    await expect(paid.locator('.paid-stamp')).toBeVisible();
+    const tops = async (name: string) => (await page.getByRole('region', { name }).boundingBox())!.y;
+    expect(await tops('Store card')).toBeGreaterThan(await tops('Visa')); // paid debts sit below the ones still being paid
+  });
+
+  test('History lists payments, new charges and statement updates, newest first and read-only', async ({ page }) => {
+    await quickSetup(page);
+    await tapDidIt(page);
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+    await goTab(page, 'Debts');
+    await page.getByRole('button', { name: 'Store card, options' }).click();
+    await page.getByRole('button', { name: 'Add a new charge or fee' }).click();
+    await page.getByRole('textbox', { name: 'Charge amount' }).fill('20');
+    await page.getByRole('textbox', { name: 'Note (optional)' }).fill('late fee');
+    await page.getByRole('button', { name: 'Add to balance' }).click();
+    await page.getByRole('button', { name: 'Store card, options' }).click();
+    await page.getByRole('button', { name: 'Update from my statement' }).click();
+    await page.getByRole('textbox', { name: 'Balance on statement' }).fill('400');
+    await page.getByRole('button', { name: 'Update balance' }).click();
+
+    await page.getByRole('button', { name: 'Store card, options' }).click();
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    const sheet = page.getByRole('dialog', { name: 'Store card history' });
+    const list = sheet.getByTestId('debt-history');
+    await expect(list).toContainText('Bill paid');
+    await expect(list).toContainText('Extra paid');
+    await expect(list).toContainText('New charge or fee (Everyday), late fee');
+    await expect(list).toContainText('Updated from statement');
+    await expect(list).toContainText('+$20.00');
+    await expect(sheet.getByRole('textbox')).toHaveCount(0); // read-only
+    await expectBrandRules(page);
+  });
+});

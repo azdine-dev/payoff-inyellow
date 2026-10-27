@@ -94,6 +94,8 @@ export interface Debt extends Meta {
   status: DebtStatus;
   /** Order the debts were entered (ties in payoff order keep it) */
   position: number;
+  /** "Update from statement" entries, for the History list. Older debts have none. */
+  statements?: { date: string; from: number; to: number }[];
 }
 
 export type PaymentKind = 'minimum' | 'extra' | 'buffer' | 'fund';

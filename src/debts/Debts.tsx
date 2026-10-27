@@ -12,9 +12,10 @@ import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, u
 import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, freshPaidDebts, plan, today } from '../state/store';
 import { Count } from '../ui/useCountUp';
-import { Bar, CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
+import { CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
+import { Ring } from '../ui/Ring';
 
-type Mode = { kind: 'add' } | { kind: 'actions' | 'edit' | 'charge' | 'statement'; id: string } | null;
+type Mode = { kind: 'add' } | { kind: 'actions' | 'edit' | 'charge' | 'statement' | 'history'; id: string } | null;
 
 const TAGS: { value: ChargeTag; label: string }[] = [
   { value: 'everyday', label: 'Everyday' },
@@ -119,6 +120,22 @@ export function Debts() {
     return () => clearTimeout(t);
   }, [freshPaidDebts.value]);
 
+  // History of one debt, newest first: bills and extras paid, new charges, statement updates. Read-only.
+  const historyOf = (debt: Debt) => {
+    const rows: { key: string; date: string; label: string; detail: string }[] = [];
+    for (const p of d.payments) {
+      if (p.debtId !== debt.id || (p.kind !== 'minimum' && p.kind !== 'extra')) continue;
+      rows.push({ key: p.id, date: p.date, label: p.kind === 'minimum' ? 'Bill paid' : p.planned ? 'Extra paid' : 'Extra payment', detail: formatMoney(p.amount, cur) });
+    }
+    for (const c of d.charges) {
+      if (c.debtId !== debt.id) continue;
+      const tag = TAGS.find((t) => t.value === c.tag)?.label ?? '';
+      rows.push({ key: c.id, date: c.date, label: `New charge or fee${tag ? ` (${tag})` : ''}${c.note ? `, ${c.note}` : ''}`, detail: `+${formatMoney(c.amount, cur)}` });
+    }
+    (debt.statements ?? []).forEach((st, i) => rows.push({ key: `st${i}`, date: st.date, label: 'Updated from statement', detail: `${formatMoney(st.from, cur)} to ${formatMoney(st.to, cur)}` }));
+    return rows.sort((a, b) => b.date.localeCompare(a.date));
+  };
+
   const close = () => {
     setMode(null);
     setText('');
@@ -134,7 +151,7 @@ export function Debts() {
       const next = await act((db, x) => logCharge(db, x, current.id, amount, tag, note, today.value));
       showNotice('info', `That adds ${formatMoneyAuto(amount, cur)} to ${current.name}. ${dateMoveSentence(before, simulatePlan(toPlanInput(next)))}`);
     }
-    else await act((db, x) => updateBalance(db, x, current.id, amount));
+    else await act((db, x) => updateBalance(db, x, current.id, amount, Date.now(), today.value));
     close();
   };
 
@@ -177,13 +194,15 @@ export function Debts() {
                 <span class={`pos-tag${index === 0 ? ' now' : ''}`}>{tagFor(index)}</span>
                 <span class="muted small num">{goneBy ? `gone by ${goneText(goneBy)}` : 'not gone within 20 years'}</span>
               </div>
-              <div class="row">
-                <h2>{debt.name}</h2>
-                <span class="num debt-left">
-                  <Count value={debt.balance} id={`debt-${debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} />
-                </span>
+              <div class="row debt-main">
+                <div class="stack" style={{ gap: 2 }}>
+                  <h2>{debt.name}</h2>
+                  <span class="num debt-left">
+                    <Count value={debt.balance} id={`debt-${debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} />
+                  </span>
+                </div>
+                <Ring pct={pct} size={60} label={`${debt.name} paid off`} />
               </div>
-              <Bar pct={pct} label={`${debt.name} paid off`} />
               <p class="muted small num">
                 {Math.floor(pct)}% gone · {debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}%`}
                 {bill ? ` · ${bill} bill${debt.dueDay ? ` on the ${ordinal(debt.dueDay)}` : ''}` : ''}
@@ -258,6 +277,9 @@ export function Debts() {
                 </button>
               </>
             )}
+            <button type="button" class="btn ghost" onClick={() => setMode({ kind: 'history', id: current.id })}>
+              History
+            </button>
             <button type="button" class="btn ghost" onClick={() => setMode({ kind: 'edit', id: current.id })}>
               Edit
             </button>
@@ -265,6 +287,30 @@ export function Debts() {
               Archive
             </button>
             <button type="button" class="link" onClick={close}>
+              Close
+            </button>
+          </>
+        )}
+      </Sheet>
+      <Sheet open={mode?.kind === 'history'} onClose={close} title={`${current?.name ?? ''} history`}>
+        {current && (
+          <>
+            {historyOf(current).length === 0 ? (
+              <p class="muted">Nothing yet. Payments, new charges and statement updates show here.</p>
+            ) : (
+              <ul class="history-list" data-testid="debt-history">
+                {historyOf(current).map((h) => (
+                  <li key={h.key}>
+                    <span class="stack" style={{ gap: 0 }}>
+                      <b>{h.label}</b>
+                      <span class="muted small">{shortDate(h.date, today.value)}</span>
+                    </span>
+                    <span class="num">{h.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button type="button" class="btn" onClick={close}>
               Close
             </button>
           </>
