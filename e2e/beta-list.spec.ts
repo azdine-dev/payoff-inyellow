@@ -144,3 +144,37 @@ test.describe('Part 4 · Debts', () => {
     await expectBrandRules(page);
   });
 });
+
+test.describe('Part 5 · wide screens', () => {
+  test.describe('above 900px', () => {
+    test.use({ viewport: { width: 1280, height: 800 } });
+
+    test('a slim side menu replaces the tab bar, and Today sits next to Path', async ({ page }) => {
+      await quickSetup(page);
+      const nav = page.getByRole('navigation', { name: 'Main' });
+      const box = (await nav.boundingBox())!;
+      expect(box.x).toBeLessThan(10);
+      expect(box.width).toBeLessThan(140); // slim
+      expect(box.height).toBeGreaterThan(250); // a column down the side, not a bar along the bottom
+      await expect(nav.getByRole('button')).toHaveCount(4);
+      await expect(page.getByTestId('payday-total')).toBeVisible(); // Today
+      await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible(); // and Path, at the same time
+      const today = (await page.getByTestId('payday-total').boundingBox())!;
+      const path = (await page.getByRole('heading', { name: 'Your path' }).boundingBox())!;
+      expect(path.x).toBeGreaterThan(today.x + 200); // beside it, not under it
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      await nav.getByRole('button', { name: 'Debts', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Debts', exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Your path' })).toHaveCount(0); // the other tabs stay single
+      await expectBrandRules(page);
+    });
+  });
+
+  test('a phone keeps the bottom tab bar and one screen at a time', async ({ page }) => {
+    await quickSetup(page);
+    const box = (await page.getByRole('navigation', { name: 'Main' }).boundingBox())!;
+    expect(box.width).toBeGreaterThan(300); // a bar across the bottom
+    expect(box.y).toBeGreaterThan(500);
+    await expect(page.getByRole('heading', { name: 'Your path' })).toHaveCount(0);
+  });
+});

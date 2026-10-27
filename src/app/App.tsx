@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { Result } from '../setup/Result';
 import { Wizard } from '../setup/Wizard';
 import { boot, licenseState, tab, view, type Tab } from '../state/store';
@@ -91,7 +91,22 @@ export function App() {
   );
 }
 
+/** True on a laptop or an iPad held wide (above 900px). Phones never are. */
+function useWide(): boolean {
+  const query = '(min-width: 900px)';
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && Boolean(window.matchMedia?.(query).matches));
+  useEffect(() => {
+    const m = window.matchMedia?.(query);
+    if (!m) return;
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+}
+
 function Screens() {
+  const wide = useWide();
   useEffect(() => {
     void boot().then(handleLaunchFragment).then(startSync);
     // A link opened in the same window (a scanned code, a tap in the installed app) only changes the # part
@@ -125,8 +140,14 @@ function Screens() {
   if (licenseState.value === 'locked') return current === 'settings' ? <Settings /> : <Result />;
 
   return (
-    <>
-      {current === 'today' ? (
+    <div class="app-shell">
+      {wide && (current === 'today' || current === 'path') ? (
+        // On a wide screen Today and Path sit side by side
+        <div class="wide-pair">
+          <Today />
+          <Path />
+        </div>
+      ) : current === 'today' ? (
         <Today />
       ) : current === 'debts' ? (
         <Debts />
@@ -138,6 +159,6 @@ function Screens() {
         <Settings />
       )}
       <TabBar />
-    </>
+    </div>
   );
 }

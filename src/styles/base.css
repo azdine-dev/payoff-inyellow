@@ -1888,3 +1888,50 @@ a.btn {
   padding: 8px 0;
   border-top: 1px dashed var(--line);
 }
+
+/* ---------- Wide screens (laptop, iPad): a slim side menu, and Today next to Path. Phones are untouched. ---------- */
+
+@media (min-width: 900px) {
+  .app-shell {
+    padding-left: 104px;
+  }
+
+  .tabbar {
+    top: 0;
+    right: auto;
+    width: 104px;
+    border-top: none;
+    border-right: 1px solid var(--line);
+    padding-bottom: 0;
+  }
+
+  .tabbar nav {
+    max-width: none;
+    margin: 0;
+    padding-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tabbar button {
+    min-height: 76px;
+  }
+
+  .screen.with-tabs {
+    padding-bottom: 48px;
+  }
+
+  .wide-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 480px));
+    justify-content: center;
+    column-gap: 32px;
+    align-items: start;
+  }
+
+  .wide-pair .screen {
+    margin: 0;
+    min-height: 0;
+  }
+}
