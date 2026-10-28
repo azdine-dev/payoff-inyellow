@@ -7,7 +7,7 @@ import type { PayoffMethod } from '../engine';
 import { FREQUENCIES, otherPaydayFrom, twiceDays, twiceFromSchedule, twiceNotes, type TwicePair } from '../setup/draft';
 import { TwicePicker } from '../setup/TwicePicker';
 import { downloadText } from '../lib/csv';
-import { buildIcs } from '../lib/ics';
+import { buildIcs, googleCalendarUrl } from '../lib/ics';
 import { COPY } from '../lib/copy';
 import { HARDSHIP_SCRIPT_URL, SUPPORT_EMAIL, VIDEO_URL } from '../lib/config';
 import { cleanCode, verifyCode } from '../lib/license';
@@ -204,6 +204,14 @@ export function Settings() {
             <button type="button" class="link small" onClick={exportCalendar}>
               Add to my calendar
             </button>
+          </div>
+        )}
+        {licenseState.value === 'unlocked' && googleCalendarUrl(d, today.value) && (
+          <div class="row" style={{ minHeight: 44 }}>
+            <span class="muted small">Only the payday check, no amounts</span>
+            <a class="link small" data-testid="google-cal" href={googleCalendarUrl(d, today.value)!} target="_blank" rel="noopener noreferrer">
+              Add to Google Calendar
+            </a>
           </div>
         )}
       </section>

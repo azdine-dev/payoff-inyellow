@@ -47,6 +47,8 @@ interface EventInit {
   /** "HH:MM" local time. Without it the event is all-day. */
   time?: string;
   alarmBeforeDays?: number;
+  /** a repeat rule, like FREQ=MONTHLY;BYMONTHDAY=12 */
+  rrule?: string;
 }
 
 function vevent(e: EventInit, now: Date): string[] {
@@ -57,6 +59,7 @@ function vevent(e: EventInit, now: Date): string[] {
   } else {
     lines.push(`DTSTART;VALUE=DATE:${compact(e.date)}`, `DTEND;VALUE=DATE:${compact(addDaysISO(e.date, 1))}`);
   }
+  if (e.rrule) lines.push(`RRULE:${e.rrule}`);
   lines.push(`SUMMARY:${escapeText(e.summary)}`);
   if (e.description) lines.push(`DESCRIPTION:${escapeText(e.description)}`);
   lines.push('TRANSP:TRANSPARENT');
@@ -71,6 +74,49 @@ function vevent(e: EventInit, now: Date): string[] {
   }
   lines.push('END:VEVENT');
   return lines;
+}
+
+/**
+ * BYMONTHDAY for a due day. Days 29 to 31 also allow the last day of the month and keep the first match,
+ * so a bill due on the 31st falls on the 30th, 28th or 29th in shorter months.
+ */
+export function monthlyDay(day: number): string {
+  if (day <= 28) return `BYMONTHDAY=${day}`;
+  const days = [];
+  for (let d = day; d <= 31; d++) days.push(d);
+  return `BYMONTHDAY=${days.join(',')},-1;BYSETPOS=1`;
+}
+
+/**
+ * A link that opens Google Calendar with the payday check filled in. Title and time only:
+ * no amounts and no debt names go into the link.
+ */
+export function googleCalendarUrl(data: AppData, today: string): string | null {
+  const s = data.settings;
+  let date = '';
+  let second = '';
+  for (let i = 1; i <= 3 && !date; i++) {
+    const c = paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + i, s.otherPayday);
+    if (c >= today) {
+      date = c;
+      second = paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + i + 1, s.otherPayday);
+    }
+  }
+  if (!date) return null;
+  const hhmm = (s.ifThen.time || '20:00').replace(':', '').padEnd(4, '0').slice(0, 4);
+  const start = `${compact(date)}T${hhmm}00`;
+  const end = `${compact(date)}T${String(Math.min(23, Number(hhmm.slice(0, 2)))).padStart(2, '0')}${String(Math.min(59, Number(hhmm.slice(2)) + 15)).padStart(2, '0')}00`;
+  const dayOf = (iso: string) => parseISO(iso).d;
+  const recur: Record<string, string | null> = {
+    weekly: 'FREQ=WEEKLY',
+    biweekly: 'FREQ=WEEKLY;INTERVAL=2',
+    monthly: dayOf(date) <= 28 ? 'FREQ=MONTHLY' : null,
+    'twice-monthly': dayOf(date) <= 28 && dayOf(second) <= 28 ? `FREQ=MONTHLY;BYMONTHDAY=${[dayOf(date), dayOf(second)].sort((a, b) => a - b).join(',')}` : null,
+  };
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: 'Open PaidInYellow: payday check', dates: `${start}/${end}` });
+  const rule = recur[s.frequency];
+  if (rule) q.set('recur', `RRULE:${rule}`);
+  return `https://calendar.google.com/calendar/render?${q.toString()}`;
 }
 
 export interface IcsOptions {
@@ -106,29 +152,30 @@ export function buildIcs(data: AppData, today: string, opts: IcsOptions = {}): s
     );
   }
 
-  // Due dates, with a reminder 3 days before
+  // One reminder per debt that repeats every month, with an alert 3 days before
   const from = parseISO(today);
-  const to = parseISO(end);
-  const monthsSpan = (to.y - from.y) * 12 + (to.m - from.m);
   for (const debt of data.debts) {
     if (debt.status !== 'active' || !debt.dueDay) continue;
-    for (let m = 0; m <= monthsSpan + 1; m++) {
+    // The first due date on or after today (short months use their last day)
+    let date = '';
+    for (let m = 0; m <= 1 && !date; m++) {
       const month = addMonths({ y: from.y, m: from.m, d: 1 }, m);
-      const date = toISO({ ...month, d: Math.min(debt.dueDay, daysInMonth(month.y, month.m)) });
-      if (date < today || date > end) continue;
-      const amount = debt.minMonthly > 0 ? ` (minimum ${formatMoneyAuto(debt.minMonthly, cur)})` : '';
-      events.push(
-        ...vevent(
-          {
-            uid: `due-${debt.id}-${date}`,
-            summary: `${debt.name} due${amount}${debt.autopay ? ', autopay' : ''}`,
-            date,
-            alarmBeforeDays: 3,
-          },
-          now,
-        ),
-      );
+      const c = toISO({ ...month, d: Math.min(debt.dueDay, daysInMonth(month.y, month.m)) });
+      if (c >= today) date = c;
     }
+    const amount = debt.minMonthly > 0 ? ` (minimum ${formatMoneyAuto(debt.minMonthly, cur)})` : '';
+    events.push(
+      ...vevent(
+        {
+          uid: `due-${debt.id}`,
+          summary: `${debt.name} due${amount}${debt.autopay ? ', autopay' : ''}`,
+          date,
+          alarmBeforeDays: 3,
+          rrule: `FREQ=MONTHLY;${monthlyDay(debt.dueDay)};UNTIL=${compact(end)}`,
+        },
+        now,
+      ),
+    );
   }
 
   const lines = [

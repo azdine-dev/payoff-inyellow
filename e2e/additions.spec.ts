@@ -229,3 +229,21 @@ test.describe('6 · print and CSV', () => {
     expect(text).toContain('Store card,Extra,150.00');
   });
 });
+
+test.describe('7 · calendar', () => {
+  test('the calendar file has one monthly reminder per debt and Settings links the payday check to Google Calendar', async ({ page }) => {
+    await quickSetup(page);
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const link = page.getByTestId('google-cal');
+    await expect(link).toHaveText('Add to Google Calendar');
+    const href = (await link.getAttribute('href'))!;
+    const q = new URL(href).searchParams;
+    expect(q.get('text')).toBe('Open PaidInYellow: payday check');
+    expect(href).not.toMatch(/Visa|Store|\$/);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Add to my calendar' }).click()]);
+    const ics = (await import('node:fs')).readFileSync((await download.path())!, 'utf8');
+    expect(ics.match(/RRULE:FREQ=MONTHLY;BYMONTHDAY=12/g)).toHaveLength(1);
+    expect(ics.match(/RRULE:FREQ=MONTHLY;BYMONTHDAY=5/g)).toHaveLength(1);
+    expect(ics.match(/SUMMARY:Visa due/g)).toHaveLength(1);
+  });
+});

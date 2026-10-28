@@ -6,7 +6,7 @@ import { loadAll, openAppDB, type PiyDB } from '../data/db';
 import { BackupError, backupDue, buildBackup, parseBackup, restoreBackup, summarizeBackup } from '../data/backup';
 import type { AppData } from '../data/types';
 import { applyAppearance, TEXT_SCALES } from '../lib/appearance';
-import { buildIcs, foldLine } from '../lib/ics';
+import { buildIcs, foldLine, googleCalendarUrl, monthlyDay } from '../lib/ics';
 import { b64urlDecode, b64urlEncode, cleanCode, publicKeyOf, verifyToken } from '../lib/licenseCore';
 import { makeCode } from '../lib/license';
 import { completeSetup, didPayday, skipPaydays, type SetupValues } from './actions';
@@ -133,8 +133,27 @@ describe('calendar file', () => {
     expect(visa[0]).toContain('TRIGGER:-P3D');
     expect(visa[0]).toContain('autopay');
     const store = events.filter((e) => e.includes('SUMMARY:Store card due'));
-    const starts = store.map((e) => /DTSTART;VALUE=DATE:(\d+)/.exec(e)![1]);
-    expect(starts.slice(0, 5)).toEqual(['20261031', '20261130', '20261231', '20270131', '20270228']);
+    expect(store).toHaveLength(1);
+    expect(/DTSTART;VALUE=DATE:(\d+)/.exec(store[0]!)![1]).toBe('20261031');
+  });
+
+  it('writes one monthly repeating reminder per debt, ending after a year', () => {
+    const due = events.filter((e) => /SUMMARY:.* due/.test(e));
+    expect(due).toHaveLength(data.debts.filter((x) => x.status === 'active' && x.dueDay).length);
+    for (const e of due) expect(e).toMatch(/RRULE:FREQ=MONTHLY;BYMONTHDAY=[^\r]*UNTIL=20271015/);
+    expect(monthlyDay(12)).toBe('BYMONTHDAY=12');
+    expect(monthlyDay(31)).toBe('BYMONTHDAY=31,-1;BYSETPOS=1');
+    expect(monthlyDay(29)).toBe('BYMONTHDAY=29,30,31,-1;BYSETPOS=1');
+  });
+
+  it('makes a Google Calendar link for the payday check with a title and time only', () => {
+    const url = googleCalendarUrl(data, '2026-10-15')!;
+    expect(url.startsWith('https://calendar.google.com/calendar/render?action=TEMPLATE')).toBe(true);
+    const q = new URL(url).searchParams;
+    expect(q.get('text')).toBe('Open PaidInYellow: payday check');
+    expect(q.get('dates')).toMatch(/^20261023T\d{6}\/20261023T\d{6}$/);
+    expect(q.get('recur')).toBe('RRULE:FREQ=WEEKLY;INTERVAL=2');
+    expect(url).not.toMatch(/Visa|Store|\$/);
   });
 
   it('uses stable ids, so importing again does not duplicate', () => {
