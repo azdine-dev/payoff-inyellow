@@ -48,3 +48,46 @@ test.describe('1 · promo rate per debt', () => {
     await expect(page.getByRole('region', { name: 'Visa' }).getByTestId('promo-line')).toContainText('Promo rate 0% until');
   });
 });
+
+test.describe('2 · "Help me work it out" on the money step', () => {
+  async function toMoneyStep(page: import('@playwright/test').Page) {
+    await page.goto('/');
+    await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
+    await page.getByLabel('Your next payday').fill('2026-10-23');
+    await page.getByRole('button', { name: /^Continue$/ }).click();
+    const card = page.locator('fieldset');
+    await card.getByLabel('Name').fill('Visa');
+    await card.getByLabel('Balance').fill('3200');
+    await card.getByLabel('Monthly minimum').fill('96');
+    await card.getByLabel('Due day').fill('12');
+    await page.getByRole('button', { name: /^(Continue|That’s all of them)$/ }).click();
+    await expect(page.getByRole('heading', { name: 'Money for the plan' })).toBeVisible();
+  }
+
+  test('take-home and essentials give what is left, and "Use all of it" fills the amount', async ({ page }) => {
+    await toMoneyStep(page);
+    await page.getByTestId('help-work-out').click();
+    const sheet = page.getByRole('dialog', { name: 'Help me work it out' });
+    await sheet.getByLabel('Take-home per paycheck').fill('900');
+    await sheet.getByLabel('Essentials per paycheck').fill('400');
+    // 96 a month of minimums, every 2 weeks: about 44 per paycheck, so 900 - 400 - 44 = 456
+    await expect(sheet.getByTestId('help-minimums')).toContainText('about $44 per paycheck');
+    await expect(sheet.getByTestId('help-result')).toContainText('About $455 is left. Put some or all of it toward the plan.');
+    await sheet.getByRole('button', { name: 'Use half' }).click();
+    await expect(page.getByLabel('Money for the plan each payday')).toHaveValue('227');
+    await page.getByTestId('help-work-out').click();
+    await page.getByRole('dialog', { name: 'Help me work it out' }).getByRole('button', { name: 'Use all of it' }).click();
+    await expect(page.getByLabel('Money for the plan each payday')).toHaveValue('455');
+  });
+
+  test('when nothing is left it says so calmly and offers no button', async ({ page }) => {
+    await toMoneyStep(page);
+    await page.getByTestId('help-work-out').click();
+    const sheet = page.getByRole('dialog', { name: 'Help me work it out' });
+    await sheet.getByLabel('Take-home per paycheck').fill('500');
+    await sheet.getByLabel('Essentials per paycheck').fill('480');
+    await expect(sheet.getByTestId('help-result')).toContainText('Nothing is left after your essentials and minimums right now. That happens.');
+    await expect(sheet.getByRole('button', { name: 'Use all of it' })).toHaveCount(0);
+    await expectBrandRules(page);
+  });
+});
