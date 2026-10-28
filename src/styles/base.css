@@ -1405,6 +1405,20 @@ input[type='range'] {
     text-align: left;
     font-size: 0.85rem;
   }
+  .print-only tr {
+    break-inside: avoid;
+  }
+  .print-only .tick {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #1f2a44;
+    border-radius: 3px;
+  }
+  .print-only .print-sub {
+    color: #5c5a55;
+    font-size: 0.8rem;
+  }
 }
 
 /* ---------- wordmark: dark version on dark backgrounds ---------- */

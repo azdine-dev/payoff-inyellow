@@ -171,3 +171,61 @@ test.describe('5 · lender, notes and type "Family or friend"', () => {
     await expectBrandRules(page);
   });
 });
+
+test.describe('6 · print and CSV', () => {
+  test.beforeEach(async ({ page }) => {
+    // The print dialog is not part of the test: count the call, and look at what would be on the paper
+    await page.addInitScript(() => {
+      (window as unknown as { __printed: number }).__printed = 0;
+      window.print = () => {
+        (window as unknown as { __printed: number }).__printed += 1;
+      };
+    });
+  });
+
+  test('"Print this payday" is a sheet of lines with due dates and tick boxes', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Print or export' }).click();
+    await page.getByRole('button', { name: 'Print this payday' }).click();
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __printed: number }).__printed)).toBe(1);
+    await page.emulateMedia({ media: 'print' });
+    const sheet = page.getByTestId('print-payday');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('This payday · Fri 23 Oct');
+    await expect(sheet).toContainText('Store card');
+    await expect(sheet).toContainText('Thu 5 Nov'); // its due date
+    await expect(sheet).toContainText('$185.00');
+    await expect(sheet.locator('.tick')).toHaveCount(1); // one line to tick (the bill and the extra are one line)
+    await expect(sheet).toContainText('A planning tool, not financial advice.');
+  });
+
+  test('"Print my debts" lists each debt in order with balance, rate, minimum and due day', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Print or export' }).click();
+    await page.getByRole('button', { name: 'Print my debts' }).click();
+    await page.emulateMedia({ media: 'print' });
+    const sheet = page.getByTestId('print-debts');
+    await expect(sheet).toBeVisible();
+    await expect(sheet.locator('tbody tr')).toHaveCount(2);
+    await expect(sheet.locator('tbody tr').first()).toContainText('Store card');
+    await expect(sheet.locator('tbody tr').first()).toContainText('$640.00');
+    await expect(sheet.locator('tbody tr').first()).toContainText('26.99%');
+    await expect(sheet.locator('tbody tr').nth(1)).toContainText('Visa');
+  });
+
+  test('"Export my payments (CSV)" has one line per payment', async ({ page }) => {
+    await quickSetup(page);
+    await tapDidIt(page);
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Print or export' }).click();
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export my payments (CSV)' }).click()]);
+    expect(download.suggestedFilename()).toBe('paidinyellow-payments.csv');
+    const text = (await import('node:fs')).readFileSync((await download.path())!, 'utf8');
+    expect(text.split('\r\n')[0]).toBe('Date,Paid to,What,Amount,Payday number,From the plan');
+    expect(text).toContain('Store card,Bill,35.00');
+    expect(text).toContain('Store card,Extra,150.00');
+  });
+});

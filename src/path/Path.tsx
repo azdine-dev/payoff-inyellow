@@ -23,6 +23,8 @@ import { Count, useCountUp } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
 import { PaydayListSheet } from './PaydayListSheet';
 import { WhatIfSheet } from './WhatIfSheet';
+import { PrintDebts, PrintPayday } from './PrintSheets';
+import { paymentsToCsv } from '../state/paymentsCsv';
 import { countdownText, readCountdownMode, saveCountdownMode, type CountdownMode } from './countdown';
 import { COPY } from '../lib/copy';
 
@@ -60,6 +62,13 @@ export function Path() {
 
   const [sheet, setSheet] = useState<'whatif' | 'list' | 'order' | 'export' | 'paid' | 'interest' | null>(null);
   const [cmode, setCmode] = useState<CountdownMode>(readCountdownMode);
+  // What "Print" prints: the plan (one page), this payday, or my debts
+  const [printKind, setPrintKind] = useState<'plan' | 'payday' | 'debts'>('plan');
+  const printNow = (kind: 'plan' | 'payday' | 'debts') => {
+    setPrintKind(kind);
+    setSheet(null);
+    setTimeout(() => window.print(), 60);
+  };
   const toggleCountdown = () => {
     const next: CountdownMode = cmode === 'months' ? 'years' : 'months';
     setCmode(next);
@@ -121,6 +130,7 @@ export function Path() {
 
   const rowBills = useMemo(() => r.rows.map((_, i) => billsForPlanRow(d, r, i)), [d, r]);
   const rowTotals = useMemo(() => r.rows.map((row, i) => totalOf(rowBills[i]!, row)), [r, rowBills]);
+  const paymentsCsv = () => downloadText('paidinyellow-payments.csv', paymentsToCsv(d));
   const csv = () => downloadText('paidinyellow-plan.csv', planToCsv(r.rows.map((row, i) => ({ row, billsDue: rowBills[i]!.total, total: rowTotals[i]! })), nameOf));
 
   const chart = chartData(today.value, active, r, stats.owed);
@@ -434,19 +444,34 @@ export function Path() {
       </Sheet>
 
       <Sheet open={sheet === 'export'} onClose={close} title="Print or export">
-        <button type="button" class="btn ghost" onClick={csv}>
-          Export CSV
+        <p class="label">Print</p>
+        {!debtFree && (
+          <button type="button" class="btn ghost" onClick={() => printNow('payday')}>
+            Print this payday
+          </button>
+        )}
+        <button type="button" class="btn ghost" onClick={() => printNow('debts')}>
+          Print my debts
         </button>
-        <button type="button" class="btn ghost" onClick={() => window.print()}>
-          Print one page
+        <button type="button" class="btn ghost" onClick={() => printNow('plan')}>
+          Print the plan (one page)
+        </button>
+        <p class="label">Export</p>
+        <button type="button" class="btn ghost" onClick={csv}>
+          Export the plan (CSV)
+        </button>
+        <button type="button" class="btn ghost" onClick={paymentsCsv}>
+          Export my payments (CSV)
         </button>
         <button type="button" class="link" onClick={close}>
           Close
         </button>
       </Sheet>
 
-      {/* Printed by "Print one page": everything else is hidden in print */}
-      <section class="print-only" aria-hidden="true">
+      {/* Printed by "Print": everything else is hidden in print */}
+      {printKind === 'payday' && <PrintPayday d={d} r={r} bills={rowBills[0] ?? { due: [], noDueDay: [], total: 0 }} today={today.value} />}
+      {printKind === 'debts' && <PrintDebts d={d} r={r} today={today.value} />}
+      {printKind === 'plan' && <section class="print-only" aria-hidden="true">
         <h1>My payoff plan · PaidInYellow</h1>
         <p>{debtFree ? 'Debt-free' : r.debtFreeDate ? `Debt-free by ${monthYear(r.debtFreeDate)}` : 'More than 20 years at this pace'}</p>
         <p>Order: {r.order.map(nameOf).join(', ')}</p>
@@ -473,7 +498,7 @@ export function Path() {
           </tbody>
         </table>
         <p>{COPY.disclaimer}</p>
-      </section>
+      </section>}
     </main>
   );
 }

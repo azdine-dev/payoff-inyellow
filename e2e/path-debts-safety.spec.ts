@@ -62,7 +62,7 @@ test('Path: the order opens from "change", and print or export is one sheet', as
   await expect(page.getByText('Order: biggest interest first')).toBeVisible();
 
   await page.getByRole('button', { name: 'Print or export' }).click();
-  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export CSV' }).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export the plan (CSV)' }).click()]);
   expect(download.suggestedFilename()).toBe('paidinyellow-plan.csv');
 });
 

@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openAppDB, loadAll, type PiyDB } from '../data/db';
 import { completeSetup, didPayday, splitExtra, type SetupValues } from './actions';
+import { paymentsToCsv } from './paymentsCsv';
 import { addDebt, editDebt, logCharge, updateBalance } from './debtActions';
 
 const values: SetupValues = {
@@ -87,5 +88,25 @@ describe('lender, notes and type', () => {
     const cleared = await editDebt(db, set, visa.id, { ...fields, type: '', lender: undefined, notes: undefined }, 3000);
     expect(cleared.debts[0]!.lender).toBeUndefined();
     expect(cleared.debts[0]!.notes).toBeUndefined();
+  });
+});
+
+describe('the CSV of payments', () => {
+  it('lists each payment with who it went to, what it was and the amount', async () => {
+    const start = await completeSetup(db, { ...values, funds: [{ name: 'Car repairs', perYear: 520, month: 'Any time' }] }, '2026-10-15', 1000);
+    const paid = await didPayday(db, start, { now: 2000 });
+    const csv = paymentsToCsv(paid.data);
+    const lines = csv.trim().split('\r\n');
+    expect(lines[0]).toBe('Date,Paid to,What,Amount,Payday number,From the plan');
+    expect(lines.some((l) => l.includes(',Visa,Extra,'))).toBe(true);
+    expect(lines.some((l) => l.includes(',Car repairs,Yearly bill,20.00,1,yes'))).toBe(true);
+    expect(csv.endsWith('\r\n')).toBe(true);
+  });
+
+  it('is only the header when nothing was paid, and quotes names with commas', async () => {
+    const start = await completeSetup(db, { ...values, debts: [{ ...values.debts[0]!, name: 'Visa, main' }] }, '2026-10-15', 1000);
+    expect(paymentsToCsv(start)).toBe('Date,Paid to,What,Amount,Payday number,From the plan\r\n');
+    const paid = await didPayday(db, start, { now: 2000 });
+    expect(paymentsToCsv(paid.data)).toContain('"Visa, main"');
   });
 });
