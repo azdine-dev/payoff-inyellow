@@ -3,6 +3,7 @@ import { simulatePlan, type MethodComparison, type PlanResult } from '../engine'
 import type { AppData } from '../data/types';
 import { formatMoney, type Currency } from '../lib/money';
 import { monthsBetween } from '../lib/today';
+import { splitExtra } from './actions';
 import { oneOffPayday, toPlanInput } from './planInput';
 
 export function whatIfPlan(data: AppData, addPerPayday: number, oneOff: { amount: number; date: string } | null): PlanResult {
@@ -13,6 +14,13 @@ export function whatIfPlan(data: AppData, addPerPayday: number, oneOff: { amount
     input.adjustments = { ...input.adjustments, [n]: (input.adjustments?.[n] ?? 0) + oneOff.amount };
   }
   return simulatePlan(input);
+}
+
+/** The plan if this extra money went to the focus debt today (nothing is saved). */
+export function extraMoneyPlan(data: AppData, amount: number, today: string): PlanResult {
+  const { changed } = splitExtra(data, amount, today);
+  const byId = new Map(changed.map((d) => [d.id, d]));
+  return simulatePlan(toPlanInput({ ...data, debts: data.debts.map((d) => byId.get(d.id) ?? d) }));
 }
 
 export interface WhatIfSummary {

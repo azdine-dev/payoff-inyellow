@@ -121,3 +121,25 @@ test.describe('3 · Worth knowing on Path', () => {
     await expectBrandRules(page);
   });
 });
+
+test.describe('4 · "I got extra money" on Today', () => {
+  test('shows the new date and the interest saved first, and "Use it" puts it on the focus debt', async ({ page }) => {
+    await quickSetup(page);
+    const focus = page.getByRole('region', { name: 'Focus debt' });
+    await expect(focus).toContainText('$640 left');
+    await page.getByTestId('got-extra').click();
+    const sheet = page.getByRole('dialog', { name: 'I got extra money' });
+    await expect(sheet.getByTestId('windfall-preview')).toHaveCount(0); // nothing until an amount is typed
+    await sheet.getByLabel('Extra money').fill('300');
+    const preview = sheet.getByTestId('windfall-preview');
+    await expect(preview).toContainText('Debt-free');
+    await expect(preview).toContainText(/less interest|sooner|same date/);
+    await expect(focus).toContainText('$640 left'); // not applied yet
+    await sheet.getByRole('button', { name: 'Use it' }).click();
+    await expect(focus).toContainText('$340 left');
+    await goTab(page, 'Debts');
+    await page.getByRole('button', { name: 'Store card, options' }).click();
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    await expect(page.getByTestId('debt-history')).toContainText('Extra payment'); // it is in the History list
+  });
+});

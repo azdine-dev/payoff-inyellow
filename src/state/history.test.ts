@@ -2,8 +2,8 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openAppDB, loadAll, type PiyDB } from '../data/db';
-import { completeSetup, didPayday, type SetupValues } from './actions';
-import { logCharge, updateBalance } from './debtActions';
+import { completeSetup, didPayday, splitExtra, type SetupValues } from './actions';
+import { addDebt, logCharge, updateBalance } from './debtActions';
 
 const values: SetupValues = {
   currency: { code: 'USD', symbol: '$' },
@@ -55,5 +55,23 @@ describe('the other History rows are there to list', () => {
     expect(kinds).toContain('extra');
     const charged = await logCharge(db, paid.data, visa.id, 45, 'emergency', 'car part', '2026-10-24', 3000);
     expect(charged.charges.at(-1)).toMatchObject({ debtId: visa.id, amount: 45, tag: 'emergency', note: 'car part' });
+  });
+});
+
+describe('extra money', () => {
+  it('splitExtra: the focus debt first, the overflow to the next, nothing saved', async () => {
+    const two: SetupValues = { ...values, debts: [...values.debts, { name: 'Store', type: '', balance: 100, apr: 20, minMonthly: 25, dueDay: 5, autopay: false, myOrder: null }] };
+    const start = await completeSetup(db, two, '2026-10-15', 1000);
+    const { changed, newlyPaid } = splitExtra(start, 150, '2026-10-16');
+    expect(changed.map((d) => [d.name, Math.round(d.balance)])).toEqual([['Store', 0], ['Visa', 3150]]); // Store is smallest, so first; 50 overflow to Visa
+    expect(newlyPaid).toHaveLength(1);
+    expect(start.debts.find((d) => d.name === 'Store')!.balance).toBe(100); // untouched
+  });
+
+  it('a deferred promo that is still running takes the extra first', async () => {
+    let d = await completeSetup(db, values, '2026-10-15', 1000);
+    d = await addDebt(db, d, { name: 'Sofa card', type: '', balance: 5000, apr: 12, minMonthly: 200, dueDay: 9, autopay: false, promoApr: 0, promoEnds: '2027-03-01', deferredInterest: true }, 2000);
+    expect(splitExtra(d, 100, '2026-10-16').changed.map((x) => x.name)).toEqual(['Sofa card']);
+    expect(splitExtra(d, 100, '2027-04-01').changed.map((x) => x.name)).not.toContain('Sofa card'); // after the promo, back to the usual order
   });
 });

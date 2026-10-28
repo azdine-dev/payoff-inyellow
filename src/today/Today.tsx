@@ -11,10 +11,11 @@ import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount, toCents } from '../lib/money';
-import { dayMonth, diffDays, relativeDay, shortDate, shortMonthYear, weekdayName } from '../lib/today';
+import { dayMonth, diffDays, monthYear, relativeDay, shortDate, shortMonthYear, weekdayName } from '../lib/today';
 import { pathView } from '../path/Path';
 import { changeablePayday, changePaid, didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { billsForNextPayday } from '../state/billsDue';
+import { deltaPhrase, extraMoneyPlan, whatIfSummary } from '../state/whatIf';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
@@ -93,7 +94,7 @@ export function Today() {
   // Undo lasts 10 seconds.
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [backedUp, setBackedUp] = useState(false);
-  const [sheet, setSheet] = useState<'amount' | 'extra' | 'redo' | null>(null);
+  const [sheet, setSheet] = useState<'amount' | 'extra' | 'redo' | 'windfall' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
   // "add a due day" for a debt that has none
@@ -206,7 +207,7 @@ export function Today() {
     setDueDebtId(null);
   };
 
-  const openSheet = (which: 'amount' | 'extra') => {
+  const openSheet = (which: 'amount' | 'extra' | 'windfall') => {
     setInput(which === 'amount' ? String(override ?? s.extraPerPayday) : '');
     setInputNote('');
     setSheet(which);
@@ -219,6 +220,14 @@ export function Today() {
     setInputNote('');
     setSheet('redo');
   };
+
+  // "I got extra money": what it would change, before anything is saved
+  const windfall = useMemo(() => {
+    const amount = sheet === 'windfall' ? parseAmount(input) : null;
+    if (!amount || amount <= 0) return null;
+    const owed = active.reduce((sum, x) => sum + x.balance, 0);
+    return whatIfSummary(plan.value!, extraMoneyPlan(d, Math.min(amount, owed), today.value));
+  }, [sheet, input, d]);
 
   const saveSheet = async () => {
     const amount = parseAmount(input);
@@ -233,7 +242,7 @@ export function Today() {
       setSheet(null);
       return;
     }
-    if (amount === null || amount < 0 || (sheet === 'extra' && amount === 0)) {
+    if (amount === null || amount < 0 || ((sheet === 'extra' || sheet === 'windfall') && amount === 0)) {
       setInputNote('Type an amount, like 50.');
       return;
     }
@@ -610,9 +619,14 @@ export function Today() {
               <p class="muted small" data-testid="focus-why">
                 {whyFirst(s.method, growingNow.has(focus.debt.id))}
               </p>
-              <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => openSheet('extra')}>
-                {COPY.extraPayment}
-              </button>
+              <span class="row" style={{ justifyContent: 'flex-start', gap: 18 }}>
+                <button type="button" class="link small" onClick={() => openSheet('extra')}>
+                  {COPY.extraPayment}
+                </button>
+                <button type="button" class="link small" data-testid="got-extra" onClick={() => openSheet('windfall')}>
+                  I got extra money
+                </button>
+              </span>
             </section>
           )}
 
@@ -667,11 +681,30 @@ export function Today() {
         </button>
       </Sheet>
 
-      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : 'Extra payment'}>
+      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : sheet === 'windfall' ? 'I got extra money' : 'Extra payment'}>
         {sheet === 'amount' || sheet === 'redo' ? (
           <Field label="How much can go to the plan this payday?" hint={`Usually ${money(s.extraPerPayday)}. Your minimums stay the same, and the rest follows the same order.`}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Money for the plan this payday" />
           </Field>
+        ) : sheet === 'windfall' ? (
+          <>
+            <Field label="How much did you get?" hint={focus ? `See what it would do first. If you use it, it goes to ${focus.debt.name}.` : undefined}>
+              <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Extra money" />
+            </Field>
+            {windfall && (
+              <section class="card stack" style={{ gap: 4 }} data-testid="windfall-preview">
+                {windfall.newDate ? (
+                  <p>
+                    Debt-free <b>{monthYear(windfall.newDate)}</b>
+                    {r.debtFreeDate && windfall.newDate !== r.debtFreeDate ? ` instead of ${monthYear(r.debtFreeDate)}` : ''}
+                  </p>
+                ) : (
+                  <p>Still more than 20 years. A bigger amount might get there.</p>
+                )}
+                {deltaPhrase(windfall, (n) => formatMoney(n, cur, { whole: true })) && <p class="muted">{deltaPhrase(windfall, (n) => formatMoney(n, cur, { whole: true }))}</p>}
+              </section>
+            )}
+          </>
         ) : (
           <Field label="How much extra did you pay?" hint={focus ? `It goes to ${focus.debt.name}. Anything over its balance goes to the next debt.` : undefined}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Extra payment" />
@@ -679,7 +712,7 @@ export function Today() {
         )}
         {inputNote && <Note>{inputNote}</Note>}
         <button type="button" class="btn" onClick={saveSheet}>
-          {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : 'Save'}
+          {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : sheet === 'windfall' ? 'Use it' : 'Save'}
         </button>
         <button type="button" class="link" onClick={() => setSheet(null)}>
           Cancel
