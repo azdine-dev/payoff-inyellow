@@ -16,6 +16,9 @@ export interface RefDebt {
   min: number;
   due?: number | null;
   my_order?: number | null;
+  promo_apr?: number | null;
+  promo_ends?: string | null;
+  deferred?: boolean;
 }
 
 export interface RefInput {
@@ -50,6 +53,8 @@ export interface RefExpect {
   first_paydays: RefRow[];
   /** Debt left after each of the first 60 paydays (the generated fixtures only) */
   owed_60?: number[];
+  /** Deferred promos that are not cleared by their end date */
+  promo?: { name: string; ends: string; owing: number; back_interest: number }[];
 }
 
 export interface RefFixture {
@@ -90,6 +95,9 @@ export function fromReferenceInput(ref: RefInput): PlanInput {
       apr: debt.apr,
       minMonthly: debt.min,
       dueDay: debt.due ?? null,
+      promoApr: debt.promo_apr ?? null,
+      promoEnds: debt.promo_ends ?? null,
+      deferred: debt.deferred ?? false,
       myOrder: debt.my_order ?? null,
     })),
     yearlyBills: (ref.yearly ?? []).map((perYear) => ({ perYear })),
@@ -118,5 +126,6 @@ export function runAsReference(ref: RefInput): Required<RefExpect> {
       owed: pyRound(row.debtLeft, 2),
     })),
     owed_60: r.rows.slice(0, 60).map((row) => pyRound(row.debtLeft, 2)),
+    promo: r.promo.map((p) => ({ name: name[p.debtId]!, ends: p.ends, owing: pyRound(p.owing, 2), back_interest: pyRound(p.backInterest, 2) })),
   };
 }

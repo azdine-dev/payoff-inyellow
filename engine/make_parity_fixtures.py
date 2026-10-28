@@ -48,6 +48,8 @@ def to_v2(s):
     out['debts'] = []
     for x in s['debts']:
         item = dict(name=x['name'], balance=x['balance'], apr=x['apr'], min=x['min'], due=x.get('due_day'))
+        for key in ('promo_apr', 'promo_ends', 'deferred'):
+            if x.get(key) is not None: item[key] = x[key]
         if x.get('my_order') is not None: item['my_order'] = x['my_order']
         out['debts'].append(item)
     for old, new in (('adj', 'adjust'), ('charges', 'charges')):
@@ -65,11 +67,12 @@ def run(inp):
 
 
 def expect_of(r):
+    promo = [dict(name=p['name'], ends=p['ends'], owing=p['owing'], back_interest=p['back_interest']) for p in r['promo']]
     return dict(order=r['order'], debt_free=r['debt_free'].isoformat() if r['debt_free'] else None, paydays=r['paydays'],
                 interest=r['interest'],
                 first_paydays=[dict(date=x['date'].isoformat(), bills=round(x['bills'], 2), extra=round(x['extra'], 2),
                                     total_move=round(x['total_move'], 2), owed=round(x['owed'], 2)) for x in r['rows'][:4]],
-                owed_60=[round(x['owed'], 2) for x in r['rows'][:60]])
+                owed_60=[round(x['owed'], 2) for x in r['rows'][:60]], promo=promo)
 
 
 def usable(old):
@@ -164,6 +167,11 @@ def random_scenario(rng, k):
         debts.append(debt('D%d' % i, bal, apr, mn, my))
         # v2: bills by due date, so the due days vary (some debts have none: no bill)
         debts[-1]['due_day'] = rng.choice([None, 1, 5, 12, 15, 20, 28, 30, 31, rng.randint(1, 31)])
+        # some debts have a promo rate that ends in the next two years, some of them with deferred interest
+        if rng.random() < 0.3:
+            debts[-1]['promo_apr'] = rng.choice([0, 0, 0, round(apr * 0.4, 2)])
+            debts[-1]['promo_ends'] = (dt.date(2026, 10, 15) + dt.timedelta(days=rng.randint(20, 700))).isoformat()
+            debts[-1]['deferred'] = rng.random() < 0.6
     y, m = rng.randint(2026, 2030), rng.randint(1, 12)
     d = rng.choice([1, 15, 28, 29, 30, 31, rng.randint(1, 31)])
     d = min(d, [31, 29 if (y % 4 == 0 and y % 100 != 0) or y % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1])

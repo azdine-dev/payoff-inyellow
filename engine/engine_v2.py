@@ -8,6 +8,13 @@ Each payday the balances move by exactly what the user pays:
   * a paid-off debt's minimum keeps rolling into the extra on the payday its
     bill would have fallen (rule 1 of CLAUDE.md, unchanged).
 
+Promo (optional, per debt: promo_apr, promo_ends, deferred): until the promo end date the promo rate is used
+instead of the normal rate (a payday before the end date uses it, the end date and later use the normal rate).
+A debt with a deferred-interest promo goes to the front of the payday order until its end date, so the extra
+reaches it first. Nothing is added to the balance when the date passes: simulate() reports in "promo" what
+would still be owing on that date and the back interest at risk (the interest the normal rate would have
+charged from the first payday to the end date), and the app says so calmly.
+
 Unchanged from v1: paydays per year, payday dates from the schedule (never
 "last payday + step"), interest per payday = balance x APR / ppy, yearly bills
 then buffer then extra, payoff orders and tie rules, the stored payoff order,
@@ -20,6 +27,12 @@ import calendar, datetime as dt, math
 
 PPY = {"weekly": 52, "biweekly": 26, "twice": 24, "monthly": 12}
 LIMIT = 520
+
+
+def _date(x):
+    """A date given as an ISO string, a date, or nothing."""
+    if not x: return None
+    return x if isinstance(x, dt.date) else dt.date.fromisoformat(x)
 
 
 def clamp(y: int, m: int, d: int) -> dt.date:
@@ -89,6 +102,11 @@ def simulate(s: dict) -> dict:
     apr = [debts[i]["apr"] / 100 for i in pos]
     mins = [debts[i]["min"] for i in pos]
     due = [debts[i].get("due") for i in pos]
+    promo_apr = [debts[i].get("promo_apr") for i in pos]
+    promo_end = [_date(debts[i].get("promo_ends")) for i in pos]
+    deferred = [bool(debts[i].get("deferred")) for i in pos]
+    owing_at_end = list(bal)
+    back_interest = [0.0] * len(bal)
     buf, ysaved = s.get("buffer", 0.0), 0.0
     yearly_pp = sum(s.get("yearly", [])) / ppy
     rows, interest_total = [], 0.0
@@ -106,19 +124,29 @@ def simulate(s: dict) -> dict:
         chg = s.get("charges", {}).get(k, 0.0)
         cpos = next((j for j, b in enumerate(bal) if b > 0.005), 0)
         pre, due_min, bill = [], [], []
+        promo_on = [promo_apr[j] is not None and promo_end[j] is not None and d0 < promo_end[j] for j in range(len(bal))]
+        rate = [promo_apr[j] / 100 if promo_on[j] else apr[j] for j in range(len(bal))]
+        # a deferred-interest promo goes first until its end date; the others keep their place
+        front = [deferred[j] and promo_on[j] and bal[j] > 0.005 for j in range(len(bal))]
+        prio = sorted(range(len(bal)), key=lambda j: (not front[j], j))
         for j in range(len(bal)):
-            b = bal[j] * (1 + apr[j] / ppy) + (chg if j == cpos else 0.0)
-            interest_total += bal[j] * apr[j] / ppy
+            b = bal[j] * (1 + rate[j] / ppy) + (chg if j == cpos else 0.0)
+            interest_total += bal[j] * rate[j] / ppy
+            if promo_on[j]:
+                back_interest[j] += bal[j] * (apr[j] - rate[j]) / ppy
             dm = mins[j] * due_count(due[j], d0, d1) if (due[j] and mins[j]) else 0.0
             pre.append(b); due_min.append(dm); bill.append(min(dm, b))
         rollover = sum(due_min) - sum(bill)
         pool = max(avail - to_yearly - to_buf, 0) + rollover
-        extra, used = [], 0.0
-        for j in range(len(bal)):
+        extra, used = [0.0] * len(bal), 0.0
+        for j in prio:
             x = min(max(pre[j] - bill[j], 0), max(pool - used, 0))
-            extra.append(x); used += x
+            extra[j] = x; used += x
         bal = [max(pre[j] - bill[j] - extra[j], 0.0) for j in range(len(bal))]
         bal = [0.0 if b < 0.005 else b for b in bal]
+        for j in range(len(bal)):
+            if promo_on[j]:
+                owing_at_end[j] = bal[j]
         rows.append({"k": k, "date": d0, "bills": sum(bill), "extra": used,
                      "yearly": to_yearly, "buffer": to_buf, "buffer_after": buf,
                      "total_move": sum(bill) + used + to_yearly + to_buf,
@@ -128,7 +156,11 @@ def simulate(s: dict) -> dict:
     return {"order": [debts[i]["name"] for i in pos], "rows": rows,
             "debt_free": free["date"] if free else None,
             "paydays": (free["k"] + 1) if free else None,
-            "interest": round(interest_total, 2)}
+            "interest": round(interest_total, 2),
+            "promo": [{"name": debts[pos[j]]["name"], "ends": promo_end[j].isoformat(),
+                       "owing": round(owing_at_end[j], 2), "back_interest": round(back_interest[j], 2)}
+                      for j in range(len(bal))
+                      if deferred[j] and promo_end[j] and promo_end[j] > p0 and owing_at_end[j] > 0.005]}
 
 
 if __name__ == "__main__":

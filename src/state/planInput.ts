@@ -15,7 +15,7 @@ export function countedDebts(data: AppData): Debt[] {
 }
 
 export function toDebtInput(d: Debt): DebtInput {
-  return { id: d.id, name: d.name, balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, dueDay: d.dueDay, myOrder: d.myOrder };
+  return { id: d.id, name: d.name, balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, dueDay: d.dueDay, promoApr: d.promoApr ?? null, promoEnds: d.promoEnds ?? null, deferred: d.deferredInterest ?? false, myOrder: d.myOrder };
 }
 
 /** Number of the next payday in the log. It keeps counting when the pay schedule changes. */

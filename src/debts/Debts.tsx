@@ -6,6 +6,7 @@ import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { diffDays, ordinal, shortDate, shortMonthYear } from '../lib/today';
 import { dateMoveSentence } from '../state/changeNote';
+import { promoLine, promoRiskSentence } from '../state/promo';
 import { showNotice } from '../state/notice';
 import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
@@ -33,6 +34,9 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     min: debt && !debt.minPending ? str(debt.minMonthly) : '',
     dueDay: debt?.dueDay ? String(debt.dueDay) : '',
     autopay: debt?.autopay ?? false,
+    promoApr: debt?.promoApr != null ? str(debt.promoApr) : '',
+    promoEnds: debt?.promoEnds ?? '',
+    deferred: debt?.deferredInterest ?? false,
   });
   const [note, setNote] = useState('');
   // A new debt starts as a quick add: name, balance and rate. Editing shows everything.
@@ -51,7 +55,27 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     // The minimum can wait: left empty it counts as 0 and the debt carries a soft tag until it is added
     if (f.min.trim() && (min === null || min < 0)) return setNote('The monthly minimum should be a number. Type 0 if there is none.');
     if (day !== null && (!Number.isInteger(day) || day < 1 || day > 31)) return setNote('The due day is a day of the month, from 1 to 31.');
-    onSave({ name: f.name.trim(), type: debt?.type ?? '', balance, apr: apr ?? DEFAULT_RATE, rateMissing: !f.apr.trim(), minMonthly: min ?? 0, minPending: !f.min.trim(), dueDay: day, autopay: f.autopay });
+    // A promo needs both its rate and the day it ends
+    const promoApr = parseAmount(f.promoApr);
+    const hasPromo = f.promoApr.trim() !== '' || f.promoEnds !== '';
+    if (hasPromo) {
+      if (promoApr === null || promoApr < 0 || promoApr > 100) return setNote('The promo rate should be a number from 0 to 100, like 0. Add the day it ends too.');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(f.promoEnds)) return setNote('Add the day the promo ends, or clear the promo rate.');
+    }
+    onSave({
+      name: f.name.trim(),
+      type: debt?.type ?? '',
+      balance,
+      apr: apr ?? DEFAULT_RATE,
+      rateMissing: !f.apr.trim(),
+      minMonthly: min ?? 0,
+      minPending: !f.min.trim(),
+      dueDay: day,
+      autopay: f.autopay,
+      promoApr: hasPromo ? promoApr! : undefined,
+      promoEnds: hasPromo ? f.promoEnds : undefined,
+      deferredInterest: hasPromo && f.deferred ? true : undefined,
+    });
   };
 
   return (
@@ -73,6 +97,16 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
           <Field label="Due day (recommended)" hint="It’s on your statement.">
             <input type="text" inputMode="numeric" maxLength={2} value={f.dueDay} onInput={(e) => set({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
           </Field>
+          <Field label="Promo rate (optional)" hint="A lower rate for a while, like 0% on a store card.">
+            <NumberInput post="%" value={f.promoApr} onInput={(v) => set({ promoApr: v })} label="Promo rate" />
+          </Field>
+          <Field label="Promo ends on">
+            <input type="date" value={f.promoEnds} onInput={(e) => set({ promoEnds: (e.target as HTMLInputElement).value })} />
+          </Field>
+          <label class="row" style={{ justifyContent: 'flex-start', minHeight: 44 }}>
+            <input type="checkbox" checked={f.deferred} onChange={(e) => set({ deferred: (e.target as HTMLInputElement).checked })} style={{ width: 22, height: 22 }} />
+            <span>Interest is deferred. It is added back if the balance is not paid by then.</span>
+          </label>
           <label class="row" style={{ justifyContent: 'flex-start', minHeight: 44 }}>
             <input type="checkbox" checked={f.autopay} onChange={(e) => set({ autopay: (e.target as HTMLInputElement).checked })} style={{ width: 22, height: 22 }} />
             <span>The minimum is paid by autopay</span>
@@ -111,7 +145,9 @@ export function Debts() {
   const archived = d.debts.filter((x) => x.status === 'archived');
   const current = mode && mode.kind !== 'add' ? d.debts.find((x) => x.id === mode.id) : undefined;
   const orderIndex = (id: string) => r.order.indexOf(id);
-  const sorted = [...active].sort((a, b) => orderIndex(a.id) - orderIndex(b.id));
+  // A deferred-interest promo that is still running goes first until its end date, like in the plan
+  const goesFirst = (x: Debt) => Boolean(x.deferredInterest && x.promoApr != null && x.promoEnds && x.promoEnds > today.value);
+  const sorted = [...active].sort((a, b) => Number(!goesFirst(a)) - Number(!goesFirst(b)) || orderIndex(a.id) - orderIndex(b.id));
 
   // Tapped on another screen (the focus debt card on Today): open that debt's sheet
   useEffect(() => {
@@ -216,6 +252,16 @@ export function Debts() {
                 {bill ? ` · ${bill} bill${debt.dueDay ? ` on the ${ordinal(debt.dueDay)}` : ''}` : ''}
                 {debt.autopay ? ' · autopay' : ''}
               </p>
+              {promoLine(debt, today.value, (iso) => shortDate(iso, today.value)) && (
+                <p class="muted small" data-testid="promo-line">
+                  {promoLine(debt, today.value, (iso) => shortDate(iso, today.value))}
+                </p>
+              )}
+              {r.promo.filter((w) => w.debtId === debt.id).map((w) => (
+                <p key={w.debtId} class="small" data-testid="promo-note">
+                  {promoRiskSentence(debt.name, w, (n) => formatMoney(n, cur, { whole: true }), (iso) => shortDate(iso, today.value))}
+                </p>
+              ))}
               {debt.minPending && (
                 <span class="tag" data-testid="min-pending" style={{ alignSelf: 'flex-start' }}>
                   Add your minimum

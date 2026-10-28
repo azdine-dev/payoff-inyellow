@@ -94,6 +94,10 @@ export interface Debt extends Meta {
   status: DebtStatus;
   /** Order the debts were entered (ties in payoff order keep it) */
   position: number;
+  /** A promo rate (percent) until `promoEnds` (ISO date). With `deferredInterest` the debt goes first until then. */
+  promoApr?: number;
+  promoEnds?: string;
+  deferredInterest?: boolean;
   /** "Update from statement" entries, for the History list. Older debts have none. */
   statements?: { date: string; from: number; to: number }[];
 }

@@ -20,6 +20,10 @@ export interface DebtFields {
   rateMissing?: boolean;
   dueDay: number | null;
   autopay: boolean;
+  /** A promo rate until a date, optionally with deferred interest. Pass undefined to clear it. */
+  promoApr?: number;
+  promoEnds?: string;
+  deferredInterest?: boolean;
 }
 
 const statusFor = (balance: number, current: Debt['status']): Debt['status'] =>

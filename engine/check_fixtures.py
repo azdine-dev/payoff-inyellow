@@ -13,7 +13,8 @@ for path in sorted(glob.glob(os.path.join(HERE, 'fixtures_v2*.json'))):
         rows = [(x['date'].isoformat(), round(x['bills'], 2), round(x['extra'], 2), round(x['total_move'], 2), round(x['owed'], 2)) for x in r['rows'][:4]]
         want = [(x['date'], x['bills'], x['extra'], x['total_move'], x['owed']) for x in e['first_paydays']]
         ok = (r['order'] == e['order'] and (r['debt_free'].isoformat() if r['debt_free'] else None) == e['debt_free']
-              and r['paydays'] == e['paydays'] and abs(r['interest'] - e['interest']) < 0.005 and rows == want)
+              and r['paydays'] == e['paydays'] and abs(r['interest'] - e['interest']) < 0.005 and rows == want
+              and ([(p['name'], p['ends'], p['owing'], p['back_interest']) for p in r['promo']] == [(p['name'], p['ends'], p['owing'], p['back_interest']) for p in e.get('promo', [])] if 'promo' in e else True))
         bad += not ok
         if not ok or 'fixtures_v2.json' in path: print(('PASS ' if ok else 'FAIL ') + f['name'])
 print('%d failed' % bad if bad else 'all passed')

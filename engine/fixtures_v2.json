@@ -509,5 +509,154 @@
     }
    ]
   }
+ },
+ {
+  "name": "promo_deferred",
+  "note": "v2 + promo: a deferred-interest promo goes first until its end date (here it is the bigger balance, so without it Visa would be first), and the warning says what is still owing then and the back interest at risk.",
+  "input": {
+   "freq": "biweekly",
+   "first_payday": "2026-10-30",
+   "money": 120,
+   "buffer": 500,
+   "goal": 500,
+   "yearly": [],
+   "debts": [
+    {
+     "name": "Furniture card",
+     "balance": 3000,
+     "apr": 14.99,
+     "min": 50,
+     "due": 12,
+     "promo_apr": 0,
+     "promo_ends": "2027-03-31",
+     "deferred": true
+    },
+    {
+     "name": "Visa",
+     "balance": 1500,
+     "apr": 22,
+     "min": 60,
+     "due": 20
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Visa",
+    "Furniture card"
+   ],
+   "debt_free": "2027-11-26",
+   "paydays": 29,
+   "interest": 300.64,
+   "first_paydays": [
+    {
+     "date": "2026-10-30",
+     "bills": 50,
+     "extra": 120.0,
+     "total_move": 170.0,
+     "owed": 4342.69
+    },
+    {
+     "date": "2026-11-13",
+     "bills": 60,
+     "extra": 120.0,
+     "total_move": 180.0,
+     "owed": 4175.49
+    },
+    {
+     "date": "2026-11-27",
+     "bills": 0,
+     "extra": 120.0,
+     "total_move": 120.0,
+     "owed": 4067.89
+    },
+    {
+     "date": "2026-12-11",
+     "bills": 110,
+     "extra": 120.0,
+     "total_move": 230.0,
+     "owed": 3850.4
+    }
+   ],
+   "promo": [
+    {
+     "name": "Furniture card",
+     "ends": "2027-03-31",
+     "owing": 1430.0,
+     "back_interest": 144.71
+    }
+   ]
+  }
+ },
+ {
+  "name": "promo_plain",
+  "note": "v2 + promo: the promo rate is used before the end date, then the normal rate. Not deferred, so the order does not change and there is no warning.",
+  "input": {
+   "freq": "biweekly",
+   "first_payday": "2026-10-30",
+   "money": 120,
+   "buffer": 500,
+   "goal": 500,
+   "yearly": [],
+   "debts": [
+    {
+     "name": "Furniture card",
+     "balance": 3000,
+     "apr": 14.99,
+     "min": 50,
+     "due": 12,
+     "promo_apr": 0,
+     "promo_ends": "2027-03-31",
+     "deferred": false
+    },
+    {
+     "name": "Visa",
+     "balance": 1500,
+     "apr": 22,
+     "min": 60,
+     "due": 20
+    }
+   ]
+  },
+  "expect": {
+   "order": [
+    "Visa",
+    "Furniture card"
+   ],
+   "debt_free": "2027-11-12",
+   "paydays": 28,
+   "interest": 216.74,
+   "first_paydays": [
+    {
+     "date": "2026-10-30",
+     "bills": 50,
+     "extra": 120.0,
+     "total_move": 170.0,
+     "owed": 4342.69
+    },
+    {
+     "date": "2026-11-13",
+     "bills": 60,
+     "extra": 120.0,
+     "total_move": 180.0,
+     "owed": 4174.48
+    },
+    {
+     "date": "2026-11-27",
+     "bills": 0,
+     "extra": 120.0,
+     "total_move": 120.0,
+     "owed": 4064.84
+    },
+    {
+     "date": "2026-12-11",
+     "bills": 110,
+     "extra": 120.0,
+     "total_move": 230.0,
+     "owed": 3844.27
+    }
+   ],
+   "promo": []
+  }
  }
 ]

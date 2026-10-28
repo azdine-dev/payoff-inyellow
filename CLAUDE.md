@@ -248,6 +248,7 @@ The model, in one step per payday:
   - monthly: the same day each month, clamped to the month's end
   - twice a month: two fixed days of the month (`other_payday`; 31 means the last day), capped at the month's end, alternating. Without `other_payday`: a day up to the 15th pairs with day + 15, the last day of a month pairs with the 15th, any other day after the 15th pairs with day - 15. See `other_payday()` and `payday()` in `engine_v2.py`. One edge differs on purpose: when the first payday is the last day of a short month (say 30 Nov), the app keeps "last day" for every month, where `engine_v2.py` keeps the literal day.
 - **Interest each payday:** `balance × APR / ppy`.
+- **Promo rate (optional, per debt: `promo_apr`, `promo_ends`, `deferred`).** Paydays before the end date use the promo rate; the end date and later use the normal rate. With `deferred`, the debt also goes to the front of the payday order until the end date (the stored order does not change; the front-move is worked out from the payday date). Nothing is added to the balance when the date passes. `simulate()` returns `promo`: for each deferred promo the plan does not clear in time, what is still owing on that date and the back interest at risk (what the normal rate would have charged from the first payday to the end date). The app says it calmly on the debt card and in "Worth knowing".
 - **Bills (v2).** Each payday, a debt's full monthly minimum is due when its due day (clamped to the month's end) falls in `[this payday, next payday)`. The bill is `min(minimum due, balance after interest and charges)`. A debt with no due date in the window gets no bill that payday: its balance only gains interest. A debt without a due day, or with a 0 minimum, has no bill at all, so it only goes down when the extra reaches it. In the app the due day is required at setup for any debt with a minimum, and Today keeps "Visa $96, add a due day" for a debt added later without one. This is exactly what Today lists, what "I did it" applies and what the Plan list shows.
 - **The order money goes each payday.** Available money is `money for the plan` plus any "+/- this payday".
   1. Yearly bills: `sum(yearly costs) / ppy`, capped at what's available.
@@ -287,6 +288,7 @@ The model, in one step per payday:
 - **Storage:** IndexedDB. Every record has an `id` and an `updatedAt` timestamp (this keeps the Pack 2 sync possible later).
   - Settings: currency, frequency, nextPayday, scheduleStart, paydayCounter, otherPayday (twice a month), payoffOrder (stored list of debt ids), paycheckAmount?, extraPerPayday, bufferGoal, method, theme, textSize, ifThen {day, time}, startMode
   - Debts: id, name, type, balance, apr, minMonthly, dueDay, myOrder, startBalance, status (active / paid / archived)
+    Optional on a debt: promoApr, promoEnds, deferredInterest (promo rate), lender, notes, statements (the History list)
   - Payments: id, date, debtId, amount, kind (minimum / extra / buffer / fund), planned (bool)
   - Charges: id, date, debtId, amount, tag (everyday / emergency / one-off), note
   - Buffer: amount, history [{date, amount, note}]

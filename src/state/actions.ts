@@ -48,6 +48,9 @@ export interface SetupValues {
     myOrder: number | null;
     /** The rate was left empty: `apr` is the default and the debt is marked "rate missing" */
     rateMissing?: boolean;
+    promoApr?: number;
+    promoEnds?: string;
+    deferredInterest?: boolean;
   }[];
   bufferNow: number;
   bufferGoal: number;

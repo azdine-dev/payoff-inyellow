@@ -45,6 +45,13 @@ export interface DebtInput {
   minMonthly: number;
   /** Day of the month the bill is due (1-31). Missing = no bill is planned or paid for this debt. */
   dueDay?: number | null;
+  /**
+   * A promo rate (percent) that is used on the paydays before `promoEnds` (ISO date). On that date and later the
+   * normal `apr` is used. With `deferred` the debt also goes first in the payday order until the end date.
+   */
+  promoApr?: number | null;
+  promoEnds?: string | null;
+  deferred?: boolean;
   /** Position for "My own order". Missing = last. */
   myOrder?: number | null;
 }
@@ -97,6 +104,19 @@ export interface DebtStep {
   extra: number;
   /** After interest, minimum, extra and any new charge */
   balanceAfter: number;
+  /** The promo rate was used for this debt on this payday */
+  promo: boolean;
+}
+
+/** A deferred-interest promo that the plan does not clear by its end date (nothing is added to the balance, this is the warning). */
+export interface PromoWatch {
+  debtId: string;
+  /** ISO date the promo ends */
+  ends: string;
+  /** What is still owing on that date */
+  owing: number;
+  /** Interest the normal rate would have charged from the first payday to the end date: what could be added back */
+  backInterest: number;
 }
 
 export interface PaydayStep {
@@ -146,6 +166,8 @@ export interface PlanResult {
   /** Debt id -> date it first reached zero */
   paidOff: Record<string, string>;
   minimumsOnly: MinimumsOnly;
+  /** Deferred promos that will not be cleared in time. Empty for most plans. */
+  promo: PromoWatch[];
 }
 
 /** A debt that charges interest and whose minimum doesn't cover it. A 0% debt never grows, even with a $0 minimum. */
@@ -230,6 +252,10 @@ export interface PreparedPlan {
   /** The monthly minimum (the bill) and its due day, in payoff order */
   minMonthly: number[];
   dueDays: (number | null)[];
+  /** Promo rate as a fraction (null = none), its end date, and whether the interest is deferred, in payoff order */
+  promoRates: (number | null)[];
+  promoEnds: (string | null)[];
+  deferred: boolean[];
   yearlyPerPayday: number;
 }
 
@@ -246,6 +272,9 @@ export function preparePlan(
     rates: ordered.map((d) => d.apr / 100),
     minMonthly: ordered.map((d) => d.minMonthly),
     dueDays: ordered.map((d) => d.dueDay ?? null),
+    promoRates: ordered.map((d) => (d.promoApr == null ? null : d.promoApr / 100)),
+    promoEnds: ordered.map((d) => d.promoEnds ?? null),
+    deferred: ordered.map((d) => Boolean(d.deferred)),
     yearlyPerPayday: pySum((input.yearlyBills ?? []).map((y) => y.perYear)) / ppy,
   };
 }
@@ -275,8 +304,11 @@ export function stepPayday(
   nextDate = '',
   bufferUsed = 0,
 ): PaydayStep {
-  const { ppy, rates } = plan;
+  const { ppy } = plan;
   const bal = state.balances;
+  // The promo rate is used on the paydays before its end date; the end date itself and later use the normal rate
+  const promoOn = plan.promoRates.map((r, i) => r !== null && plan.promoEnds[i] !== null && date !== '' && date < plan.promoEnds[i]!);
+  const rates = plan.rates.map((r, i) => (promoOn[i] ? plan.promoRates[i]! : r));
 
   const funds = Math.min(plan.yearlyPerPayday, Math.max(planMoney, 0));
   const toBuffer = Math.min(Math.max(state.bufferGoal - state.buffer, 0), Math.max(planMoney - funds, 0));
@@ -296,11 +328,14 @@ export function stepPayday(
   const rollover = pySum(dueMin) - pySum(bills);
   const pool = Math.max(planMoney - funds - toBuffer, 0) + rollover;
 
-  const xs: number[] = [];
+  // A deferred-interest promo goes first until its end date; the other debts keep their place
+  const front = pre.map((_, i) => plan.deferred[i]! && promoOn[i]! && bal[i]! > ZERO);
+  const priority = pre.map((_, i) => i).sort((a, b) => Number(!front[a]) - Number(!front[b]) || a - b);
+  const xs: number[] = pre.map(() => 0);
   let used = 0;
-  for (let i = 0; i < pre.length; i++) {
+  for (const i of priority) {
     const x = Math.min(Math.max(pre[i]! - bills[i]!, 0), Math.max(pool - used, 0));
-    xs.push(x);
+    xs[i] = x;
     used += x;
   }
   const maxExtra = xs.length ? Math.max(...xs) : 0;
@@ -328,6 +363,7 @@ export function stepPayday(
       minimum: bills[i]!,
       extra: xs[i]!,
       balanceAfter: after[i]!,
+      promo: promoOn[i]!,
     })),
     interest,
     minimums,
@@ -352,6 +388,8 @@ export function simulatePlan(input: PlanInput): PlanResult {
   const offset = input.paydayOffset ?? 0;
 
   let balances = plan.ids.map((id) => byId.get(id)!.balance);
+  const owingAtEnd = [...balances];
+  const backInterest = plan.ids.map(() => 0);
   let buffer = input.bufferNow;
   let totalInterest = 0;
   const rows: PaydayStep[] = [];
@@ -375,9 +413,13 @@ export function simulatePlan(input: PlanInput): PlanResult {
     totalInterest += row.interest;
     buffer = row.bufferAfter;
     balances = row.debts.map((d) => d.balanceAfter);
-    for (const d of row.debts) {
+    row.debts.forEach((d, i) => {
       if (d.balanceAfter <= ZERO && !(d.id in paidOff)) paidOff[d.id] = date;
-    }
+      if (d.promo) {
+        backInterest[i] = backInterest[i]! + (d.balanceBefore * (plan.rates[i]! - plan.promoRates[i]!)) / plan.ppy;
+        owingAtEnd[i] = d.balanceAfter;
+      }
+    });
     rows.push(row);
   }
 
@@ -391,6 +433,11 @@ export function simulatePlan(input: PlanInput): PlanResult {
     totalInterest,
     paidOff,
     minimumsOnly: minimumsOnly(input.debts),
+    promo: plan.ids.flatMap((id, i) =>
+      plan.deferred[i]! && plan.promoEnds[i] && rows[0] && plan.promoEnds[i]! > rows[0].date && owingAtEnd[i]! > ZERO
+        ? [{ debtId: id, ends: plan.promoEnds[i]!, owing: owingAtEnd[i]!, backInterest: backInterest[i]! }]
+        : [],
+    ),
   };
 }
 

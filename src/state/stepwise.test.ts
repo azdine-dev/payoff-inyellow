@@ -50,7 +50,7 @@ function setupFrom(f: RefFixture): SetupValues {
     nextPayday: p.nextPayday,
     otherPayday: p.otherPayday ?? null,
     paycheckAmount: null,
-    debts: p.debts.map((d) => ({ name: d.name, type: '', balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, dueDay: d.dueDay ?? null, autopay: false, myOrder: d.myOrder ?? null })),
+    debts: p.debts.map((d) => ({ name: d.name, type: '', balance: d.balance, apr: d.apr, minMonthly: d.minMonthly, dueDay: d.dueDay ?? null, autopay: false, myOrder: d.myOrder ?? null, ...(d.promoApr != null ? { promoApr: d.promoApr, promoEnds: d.promoEnds ?? undefined, deferredInterest: d.deferred } : {}) })),
     bufferNow: p.bufferNow,
     bufferGoal: p.bufferGoal,
     extraPerPayday: p.extraPerPayday,
@@ -83,7 +83,7 @@ async function tapThrough(data: AppData) {
 describe('"I did it" on every payday gives the same result as one full simulation', () => {
   const withoutAdjustments = all.filter((f) => !['adjust', 'charges', 'buffer_used'].some((k) => Object.keys((f.input as unknown as Record<string, object>)[k] ?? {}).length));
 
-  it('covers the fixtures without +/- or charges', () => expect(withoutAdjustments.length).toBe(8)); // 6 of the Sheet + the 2 stories
+  it('covers the fixtures without +/- or charges', () => expect(withoutAdjustments.length).toBe(10)); // 6 of the Sheet + 2 promo ones + the 2 stories
 
   it.each(withoutAdjustments.map((f) => [f.name, f] as const))('%s', async (_name, f) => {
     const data = await completeSetup(db, setupFrom(f), '2026-10-15');
