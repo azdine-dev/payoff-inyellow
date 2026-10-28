@@ -1955,3 +1955,12 @@ a.btn {
   text-align: left;
   cursor: pointer;
 }
+
+/* Worth knowing: a few calm sentences */
+.know-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

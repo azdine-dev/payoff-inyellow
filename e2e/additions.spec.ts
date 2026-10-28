@@ -91,3 +91,33 @@ test.describe('2 · "Help me work it out" on the money step', () => {
     await expectBrandRules(page);
   });
 });
+
+test.describe('3 · Worth knowing on Path', () => {
+  test('hidden when empty; calm sentences from the buyer’s own numbers once there is something to say', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Path');
+    await expect(page.getByTestId('worth-knowing')).toHaveCount(0);
+
+    // A bill with no due day, and some of the buffer used
+    await goTab(page, 'Debts');
+    await page.getByRole('button', { name: 'Add a debt' }).click();
+    const add = page.getByRole('dialog', { name: 'Add a debt' });
+    await add.getByLabel('Name').fill('Phone plan');
+    await add.getByRole('textbox', { name: 'Balance' }).fill('300');
+    await add.getByRole('textbox', { name: 'Interest rate' }).fill('0');
+    await add.getByRole('button', { name: 'Add minimum and due day now' }).click();
+    await add.getByLabel('Monthly minimum').fill('40');
+    await add.getByRole('button', { name: 'Save', exact: true }).click();
+    await goTab(page, 'Safety net');
+    await page.getByRole('button', { name: 'I used some of it' }).click();
+    await page.getByRole('textbox', { name: 'Amount used' }).fill('200');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+
+    await goTab(page, 'Path');
+    const card = page.getByTestId('worth-knowing');
+    await expect(card).toContainText('Phone plan has no due day yet, so its bill is not in your plan.');
+    await expect(card).toContainText('You used some of your buffer. Your plan refills it first: $300 of $500 so far.');
+    await expect(card.locator('li')).toHaveCount(2);
+    await expectBrandRules(page);
+  });
+});

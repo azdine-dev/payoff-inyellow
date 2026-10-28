@@ -17,6 +17,7 @@ import { setMethod } from '../state/planActions';
 import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
 import { act, data, freshPayday, plan, tab, today } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
+import { worthKnowing } from '../state/worthKnowing';
 import { Chart } from '../progress/Chart';
 import { Count, useCountUp } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
@@ -106,6 +107,7 @@ export function Path() {
     });
   }, [d, r]);
 
+  const know = worthKnowing(d, r, today.value, { money: (n) => formatMoney(n, cur, { whole: true }), day: (iso) => shortDate(iso, today.value) });
   const reachedList = d.milestones.filter((m) => m.id !== 'plan-made').sort((x, y) => x.reachedOn.localeCompare(y.reachedOn));
 
   // The square of the payday just done fills yellow once
@@ -245,6 +247,17 @@ export function Path() {
               Next: {timeline[0]!.title} · {timeline[0]!.short}
             </b>
           </p>
+        </section>
+      )}
+
+      {know.length > 0 && (
+        <section class="card stack" aria-label="Worth knowing" data-testid="worth-knowing">
+          <p class="label">Worth knowing</p>
+          <ul class="know-list">
+            {know.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
         </section>
       )}
 
