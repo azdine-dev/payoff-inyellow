@@ -7,8 +7,9 @@ import { DEFAULT_RATE } from '../../state/debtActions';
 import { Field, Note, NumberInput } from '../../ui/controls';
 import { emptyDebt, type DraftDebt } from '../draft';
 import type { StepProps } from '../Wizard';
+import { DEBT_TYPES } from '../../lib/debtTypes';
 
-const TYPES = ['Credit card', 'Store card', 'Car loan', 'Student loan', 'Medical bill', 'Personal loan', 'Family or friend', 'Other'];
+const TYPES = DEBT_TYPES;
 
 /** "22.9" as 22.9, whatever way it was typed or pasted. */
 const rate = (n: number) => String(Math.round(n * 100) / 100);

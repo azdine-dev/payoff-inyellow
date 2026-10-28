@@ -20,6 +20,9 @@ export interface DebtFields {
   rateMissing?: boolean;
   dueDay: number | null;
   autopay: boolean;
+  /** Optional: who the debt is with, and notes. Pass undefined to clear. */
+  lender?: string;
+  notes?: string;
   /** A promo rate until a date, optionally with deferred interest. Pass undefined to clear it. */
   promoApr?: number;
   promoEnds?: string;

@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { openAppDB, loadAll, type PiyDB } from '../data/db';
 import { completeSetup, didPayday, splitExtra, type SetupValues } from './actions';
-import { addDebt, logCharge, updateBalance } from './debtActions';
+import { addDebt, editDebt, logCharge, updateBalance } from './debtActions';
 
 const values: SetupValues = {
   currency: { code: 'USD', symbol: '$' },
@@ -73,5 +73,19 @@ describe('extra money', () => {
     d = await addDebt(db, d, { name: 'Sofa card', type: '', balance: 5000, apr: 12, minMonthly: 200, dueDay: 9, autopay: false, promoApr: 0, promoEnds: '2027-03-01', deferredInterest: true }, 2000);
     expect(splitExtra(d, 100, '2026-10-16').changed.map((x) => x.name)).toEqual(['Sofa card']);
     expect(splitExtra(d, 100, '2027-04-01').changed.map((x) => x.name)).not.toContain('Sofa card'); // after the promo, back to the usual order
+  });
+});
+
+describe('lender, notes and type', () => {
+  it('are kept on the debt, and cleared when emptied', async () => {
+    const start = await completeSetup(db, values, '2026-10-15', 1000);
+    const visa = start.debts[0]!;
+    const fields = { name: 'Visa', type: 'Family or friend', balance: 3200, apr: 22.9, minMonthly: 96, dueDay: 12, autopay: false };
+    const set = await editDebt(db, start, visa.id, { ...fields, lender: 'Aunt Sara', notes: 'Pays back on the 1st' }, 2000);
+    expect(set.debts[0]).toMatchObject({ type: 'Family or friend', lender: 'Aunt Sara', notes: 'Pays back on the 1st' });
+    expect((await loadAll(db))!.debts[0]!.lender).toBe('Aunt Sara');
+    const cleared = await editDebt(db, set, visa.id, { ...fields, type: '', lender: undefined, notes: undefined }, 3000);
+    expect(cleared.debts[0]!.lender).toBeUndefined();
+    expect(cleared.debts[0]!.notes).toBeUndefined();
   });
 });

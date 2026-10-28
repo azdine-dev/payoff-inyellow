@@ -143,3 +143,31 @@ test.describe('4 · "I got extra money" on Today', () => {
     await expect(page.getByTestId('debt-history')).toContainText('Extra payment'); // it is in the History list
   });
 });
+
+test.describe('5 · lender, notes and type "Family or friend"', () => {
+  test('they are saved on the debt card, and can be cleared', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Debts');
+    await page.getByRole('button', { name: 'Visa, options' }).click();
+    await page.getByRole('button', { name: 'Edit', exact: true }).click();
+    const form = page.getByRole('dialog', { name: 'Edit Visa' });
+    await form.getByLabel('Type (optional)').selectOption('Family or friend');
+    await form.getByLabel('Lender (optional)').fill('Aunt Sara');
+    await form.getByLabel('Notes (optional)').fill('Pays back on the 1st');
+    await form.getByRole('button', { name: 'Save', exact: true }).click();
+    const card = page.getByRole('region', { name: 'Visa' });
+    await expect(card.getByTestId('debt-meta')).toHaveText('Family or friend · Aunt Sara');
+    await expect(card.getByTestId('debt-notes')).toHaveText('Pays back on the 1st');
+
+    await page.getByRole('button', { name: 'Visa, options' }).click();
+    await page.getByRole('button', { name: 'Edit', exact: true }).click();
+    const again = page.getByRole('dialog', { name: 'Edit Visa' });
+    await expect(again.getByLabel('Lender (optional)')).toHaveValue('Aunt Sara'); // it comes back when editing
+    await again.getByLabel('Lender (optional)').fill('');
+    await again.getByLabel('Notes (optional)').fill('');
+    await again.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(card.getByTestId('debt-notes')).toHaveCount(0);
+    await expect(card.getByTestId('debt-meta')).toHaveText('Family or friend');
+    await expectBrandRules(page);
+  });
+});

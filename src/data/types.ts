@@ -94,6 +94,9 @@ export interface Debt extends Meta {
   status: DebtStatus;
   /** Order the debts were entered (ties in payoff order keep it) */
   position: number;
+  /** Who the debt is with, and a few words of the buyer's own (both optional) */
+  lender?: string;
+  notes?: string;
   /** A promo rate (percent) until `promoEnds` (ISO date). With `deferredInterest` the debt goes first until then. */
   promoApr?: number;
   promoEnds?: string;

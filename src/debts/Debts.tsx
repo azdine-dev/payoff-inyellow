@@ -7,6 +7,7 @@ import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { diffDays, ordinal, shortDate, shortMonthYear } from '../lib/today';
 import { dateMoveSentence } from '../state/changeNote';
 import { promoLine, promoRiskSentence } from '../state/promo';
+import { DEBT_TYPES } from '../lib/debtTypes';
 import { showNotice } from '../state/notice';
 import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
@@ -34,6 +35,9 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     min: debt && !debt.minPending ? str(debt.minMonthly) : '',
     dueDay: debt?.dueDay ? String(debt.dueDay) : '',
     autopay: debt?.autopay ?? false,
+    type: debt?.type ?? '',
+    lender: debt?.lender ?? '',
+    notes: debt?.notes ?? '',
     promoApr: debt?.promoApr != null ? str(debt.promoApr) : '',
     promoEnds: debt?.promoEnds ?? '',
     deferred: debt?.deferredInterest ?? false,
@@ -64,7 +68,9 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
     }
     onSave({
       name: f.name.trim(),
-      type: debt?.type ?? '',
+      type: f.type,
+      lender: f.lender.trim() || undefined,
+      notes: f.notes.trim() || undefined,
       balance,
       apr: apr ?? DEFAULT_RATE,
       rateMissing: !f.apr.trim(),
@@ -96,6 +102,20 @@ function DebtForm({ debt, onSave, onCancel, symbol }: { debt?: Debt; onSave: (f:
           </Field>
           <Field label="Due day (recommended)" hint="It’s on your statement.">
             <input type="text" inputMode="numeric" maxLength={2} value={f.dueDay} onInput={(e) => set({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
+          </Field>
+          <Field label="Type (optional)">
+            <select value={f.type} onChange={(e) => set({ type: (e.target as HTMLSelectElement).value })}>
+              <option value="">Not set</option>
+              {DEBT_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Lender (optional)" hint="Who the debt is with.">
+            <input type="text" value={f.lender} onInput={(e) => set({ lender: (e.target as HTMLInputElement).value })} />
+          </Field>
+          <Field label="Notes (optional)" hint="Anything you want to remember. It stays on this device.">
+            <textarea rows={3} value={f.notes} onInput={(e) => set({ notes: (e.target as HTMLTextAreaElement).value })} />
           </Field>
           <Field label="Promo rate (optional)" hint="A lower rate for a while, like 0% on a store card.">
             <NumberInput post="%" value={f.promoApr} onInput={(v) => set({ promoApr: v })} label="Promo rate" />
@@ -252,6 +272,16 @@ export function Debts() {
                 {bill ? ` · ${bill} bill${debt.dueDay ? ` on the ${ordinal(debt.dueDay)}` : ''}` : ''}
                 {debt.autopay ? ' · autopay' : ''}
               </p>
+              {(debt.type || debt.lender) && (
+                <p class="muted small" data-testid="debt-meta">
+                  {[debt.type, debt.lender].filter(Boolean).join(' · ')}
+                </p>
+              )}
+              {debt.notes && (
+                <p class="muted small debt-notes" data-testid="debt-notes">
+                  {debt.notes}
+                </p>
+              )}
               {promoLine(debt, today.value, (iso) => shortDate(iso, today.value)) && (
                 <p class="muted small" data-testid="promo-line">
                   {promoLine(debt, today.value, (iso) => shortDate(iso, today.value))}

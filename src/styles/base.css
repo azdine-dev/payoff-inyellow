@@ -1964,3 +1964,22 @@ a.btn {
   flex-direction: column;
   gap: 8px;
 }
+
+/* Notes on a debt card: two lines at most */
+.debt-notes {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+textarea {
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink);
+  border-radius: 12px;
+  background: var(--card);
+}
