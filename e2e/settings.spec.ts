@@ -89,7 +89,7 @@ test('dark mode and a larger text size apply at once and stay after a reload', a
   await page.getByRole('radio', { name: 'Larger' }).click();
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(31, 42, 68)');
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(27, 36, 51)');
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe('20.8px');
 
   await page.reload();

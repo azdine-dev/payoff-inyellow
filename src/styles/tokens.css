@@ -1,16 +1,21 @@
-/* "Pay Stub & Highlighter" palette (CLAUDE.md §3). No red anywhere. */
+/* "Calm sage" palette (brand/design-tokens-v2.md, CLAUDE.md section 3). No red anywhere. */
 :root {
-  --paper: #f4f0e6;
-  --card: #fbf9f3;
-  --ink: #1f2a44;
-  --yellow: #ffe14d; /* ONLY paid / done / the one key word. Never a text color. */
+  --paper: #f8f6f0; /* background */
+  --card: #ffffff;
+  --calm: #e6efe8; /* big cards that used to be ink */
+  --calm-band: #d8e7dc; /* the top band of each screen */
+  --ink: #1f2a44; /* text, lines, logo */
+  --action: #2f4a6d; /* main buttons, links */
+  --on-action: #ffffff; /* text on --action */
+  --yellow: #ffe14d; /* ONLY paid / done / the debt-free month / the active payday. Never a text color. */
   --yellow-soft: #fff6c2;
   --gray: #5c5a55;
   --line: #e2dccd;
-  --on-ink: #f4f0e6; /* text on ink buttons */
+  --on-ink: #f8f6f0; /* text on ink chips and tabs */
   --on-yellow: #1f2a44; /* text sitting on a yellow swipe */
-  --pc-bg: #1f2a44; /* the payday card on Today */
-  --pc-fg: #f4f0e6;
+  --pc-bg: var(--calm); /* the payday card on Today */
+  --pc-fg: var(--ink);
+  --row-bg: rgba(255, 255, 255, 0.75); /* rows inside a calm card */
 
   --radius: 16px;
   --radius-sm: 10px;
@@ -25,30 +30,40 @@
   color-scheme: light;
 }
 
-/* Dark mode: ink background, paper text, yellow keeps its "paid" meaning. */
+/* Dark mode: the dark tokens. Yellow keeps its meaning. The payday card is #24332B. */
 :root[data-theme='dark'] {
-  --paper: #1f2a44;
-  --card: #273352;
-  --ink: #f4f0e6;
+  --paper: #1b2433;
+  --card: #222d3f;
+  --calm: #24332b;
+  --calm-band: #2a3b31;
+  --ink: #e8ede9;
+  --action: #9dbbe6; /* lighter, so links read on dark; buttons then take dark text */
+  --on-action: #14203a;
   --yellow-soft: #4a4528;
-  --gray: #c9c4b8;
-  --line: #3a4766;
-  --on-ink: #1f2a44;
-  --pc-bg: #2a3654;
+  --gray: #a9b4ac;
+  --line: #3b4a54;
+  --on-ink: #1b2433;
+  --pc-bg: #24332b;
+  --row-bg: rgba(34, 45, 63, 0.75);
   color-scheme: dark;
 }
 
 /* "Match my phone": the same colors when the phone is set to dark and no choice is made */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --paper: #1f2a44;
-    --card: #273352;
-    --ink: #f4f0e6;
+    --paper: #1b2433;
+    --card: #222d3f;
+    --calm: #24332b;
+    --calm-band: #2a3b31;
+    --ink: #e8ede9;
+    --action: #9dbbe6;
+    --on-action: #14203a;
     --yellow-soft: #4a4528;
-    --gray: #c9c4b8;
-    --line: #3a4766;
-    --on-ink: #1f2a44;
-    --pc-bg: #2a3654;
+    --gray: #a9b4ac;
+    --line: #3b4a54;
+    --on-ink: #1b2433;
+    --pc-bg: #24332b;
+    --row-bg: rgba(34, 45, 63, 0.75);
     color-scheme: dark;
   }
 }

@@ -11,7 +11,8 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
+  /* a calm band behind the top 150px of each screen, paper below */
+  background: linear-gradient(var(--calm-band), var(--calm-band)) top / 100% 150px no-repeat, var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.45;
@@ -168,8 +169,8 @@ select {
   width: 100%;
   border: none;
   border-radius: 12px;
-  background: var(--ink);
-  color: var(--on-ink);
+  background: var(--action);
+  color: var(--on-action);
   font-weight: 600;
   font-size: 1.05rem;
   cursor: pointer;
@@ -188,8 +189,8 @@ select {
 
 .btn.ghost {
   background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--ink);
+  color: var(--action);
+  border: 1.5px solid var(--action);
 }
 
 .btn.done {
@@ -202,7 +203,7 @@ select {
   border: none;
   padding: 0;
   min-height: var(--tap);
-  color: var(--ink);
+  color: var(--action);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -607,7 +608,8 @@ select {
 
 .pc-rows {
   margin-top: 6px;
-  background: rgba(244, 240, 230, 0.08);
+  background: var(--row-bg);
+  border: 1px solid var(--line);
   border-radius: 18px;
   padding: 0 14px;
 }
@@ -616,7 +618,7 @@ select {
   min-height: 68px;
   padding: 10px 0;
   color: var(--pc-fg);
-  border-top: 1px solid rgba(244, 240, 230, 0.14);
+  border-top: 1px solid var(--line);
 }
 
 .pc-rows .check:first-child {
@@ -630,7 +632,7 @@ select {
 
 .pc-rows .check[aria-checked='true'] .box {
   background: var(--yellow);
-  border-color: var(--yellow);
+  border-color: var(--ink); /* yellow and sage are close in lightness, so a ticked box keeps an ink edge */
 }
 
 .pc-rows .check .box svg {
@@ -658,7 +660,7 @@ select {
   min-height: 52px;
   display: flex;
   align-items: center;
-  border-top: 1px solid rgba(244, 240, 230, 0.14);
+  border-top: 1px solid var(--line);
 }
 
 .pc-note {
@@ -676,8 +678,8 @@ select {
   width: 100%;
   border: none;
   border-radius: 16px;
-  background: var(--pc-fg);
-  color: #1f2a44;
+  background: var(--action);
+  color: var(--on-action);
   font-weight: 700;
   font-size: 1.15rem;
   cursor: pointer;
@@ -703,7 +705,7 @@ select {
 }
 
 .payday-card .link {
-  color: var(--pc-fg);
+  color: var(--action);
 }
 
 /* The highlighter swipe (300 ms): yellow runs across the card, and the words turn ink as it passes */
@@ -1031,8 +1033,8 @@ select {
 
 .btn.dashed {
   background: transparent;
-  color: var(--ink);
-  border: 1.5px dashed var(--ink);
+  color: var(--action);
+  border: 1.5px dashed var(--action);
 }
 
 /* The result screen: the date tilts a little, like a highlighter swipe */
@@ -1055,8 +1057,8 @@ select {
 
 /* "Your first step": the one dark card on the result screen */
 .first-card {
-  background: var(--ink);
-  color: var(--on-ink);
+  background: var(--calm);
+  color: var(--ink);
   border-radius: 24px;
   padding: 24px;
   display: flex;
@@ -1090,7 +1092,7 @@ select {
   border: none;
   padding: 0;
   min-height: var(--tap);
-  color: var(--on-ink);
+  color: var(--action);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -1486,16 +1488,17 @@ a.btn {
   gap: 12px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: var(--ink);
-  color: var(--on-ink);
-  box-shadow: 0 6px 20px rgba(31, 42, 68, 0.25);
+  background: var(--calm);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgba(31, 42, 68, 0.18);
   /* Taps go through the message to the screen under it. Only the OK button takes a tap. */
   pointer-events: none;
 }
 
 .notice-bar .link {
   pointer-events: auto;
-  color: var(--on-ink);
+  color: var(--action);
   min-height: 36px;
   flex: none;
 }
@@ -1533,7 +1536,7 @@ a.btn {
 }
 
 .sq.future.current {
-  background: transparent;
+  background: var(--yellow-soft);
   border-color: var(--ink);
 }
 
@@ -1624,9 +1627,9 @@ a.btn {
 }
 
 .round-btn.dark {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
 }
 
 /* ---------- Safety net (ux-v2 section 7) ---------- */
@@ -1663,8 +1666,8 @@ a.btn {
 
 .btn.dashed {
   background: transparent;
-  color: var(--ink);
-  border: 1.5px dashed var(--ink);
+  color: var(--action);
+  border: 1.5px dashed var(--action);
 }
 
 .find-row {
@@ -2070,7 +2073,7 @@ textarea {
 }
 
 .payday-card .tag.paid {
-  border-color: var(--yellow);
+  border-color: var(--ink);
 }
 
 /* ---------- List / Calendar switch and the month grid ---------- */

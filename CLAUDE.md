@@ -98,27 +98,36 @@ The app links to these products but doesn't contain them.
 
 ## 3. Design system
 
-Approved look: `mockups/01-core-app-screens.png`. The palette is called "Pay Stub & Highlighter".
+Approved look: `mockups/01-core-app-screens.png` for layout. Colors are "calm sage" (`brand/design-tokens-v2.md`, decided 30 Oct 2026): big surfaces are soft sage, ink stays for text and the logo.
 
 ```css
 :root {
-  --paper:  #F4F0E6;  /* app background (light) */
-  --card:   #FBF9F3;  /* cards on paper (from mockup), white also fine */
-  --ink:    #1F2A44;  /* text, lines, primary buttons */
-  --yellow: #FFE14D;  /* ONLY for paid / done / the one key word. Never as text color. */
-  --yellow-soft: #FFF6C2; /* soft yellow box, rare */
-  --gray:   #5C5A55;  /* secondary text */
-  --line:   #E2DCCD;  /* empty bars, dividers */
-  --pink:   #FF8FB1;  /* reserved for Pack 2 "Together" (partner 2 dot). Not used in Pack 1. */
+  --paper:      #F8F6F0;  /* background */
+  --card:       #FFFFFF;
+  --calm:       #E6EFE8;  /* big cards (the payday card, the first-step card, banners) */
+  --calm-band:  #D8E7DC;  /* a band behind the top 150px of each screen */
+  --ink:        #1F2A44;  /* text, lines, logo */
+  --action:     #2F4A6D;  /* main buttons, links, secondary button outlines. Text on it is white. */
+  --yellow:     #FFE14D;  /* ONLY for paid / done / the debt-free month / the next payday square. Never as text color. */
+  --yellow-soft:#FFF6C2;
+  --gray:       #5C5A55;  /* secondary text */
+  --line:       #E2DCCD;  /* empty bars, dividers, hairlines */
+  --pink:       #FF8FB1;  /* reserved for Pack 2 "Together" (partner 2 dot). Not used in Pack 1. */
 }
+/* dark: paper #1B2433, card #222D3F, calm #24332B (the payday card), calm-band #2A3B31, text #E8EDE9, gray #A9B4AC,
+   action #9DBBE6 with dark text #14203A (a lighter blue so links read on dark) */
 ```
+
+- **Calm surfaces:** every large surface that used to be ink is `--calm` with ink text. Rows inside it are white at 75% with a `--line` hairline. Yellow and sage are close in lightness, so yellow inside a calm card (a ticked box, a Paid label) always keeps an ink edge.
+- **Buttons and links:** main buttons use `--action` with white text, secondary buttons are an `--action` outline, links use `--action`. Small controls (a pressed chip, the List / Calendar switch) stay ink.
+- **Contrast:** `src/styles/contrast.test.ts` checks every text and background pair in both themes (4.5:1 for body text).
 
 - **Yellow rule:** yellow means paid, done, or the single most important word on a screen (for example the debt-free date, highlighted like a highlighter swipe). Ticked boxes, paid paydays, paid-off debts, filled progress and milestones reached are yellow. Yellow is never used as a text color.
 - **Highlight style:** use a solid `background-color` for the highlighter swipe. Do not use CSS gradients for highlights in anything that gets exported to PDF: one PDF viewer showed our gradient highlight as pink.
 - **Fonts (Google Fonts):** Bricolage Grotesque (700-800) for headings and big numbers on hero spots; Inter for body text and all numbers (use `font-variant-numeric: tabular-nums`); Caveat (700) only for one small handwritten line, like "one paycheck at a time" under a button.
-- **Shapes:** rounded cards (about 16px radius), thin ink or line borders, square checkboxes with rounded corners that fill yellow when ticked, dark ink primary buttons with paper-colored text.
-- **Logo:** the wordmark is "paid in yellow", with "yellow" on a yellow swipe. Use `brand/paidinyellow-wordmark-transparent.svg` on light screens and `paidinyellow-wordmark-dark.svg` on ink. The app icon is `icon-paystub.svg` (a pay stub with one highlighted, checked line).
-- **Dark mode:** ink-based background, paper-colored text, and yellow keeps its "paid" meaning.
+- **Shapes:** rounded cards (about 16px radius), thin ink or line borders, square checkboxes with rounded corners that fill yellow when ticked, `--action` primary buttons with white text.
+- **Logo:** the wordmark is "paid in yellow", with "yellow" on a yellow swipe. Use `brand/paidinyellow-wordmark-transparent.svg` on light screens and `paidinyellow-wordmark-dark.svg` on dark. The app icon is `icon-paystub.svg` (a pay stub with one highlighted, checked line) on the `--calm-band` green; `npm run icons` makes the PNGs.
+- **Dark mode:** the dark tokens above (deep blue paper, sage-dark cards), light text, and yellow keeps its "paid" meaning.
 - **One main number per screen.** Everything else is secondary.
 - **Accessibility:** big tap targets (44px), text size setting, never color alone (paid rows also show a check or the word "Paid").
 

@@ -8,7 +8,7 @@ export interface ShareInfo {
 }
 
 const INK = '#1F2A44';
-const PAPER = '#F4F0E6';
+const PAPER = '#F8F6F0';
 const YELLOW = '#FFE14D';
 const LINE = '#E2DCCD';
 const GRAY = '#5C5A55';

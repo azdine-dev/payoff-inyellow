@@ -1,10 +1,11 @@
-// Makes the app icons from brand/icon-paystub.png (1024 px). Run: node tools/make-icons.mjs
+// Makes the app icons from brand/icon-paystub.svg (calm-band green background). Run: node tools/make-icons.mjs
 import { chromium } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
-const src = 'data:image/png;base64,' + readFileSync('brand/icon-paystub.png').toString('base64');
-const PAPER = '#F4F0E6';
+const src = 'data:image/svg+xml;base64,' + readFileSync('brand/icon-paystub.svg').toString('base64');
+const PAPER = '#D8E7DC'; // the calm band, the same as the icon background and the PWA theme color
 const jobs = [
+  { file: 'brand/icon-paystub.png', size: 1024, pad: 0, bg: null },
   { file: 'public/icons/icon-192.png', size: 192, pad: 0, bg: null },
   { file: 'public/icons/icon-512.png', size: 512, pad: 0, bg: null },
   { file: 'public/icons/apple-touch-icon.png', size: 180, pad: 0, bg: PAPER }, // iPhone fills the corners itself
