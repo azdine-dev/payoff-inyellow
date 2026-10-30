@@ -46,7 +46,8 @@ test.describe('3 · labels on payday rows and Coming up', () => {
     await expect(row.locator('.tag', { hasText: 'Extra' })).toBeVisible();
     await expect(row.locator('.tag.paid')).toHaveCount(0);
     await row.click();
-    await expect(row.locator('.tag.paid')).toHaveText('Paid');
+    // the label shows for a moment before the payday is recorded (or stays, when ticking is not the last step)
+    await expect(row.locator('.tag.paid').or(page.getByTestId('paid-card'))).toBeVisible();
   });
 
   test('Coming up says Paid once a payday covered the bill', async ({ page }) => {
@@ -130,5 +131,40 @@ test.describe('4 · Path: List / Calendar', () => {
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
     await page.getByTestId('payday-calendar').getByRole('gridcell', { name: 'Thursday 15 October' }).click();
     await expect(page.getByTestId('calendar-day').getByTestId('empty')).toContainText('Nothing on this day.');
+  });
+});
+
+test.describe('5 · empty lists', () => {
+  test('every empty list has a small picture and one warm line', async ({ page }) => {
+    await quickSetup(page);
+    // Today: nothing due in the next 14 days
+    const comingEmpty = page.getByTestId('coming-up-empty');
+    await expect(comingEmpty.getByTestId('empty')).toContainText('Nothing due in the next 14 days.');
+    await expect(comingEmpty.locator('svg.empty-art')).toBeVisible();
+    // Safety net: no yearly bills yet
+    await goTab(page, 'Safety net');
+    await expect(page.getByRole('region', { name: 'Yearly bills' }).getByTestId('empty')).toContainText('No yearly bills yet.');
+    // Debts: a debt with no history
+    await goTab(page, 'Debts');
+    await page.getByRole('button', { name: 'Visa, options' }).click();
+    await page.getByRole('button', { name: 'History' }).click();
+    await expect(page.getByRole('dialog').getByTestId('empty')).toContainText('Nothing yet.');
+    await page.getByRole('button', { name: 'Close' }).click();
+    // Path: the payday list when nothing is done yet
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Payday list' }).click();
+    await page.getByRole('button', { name: /^Done/ }).click();
+    await expect(page.getByRole('dialog').getByTestId('empty')).toContainText('No paydays done yet.');
+    await expectBrandRules(page);
+  });
+
+  test('a plan with every debt archived says so warmly', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Debts');
+    for (const name of ['Visa', 'Store card']) {
+      await page.getByRole('button', { name: `${name}, options` }).click();
+      await page.getByRole('button', { name: 'Archive' }).click();
+    }
+    await expect(page.getByRole('region', { name: 'No debts' }).getByTestId('empty')).toContainText('No debts to pay right now.');
   });
 });

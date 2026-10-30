@@ -15,6 +15,7 @@ import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, freshPaidDebts, openDebtId, plan, today } from '../state/store';
 import { Count } from '../ui/useCountUp';
 import { CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
+import { Empty } from '../ui/Empty';
 import { Ring } from '../ui/Ring';
 
 type Mode = { kind: 'add' } | { kind: 'actions' | 'edit' | 'charge' | 'statement' | 'history'; id: string } | null;
@@ -319,7 +320,11 @@ export function Debts() {
         </button>
       </header>
       {sorted.map(card)}
-      {!active.length && <p class="card">No debts to pay right now.</p>}
+      {!active.length && (
+        <section class="card" aria-label="No debts">
+          <Empty art="debts" line="No debts to pay right now. Tap the plus if one comes up." />
+        </section>
+      )}
       {active.length > 0 && (
         <section class="card stack" aria-label="Tap a debt to">
           <p class="label">Tap a debt to</p>
@@ -380,7 +385,7 @@ export function Debts() {
         {current && (
           <>
             {historyOf(current).length === 0 ? (
-              <p class="muted">Nothing yet. Payments, new charges and statement updates show here.</p>
+              <Empty art="list" line="Nothing yet. Payments and charges show up here." />
             ) : (
               <ul class="history-list" data-testid="debt-history">
                 {historyOf(current).map((h) => (

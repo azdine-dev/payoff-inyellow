@@ -17,6 +17,7 @@ import {
 import { PAYDAYS_PER_YEAR } from '../engine';
 import { activeDebts } from '../state/planInput';
 import { act, data, today } from '../state/store';
+import { Empty } from '../ui/Empty';
 import { useCountUp } from '../ui/useCountUp';
 import { Bar, Checkbox, ChevronRight, Field, Note, NumberInput, Sheet } from '../ui/controls';
 
@@ -148,7 +149,7 @@ export function Money() {
           </p>
           {d.funds.length > 0 && <span class="muted num">{money(eachPayday, cur)} each payday</span>}
         </div>
-        {d.funds.length === 0 && <p class="muted">Bills you know are coming, like car repairs or gifts. A little each payday keeps them off a card.</p>}
+        {d.funds.length === 0 && <Empty art="envelope" line="No yearly bills yet. Add one and a little goes aside each payday." />}
         {d.funds.map((f) => (
           <button key={f.id} type="button" class="fund-row" aria-label={`${f.name}, edit`} onClick={() => openFund('edit', f.id)}>
             <span class="row">

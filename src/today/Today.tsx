@@ -30,6 +30,7 @@ import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
 import { DebtFreeCard } from './DebtFreeCard';
+import { Empty } from '../ui/Empty';
 import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, mergedRows, paidFromLog, whyFirst } from './model';
 
 interface JustPaid {
@@ -530,6 +531,7 @@ export function Today() {
                     onToggle={() => toggle(x.key)}
                     right={<span class="num pc-amount">{money(x.amount)}</span>}
                   >
+                    <span class="pc-title">{x.title}</span>
                     <span class="pc-tags">
                       {x.tags.map((t) => (
                         <span key={t} class="tag">
@@ -538,7 +540,6 @@ export function Today() {
                       ))}
                       {checked.has(x.key) && <span class="tag paid">Paid</span>}
                     </span>
-                    <span class="pc-title">{x.title}</span>
                     <span class="pc-rowsub">{x.sub}</span>
                   </Checkbox>
                 ))}
@@ -641,6 +642,12 @@ export function Today() {
             </button>
           </div>
 
+          {due.length === 0 && (
+            <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up-empty">
+              <p class="label">Coming up</p>
+              <Empty art="calendar" line="Nothing due in the next 14 days. Enjoy the quiet." small />
+            </section>
+          )}
           {due.length > 0 && (
             <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up">
               <p class="label">Coming up</p>

@@ -6,6 +6,7 @@ import { dayMonth, monthYear, shortDate } from '../lib/today';
 import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { data, plan } from '../state/store';
 import { CheckIcon, Sheet } from '../ui/controls';
+import { Empty } from '../ui/Empty';
 
 const FUTURE_STEP = 26;
 
@@ -60,8 +61,8 @@ function Body() {
         ))}
       </div>
 
-      {list === 'done' && d.paydays.length === 0 && <p class="muted">No paydays done yet. Each one you mark done turns yellow here.</p>}
-      {list === 'upcoming' && r.rows.length === 0 && <p class="muted">No paydays ahead.</p>}
+      {list === 'done' && d.paydays.length === 0 && <Empty art="calendar" line="No paydays done yet. Your first one turns yellow." />}
+      {list === 'upcoming' && r.rows.length === 0 && <Empty art="calendar" line="No paydays ahead. That is the finish line." />}
 
       <div class="timeline" aria-label="Paydays">
         {list === 'done'
