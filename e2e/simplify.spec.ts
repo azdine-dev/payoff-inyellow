@@ -75,3 +75,60 @@ test.describe('3 · labels on payday rows and Coming up', () => {
     await expect(next.locator('.tag.paid')).toHaveCount(0);
   });
 });
+
+test.describe('4 · Path: List / Calendar', () => {
+  test('a month grid with a dot under paydays and bill days, and a day opens its lines', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Path');
+    // List is the first view: the squares
+    await expect(page.locator('.payday-grid')).toBeVisible();
+    await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+    const cal = page.getByTestId('payday-calendar');
+    await expect(cal).toContainText('October 2026');
+    await expect(page.locator('.payday-grid')).toBeHidden();
+    const payday = cal.getByRole('gridcell', { name: 'Friday 23 October, payday' });
+    await expect(payday.locator('.dot-pay')).toHaveCount(1);
+    const bill = cal.getByRole('gridcell', { name: 'Monday 12 October, bill due' });
+    await expect(bill.locator('.dot-bill')).toHaveCount(1);
+    // tap a payday: its lines and total
+    await payday.click();
+    const lines = page.getByTestId('calendar-day');
+    await expect(lines).toContainText('Store card');
+    await expect(lines.locator('.tag', { hasText: 'Bill' })).toBeVisible();
+    await expect(lines).toContainText('Total');
+    // tap a bill day
+    await bill.click();
+    await expect(lines).toContainText('Visa due');
+    // next month, then back to the List
+    await cal.getByRole('button', { name: 'Next month' }).click();
+    await expect(cal).toContainText('November 2026');
+    await expect(cal.getByRole('gridcell', { name: 'Friday 6 November, payday' })).toBeVisible();
+    await page.getByRole('button', { name: 'List', exact: true }).click();
+    await expect(page.locator('.payday-grid')).toBeVisible();
+    await expectBrandRules(page);
+  });
+
+  test('a paid payday is a yellow filled circle', async ({ page }) => {
+    await quickSetup(page);
+    await tapDidIt(page);
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+    const paid = page.getByTestId('payday-calendar').getByRole('gridcell', { name: 'Friday 23 October, payday, paid' });
+    await expect(paid).toHaveClass(/paid/);
+    await expect(paid.locator('.cal-num')).toHaveCSS('background-color', 'rgb(255, 225, 77)');
+    await expect(paid.locator('.dot-pay')).toHaveCount(0);
+    await paid.click();
+    const lines = page.getByTestId('calendar-day');
+    await expect(lines.locator('.tag.paid').first()).toHaveText('Paid');
+    await expect(lines).toContainText('Total');
+  });
+
+  test('an empty day says so with a small picture', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+    await page.getByTestId('payday-calendar').getByRole('gridcell', { name: 'Thursday 15 October' }).click();
+    await expect(page.getByTestId('calendar-day').getByTestId('empty')).toContainText('Nothing on this day.');
+  });
+});

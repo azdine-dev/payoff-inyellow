@@ -1,7 +1,7 @@
 /** Labels on Coming up: Bill, then Paid once a payday covered it, or "Not paid yet" once its date passed. */
 import { describe, expect, it } from 'vitest';
 import type { PaydayLog } from '../data/types';
-import { billPaid, comingUp, prevDueDate } from './model';
+import { billPaid, billState, comingUp, prevDueDate } from './model';
 import { countdownParts } from './DebtFreeCard';
 import { roadDone } from '../ui/Road';
 
@@ -55,5 +55,18 @@ describe('the countdown card', () => {
     expect(roadDone(50)).toBeGreaterThan(roadDone(10));
     expect(roadDone(99)).toBe(7);
     expect(roadDone(100)).toBe(8);
+  });
+});
+
+describe('billState', () => {
+  const store = { id: 's', minMonthly: 50 };
+  it('is paid, late or upcoming', () => {
+    const data = { paydays: [done(1, '2026-10-09', [{ debtId: 's', name: 'Store card', amount: 50, due: '2026-10-12' }])] };
+    expect(billState(data, store, '2026-10-12', '2026-10-30')).toBe('paid');
+    expect(billState(data, store, '2026-10-20', '2026-10-30')).toBe('late');
+    expect(billState(data, store, '2026-11-05', '2026-10-30')).toBe('upcoming');
+    expect(billState(data, store, '2026-10-05', '2026-10-30')).toBe('upcoming'); // before the plan began
+    expect(billState(data, { id: 'z', minMonthly: 0 }, '2026-10-20', '2026-10-30')).toBe('upcoming');
+    expect(billState({ paydays: [] }, store, '2026-10-20', '2026-10-30')).toBe('upcoming');
   });
 });

@@ -130,6 +130,16 @@ export function billPaid(data: Pick<AppData, 'paydays'>, debtId: string, due: st
   return data.paydays.some((p) => p.status === 'done' && p.bills?.some((b) => b.debtId === debtId && b.due === due));
 }
 
+/**
+ * One bill on one date: paid (a payday carried it), late (its date passed after the plan began and nobody paid it),
+ * or upcoming. Debts with no minimum never show as late.
+ */
+export function billState(data: Pick<AppData, 'paydays'>, debt: Pick<Debt, 'id' | 'minMonthly'>, due: string, today: string): 'paid' | 'late' | 'upcoming' {
+  if (billPaid(data, debt.id, due)) return 'paid';
+  const firstDone = data.paydays.filter((p) => p.status === 'done').map((p) => p.date).sort()[0];
+  return due < today && firstDone !== undefined && due >= firstDone && debt.minMonthly > 0 ? 'late' : 'upcoming';
+}
+
 /** The last date before `fromISO` that a debt with this due day was due (clamped to the month end). */
 export function prevDueDate(dueDay: number, fromISO: string): string {
   const from = parseISO(fromISO);

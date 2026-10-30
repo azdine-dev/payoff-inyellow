@@ -21,6 +21,7 @@ import { worthKnowing } from '../state/worthKnowing';
 import { Chart } from '../progress/Chart';
 import { Count, useCountUp } from '../ui/useCountUp';
 import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
+import { PaydayCalendar } from './PaydayCalendar';
 import { PaydayListSheet } from './PaydayListSheet';
 import { WhatIfSheet } from './WhatIfSheet';
 import { PrintDebts, PrintPayday } from './PrintSheets';
@@ -62,6 +63,8 @@ export function Path() {
 
   const [sheet, setSheet] = useState<'whatif' | 'list' | 'order' | 'export' | 'paid' | 'interest' | null>(null);
   const [cmode, setCmode] = useState<CountdownMode>(readCountdownMode);
+  // "Every payday" as squares (List) or as a month grid (Calendar)
+  const [paydayView, setPaydayView] = useState<'list' | 'calendar'>('list');
   // What "Print" prints: the plan (one page), this payday, or my debts
   const [printKind, setPrintKind] = useState<'plan' | 'payday' | 'debts'>('plan');
   const printNow = (kind: 'plan' | 'payday' | 'debts') => {
@@ -213,13 +216,20 @@ export function Path() {
       </section>
 
       <section class="card stack" aria-labelledby="grid-title">
-        <div class="row" style={{ alignItems: 'baseline' }}>
+        <div class="row" style={{ alignItems: 'center' }}>
           <p class="label" id="grid-title">
             Every payday
           </p>
-          <span class="muted small">paid ones turn yellow</span>
+          <div class="seg" role="group" aria-label="Show paydays as">
+            {(['list', 'calendar'] as const).map((v) => (
+              <button key={v} type="button" class="seg-btn" aria-pressed={paydayView === v} onClick={() => setPaydayView(v)}>
+                {v === 'list' ? 'List' : 'Calendar'}
+              </button>
+            ))}
+          </div>
         </div>
-        <div class="payday-grid" role="list">
+        {paydayView === 'calendar' && <PaydayCalendar d={d} r={r} today={today.value} />}
+        <div class="payday-grid" role="list" hidden={paydayView === 'calendar'}>
           {['Debts listed', 'Plan made'].map((label) => (
             <div key={label} class="sq on" role="listitem" aria-label={label} title={label}>
               <CheckIcon />
@@ -239,8 +249,8 @@ export function Path() {
             />
           ))}
         </div>
-        <p class="muted small">The first two squares are done already: debts listed, plan made.</p>
-        {ahead > aheadShown && <p class="muted small">+ {ahead - aheadShown} more paydays after these.</p>}
+        {paydayView === 'list' && <p class="muted small">The first two squares are done already: debts listed, plan made.</p>}
+        {paydayView === 'list' && ahead > aheadShown && <p class="muted small">+ {ahead - aheadShown} more paydays after these.</p>}
       </section>
 
       {debtFree && (
