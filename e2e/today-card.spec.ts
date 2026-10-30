@@ -62,7 +62,7 @@ test('"Change what I paid" redoes the payday with another amount, and stays unti
   await page.reload();
   await expect(page.getByTestId('change-paid')).toBeVisible();
   await goTab(page, 'Path');
-  await page.getByRole('button', { name: 'Payday list', exact: true }).click();
+  await page.getByRole('button', { name: 'List', exact: true }).click();
   await page.getByRole('button', { name: 'Done (1)' }).click();
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toHaveCount(1);
 });

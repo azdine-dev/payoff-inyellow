@@ -22,6 +22,7 @@ import { FooterNote, HelpTip, SetupBar } from '../ui/controls';
 import { RoadIllustration, roadDone } from '../ui/Road';
 import { HowWeGotThis } from './HowWeGotThis';
 import { LaterChips } from './LaterChips';
+import { RateSheet } from './LaterSheets';
 import { EmailCapture, UnlockCard } from './Unlock';
 
 export function Result() {
@@ -45,6 +46,8 @@ export function Result() {
     : [];
   const parts = partsList.join(' · ');
   const [how, setHow] = useState(false);
+  const [rateFor, setRateFor] = useState<string | null>(null);
+  const missingRates = d.debts.filter((debt) => debt.status === 'active' && debt.rateMissing);
 
   const sooner = r.debtFreeDate && mo.months !== null ? mo.months - monthsBetween(today.value, r.debtFreeDate) : null;
   const less = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
@@ -94,6 +97,27 @@ export function Result() {
       ) : (
         <h1 style={{ fontSize: '2rem' }}>{isDebtFree(d) ? 'You’re debt-free.' : 'Right now this plan takes more than 20 years.'}</h1>
       )}
+
+      {missingRates.length > 0 && (
+        <section class="card soft stack" style={{ gap: 8 }} aria-label="Estimated interest rates" data-testid="assumed-rates">
+          <p class="label">Estimated rates</p>
+          <p class="muted small">We used these rates because they were missing. Your date may change when you add the rates from your statements.</p>
+          <div class="stack" style={{ gap: 6 }}>
+            {missingRates.map((debt) => (
+              <div class="row" key={debt.id}>
+                <span>{debt.name}: {debt.apr}%</span>
+                <button type="button" class="link small" onClick={() => setRateFor(debt.id)}>Add the real rate</button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <p class="muted small" data-testid="buffer-plan-note">
+        {s.bufferGoal > 0
+          ? `Your plan starts with a ${formatMoneyAuto(s.bufferGoal, cur)} goal for surprise costs. It fills this before extra debt payments. You can change the goal in Safety net.`
+          : 'Your plan has no safety net goal. You can add one later in Safety net.'}
+      </p>
 
       {r.debtFreeDate && (
         <div class="grid-2">
@@ -225,6 +249,7 @@ export function Result() {
         </>
       )}
       <HowWeGotThis open={how} onClose={() => setHow(false)} />
+      <RateSheet debtId={rateFor} onClose={() => setRateFor(null)} />
       <p class="hand">{COPY.slogan}</p>
       <FooterNote privacy={syncOn.value ? COPY.privacySynced : COPY.privacy} />
     </main>

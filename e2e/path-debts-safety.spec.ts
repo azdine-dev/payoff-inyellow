@@ -7,28 +7,30 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
 });
 
-test('Path: the progress card, the payday grid, what is ahead and the two buttons', async ({ page }) => {
+test('Path: the header, three stats, the road, and the footer links', async ({ page }) => {
   await quickSetup(page);
   await goTab(page, 'Path');
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
-  await expect(page.getByTestId('pct-gone')).toHaveText('0%');
+  await expect(page.getByTestId('countdown-toggle')).toHaveText(/to go$/);
+  await expect(page.getByTestId('status-line')).toHaveText(/^Debt-free · [A-Z][a-z]{2} \d{4}$/);
   await expect(page.getByTestId('interest-avoided')).toBeVisible();
 
-  // Ten squares a row; two are pre-filled; the next payday is an outline
-  const cols = await page.locator('.payday-grid').evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
-  expect(cols).toBe(10);
-  await expect(page.locator('.payday-grid .sq.on')).toHaveCount(2);
-  await expect(page.locator('.payday-grid .sq.current')).toHaveCount(1);
-
-  // Milestones only: a debt gone, halfway, debt-free (the last one on yellow)
-  const ahead = page.getByTestId('whats-ahead');
-  await expect(ahead).toContainText('Store card gone');
-  await expect(ahead).toContainText('Halfway there');
-  await expect(ahead).toContainText('Debt-free');
-  await expect(ahead).toContainText('around'); // months, never fake precision, for what is far away
-  await expect(page.getByRole('button', { name: 'What if I add more?' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Payday list', exact: true })).toBeVisible();
+  // The road: two squares pre-filled, the next payday is an outline, a pin says where you are
+  await expect(page.locator('[data-testid="road-sq"][data-kind="start"]')).toHaveCount(2);
+  await expect(page.locator('[data-testid="road-sq"][data-kind="next"]')).toHaveCount(1);
+  await expect(page.getByTestId('road-pin')).toHaveAttribute('aria-label', /You are here/);
+  // Flags: a debt gone, halfway, the finish
+  await expect(page.getByRole('button', { name: /^Store card\. Gone / })).toHaveCount(1);
+  await expect(page.locator('[data-testid="road-flag"][data-kind="half"]')).toHaveCount(1);
+  await expect(page.locator('[data-testid="road-flag"][data-kind="finish"]')).toHaveCount(1);
+  // The old tiles, the % card, the milestone cards and the what-if button are gone
+  await expect(page.getByTestId('whats-ahead')).toHaveCount(0);
+  await expect(page.getByTestId('next-milestone')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'What if I add more?' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'More options' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'List', exact: true })).toBeVisible();
   await expect(page.getByText('Order: smallest first')).toBeVisible();
+  for (const name of ['Order', 'Print', 'Export']) await expect(page.getByRole('navigation', { name: 'Order, print and export' }).getByRole('button', { name })).toBeVisible();
   await expectBrandRules(page);
 });
 
@@ -37,8 +39,8 @@ test('Path: what-if and the payday list are bottom sheets, and "Use this in my p
   await goTab(page, 'Path');
   const before = await page.getByTestId('status-line').innerText();
 
-  await page.getByRole('button', { name: 'What if I add more?' }).click();
-  const sheet = page.getByRole('dialog', { name: 'What if I add more?' });
+  await page.getByRole('button', { name: 'More options' }).click();
+  const sheet = page.getByRole('dialog', { name: 'More options' });
   await sheet.getByLabel('Add money each payday').fill('100');
   await expect(sheet.getByTestId('whatif-result')).toContainText('sooner');
   await sheet.getByRole('button', { name: 'Use this in my plan' }).click();
@@ -46,22 +48,22 @@ test('Path: what-if and the payday list are bottom sheets, and "Use this in my p
   await expect(page.getByTestId('status-line')).not.toHaveText(before);
 
   // Payday list: tap a payday and it opens in place
-  await page.getByRole('button', { name: 'Payday list', exact: true }).click();
+  await page.getByRole('button', { name: 'List', exact: true }).click();
   await page.getByRole('button', { name: 'Fri 23 Oct, to come' }).click();
   await expect(page.getByRole('group', { name: 'Fri 23 Oct details' })).toContainText('Total');
   await page.getByRole('button', { name: 'Fri 23 Oct, to come' }).click();
   await expect(page.getByRole('group', { name: 'Fri 23 Oct details' })).toHaveCount(0);
 });
 
-test('Path: the order opens from "change", and print or export is one sheet', async ({ page }) => {
+test('Path: the order, print and export are footer links that open sheets', async ({ page }) => {
   await quickSetup(page);
   await goTab(page, 'Path');
-  await page.getByRole('button', { name: 'change', exact: true }).click();
+  await page.getByRole('button', { name: 'Order', exact: true }).click();
   await page.getByRole('radio', { name: /Biggest interest first/ }).click();
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByText('Order: biggest interest first')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Print or export' }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export the plan (CSV)' }).click()]);
   expect(download.suggestedFilename()).toBe('paidinyellow-plan.csv');
 });

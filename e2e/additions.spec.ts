@@ -186,7 +186,7 @@ test.describe('6 · print and CSV', () => {
   test('"Print this payday" is a sheet of lines with due dates and tick boxes', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'Print or export' }).click();
+    await page.getByRole('button', { name: 'Print' }).click();
     await page.getByRole('button', { name: 'Print this payday' }).click();
     await expect.poll(() => page.evaluate(() => (window as unknown as { __printed: number }).__printed)).toBe(1);
     await page.emulateMedia({ media: 'print' });
@@ -203,7 +203,7 @@ test.describe('6 · print and CSV', () => {
   test('"Print my debts" lists each debt in order with balance, rate, minimum and due day', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'Print or export' }).click();
+    await page.getByRole('button', { name: 'Print' }).click();
     await page.getByRole('button', { name: 'Print my debts' }).click();
     await page.emulateMedia({ media: 'print' });
     const sheet = page.getByTestId('print-debts');
@@ -220,7 +220,7 @@ test.describe('6 · print and CSV', () => {
     await tapDidIt(page);
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'Print or export' }).click();
+    await page.getByRole('button', { name: 'Export' }).click();
     const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export my payments (CSV)' }).click()]);
     expect(download.suggestedFilename()).toBe('paidinyellow-payments.csv');
     const text = (await import('node:fs')).readFileSync((await download.path())!, 'utf8');

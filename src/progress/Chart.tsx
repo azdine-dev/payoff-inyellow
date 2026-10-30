@@ -37,6 +37,21 @@ export function Chart(props: { data: ChartData; startLabel: string; endLabel: st
             </text>
           </>
         )}
+        {data.minimums.length > 0 && (
+          <text
+            x={Math.min(W - PAD.r, sx(data.minimums[data.minimums.length - 1]!.x))}
+            y={Math.max(PAD.t + 8, sy(data.minimums[data.minimums.length - 1]!.y) - 7)}
+            font-size="11"
+            font-weight="600"
+            fill="var(--gray)"
+            stroke="var(--card)"
+            stroke-width="4"
+            paint-order="stroke"
+            text-anchor="end"
+          >
+            Minimums only: {data.minimumsMonths === null ? 'never ends' : props.minimumsEnd}
+          </text>
+        )}
         <text x={PAD.l} y={H - 5} font-size="11" fill="var(--gray)">
           {props.startLabel}
         </text>
@@ -49,7 +64,7 @@ export function Chart(props: { data: ChartData; startLabel: string; endLabel: st
           <b style={{ color: 'var(--ink)' }}>━</b> Your plan
         </span>
         <span>
-          <b>╌</b> Minimums only ({data.minimumsMonths === null ? 'never ends' : `ends ${props.minimumsEnd}`})
+          <b>╌</b> Minimums only
         </span>
       </figcaption>
     </figure>

@@ -9,6 +9,7 @@ import {
   findMoneyItems,
   removeFund,
   saveFindMoney,
+  setBuffer,
   setBufferGoal,
   spendFund,
   useBuffer,
@@ -21,7 +22,7 @@ import { Empty } from '../ui/Empty';
 import { useCountUp } from '../ui/useCountUp';
 import { Bar, Checkbox, ChevronRight, Field, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 
-type Mode = 'use-buffer' | 'goal' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
+type Mode = 'use-buffer' | 'balance' | 'goal' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
 
 export function Money() {
   const d = data.value!;
@@ -68,6 +69,9 @@ export function Money() {
       if (amount === null || amount <= 0) return bad();
       await act((db, x) => useBuffer(db, x, amount, text2, today.value));
       setUsedNote(true);
+    } else if (mode === 'balance') {
+      if (amount === null || amount < 0) return bad();
+      await act((db, x) => setBuffer(db, x, amount, today.value));
     } else if (mode === 'goal') {
       if (amount === null || amount < 0) return bad();
       await act((db, x) => setBufferGoal(db, x, amount));
@@ -129,6 +133,9 @@ export function Money() {
         </button>
         <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => { setText(String(s.bufferGoal)); setMode('goal'); }}>
           Change my goal
+        </button>
+        <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => { setText(String(d.buffer.amount)); setMode('balance'); }}>
+          Update amount set aside
         </button>
         {d.buffer.history.length > 0 && (
           <details>
@@ -238,6 +245,13 @@ export function Money() {
         <Field label="Goal"><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Buffer goal" /></Field>
         {msg && <Note>{msg}</Note>}
         <button type="button" class="btn" onClick={save}>Save</button>
+        <button type="button" class="link" onClick={close}>Cancel</button>
+      </Sheet>
+      <Sheet open={mode === 'balance'} onClose={close} title="Amount set aside">
+        <p class="muted">Enter what is in your separate account or envelope now.</p>
+        <Field label="Amount set aside"><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Amount set aside" /></Field>
+        {msg && <Note>{msg}</Note>}
+        <button type="button" class="btn" onClick={save}>Save amount</button>
         <button type="button" class="link" onClick={close}>Cancel</button>
       </Sheet>
       <Sheet open={mode === 'fund-add' || (typeof mode === 'object' && mode?.kind === 'edit')} onClose={close} title={mode === 'fund-add' ? 'Add a yearly bill' : 'Edit yearly bill'}>

@@ -2258,3 +2258,173 @@ textarea {
 .payday-card .help-tip {
   color: var(--pc-fg);
 }
+
+/* ---------- Path: the header, the stats line, the road ---------- */
+.path-count {
+  align-self: flex-start;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 2.1rem;
+  line-height: 1.1;
+}
+
+.countdown-toggle.path-count {
+  font-size: 2.1rem;
+  text-decoration: none;
+  border-bottom: 2px dotted var(--ink);
+  min-height: 48px;
+}
+
+.path-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 4px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.path-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-val {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.road-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.road-scroll {
+  max-height: 460px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.road-sq .sq-body {
+  fill: var(--line);
+  stroke: var(--line);
+  stroke-width: 1.8;
+}
+
+.road-sq.next .sq-body {
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 2.6;
+}
+
+.road-sq.skipped .sq-body {
+  fill: none;
+  stroke: var(--ink);
+  stroke-dasharray: 3 3;
+}
+
+.road-sq.paid .sq-body,
+.road-sq.start .sq-body {
+  fill: none;
+  stroke: none;
+}
+
+.road-flag,
+.road-half,
+.road-finish {
+  cursor: pointer;
+  outline: none;
+}
+
+.road-flag:focus-visible,
+.road-half:focus-visible,
+.road-finish:focus-visible {
+  outline: 2px solid var(--ink);
+}
+
+.road-pin,
+.road-finish {
+  transition: transform 600ms ease;
+}
+
+.road-flag.stamped .stamp {
+  transform-box: fill-box;
+}
+
+/* a newly paid square fills with the highlighter swipe */
+.sq-fill.swipe {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: road-swipe 500ms ease-out;
+}
+
+/* a debt that has just been paid: its stamp lands */
+.road-flag.fresh .stamp {
+  animation: road-stamp 500ms ease-out;
+}
+
+@keyframes road-swipe {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes road-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .road-pin,
+  .road-finish {
+    transition: none;
+  }
+  .sq-fill.swipe,
+  .road-flag.fresh .stamp {
+    animation: none;
+  }
+}
+
+.path-foot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.foot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  background: none;
+  color: var(--action);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg.wide {
+  display: flex;
+  width: 100%;
+}
+
+.seg.wide .seg-btn {
+  flex: 1;
+}

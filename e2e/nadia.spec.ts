@@ -2,28 +2,9 @@
  * The Nadia scenario: every 2 weeks, next payday Fri 6 Nov 2026, $150 per payday, buffer 200 of 500,
  * Gifts $260 in December. Store Card 450 / 26.99% / 30 / day 12, Medical 600 / 0% / 50 / day 3, Visa 2,200 / 22.99% / 66 / day 20.
  */
-import { expect, test, type Page } from '@playwright/test';
-import { runWizard, startPlan, goTab, expectBrandRules, type WizardConfig } from './scenario';
-
-export const NADIA: WizardConfig = {
-  frequency: 'Every 2 weeks',
-  nextPayday: '2026-11-06',
-  debts: [
-    { name: 'Store Card', balance: '450', apr: '26.99', min: '30', due: '12' },
-    { name: 'Medical', balance: '600', apr: '0', min: '50', due: '3' },
-    { name: 'Visa', balance: '2200', apr: '22.99', min: '66', due: '20' },
-  ],
-  bufferNow: '200',
-  extra: '150',
-  yearly: [{ idea: 'Gifts and holidays', amount: '260', month: 'December' }],
-};
-
-/** Sets the phone clock to Fri 30 Oct 2026 (so Medical, due Tue 3 Nov, is inside "Coming up"), then runs the setup. */
-export async function nadiaSetup(page: Page) {
-  await page.clock.setFixedTime(new Date('2026-10-30T10:00:00'));
-  await runWizard(page, NADIA);
-  await startPlan(page);
-}
+import { expect, test } from '@playwright/test';
+import { goTab, expectBrandRules } from './scenario';
+import { nadiaSetup } from './nadia';
 
 test.describe('Part A · Today, the Nadia scenario', () => {
   test('1 · the buffer set aside in setup is saved: Safety net and the focus card agree', async ({ page }) => {

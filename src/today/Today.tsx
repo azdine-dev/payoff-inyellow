@@ -168,7 +168,6 @@ export function Today() {
     const next = new Set(checked);
     next.has(key) ? next.delete(key) : next.add(key);
     setChecked(next);
-    if (rows.length && next.size === rows.length) void apply();
   };
 
   // What is ticked so far, and what is left of this payday

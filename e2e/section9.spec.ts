@@ -32,7 +32,7 @@ test('archiving every debt gives the same debt-free state on every screen, with 
   await expect(line).toHaveText('Debt-free');
   // Nothing is ticked on an empty plan: the only reached milestone is "Plan made"
   await expect(page.getByRole('listitem', { name: /, reached$/ })).toHaveCount(0);
-  await expect(page.getByRole('listitem', { name: 'Plan made' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Plan made' })).toBeVisible();
 });
 
 test('a date in another year shows its year', async ({ page }) => {

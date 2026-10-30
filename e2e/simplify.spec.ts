@@ -69,7 +69,7 @@ test.describe('3 · labels on payday rows and Coming up', () => {
   test('the payday list uses Bill, Extra, Buffer and Yearly, with a yellow Paid once done', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'Payday list' }).click();
+    await page.getByRole('button', { name: 'List', exact: true }).click();
     const next = page.getByRole('button', { name: 'Fri 23 Oct, to come' }).locator('xpath=..');
     await expect(next.locator('.tag', { hasText: 'Bill' })).toBeVisible();
     await expect(next.locator('.tag', { hasText: 'Minimum' })).toHaveCount(0);
@@ -81,12 +81,12 @@ test.describe('4 · Path: List / Calendar', () => {
   test('a month grid with a dot under paydays and bill days, and a day opens its lines', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    // List is the first view: the squares
-    await expect(page.locator('.payday-grid')).toBeVisible();
+    // The road is the first view
+    await expect(page.getByTestId('road')).toBeVisible();
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
     const cal = page.getByTestId('payday-calendar');
     await expect(cal).toContainText('October 2026');
-    await expect(page.locator('.payday-grid')).toBeHidden();
+    await expect(page.getByTestId('road')).toBeHidden();
     const payday = cal.getByRole('gridcell', { name: 'Friday 23 October, payday' });
     await expect(payday.locator('.dot-pay')).toHaveCount(1);
     const bill = cal.getByRole('gridcell', { name: 'Monday 12 October, bill due' });
@@ -104,8 +104,8 @@ test.describe('4 · Path: List / Calendar', () => {
     await cal.getByRole('button', { name: 'Next month' }).click();
     await expect(cal).toContainText('November 2026');
     await expect(cal.getByRole('gridcell', { name: 'Friday 6 November, payday' })).toBeVisible();
-    await page.getByRole('button', { name: 'List', exact: true }).click();
-    await expect(page.locator('.payday-grid')).toBeVisible();
+    await page.getByRole('button', { name: 'Road', exact: true }).click();
+    await expect(page.getByTestId('road')).toBeVisible();
     await expectBrandRules(page);
   });
 
@@ -152,9 +152,9 @@ test.describe('5 · empty lists', () => {
     await page.getByRole('button', { name: 'Close' }).click();
     // Path: the payday list when nothing is done yet
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'Payday list' }).click();
+    await page.getByRole('button', { name: 'List', exact: true }).click();
     await page.getByRole('button', { name: /^Done/ }).click();
-    await expect(page.getByRole('dialog').getByTestId('empty')).toContainText('No paydays done yet.');
+    await expect(page.getByTestId('empty')).toContainText('No paydays done yet.');
     await expectBrandRules(page);
   });
 
@@ -260,7 +260,7 @@ test.describe('1 · fewer words, explanations behind a (?)', () => {
       expect(list.length, `${tab} has cards`).toBeGreaterThan(1);
       for (const t of list) {
         const n = t.split(/\s+/).length;
-        expect(n >= 1 && n <= 4, `"${t}" on ${tab} has ${n} words`).toBe(true);
+        expect(n >= 1 && n <= 5, `"${t}" on ${tab} has ${n} words`).toBe(true); // "Your plan vs minimums only" is the one 5-word title
       }
     }
   });

@@ -116,7 +116,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await goTab(page, 'Plan');
     await expect(page.getByText('Order: smallest first')).toBeVisible();
     await expect(page.getByTestId('comparison')).toHaveCount(0); // the comparison shows on Path only when the rule fires
-    await page.getByRole('button', { name: 'change', exact: true }).click();
+    await page.getByRole('button', { name: 'Order', exact: true }).click();
     await expect(page.getByRole('radio', { name: /PaidInYellow order/ })).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByTestId('order-comparison')).toContainText('Biggest interest first would save $140, a small difference');
     await page.getByRole('button', { name: 'Done', exact: true }).click();
@@ -186,7 +186,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('listitem', { name: 'Buffer full, reached' })).toBeVisible();
     await expect(page.getByRole('listitem', { name: 'First extra payment, reached' })).toBeVisible();
     await goTab(page, 'Plan');
-    await expect(page.getByTestId('status-line')).toHaveText('Debt-free by Oct 2028 · 50 paydays left'); // 53 paydays in all (v2: bills by due date)
+    await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Oct 2028');
+    await expect(page.getByTestId('paydays-left')).toHaveText('50 paydays left'); // 53 paydays in all (v2: bills by due date)
   });
 
   // ---------------------------------------------------------------- part 6: payday 4, less money
@@ -207,7 +208,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await iDidIt(page, 'Fri 4 Dec');
     await expectPaidPayday(page, { date: 'Fri 4 Dec', total: 231, debtLeft: 14313.16 });
     await goTab(page, 'Plan');
-    await expect(page.getByTestId('status-line')).toHaveText('Debt-free by Oct 2028 · 49 paydays left'); // the date did not move
+    await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Oct 2028');
+    await expect(page.getByTestId('paydays-left')).toHaveText('49 paydays left'); // the date did not move
   });
 
   // ---------------------------------------------------------------- part 7: a new charge
@@ -223,7 +225,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await goTab(page, 'Progress');
     await expect(page.getByTestId('to-go')).toContainText('$14,358'); // 14,313.16 + 45
     await goTab(page, 'Plan');
-    await expect(page.getByTestId('status-line')).toHaveText('Debt-free by Oct 2028 · 49 paydays left'); // 20 Oct 2028, one payday later
+    await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Oct 2028');
+    await expect(page.getByTestId('paydays-left')).toHaveText('49 paydays left'); // 20 Oct 2028, one payday later
   });
 
   // ---------------------------------------------------------------- part 8: the buffer is used
@@ -340,7 +343,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   // ---------------------------------------------------------------- part 12: what-if and payoff order
   await test.step('What-if +$50 each payday: 11 Aug 2028, 6 paydays sooner, $168 less interest', async () => {
     await goTab(page, 'Plan');
-    await page.getByRole('button', { name: 'What if I add more?' }).click();
+    await page.getByRole('button', { name: 'More options' }).click();
     await page.getByLabel('Add money each payday').fill('50');
     const result = page.getByTestId('whatif-result');
     await expect(result).toContainText('August 2028');
@@ -509,8 +512,8 @@ test('Case B: a debt that grows, paid twice a month (15th and last day)', async 
     for (const label of ['Sat 31 Oct', 'Sun 15 Nov', 'Mon 30 Nov', 'Tue 15 Dec', 'Thu 31 Dec', 'Fri 15 Jan 2027']) { // the year shows once a date is not in the current year
       await expect(page.getByRole('button', { name: `${label}, to come`, exact: true })).toBeVisible();
     }
-    await expect(page.getByTestId('status-line')).toHaveText('Debt-free by Mar 2032 · 131 paydays left');
-    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Mar 2032');
+    await expect(page.getByTestId('paydays-left')).toHaveText('131 paydays left');
   });
 
   await test.step('First payday: the buffer comes first', async () => {
@@ -543,7 +546,8 @@ test('Case C: the well-known $8,000 at 24%', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: /Card.*due Sun 1 Nov/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^I did it/ })).toContainText('$240');
   await goTab(page, 'Plan');
-  await expect(page.getByTestId('status-line')).toHaveText('Debt-free by Jun 2031 · 56 paydays left');
+  await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Jun 2031');
+    await expect(page.getByTestId('paydays-left')).toHaveText('56 paydays left');
   await showPaydays(page, 'Upcoming');
   await page.getByRole('button', { name: 'Sun 1 Nov, to come', exact: true }).click();
   await expect(page.getByTestId('debt-left-after')).toContainText('$7,920.00');

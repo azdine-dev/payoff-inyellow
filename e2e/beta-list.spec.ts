@@ -8,25 +8,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Part 3 · Path', () => {
-  test('four tiles, each a door, and "Debts paid 2 of 4" next to the % gone', async ({ page }) => {
+  test('one line of three stats replaces the four tiles and the big % card', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    const tiles = page.getByRole('group', { name: 'Your numbers' }).getByRole('button');
-    await expect(tiles).toHaveCount(4);
-    for (const label of ['Owed now', 'Debt-free date', 'Paid off so far', 'Interest you avoid']) await expect(tiles.filter({ hasText: label })).toHaveCount(1);
-    await expect(page.getByTestId('debts-paid')).toHaveText('Debts paid 0 of 2');
-
-    await tiles.filter({ hasText: 'Paid off so far' }).click();
-    await expect(page.getByRole('dialog', { name: 'Paid off so far' })).toContainText('Store card');
-    await page.getByRole('button', { name: 'Close' }).click();
-    await tiles.filter({ hasText: 'Interest you avoid' }).click();
-    await expect(page.getByRole('dialog', { name: 'Interest you avoid' })).toContainText('Paying only minimums');
-    await page.getByRole('button', { name: 'Close' }).click();
-    await tiles.filter({ hasText: 'Debt-free date' }).click();
-    await expect(page.getByRole('dialog', { name: 'Payday list' })).toBeVisible();
-    await page.getByRole('button', { name: 'Close' }).click();
-    await tiles.filter({ hasText: 'Owed now' }).click();
-    await expect(page.getByRole('heading', { name: 'Debts', exact: true })).toBeVisible(); // the Debts tab
+    const stats = page.getByRole('group', { name: 'Your numbers' });
+    for (const label of ['Paid off', 'Still owed', 'Interest you avoid']) await expect(stats).toContainText(label);
+    await expect(stats.getByRole('button')).toHaveCount(0);
+    await expect(page.getByTestId('pct-gone')).toHaveCount(0);
+    await expect(page.getByTestId('tile-date')).toHaveCount(0);
     await expectBrandRules(page);
   });
 
@@ -34,34 +23,38 @@ test.describe('Part 3 · Path', () => {
     await quickSetup(page);
     await goTab(page, 'Path');
     const toggle = page.getByTestId('countdown-toggle');
-    await expect(toggle).toHaveText(/^\d+ months? left$/);
+    await expect(toggle).toHaveText(/^\d+ months? to go$/);
     await toggle.click();
-    await expect(toggle).toHaveText(/^\d(\.\d)? years? left$/);
+    await expect(toggle).toHaveText(/^\d(\.\d)? years? to go$/);
     await page.reload();
     await goTab(page, 'Path');
-    await expect(page.getByTestId('countdown-toggle')).toHaveText(/years? left$/); // remembered on this device
+    await expect(page.getByTestId('countdown-toggle')).toHaveText(/years? to go$/); // remembered on this device
     await page.getByTestId('countdown-toggle').click();
-    await expect(page.getByTestId('countdown-toggle')).toHaveText(/months? left$/);
+    await expect(page.getByTestId('countdown-toggle')).toHaveText(/months? to go$/);
   });
 
-  test('"Pay a bit more?" has four rows, and "Use this" moves the date', async ({ page }) => {
+  test('"Pay a bit more?" has four chips, a tap shows the new date, and "Use this" moves it', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
     const before = await page.getByTestId('status-line').innerText();
-    await page.getByRole('button', { name: 'What if I add more?' }).click();
-    const rows = page.getByTestId('more-row');
-    await expect(rows).toHaveCount(4);
-    await expect(page.getByLabel('Add money each payday')).toBeVisible(); // slider below the table
-    await rows.nth(2).getByRole('button', { name: 'Use +$100 each payday' }).click();
-    await expect(page.getByText('Done. Your plan and Today use it now.')).toBeVisible();
-    await page.getByRole('button', { name: 'Close' }).click();
+    const more = page.getByTestId('pay-more');
+    await expect(more.getByRole('button', { name: /^\+\$/ })).toHaveCount(4);
+    await more.getByRole('button', { name: '+$100' }).click();
+    await expect(more.getByTestId('more-result')).toContainText('Debt-free');
+    await expect(more.getByTestId('more-result')).toContainText('less interest');
+    await more.getByRole('button', { name: 'Use this' }).click();
+    await expect(more.getByTestId('more-done')).toBeVisible();
     await expect(page.getByTestId('status-line')).not.toHaveText(before);
+    // the slider and one-off money live behind "More options"
+    await more.getByRole('button', { name: 'More options' }).click();
+    await expect(page.getByLabel('Add money each payday')).toBeVisible();
   });
 
-  test('a Next milestone card sits above the list, and "This month: X of Y planned" shows after a payday', async ({ page }) => {
+  test('a Next stop card names the debt, and "This month: X of Y planned" shows after a payday', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await expect(page.getByTestId('next-milestone')).toContainText(/^Next milestone\s*Store card gone · /);
+    await expect(page.getByTestId('next-stop')).toContainText(/Next stop\s*Store card/);
+    await expect(page.getByTestId('next-stop')).toContainText(/\d+ paydays? to go/);
     await expect(page.getByTestId('planned-vs-actual')).toHaveCount(0);
     await goTab(page, 'Today');
     await tapDidIt(page);
@@ -75,7 +68,7 @@ test.describe('Part 3 · Path', () => {
     await tapDidIt(page);
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'Payday list', exact: true }).click();
+    await page.getByRole('button', { name: 'List', exact: true }).click();
     const next = page.getByRole('button', { name: /to come$/ }).first();
     await expect(next).toHaveAttribute('aria-current', 'step');
     expect(await next.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('solid');

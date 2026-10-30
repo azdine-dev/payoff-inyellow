@@ -24,17 +24,16 @@ test('each tab opens its screen, and Path holds what Plan and Progress showed', 
   await nav(page).getByRole('button', { name: 'Path', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   // Progress side: the date and paydays left, the share paid
-  await expect(page.getByTestId('status-line')).toContainText(/paydays left/);
+  await expect(page.getByTestId('paydays-left')).toContainText(/paydays left/);
   await expect(page.getByTestId('paid-so-far')).toBeVisible();
-  await expect(page.getByTestId('whats-ahead')).toBeVisible();
+  await expect(page.getByTestId('road')).toBeVisible();
   // Plan side: the what-if and the payday list are bottom sheets, the order is one line
   await expect(page.getByText('Order: smallest first')).toBeVisible();
-  await page.getByRole('button', { name: 'What if I add more?' }).click();
-  await expect(page.getByRole('dialog', { name: 'What if I add more?' })).toBeVisible();
+  await page.getByRole('button', { name: 'More options' }).click();
+  await expect(page.getByRole('dialog', { name: 'More options' })).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Payday list', exact: true }).click();
+  await page.getByRole('button', { name: 'List', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toBeVisible();
-  await page.getByRole('button', { name: 'Close' }).click();
 
   await nav(page).getByRole('button', { name: 'Debts', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Debts' })).toBeVisible();
@@ -90,7 +89,7 @@ test('the old shortcuts still land on the right view', async ({ page }) => {
   await expect(page.getByRole('radio', { name: /PaidInYellow order/ })).toHaveAttribute('aria-checked', 'true');
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await goTab(page, 'Progress');
-  await expect(page.getByTestId('whats-ahead')).toBeVisible();
+  await expect(page.getByTestId('road')).toBeVisible();
   await goTab(page, 'Money');
   await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
 });

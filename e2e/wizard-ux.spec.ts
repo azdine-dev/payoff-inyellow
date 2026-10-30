@@ -163,19 +163,18 @@ test('"How we got this" shows the plain math behind the date and the first step'
   }
 });
 
-test('"Pay a bit more?" shows four amounts, each with what it changes and a Use this button', async ({ page }) => {
+test('"Pay a bit more?" shows four chips, each with what it changes and a Use this button', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   await quickSetup(page);
   await goTab(page, 'Plan');
-  await page.getByRole('button', { name: 'What if I add more?' }).click();
-  const rows = page.getByTestId('more-row');
-  await expect(rows).toHaveCount(4);
-  for (const [i, amount] of ['$20', '$50', '$100', '$200'].entries()) {
-    await expect(rows.nth(i)).toContainText(`+${amount} each payday`);
-    await expect(rows.nth(i)).toContainText(/(same month|sooner)/);
-    await expect(rows.nth(i).getByRole('button', { name: /^Use +/ })).toBeVisible();
+  const more = page.getByTestId('pay-more');
+  for (const amount of ['$20', '$50', '$100', '$200']) {
+    await more.getByRole('button', { name: `+${amount}`, exact: true }).click();
+    await expect(more.getByTestId('more-result')).toContainText(/(same month|sooner|Debt-free)/);
+    await expect(more.getByRole('button', { name: 'Use this' })).toBeVisible();
   }
-  await expect(page.getByLabel('Add money each payday')).toBeVisible(); // the slider stays below the table
+  await more.getByRole('button', { name: 'More options' }).click();
+  await expect(page.getByLabel('Add money each payday')).toBeVisible(); // the slider is behind "More options"
 });
 
 test('Path says the date and the paydays left, and they count down at "I did it"', async ({ page }) => {
@@ -183,10 +182,11 @@ test('Path says the date and the paydays left, and they count down at "I did it"
   const { goTab, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   const line = page.getByTestId('status-line');
-  const left = async () => Number((await line.innerText()).match(/(\d+) paydays? left/)![1]);
+  const paydays = page.getByTestId('paydays-left');
+  const left = async () => Number((await paydays.innerText()).match(/(\d+) paydays? left/)![1]);
 
   await goTab(page, 'Path');
-  expect(await line.innerText()).toMatch(/^Debt-free by [A-Z][a-z]{2} 20\d\d · \d+ paydays left$/);
+  expect(await line.innerText()).toMatch(/^Debt-free · [A-Z][a-z]{2} 20\d\d$/);
   const before = await left();
   await goTab(page, 'Today');
   await tapDidIt(page);
@@ -211,27 +211,24 @@ test('a calm Today: at most 3 cards above the fold, and every card has room arou
   expect(stats.minGap).toBeGreaterThanOrEqual(16);
 });
 
-test('Path starts at 0% and shows the share paid, in a card with three numbers', async ({ page }) => {
+test('Path starts with nothing paid, and the paydays left count down', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   const { goTab, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   await goTab(page, 'Progress');
-  const line = page.getByTestId('status-line');
-  await expect(line).toContainText(/\d+ paydays left/);
-  await expect(page.getByTestId('pct-gone')).toHaveText('0%');
-  const ring = page.getByRole('progressbar', { name: 'Debt paid off' });
-  await expect(ring).toHaveAttribute('aria-valuenow', '0');
+  const paydays = page.getByTestId('paydays-left');
+  await expect(paydays).toContainText(/\d+ paydays left/);
+  await expect(page.getByTestId('paid-so-far')).toHaveText('$0');
   for (const id of ['paid-so-far', 'to-go']) await expect(page.getByTestId(id)).toBeVisible();
   await expectBrandRules(page); // no red, no yellow text, no loan or transfer words
-  const before = Number((await line.innerText()).match(/(\d+) paydays left/)![1]);
+  const before = Number((await paydays.innerText()).match(/(\d+) paydays? left/)![1]);
 
   await goTab(page, 'Today');
   await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await goTab(page, 'Progress');
-  expect(Number((await line.innerText()).match(/(\d+) paydays left/)![1])).toBe(before - 1);
+  expect(Number((await paydays.innerText()).match(/(\d+) paydays? left/)![1])).toBe(before - 1);
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
-  expect(Number(await ring.getAttribute('aria-valuenow'))).toBeGreaterThan(0);
 });
 
 test('Plan is a timeline by month with tags, and an Upcoming / Done switch', async ({ page }) => {
@@ -250,7 +247,6 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   await expectBrandRules(page);
   await showPaydays(page, 'Done');
   await expect(page.getByText('No paydays done yet.')).toBeVisible();
-  await page.getByRole('button', { name: 'Close' }).click();
 
   await goTab(page, 'Today');
   await tapDidIt(page);
@@ -272,7 +268,7 @@ test('the what-if shows three small cards and says nothing changes until you app
   const { goTab } = await import('./scenario');
   await quickSetup(page);
   await goTab(page, 'Plan');
-  await page.getByRole('button', { name: 'What if I add more?' }).click();
+  await page.getByRole('button', { name: 'More options' }).click();
   await expect(page.getByText('Try it here first. Nothing changes until you tap Use this in my plan.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Use this in my plan' })).toBeDisabled();
   await page.getByLabel('Add money each payday').fill('100');

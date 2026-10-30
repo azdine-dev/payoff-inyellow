@@ -7,7 +7,7 @@ import { Field, HelpTip, NumberInput, Sheet } from '../../ui/controls';
 import { filledDebts, type Draft } from '../draft';
 import type { StepProps } from '../Wizard';
 
-const EXTRA_CHIPS = [20, 50, 100, 150];
+const EXTRA_CHIPS = [20, 50, 100];
 const whole = (symbol: string, n: number) => `${symbol}${Math.round(n).toLocaleString('en-US')}`;
 
 /** "Your minimums: $466 a month." Null until a debt has a minimum. */
@@ -35,6 +35,10 @@ export function MoneyStep({ draft, set }: StepProps) {
   const ppy = draft.frequency ? PAYDAYS_PER_YEAR[draft.frequency] : null;
   const home = parseAmount(takeHome);
   const need = parseAmount(essentials);
+  const bufferGoal = parseAmount(draft.bufferGoal) ?? 0;
+  const bufferSummary = bufferGoal > 0
+    ? `A little set aside for surprise costs, so they don’t go back on a card. Your plan starts with a ${whole(sym, bufferGoal)} goal and fills it before extra debt payments. You can change it now or later.`
+    : 'Your plan starts without a safety net goal. You can add one now or later in Safety net.';
   const known = home !== null && home > 0 && need !== null && need >= 0;
   const left = known ? roomLeft(home!, need!, monthly, ppy) : 0;
   const room = Math.floor(left);
@@ -127,16 +131,21 @@ export function MoneyStep({ draft, set }: StepProps) {
         </button>
       </Sheet>
 
-      <h2 style={{ fontSize: '1.3rem', marginTop: 8 }}>Your buffer</h2>
-      <p class="muted">{COPY.buffer}</p>
-      <div class="grid-2">
-        <Field label="Set aside now" hint="Empty is fine.">
-          <NumberInput pre={draft.currencySymbol} value={draft.bufferNow} onInput={(v) => set({ bufferNow: v })} label="Buffer now" />
-        </Field>
-        <Field label="Buffer goal" hint="A plain separate account or an envelope.">
-          <NumberInput pre={draft.currencySymbol} value={draft.bufferGoal} onInput={(v) => set({ bufferGoal: v })} label="Buffer goal" />
-        </Field>
-      </div>
+      <section class="stack" style={{ gap: 8, marginTop: 8 }}>
+        <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Your safety net</h2>
+        <p class="muted">{bufferSummary}</p>
+        <details class="faq">
+          <summary>Change what you have set aside or the goal</summary>
+          <div class="grid-2">
+            <Field label="Set aside now" hint="Leave empty if you have not set money aside yet.">
+              <NumberInput pre={draft.currencySymbol} value={draft.bufferNow} onInput={(v) => set({ bufferNow: v })} label="Buffer now" />
+            </Field>
+            <Field label="Safety net goal" hint="Keep it in a plain separate account or an envelope.">
+              <NumberInput pre={draft.currencySymbol} value={draft.bufferGoal} onInput={(v) => set({ bufferGoal: v })} label="Safety net goal" />
+            </Field>
+          </div>
+        </details>
+      </section>
     </div>
   );
 }

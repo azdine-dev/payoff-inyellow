@@ -1,4 +1,4 @@
-/** "What if I add more?": the "Pay a bit more?" table, the slider and one-off money, shown in a bottom sheet. Nothing changes until "Use this in my plan". */
+/** "More options" under "Pay a bit more?": the slider and one-off money, in a bottom sheet. Nothing changes until "Use this in my plan". */
 import { useMemo, useState } from 'preact/hooks';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { addDaysISO, monthYear, shortDate } from '../lib/today';
@@ -25,25 +25,6 @@ function Body() {
   const wi = useMemo(() => whatIfPlan(d, add, oneOff), [d, add, oneAmount, oneDate]);
   const sum = whatIfSummary(r, wi);
   const changed = add > 0 || oneOff !== null;
-  // "Pay a bit more?": four amounts, each with what it would change and a button to use it
-  const rows = useMemo(
-    () =>
-      [20, 50, 100, 200].map((n) => {
-        const sm = whatIfSummary(r, whatIfPlan(d, n, null));
-        const months = sm.monthsSaved;
-        return {
-          n,
-          date: sm.newDate ? monthYear(sm.newDate) : 'More than 20 years',
-          sooner: sm.nowEnds ? 'gets your plan to an end' : months !== null && months > 0 ? `${months} month${months === 1 ? '' : 's'} sooner` : 'same month',
-          interest: sm.interestSaved >= 1 ? `${formatMoney(sm.interestSaved, cur, { whole: true })} less interest` : null,
-        };
-      }),
-    [d, r],
-  );
-  const useAmount = async (n: number) => {
-    await act((db, x) => applyWhatIf(db, x, n, null));
-    setApplied(true);
-  };
   return (
     <>
         <p class="muted small">Try it here first. Nothing changes until you tap Use this in my plan.</p>
@@ -53,25 +34,6 @@ function Body() {
           </span>
           <input type="range" min="0" max="1000" step="10" value={add} aria-label="Add money each payday" onInput={(e) => { setAdd(Number((e.target as HTMLInputElement).value)); setApplied(false); }} />
         </label>
-        <p class="label">Pay a bit more?</p>
-        <ul class="more-list" aria-label="Pay a bit more">
-          {rows.map((row) => (
-            <li key={row.n} class="more-row" data-testid="more-row">
-              <span class="stack" style={{ gap: 0, flex: 1 }}>
-                <b>
-                  +{formatMoneyAuto(row.n, cur)} <span class="muted">each payday</span>
-                </b>
-                <span class="muted small">
-                  {row.date} · {row.sooner}
-                  {row.interest ? ` · ${row.interest}` : ''}
-                </span>
-              </span>
-              <button type="button" class="btn small ghost" aria-label={`Use +${formatMoneyAuto(row.n, cur)} each payday`} onClick={() => useAmount(row.n)}>
-                Use this
-              </button>
-            </li>
-          ))}
-        </ul>
         <div class="grid-2">
           <Field label="One-off money">
             <NumberInput pre={cur.symbol} value={oneAmount} onInput={(v) => { setOneAmount(v); setApplied(false); }} label="One-off money" />
@@ -148,7 +110,7 @@ function Body() {
 
 export function WhatIfSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Sheet open={open} onClose={onClose} title="What if I add more?">
+    <Sheet open={open} onClose={onClose} title="More options">
       <Body />
       <button type="button" class="link" onClick={onClose}>
         Close

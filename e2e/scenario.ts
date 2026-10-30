@@ -64,7 +64,8 @@ export async function iDidIt(page: Page, paidLabel: string) {
 
 /** Opens the "Payday list" sheet on Path (if it is not open) and shows the Upcoming or the Done paydays. */
 export async function showPaydays(page: Page, which: 'Upcoming' | 'Done') {
-  if (!(await page.getByRole('dialog', { name: 'Payday list' }).isVisible())) await page.getByRole('button', { name: 'Payday list', exact: true }).click();
+  // The payday list is the List view of the switch on Path
+  if (!(await page.getByRole('group', { name: 'Which paydays' }).isVisible())) await page.getByRole('button', { name: 'List', exact: true }).click();
   await page.getByRole('group', { name: 'Which paydays' }).getByRole('button', { name: new RegExp(`^${which}`) }).click();
 }
 
@@ -77,7 +78,9 @@ export async function openPayday(page: Page, label: string) {
 }
 
 export async function closeSheet(page: Page) {
-  await page.getByRole('button', { name: 'Close' }).click();
+  // The payday list is inline now, so there may be nothing to close
+  const close = page.getByRole('button', { name: 'Close' });
+  if (await close.count()) await close.first().click();
 }
 
 export interface PaydayExpect {

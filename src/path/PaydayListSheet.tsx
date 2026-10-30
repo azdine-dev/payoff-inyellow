@@ -30,7 +30,7 @@ function monthGroups<T>(items: T[], dateOf: (x: T) => string): { month: string; 
   return groups;
 }
 
-function Body() {
+export function PaydayListBody() {
   const d = data.value!;
   const cur = d.settings.currency;
   const r = plan.value!;
@@ -193,7 +193,7 @@ function Body() {
 export function PaydayListSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title="Payday list">
-      <Body />
+      <PaydayListBody />
       <button type="button" class="link" onClick={onClose}>
         Close
       </button>

@@ -10,12 +10,12 @@ test.beforeEach(async ({ page }) => {
 /** The page answers: a click opens a sheet, and the main thread is not stuck */
 async function expectResponsive(page: Page) {
   expect(await page.evaluate(() => 1 + 1)).toBe(2);
-  await page.getByRole('button', { name: 'What if I add more?' }).click();
-  await expect(page.getByRole('dialog', { name: 'What if I add more?' })).toBeVisible();
+  await page.getByRole('button', { name: 'More options' }).click();
+  await expect(page.getByRole('dialog', { name: 'More options' })).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Payday list', exact: true }).click();
+  await page.getByRole('button', { name: 'List', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Fri 6 Nov, to come' })).toBeVisible();
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Road', exact: true }).click();
 }
 
 test('1 · mark a payday done before its date, open Path: it does not freeze, also after a reload', async ({ page }) => {
@@ -43,8 +43,8 @@ test('1 · the same with two paydays marked early, and with a payday marked on t
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
   await goTab(page, 'Path');
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
-  await page.getByRole('button', { name: 'Payday list', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Payday list' })).toBeVisible();
+  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Which paydays' })).toBeVisible();
 });
 
 test('4 · "How we got this" is one link, and the first step says "Move" like Today does', async ({ page }) => {
@@ -102,8 +102,14 @@ test.describe('5 · small animations', () => {
 
   test('bars, tab fade and sheets: named, and never longer than 600 ms', async ({ page }) => {
     await quickSetup(page);
+    const bar = await anim(page, '.bar > div'); // the focus debt bar on Today
     await goTab(page, 'Path');
-    const bar = await anim(page, '.bar > div');
+    // the "You are here" pin and the finish flag slide for 600 ms at most
+    for (const sel of ['.road-pin', '.road-finish']) {
+      const ms = await page.locator(sel).first().evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration) * 1000);
+      expect(ms).toBeGreaterThan(0);
+      expect(ms).toBeLessThanOrEqual(600);
+    }
     await goTab(page, 'Debts');
     expect(bar.name).toBe('stroke-in');
     expect(bar.ms).toBeLessThanOrEqual(600);
@@ -124,13 +130,13 @@ test.describe('5 · small animations', () => {
     await page.getByRole('button', { name: /^I did it/ }).click();
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await goTab(page, 'Path');
-    await expect(page.locator('.sq.fill')).toHaveCount(1);
-    expect((await anim(page, '.sq.fill')).ms).toBeLessThanOrEqual(600);
+    await expect(page.locator('.sq-fill.swipe')).toHaveCount(1);
+    expect((await anim(page, '.sq-fill.swipe')).ms).toBeLessThanOrEqual(600);
     // It settles on the new balance, which is lower
     await expect(page.getByTestId('to-go')).not.toHaveText(before);
     const num = (t: string) => Number(t.replace(/[^0-9.]/g, ''));
     await expect.poll(async () => num(await page.getByTestId('to-go').innerText())).toBeLessThan(num(before));
-    await expect(page.locator('.sq.fill')).toHaveCount(0, { timeout: 3000 }); // once, then it is just a square
+    await expect(page.locator('.sq-fill.swipe')).toHaveCount(0, { timeout: 3000 }); // once, then it is just a square
   });
 
   test('a debt paid off: the card turns yellow with the stamp, then the next one slides in', async ({ page }) => {
@@ -152,8 +158,11 @@ test.describe('5 · small animations', () => {
   test('reduced motion turns all of it off', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await quickSetup(page);
+    expect((await anim(page, '.bar > div')).name).toBe('none');
     await goTab(page, 'Path');
-    for (const selector of ['.bar > div', 'main.screen']) expect((await anim(page, selector)).name).toBe('none');
+    expect((await anim(page, 'main.screen')).name).toBe('none');
+    // the pin and the finish flag do not slide
+    for (const sel of ['.road-pin', '.road-finish']) expect(await page.locator(sel).first().evaluate((el) => getComputedStyle(el).transitionDuration)).toBe('0s');
     await goTab(page, 'Debts');
     await page.getByRole('button', { name: 'Store card, options' }).click();
     expect((await anim(page, '.sheet')).name).toBe('none');

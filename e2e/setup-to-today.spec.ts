@@ -223,7 +223,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
 
   // Plan: the what-if shows a sooner date and "Apply to my plan" changes Today
   await goTab(page, 'Plan');
-  await page.getByRole('button', { name: 'What if I add more?' }).click();
+  await page.getByRole('button', { name: 'More options' }).click();
   await page.getByLabel('Add money each payday').fill('100');
   await expect(page.getByTestId('whatif-result')).toContainText('sooner');
   await shot(page, '13-plan');
@@ -247,14 +247,13 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toBeVisible();
   await page.getByRole('button', { name: 'Fri 23 Oct, paid' }).click();
   await expect(page.getByRole('group', { name: 'Fri 23 Oct details' })).toContainText('Total');
-  await page.getByRole('button', { name: 'Close' }).click();
 
   // Progress: grid, milestones, planned vs actual
   await goTab(page, 'Progress');
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
-  await expect(page.getByRole('listitem', { name: 'Fri 23 Oct: paid' })).toBeVisible();
-  await expect(page.getByRole('listitem', { name: 'Fri 6 Nov: paid' })).toBeVisible();
-  await expect(page.getByRole('listitem', { name: 'Plan made' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Fri 23 Oct, paid' })).toBeVisible(); // the squares of the road
+  await expect(page.getByRole('img', { name: 'Fri 6 Nov, paid' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Plan made' })).toBeVisible();
   await expect(page.getByTestId('planned-vs-actual')).toContainText('This month:');
   await shot(page, '14-progress');
 });
