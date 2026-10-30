@@ -17,7 +17,7 @@ import { worthKnowing } from '../state/worthKnowing';
 import { focusDebt } from '../today/model';
 import { Chart } from '../progress/Chart';
 import { Count } from '../ui/useCountUp';
-import { Choice, HelpTip, Sheet } from '../ui/controls';
+import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { PaydayCalendar } from './PaydayCalendar';
 import { PaydayListBody } from './PaydayListSheet';
@@ -25,6 +25,7 @@ import { PayMore } from './PayMore';
 import { Road } from './Road';
 import { buildRoad, finishIndexFor, type RoadFlag } from './roadModel';
 import { WhatIfSheet } from './WhatIfSheet';
+import { openReads } from '../reads/ReadsScreen';
 import { PrintDebts, PrintPayday } from './PrintSheets';
 import { paymentsToCsv } from '../state/paymentsCsv';
 import { countdownText, readCountdownMode, saveCountdownMode, type CountdownMode } from './countdown';
@@ -331,6 +332,14 @@ export function Path() {
           )}
         </section>
       )}
+
+      <button type="button" class="card find-row" data-testid="reads-card" onClick={() => openReads('path')}>
+        <span class="stack" style={{ gap: 2, textAlign: 'left' }}>
+          <b>Short reads</b>
+          <span class="muted small">Ten calm reads, a minute each</span>
+        </span>
+        <ChevronRight />
+      </button>
 
       <nav class="path-foot" aria-label="Order, print and export">
         <button type="button" class="foot-link" onClick={() => setSheet('order')}>

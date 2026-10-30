@@ -11,15 +11,13 @@ test.describe('2 · the countdown card', () => {
   test('shows years and months as two big numbers, the month on the highlight, and the road', async ({ page }) => {
     await quickSetup(page);
     const card = page.getByTestId('debt-free-pill');
-    await expect(card).toContainText('Debt-free countdown');
+    await expect(card).toContainText('Debt-free in');
     // under a year: only the months show, a zero part is left out
     await expect(card.locator('.dfc-unit')).toHaveCount(1);
     await expect(card.locator('.dfc-unit').first()).toContainText(/^\d+\s*months$/);
     await expect(card.locator('.hl')).toHaveText(/^[A-Z][a-z]+ 20\d\d$/);
-    await expect(card.locator('svg.road')).toBeVisible();
-    // 8 squares, only the first is yellow at the start
-    await expect(card.locator('.road-sq')).toHaveCount(8);
-    await expect(card.locator('.road-sq.on')).toHaveCount(1);
+    await expect(card.locator('svg.scene')).toBeVisible(); // your scene, stage 1 on day one
+    await expect(card.locator('svg.scene')).toHaveAttribute('data-stage', '1');
     await expectBrandRules(page);
   });
 
@@ -34,7 +32,7 @@ test.describe('2 · the countdown card', () => {
     await quickSetup(page);
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(bg).not.toBe('rgb(244, 240, 230)');
-    await expect(page.getByTestId('debt-free-pill').locator('svg.road')).toBeVisible();
+    await expect(page.getByTestId('debt-free-pill').locator('svg.scene')).toBeVisible();
   });
 });
 

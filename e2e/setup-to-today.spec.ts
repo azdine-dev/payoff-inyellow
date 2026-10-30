@@ -6,7 +6,7 @@
 import { addYearlyBills, showPaydays, tapDidIt, goTab, revealEarly } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
-import { unlockOnResult } from './helpers';
+import { unlockOnResult, openBufferFields } from './helpers';
 
 const SHOTS = process.env.SHOTS_DIR;
 const shot = async (page: Page, name: string) => {
@@ -53,8 +53,9 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
 
   // 3 Money: the plan amount and the buffer on one screen
   await page.getByLabel('Money for the plan each payday').fill('150');
+  await openBufferFields(page);
   await page.getByLabel('Buffer now').fill('200');
-  await expect(page.getByLabel('Buffer goal')).toHaveValue('500');
+  await expect(page.getByLabel('Safety net goal')).toHaveValue('500');
   await shot(page, '03-money');
   await next.click();
 
@@ -122,6 +123,7 @@ async function quickSetup(page: Page) {
   }
   await next.click();
   await page.getByLabel('Money for the plan each payday').fill('150');
+  await openBufferFields(page);
   await page.getByLabel('Buffer now').fill('500');
   await next.click();
   await unlockOnResult(page);
@@ -133,7 +135,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await quickSetup(page);
   await revealEarly(page);
   // Store card is due on the 5th (before the next payday): its bill and the extra are one row. Visa is due on the 12th: next payday.
-  await expect(page.getByRole('checkbox', { name: /Store card.*Bill \$35 \+ extra \$150.*due Thu 5 Nov/ })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /Store card.*\$35 bill \+ \$150 extra.*due Thu 5 Nov/ })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Visa/ })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^I did it · \$/ })).toContainText('$185');
 
@@ -157,7 +159,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await page.getByRole('button', { name: 'I got extra money' }).click();
   await page.getByRole('textbox', { name: 'Extra money' }).fill('640');
   await page.getByRole('button', { name: 'Use it', exact: true }).click();
-  await expect(page.getByText('PAID. One down.')).toBeVisible();
+  await expect(page.getByTestId('paid-moment').getByText('PAID. One down.')).toBeVisible();
   await expect(page.getByTestId('paid-moment')).toContainText('Store card is paid.');
   await page.getByRole('button', { name: 'Next payday' }).click();
   await expect(page.getByTestId('paid-moment')).toHaveCount(0);
@@ -251,6 +253,7 @@ test('plan and progress: what-if applies, paid paydays turn yellow, milestones a
   // Progress: grid, milestones, planned vs actual
   await goTab(page, 'Progress');
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
+  await page.getByRole('button', { name: 'Road', exact: true }).click(); // Path remembers the List view from above
   await expect(page.getByRole('img', { name: 'Fri 23 Oct, paid' })).toBeVisible(); // the squares of the road
   await expect(page.getByRole('img', { name: 'Fri 6 Nov, paid' })).toBeVisible();
   await expect(page.getByRole('img', { name: 'Plan made' })).toBeVisible();

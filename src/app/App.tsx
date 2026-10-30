@@ -5,6 +5,7 @@ import { boot, licenseState, tab, view, type Tab } from '../state/store';
 import { Debts } from '../debts/Debts';
 import { Path } from '../path/Path';
 import { Settings } from '../settings/Settings';
+import { ReadsScreen } from '../reads/ReadsScreen';
 import { applyAppearance } from '../lib/appearance';
 import { data } from '../state/store';
 import { Money } from '../money/Money';
@@ -145,6 +146,15 @@ function Screens() {
       </div>
     ) : (
       <Result />
+    );
+  }
+
+  // Short reads are full screens of their own, with a back link instead of the tab bar
+  if (current === 'reads') {
+    return (
+      <div class="app-shell no-nav">
+        <ReadsScreen />
+      </div>
     );
   }
 

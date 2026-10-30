@@ -30,6 +30,8 @@ import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
 import { DebtFreeCard } from './DebtFreeCard';
+import { MiniChart } from './MiniChart';
+import { pickNote } from './payNote';
 import { Empty } from '../ui/Empty';
 import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, greetingWithName, mergedRows, paidFromLog, whyFirst } from './model';
 
@@ -296,6 +298,24 @@ export function Today() {
   const bufferFull = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
   const showNudge = justPaid && (doneCount === 1 || doneCount % 4 === 0);
 
+  // One short line for this payday: for what just happened if there is something, else the line of the payday
+  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0, freshHalfway: freshMilestones.value.includes('pct-50') });
+  const noteCard = (
+    <section class="card note-card" aria-label="A note for this payday" data-testid="pay-note-card">
+      <span class="note-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 4h14v12H9l-4 4z" />
+        </svg>
+      </span>
+      <div class="stack" style={{ gap: 4 }}>
+        <p class="label">A note for this payday</p>
+        <p class="note-text" data-testid="pay-note">
+          {note.text}
+        </p>
+      </div>
+    </section>
+  );
+
   const moments = d.milestones
     .filter((m) => freshMilestones.value.includes(m.id) && !closedMoments.has(m.id))
     .map((m) => {
@@ -344,6 +364,8 @@ export function Today() {
           tab.value = 'path';
         }}
       />
+
+      {active.length > 0 && noteCard}
 
       {updateReady.value && !updateDismissed.value && (
         <section class="card row" role="status" data-testid="update-bar">
@@ -518,7 +540,7 @@ export function Today() {
                 </p>
               ) : row.bufferFirst ? (
                 <p class="pc-sub" data-testid="buffer-first">
-                  Extra goes to your buffer until it reaches {money(s.bufferGoal)}.
+                  Your buffer fills first, until {money(s.bufferGoal)}.
                 </p>
               ) : null}
 
@@ -531,15 +553,17 @@ export function Today() {
                     right={<span class="num pc-amount">{money(x.amount)}</span>}
                   >
                     <span class="pc-title">{x.title}</span>
-                    <span class="pc-tags">
-                      {x.tags.map((t) => (
-                        <span key={t} class="tag">
-                          {t}
-                        </span>
-                      ))}
-                      {checked.has(x.key) && <span class="tag paid">Paid</span>}
+                    <span class="pc-meta">
+                      <span class="pc-tags">
+                        {x.tags.map((t) => (
+                          <span key={t} class="tag">
+                            {t}
+                          </span>
+                        ))}
+                        {checked.has(x.key) && <span class="tag paid">Paid</span>}
+                      </span>
+                      <span class="pc-rowsub">{x.sub}</span>
                     </span>
-                    <span class="pc-rowsub">{x.sub}</span>
                   </Checkbox>
                 ))}
                 {noDueDay.map((b) => (
@@ -586,6 +610,8 @@ export function Today() {
           )}
 
           <NeedsHelp reasons={reasons} />
+
+          <MiniChart />
 
           {focus && (
             <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">
@@ -659,10 +685,11 @@ export function Today() {
                     <span class="pc-tags">
                       <span class="tag">Bill</span>
                       {i.state === 'paid' && <span class="tag paid">Paid</span>}
-                      {i.state === 'current' && <span class="tag">From your current pay</span>}
+
                       {i.state === 'late' && <span class="tag">Not paid yet</span>}
                     </span>{' '}
-                    {i.state !== 'late' && <span class="muted small">{relativeDay(today.value, i.date)}</span>}
+                    {i.state === 'current' && <span class="muted small">from your current pay</span>}
+                    {i.state !== 'late' && i.state !== 'current' && <span class="muted small">{relativeDay(today.value, i.date)}</span>}
                   </span>
                   <span class="num">{money(i.amount)}</span>
                 </div>

@@ -6,7 +6,7 @@
  */
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { FIXED, shot, unlockOnResult } from './helpers';
+import { FIXED, shot, unlockOnResult, openBufferFields } from './helpers';
 import { addYearlyBills,
   closeSheet,
   expectBrandRules,
@@ -75,9 +75,10 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   await test.step('3 Money: 150 for the plan, 200 in the buffer, the goal is 500 from the start', async () => {
     await expect(page.getByTestId('minimums-line')).toHaveText('Your minimums: $466 a month.');
     await expect(page.getByText('Even $20 matters. You can change it any time.')).toBeVisible();
-    await page.getByRole('button', { name: '$150', exact: true }).click();
+    await page.getByLabel('Money for the plan each payday').fill('150');
     await expect(page.getByLabel('Money for the plan each payday')).toHaveValue('150');
-    await expect(page.getByLabel('Buffer goal')).toHaveValue('500');
+    await openBufferFields(page);
+    await expect(page.getByLabel('Safety net goal')).toHaveValue('500');
     await page.getByLabel('Buffer now').fill('200');
     await next.click();
   });
@@ -135,7 +136,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('checkbox', { name: /Yearly bills/ })).toContainText(near(42.31));
     await expect(page.getByRole('checkbox', { name: /Buffer.*\$200 of \$500/ })).toContainText(near(107.69));
     await expect(page.getByRole('checkbox', { name: /extra/i })).toHaveCount(0);
-    await expect(page.getByTestId('buffer-first')).toContainText('Extra goes to your buffer until it reaches');
+    await expect(page.getByTestId('buffer-first')).toContainText('Your buffer fills first, until');
     await expect(page.getByRole('button', { name: 'I did it · $235' })).toBeVisible(); // 85 + 42.31 + 107.69
     const focus = page.getByRole('region', { name: 'Focus debt' });
     await expect(focus).toContainText('Store card');
@@ -143,7 +144,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(focus).toContainText('$640 left');
     await expect(focus).toContainText('gone by Jan 2027');
     await expect(page.getByTestId('daily-cost')).toContainText('$4.49 a day');
-    await expect(page.getByTestId('coming-up')).toContainText(/Tue 20 Oct.*Car loan.*in 5 days.*\$285/s);
+    await expect(page.getByTestId('coming-up')).toContainText(/Tue 20 Oct.*Car loan.*from your current pay.*\$285/s); // before the first payday: paid from the pay you have now
     await shot(page, '21-sara-today');
   });
 
@@ -312,7 +313,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('button', { name: /^I did it/ })).toContainText(near(235)); // 50 + 35.11 + 42.31 + 107.58
     await tapDidIt(page);
     await expect(page.getByText('Fri 26 Mar is paid.')).toBeVisible();
-    await expect(page.getByText('PAID. One down.')).toBeVisible();
+    await expect(page.getByTestId('paid-moment').getByText('PAID. One down.')).toBeVisible();
     // The rollover is said in words: its bill goes on into the extra for the next debt
     await expect(page.getByTestId('paid-moment')).toContainText('Store card is paid. Its $35 bill now rolls into the extra for Medical bill.');
     await page.getByRole('button', { name: 'Next payday' }).click();
@@ -355,7 +356,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   });
 
   await test.step('Biggest interest first: a small saving in v2, so PaidInYellow order stays recommended', async () => {
-    await page.getByRole('button', { name: 'change', exact: true }).click();
+    await page.getByRole('button', { name: 'Order', exact: true }).click();
     await page.getByRole('radio', { name: /Biggest interest first/ }).click();
     await expect(page.getByTestId('order-comparison')).toContainText('Biggest interest first would save $80, a small difference.');
     await page.getByRole('radio', { name: /^PaidInYellow order/ }).click();
@@ -369,9 +370,10 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   // ---------------------------------------------------------------- part 13: Progress
   await test.step('Progress: 12 paid paydays, the skipped one is not paid, 3 milestones', async () => {
     await goTab(page, 'Progress');
-    await expect(page.getByRole('listitem', { name: /: paid$/ })).toHaveCount(12);
-    await expect(page.getByRole('listitem', { name: 'Fri 1 Jan: skipped' })).toBeVisible();
-    await expect(page.getByRole('listitem', { name: 'Plan made' })).toBeVisible(); // the second pre-filled square
+    await page.getByRole('button', { name: 'Road', exact: true }).click(); // Path remembers the view it was left on
+    await expect(page.getByRole('img', { name: /, paid$/ })).toHaveCount(12); // the squares of the road
+    await expect(page.getByRole('img', { name: 'Fri 1 Jan, skipped' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Plan made' })).toBeVisible(); // the second pre-filled square
     for (const m of ['First extra payment', 'First debt gone']) {
       await expect(page.getByRole('listitem', { name: `${m}, reached` })).toBeVisible();
     }
@@ -414,7 +416,6 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await showPaydays(other, 'Done');
     await other.getByRole('button', { name: 'Fri 26 Mar, paid', exact: true }).click();
     await expect(other.getByTestId('debt-left-after')).toContainText(near(12634.4));
-    await other.getByRole('button', { name: 'Close' }).click();
     await goTab(other, 'Money');
     await expect(other.getByRole('region', { name: 'Buffer' })).toContainText('$500 of $500');
     await other.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Debts', exact: true }).click();

@@ -3,7 +3,7 @@
  * back as "Do these later": on the result screen and on Today until done.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { FIXED, quickSetup, unlockOnResult } from './helpers';
+import { FIXED, quickSetup, unlockOnResult, openBufferFields } from './helpers';
 import { addYearlyBills, expectBrandRules, goTab, revealEarly } from './scenario';
 
 test.beforeEach(async ({ page }) => {
@@ -78,6 +78,7 @@ test('an empty rate uses 24%, marks the debt, and Today offers to add the real o
   await page.getByRole('button', { name: 'Got it' }).click();
   await next(page).click(); // not blocked
   await page.getByLabel('Money for the plan each payday').fill('100');
+  await openBufferFields(page);
   await page.getByLabel('Buffer now').fill('500');
   await next(page).click();
   await expect(page.getByTestId('debt-free-date')).toBeVisible();

@@ -2005,14 +2005,25 @@ textarea {
 /* ---------- Today's top card: the countdown and the road ---------- */
 .debt-free-card {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
   width: 100%;
-  padding: 14px 14px 14px 20px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 24px;
   color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.dfc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px 20px 18px;
 }
 
 .dfc-text {
@@ -2049,6 +2060,26 @@ textarea {
   flex: none;
   max-width: 42%;
   height: auto;
+}
+
+/* a stage reached for the first time fades in (500 ms) */
+.scene-in {
+  animation: scene-in 500ms ease-out;
+}
+
+@keyframes scene-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-in {
+    animation: none;
+  }
 }
 
 .road-sq.on {
@@ -2427,4 +2458,328 @@ textarea {
 
 .seg.wide .seg-btn {
   flex: 1;
+}
+
+/* ---------- the small balance chart on Today ---------- */
+.minichart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* ---------- Today, to the warm design: the note card, rows with a tag and a line, the chart ---------- */
+.note-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 20px;
+}
+
+.note-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--calm);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+}
+
+.note-text {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+
+.pc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.pc-meta .pc-tags {
+  margin: 0;
+}
+
+.pc-meta .pc-rowsub {
+  display: inline;
+}
+
+.minichart .chev {
+  font-size: 1.2rem;
+  color: var(--gray);
+}
+
+.dfc-text .label {
+  font-size: 0.75rem;
+}
+
+/* ---------- short reads, two full screens (design/warm-extras/Reads.html and Read.html) ---------- */
+.reads-screen {
+  gap: 12px;
+}
+
+.reads-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: -20px calc(var(--gutter) * -1) 4px;
+  padding: 18px var(--gutter) 22px;
+  background: var(--calm-band);
+}
+
+.reads-head h1 {
+  font-weight: 800;
+  font-size: 1.9rem;
+  letter-spacing: -0.5px;
+}
+
+.reads-sub {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.reads-back {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--action);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.read-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.read-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.read-item.suggested {
+  border: 1.5px solid var(--ink);
+}
+
+.read-tile {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--calm);
+  display: grid;
+  place-items: center;
+}
+
+.read-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  background: var(--yellow);
+  color: var(--on-yellow);
+}
+
+.read-check svg {
+  width: 12px;
+  height: 12px;
+}
+
+.read-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  --sc-sky: #e6efe8;
+  --sc-sun: #fff6c2;
+  --sc-h2: #bfd5c4;
+  --sc-sq: #f8f6f0;
+}
+
+:root[data-theme='dark'] .read-art {
+  --sc-sky: #1f2b27;
+  --sc-sun: #4a4528;
+  --sc-h2: #324838;
+  --sc-sq: #1b2433;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .read-art {
+    --sc-sky: #1f2b27;
+    --sc-sun: #4a4528;
+    --sc-h2: #324838;
+    --sc-sq: #1b2433;
+  }
+}
+
+.rd-rain {
+  stroke: #9db3c2;
+}
+
+.read-title {
+  font-weight: 800;
+  font-size: 1.9rem;
+  line-height: 1.12;
+  letter-spacing: -0.5px;
+}
+
+.read-p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.read-callout {
+  background: var(--calm);
+  border-radius: 16px;
+  padding: 14px 16px;
+  line-height: 1.55;
+}
+
+.next-read {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---------- your scene (design/warm-extras/Scenes.html), with a dark set ---------- */
+.scene {
+  display: block;
+  width: 100%;
+  height: auto;
+  --sc-sky: #e6efe8;
+  --sc-sun: #fff6c2;
+  --sc-h1: #cfe0d3;
+  --sc-h2: #bfd5c4;
+  --sc-tree: #9dbfa6;
+  --sc-water: #7fa9c9;
+  --sc-field: #7faa8a;
+  --sc-sq: #f8f6f0;
+}
+
+.scene-3,
+.scene-4 {
+  --sc-sky: #ebf3ed;
+}
+
+.scene-4,
+.scene-5 {
+  --sc-h1: #bfd8c5;
+  --sc-h2: #a9cbb1;
+}
+
+.scene-5 {
+  --sc-sky: #eef5f0;
+}
+
+:root[data-theme='dark'] .scene {
+  --sc-sky: #1f2b27;
+  --sc-sun: #4a4528;
+  --sc-h1: #2a3b31;
+  --sc-h2: #324838;
+  --sc-tree: #4f6b58;
+  --sc-water: #5b7f9e;
+  --sc-field: #5f8a6b;
+  --sc-sq: #1b2433;
+}
+
+:root[data-theme='dark'] .scene-4,
+:root[data-theme='dark'] .scene-5 {
+  --sc-h1: #30463a;
+  --sc-h2: #3a5444;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .scene {
+    --sc-sky: #1f2b27;
+    --sc-sun: #4a4528;
+    --sc-h1: #2a3b31;
+    --sc-h2: #324838;
+    --sc-tree: #4f6b58;
+    --sc-water: #5b7f9e;
+    --sc-field: #5f8a6b;
+    --sc-sq: #1b2433;
+  }
+  :root:not([data-theme]) .scene-4,
+  :root:not([data-theme]) .scene-5 {
+    --sc-h1: #30463a;
+    --sc-h2: #3a5444;
+  }
+}
+
+.sc-sky {
+  fill: var(--sc-sky);
+}
+.sc-sun {
+  fill: var(--sc-sun);
+}
+.sc-hill1 {
+  fill: var(--sc-h1);
+}
+.sc-hill2 {
+  fill: var(--sc-h2);
+}
+.sc-tree {
+  fill: var(--sc-tree);
+  stroke: var(--ink);
+}
+.sc-water {
+  stroke: var(--sc-water);
+}
+.sc-field {
+  stroke: var(--sc-field);
+}
+.sc-ink {
+  stroke: var(--ink);
+}
+.sc-ink-fill {
+  fill: var(--ink);
+}
+.sc-paid {
+  fill: var(--yellow);
+}
+.sc-sq {
+  fill: var(--sc-sq);
+}
+
+.read-item b,
+.next-read b {
+  font-size: 0.95rem;
 }

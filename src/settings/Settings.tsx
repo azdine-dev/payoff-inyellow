@@ -25,6 +25,7 @@ import { downloadBackup } from '../state/backupActions';
 import { RestoreButton } from './Restore';
 import { SyncSection } from './SyncSection';
 import { syncOn } from '../sync/controller';
+import { openReads } from '../reads/ReadsScreen';
 
 type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | 'order' | 'theme' | 'text' | 'faq' | 'install' | 'code' | 'about' | null;
 
@@ -246,6 +247,17 @@ export function Settings() {
       <section class="card" aria-labelledby="set-help">
         <h2 id="set-help">Help</h2>
         {row('Questions and answers', 'FAQ', 'faq', 'Open')}
+        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+          <span>
+            <span class="muted small" style={{ display: 'block' }}>
+              Short reads
+            </span>
+            <span style={{ fontWeight: 600 }}>Ten calm reads</span>
+          </span>
+          <button type="button" class="link small" aria-label="Open Short reads" onClick={() => openReads('settings')}>
+            Open
+          </button>
+        </div>
         <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
           <span>
             <span class="muted small" style={{ display: 'block' }}>

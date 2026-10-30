@@ -1,5 +1,5 @@
 /** Safety net tab (was Money): buffer, yearly bills, "Find your first $500", debt share of pay. */
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { MONTH_CHOICES } from '../setup/draft';
@@ -17,7 +17,7 @@ import {
 } from '../state/moneyActions';
 import { PAYDAYS_PER_YEAR } from '../engine';
 import { activeDebts } from '../state/planInput';
-import { act, data, today } from '../state/store';
+import { act, data, safetyIntent, today } from '../state/store';
 import { Empty } from '../ui/Empty';
 import { useCountUp } from '../ui/useCountUp';
 import { Bar, Checkbox, ChevronRight, Field, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
@@ -34,6 +34,20 @@ export function Money() {
   const [month, setMonth] = useState('Any time');
   const [msg, setMsg] = useState('');
   const [usedNote, setUsedNote] = useState(false);
+
+  // A short read sent us here with a sheet to open
+  useEffect(() => {
+    const want = safetyIntent.value;
+    if (!want) return;
+    safetyIntent.value = null;
+    if (want === 'find') setMode('find');
+    else {
+      setText('');
+      setText2('');
+      setMonth('Any time');
+      setMode('fund-add');
+    }
+  }, [safetyIntent.value]);
 
   const close = () => {
     setMode(null);

@@ -1,6 +1,6 @@
 /** Setup wizard: shorter and clearer. One debt open at a time, gentle checks, money step, currency, example. */
 import { expect, test } from '@playwright/test';
-import { FIXED } from './helpers';
+import { FIXED, openBufferFields } from './helpers';
 import { expectBrandRules, goTab } from './scenario';
 
 test.beforeEach(async ({ page }) => {
@@ -99,7 +99,8 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await expect(page.getByRole('button', { name: '$20' })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByRole('button', { name: 'Other' })).toHaveAttribute('aria-pressed', 'true'); // 135 is none of the quick amounts
   // The buffer is on the same screen, with its goal at $500
-  await expect(page.getByLabel('Buffer goal')).toHaveValue('500');
+  await openBufferFields(page);
+  await expect(page.getByLabel('Safety net goal')).toHaveValue('500');
   await expect(page.getByLabel('Buffer now')).toBeVisible();
 });
 
@@ -200,7 +201,7 @@ test('a calm Today: at most 3 cards above the fold, and every card has room arou
   await quickSetup(page);
   const stats = await page.evaluate(() => {
     const h = window.innerHeight;
-    const cards = Array.from(document.querySelectorAll<HTMLElement>('main .card'));
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('main .card:not(.debt-free-card)')); // the scene card runs edge to edge, like the design
     const above = cards.filter((c) => c.getBoundingClientRect().top < h - 80); // 80px = the tab bar
     const padding = Math.min(...cards.map((c) => parseFloat(getComputedStyle(c).paddingLeft)));
     const gaps = above.slice(1).map((c, i) => c.getBoundingClientRect().top - above[i]!.getBoundingClientRect().bottom);

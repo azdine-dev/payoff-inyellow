@@ -6,6 +6,11 @@ export const shot = async (page: Page, name: string) => {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
 };
 
+/** The buffer fields on the money step sit inside a collapsed "change" section: open it once. */
+export async function openBufferFields(page: Page) {
+  if (!(await page.getByLabel('Buffer now').isVisible())) await page.getByText('Change what you have set aside or the goal').click();
+}
+
 /** On the result screen: paste a valid unlock code (checked on the phone) so the full planner opens. */
 export async function unlockOnResult(page: Page, id = 'TEST-ORDER') {
   await page.getByRole('button', { name: 'I have a code' }).click();
@@ -44,6 +49,7 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: st
   await next.click();
   // 3 Money
   await page.getByLabel('Money for the plan each payday').fill('150');
+  await openBufferFields(page);
   await page.getByLabel('Buffer now').fill('500');
   await next.click();
   // 4 Your date

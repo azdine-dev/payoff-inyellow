@@ -49,11 +49,11 @@ test.describe('Part A · Today, the Nadia scenario', () => {
     const coming = page.getByTestId('coming-up');
     const medical = coming.locator('[data-state]', { hasText: 'Medical' });
     await expect(medical).toContainText('Tue 3 Nov');
-    await expect(medical.locator('.tag', { hasText: 'From your current pay' })).toBeVisible();
+    await expect(medical).toContainText('from your current pay');
     // Store Card, due after the first payday, is part of the payday and carries no such label
     const store = coming.locator('[data-state]', { hasText: 'Store Card' });
     await expect(store).toContainText('Thu 12 Nov');
-    await expect(store.locator('.tag', { hasText: 'From your current pay' })).toHaveCount(0);
+    await expect(store).not.toContainText('from your current pay');
     await expectBrandRules(page);
   });
 });

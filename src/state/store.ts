@@ -10,7 +10,7 @@ import { syncMilestones } from './milestones';
 import { baselineFor, toPlanInput } from './planInput';
 
 export type View = 'loading' | 'setup' | 'result' | 'app';
-export type Tab = 'today' | 'path' | 'debts' | 'safety' | 'settings';
+export type Tab = 'today' | 'path' | 'debts' | 'safety' | 'settings' | 'reads';
 
 export const view = signal<View>('loading');
 export const tab = signal<Tab>('today');
@@ -24,6 +24,11 @@ export const freshPayday = signal<number | null>(null);
 /** A number on another screen was tapped: Debts opens that debt's sheet when it shows */
 export const openDebtId = signal<string | null>(null);
 export const freshPaidDebts = signal<string[]>([]);
+/** A short read's button asks the Safety net tab to open a sheet: a new yearly bill, or "Find your first $500" */
+/** Short reads is a full screen: which read is open (null = the list), and the tab its back link returns to */
+export const readsId = signal<string | null>(null);
+export const readsFrom = signal<Tab>('path');
+export const safetyIntent = signal<'fund-add' | 'find' | null>(null);
 
 /**
  * 'checking' while a stored code is being verified, 'locked' = calculator mode (no valid code),

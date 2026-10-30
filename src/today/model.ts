@@ -227,7 +227,7 @@ export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): 
       kind: 'debt',
       title: b.name,
       tags: extra > 0 ? ['Bill', 'Extra'] : ['Bill'],
-      sub: extra > 0 ? `Bill ${money(b.amount)} + extra ${money(extra)} · due ${shortDate(b.due)}${auto}` : `Bill, due ${shortDate(b.due)}${auto}`,
+      sub: extra > 0 ? `${money(b.amount)} bill + ${money(extra)} extra · due ${shortDate(b.due)}${auto}` : `due ${shortDate(b.due)}${auto}`,
       paidLabel: extra > 0 ? `${b.name}, bill + extra` : `${b.name} bill`,
       amount: toCents(b.amount) + extra,
       debtId: b.debtId,

@@ -170,7 +170,7 @@ export async function runWizard(page: Page, c: WizardConfig) {
   // The buffer fields may sit inside a collapsed "change" section
   if (!(await page.getByLabel('Buffer now').isVisible())) await page.getByText('Change what you have set aside or the goal').click();
   await page.getByLabel('Buffer now').fill(c.bufferNow);
-  if (c.bufferGoal !== undefined) await page.getByLabel('Buffer goal').fill(c.bufferGoal);
+  if (c.bufferGoal !== undefined) await page.getByLabel('Safety net goal').fill(c.bufferGoal);
   await next.click();
   await expect(page.getByTestId('debt-free-date').or(page.getByRole('heading', { name: /more than 20 years/i }))).toBeVisible();
   if (c.yearly?.length) {
