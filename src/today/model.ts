@@ -79,6 +79,18 @@ export function methodReason(method: AppData['settings']['method']): string {
   return 'In the order you chose.';
 }
 
+/**
+ * The Today greeting. With a first name it is warmer; without one it is exactly the plain sentence.
+ * `base` is the plain sentence, `kind` says which one it is.
+ */
+export function greetingWithName(base: string, kind: 'payday' | 'back' | 'other', name: string | undefined): string {
+  const n = (name ?? '').trim();
+  if (!n) return base;
+  if (kind === 'payday') return `Hi ${n}, it’s payday.`;
+  if (kind === 'back') return `Welcome back, ${n}.`;
+  return `Hi ${n}. ${base}`;
+}
+
 /** One line on why this debt is the one getting the extra. */
 export function whyFirst(method: AppData['settings']['method'], grows: boolean): string {
   if (grows) return 'It grows even when you pay the minimum, so it goes first.';

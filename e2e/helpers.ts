@@ -19,10 +19,11 @@ export async function unlockOnResult(page: Page, id = 'TEST-ORDER') {
  * By default the planner is unlocked at the end. With { unlock: false } it stops at the
  * calculator result.
  */
-export async function quickSetup(page: Page, opts: { unlock?: boolean } = {}) {
+export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: string } = {}) {
   await page.goto('/');
   const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
   // 1 Pay (the welcome words are on top of it)
+  if (opts.name) await page.getByLabel('What should we call you? (optional)').fill(opts.name);
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next.click();

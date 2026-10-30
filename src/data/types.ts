@@ -56,6 +56,8 @@ export interface Settings extends Meta {
   baseline: Baseline | null;
   /** "Do these later" items that are done (or that the buyer said they don't need) */
   later?: { yearly?: boolean; reminder?: boolean };
+  /** Optional first name, asked in setup. Used only in the Today greeting. Stays on this device. */
+  firstName?: string;
 }
 
 export interface OneOff {

@@ -31,7 +31,7 @@ import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
 import { DebtFreeCard } from './DebtFreeCard';
 import { Empty } from '../ui/Empty';
-import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, mergedRows, paidFromLog, whyFirst } from './model';
+import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, greetingWithName, mergedRows, paidFromLog, whyFirst } from './model';
 
 interface JustPaid {
   date: string;
@@ -268,7 +268,7 @@ export function Today() {
   };
 
   // ---------------------------------------------------------------- what the screen says
-  const greeting = paidView
+  const plainGreeting = paidView
     ? 'Done for this payday.'
     : !active.length
       ? 'You’re debt-free.'
@@ -277,6 +277,7 @@ export function Today() {
         : isPayday
           ? 'Hi, it’s payday.'
           : `Next payday is ${shortDate(nextDate)}.`;
+  const greeting = greetingWithName(plainGreeting, !paidView && active.length > 0 && missed > 0 ? 'back' : !paidView && active.length > 0 && missed === 0 && isPayday ? 'payday' : 'other', s.firstName);
 
   const goneLabel = (iso: string | null) => (iso ? (diffDays(today.value, iso) <= 100 ? shortDate(iso) : shortMonthYear(iso)) : null);
   // Paydays left for the focus debt after the one on the card (0 = this payday pays it off)

@@ -58,7 +58,7 @@ function CurrencyLine({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
 }
 
 /** The words that used to be a screen of their own. Skipped when numbers are being changed. */
-function Welcome() {
+function Welcome({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
   return (
     <div class="stack" style={{ gap: 12 }}>
       <Wordmark height={30} />
@@ -70,6 +70,9 @@ function Welcome() {
           {COPY.watchVideo}
         </a>
       )}
+      <Field label="What should we call you? (optional)" hint="Only used to say hi on Today. It stays on this device.">
+        <input type="text" maxLength={24} autoComplete="given-name" value={draft.firstName ?? ''} onInput={(e) => set({ firstName: (e.target as HTMLInputElement).value })} />
+      </Field>
     </div>
   );
 }
@@ -77,7 +80,7 @@ function Welcome() {
 export function PayStep({ draft, set, today }: StepProps) {
   return (
     <div class="stack">
-      {!editSeed.value && <Welcome />}
+      {!editSeed.value && <Welcome draft={draft} set={set} />}
       <h2 style={{ fontSize: '1.5rem' }}>Your pay schedule</h2>
       <p class="muted">Your whole plan follows your paydays, not the calendar month.</p>
       <CurrencyLine draft={draft} set={set} />

@@ -33,6 +33,8 @@ export interface DraftFund {
 export type TwicePair = '' | '1-15' | '15-31' | 'custom';
 
 export interface Draft {
+  /** Optional: only the Today greeting uses it */
+  firstName: string;
   /** ISO code, or '' for "Other" (symbol typed by hand) */
   currencyCode: string;
   currencySymbol: string;
@@ -66,6 +68,7 @@ export const newFund = (name = ''): DraftFund => ({ key: newKey(), name, perYear
 export function newDraft(): Draft {
   const c = detectCurrency();
   return {
+    firstName: '',
     currencyCode: c.code ?? '',
     currencySymbol: c.symbol,
     frequency: '',
@@ -254,7 +257,9 @@ export function ifThenDefault(draft: Draft): string {
 export function toSetupValues(draft: Draft): SetupValues {
   const debts = filledDebts(draft);
   const inputs = draftDebtInputs(draft);
+  const firstName = (draft.firstName ?? '').trim();
   return {
+    ...(firstName ? { firstName } : {}),
     currency: draft.currencyCode ? currencyFromCode(draft.currencyCode) : { symbol: draft.currencySymbol.trim() },
     frequency: draft.frequency as Frequency,
     nextPayday: draft.nextPayday,
@@ -297,6 +302,7 @@ export function draftFromData(d: AppData): Draft {
   const keyOf = new Map(debts.map((x) => [x.id, newKey()]));
   const byOrder = [...debts].sort((a, b) => (a.myOrder ?? 1e6) - (b.myOrder ?? 1e6) || a.position - b.position);
   return {
+    firstName: s.firstName ?? '',
     currencyCode: s.currency.code ?? '',
     currencySymbol: s.currency.symbol,
     frequency: s.frequency,

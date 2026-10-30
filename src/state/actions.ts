@@ -31,6 +31,8 @@ import {
 } from './planInput';
 
 export interface SetupValues {
+  /** Optional first name for the Today greeting */
+  firstName?: string;
   currency: Currency;
   frequency: Frequency;
   nextPayday: string;
@@ -108,6 +110,7 @@ export function buildSetupData(v: SetupValues, today: string, now = Date.now(), 
     theme: carry.theme ?? 'auto',
     textSize: carry.textSize ?? 1,
     license: carry.license ?? null,
+    ...(v.firstName?.trim() ? { firstName: v.firstName.trim() } : {}),
   };
   const debts: Debt[] = v.debts.map((d, i) => ({
     id: newId(),

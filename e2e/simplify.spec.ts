@@ -168,3 +168,42 @@ test.describe('5 · empty lists', () => {
     await expect(page.getByRole('region', { name: 'No debts' }).getByTestId('empty')).toContainText('No debts to pay right now.');
   });
 });
+
+test.describe('6 · first name', () => {
+  test('the name asked in setup shows in the Today greeting, and nowhere else', async ({ page }) => {
+    await quickSetup(page, { name: 'Marco' });
+    await expect(page.getByTestId('greeting')).toHaveText('Hi Marco. Next payday is Fri 23 Oct.');
+    await goTab(page, 'Debts');
+    await expect(page.locator('main')).not.toContainText('Marco');
+    await goTab(page, 'Path');
+    await expect(page.locator('main')).not.toContainText('Marco');
+  });
+
+  test('without a name the greeting is the plain one', async ({ page }) => {
+    await quickSetup(page);
+    await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 23 Oct.');
+  });
+
+  test('the name stays after a reload and is stored in the settings on this device', async ({ page }) => {
+    await quickSetup(page, { name: 'Marco' });
+    await page.reload();
+    await expect(page.getByTestId('greeting')).toHaveText('Hi Marco. Next payday is Fri 23 Oct.');
+    const stored = await page.evaluate(
+      () =>
+        new Promise<string | undefined>((resolve) => {
+          const open = indexedDB.databases ? indexedDB.databases() : Promise.resolve([]);
+          open.then(async (dbs) => {
+            const name = dbs[0]?.name;
+            if (!name) return resolve(undefined);
+            const req = indexedDB.open(name);
+            req.onsuccess = () => {
+              const tx = req.result.transaction('settings', 'readonly');
+              const get = tx.objectStore('settings').getAll();
+              get.onsuccess = () => resolve((get.result[0] as { firstName?: string } | undefined)?.firstName);
+            };
+          });
+        }),
+    );
+    expect(stored).toBe('Marco');
+  });
+});

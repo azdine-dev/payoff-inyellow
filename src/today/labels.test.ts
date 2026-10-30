@@ -1,7 +1,9 @@
 /** Labels on Coming up: Bill, then Paid once a payday covered it, or "Not paid yet" once its date passed. */
 import { describe, expect, it } from 'vitest';
 import type { PaydayLog } from '../data/types';
-import { billPaid, billState, comingUp, prevDueDate } from './model';
+import { billPaid, billState, comingUp, greetingWithName, prevDueDate } from './model';
+import { draftFromData, newDraft, toSetupValues } from '../setup/draft';
+import { buildSetupData } from '../state/actions';
 import { countdownParts } from './DebtFreeCard';
 import { roadDone } from '../ui/Road';
 
@@ -68,5 +70,35 @@ describe('billState', () => {
     expect(billState(data, store, '2026-10-05', '2026-10-30')).toBe('upcoming'); // before the plan began
     expect(billState(data, { id: 'z', minMonthly: 0 }, '2026-10-20', '2026-10-30')).toBe('upcoming');
     expect(billState({ paydays: [] }, store, '2026-10-20', '2026-10-30')).toBe('upcoming');
+  });
+});
+
+describe('greeting with a first name', () => {
+  it('is the plain sentence when there is no name', () => {
+    expect(greetingWithName('Next payday is Fri 23 Oct.', 'other', undefined)).toBe('Next payday is Fri 23 Oct.');
+    expect(greetingWithName('Hi, it’s payday.', 'payday', '  ')).toBe('Hi, it’s payday.');
+  });
+
+  it('puts the name in a warm place for each kind', () => {
+    expect(greetingWithName('Hi, it’s payday.', 'payday', 'Marco')).toBe('Hi Marco, it’s payday.');
+    expect(greetingWithName('Welcome back.', 'back', 'Marco')).toBe('Welcome back, Marco.');
+    expect(greetingWithName('Next payday is Fri 23 Oct.', 'other', ' Marco ')).toBe('Hi Marco. Next payday is Fri 23 Oct.');
+  });
+});
+
+describe('the first name is kept on this device only', () => {
+  it('goes from the setup draft into the settings, and back into the draft', () => {
+    const d = { ...newDraft(), firstName: '  Marco ', frequency: 'weekly' as const, nextPayday: '2026-10-23', debts: [{ key: 'a', name: 'Visa', type: '', balance: '3200', apr: '22.9', min: '96', dueDay: '12', autopay: false }] };
+    const values = toSetupValues(d);
+    expect(values.firstName).toBe('Marco');
+    const data = buildSetupData(values, '2026-10-15', 1000);
+    expect(data.settings.firstName).toBe('Marco');
+    expect(draftFromData(data).firstName).toBe('Marco');
+  });
+
+  it('is left out when empty', () => {
+    const d = { ...newDraft(), firstName: ' ', frequency: 'weekly' as const, nextPayday: '2026-10-23', debts: [{ key: 'a', name: 'Visa', type: '', balance: '3200', apr: '22.9', min: '96', dueDay: '12', autopay: false }] };
+    expect(toSetupValues(d).firstName).toBeUndefined();
+    expect('firstName' in buildSetupData(toSetupValues(d), '2026-10-15', 1000).settings).toBe(false);
   });
 });
