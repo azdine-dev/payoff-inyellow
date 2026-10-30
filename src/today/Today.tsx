@@ -29,6 +29,7 @@ import { Bar, Checkbox, CheckIcon, ChevronRight, Field, GearIcon, Note, NumberIn
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
+import { DebtFreeCard } from './DebtFreeCard';
 import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, mergedRows, paidFromLog, whyFirst } from './model';
 
 interface JustPaid {
@@ -332,27 +333,16 @@ export function Today() {
         </button>
       </header>
 
-      <button
-        type="button"
-        class="pill-link"
-        data-testid="debt-free-pill"
-        aria-label={r.debtFreeDate ? `Debt-free by ${shortMonthYear(r.debtFreeDate)}. Open your path.` : undefined}
-        onClick={() => {
+      <DebtFreeCard
+        today={today.value}
+        debtFreeDate={r.debtFreeDate}
+        hasDebts={active.length > 0}
+        pctGone={progressStats(d).pct}
+        onOpen={() => {
           pathView.value = 'progress';
           tab.value = 'path';
         }}
-      >
-        {r.debtFreeDate ? (
-          <>
-            Debt-free by <span class="hl">{shortMonthYear(r.debtFreeDate)}</span>
-          </>
-        ) : active.length ? (
-          'More than 20 years'
-        ) : (
-          'Debt-free'
-        )}
-        <ChevronRight />
-      </button>
+      />
 
       {updateReady.value && !updateDismissed.value && (
         <section class="card row" role="status" data-testid="update-bar">
@@ -540,6 +530,14 @@ export function Today() {
                     onToggle={() => toggle(x.key)}
                     right={<span class="num pc-amount">{money(x.amount)}</span>}
                   >
+                    <span class="pc-tags">
+                      {x.tags.map((t) => (
+                        <span key={t} class="tag">
+                          {t}
+                        </span>
+                      ))}
+                      {checked.has(x.key) && <span class="tag paid">Paid</span>}
+                    </span>
                     <span class="pc-title">{x.title}</span>
                     <span class="pc-rowsub">{x.sub}</span>
                   </Checkbox>
@@ -647,10 +645,16 @@ export function Today() {
             <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up">
               <p class="label">Coming up</p>
               {due.map((i) => (
-                <div key={`${i.name}-${i.date}`} class="row">
-                  <span>
+                <div key={`${i.debtId}-${i.date}`} class="row" data-state={i.state}>
+                  <span class="coming-main">
                     {shortDate(i.date)} · {i.name}
-                    {i.autopay ? ' (autopay)' : ''} <span class="muted small">{relativeDay(today.value, i.date)}</span>
+                    {i.autopay ? ' (autopay)' : ''}{' '}
+                    <span class="pc-tags">
+                      <span class="tag">Bill</span>
+                      {i.state === 'paid' && <span class="tag paid">Paid</span>}
+                      {i.state === 'late' && <span class="tag">Not paid yet</span>}
+                    </span>{' '}
+                    {i.state !== 'late' && <span class="muted small">{relativeDay(today.value, i.date)}</span>}
                   </span>
                   <span class="num">{money(i.amount)}</span>
                 </div>

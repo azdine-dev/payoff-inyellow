@@ -259,7 +259,8 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   await showPaydays(page, 'Done');
   const done = page.getByRole('button', { name: 'Fri 23 Oct, paid' }).locator('xpath=..');
   await expect(done.locator('.tag.paid').first()).toBeVisible(); // yellow once paid
-  await expect(done.locator('.tag.paid', { hasText: 'Extra' })).toHaveCount(1);
+  await expect(done.locator('.tag.paid', { hasText: 'Paid' })).toHaveCount(1);
+  await expect(done.locator('.tag', { hasText: 'Extra' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toHaveCount(0);
   // Tapping a row still opens its details
   await done.getByRole('button').click();

@@ -19,6 +19,7 @@ import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { SetupBar } from '../ui/controls';
+import { RoadIllustration, roadDone } from '../ui/Road';
 import { HowWeGotThis } from './HowWeGotThis';
 import { LaterChips } from './LaterChips';
 import { EmailCapture, UnlockCard } from './Unlock';
@@ -73,11 +74,14 @@ export function Result() {
       {r.debtFreeDate ? (
         <div class="stack" style={{ gap: 8 }}>
           <p class="muted" style={{ fontSize: '1.1rem' }}>{COPY.resultLead}</p>
-          <h1 style={{ margin: 0 }}>
-            <span class="hl-big tilt" style={{ fontSize: '2.9rem', fontWeight: 800 }} data-testid="debt-free-date">
-              {monthYear(r.debtFreeDate)}
-            </span>
-          </h1>
+          <div class="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+            <h1 style={{ margin: 0 }}>
+              <span class="hl-big tilt" style={{ fontSize: '2.9rem', fontWeight: 800 }} data-testid="debt-free-date">
+                {monthYear(r.debtFreeDate)}
+              </span>
+            </h1>
+            <RoadIllustration done={roadDone(0)} width={92} />
+          </div>
           <button type="button" class="link small" style={{ alignSelf: 'flex-start', fontWeight: 500 }} aria-label="How we got this date" onClick={() => setHow(true)}>
             How we got this
           </button>

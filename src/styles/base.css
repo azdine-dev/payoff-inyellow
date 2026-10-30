@@ -1997,3 +1997,78 @@ textarea {
   border-radius: 12px;
   background: var(--card);
 }
+
+
+/* ---------- Today's top card: the countdown and the road ---------- */
+.debt-free-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 14px 14px 20px;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dfc-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dfc-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-family: var(--font-head);
+  line-height: 1;
+}
+
+.dfc-unit b {
+  font-size: 2.3rem;
+  font-weight: 800;
+}
+
+.dfc-unit small {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.dfc-month {
+  align-self: flex-start;
+  font-weight: 700;
+}
+
+.road {
+  flex: none;
+  max-width: 42%;
+  height: auto;
+}
+
+.road-sq.on {
+  filter: none;
+}
+
+/* ---------- labels on payday rows and Coming up ---------- */
+.pc-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.pc-rows .pc-tags {
+  display: flex;
+  margin: 2px 0;
+}
+
+.payday-card .tag {
+  border-color: var(--pc-fg);
+}
+
+.payday-card .tag.paid {
+  border-color: var(--yellow);
+}

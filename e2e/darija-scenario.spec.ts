@@ -126,7 +126,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   // ---------------------------------------------------------------- part 4: Today before payday 1
   await test.step('Today before the first payday', async () => {
     await revealEarly(page);
-    await expect(pill).toHaveText('Debt-free by Oct 2028');
+    await expect(pill).toContainText('October 2028');
     // The bills due from Fri 23 Oct up to Fri 6 Nov, each with its full monthly minimum and its due date
     await expect(page.getByRole('checkbox', { name: /Medical bill.*due Sun 1 Nov/ })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: /Store card.*due Thu 5 Nov/ })).toBeVisible();
@@ -161,7 +161,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     });
     await expectBuffer(page, 307.69);
     await goTab(page, 'Today');
-    await expect(pill).toHaveText('Debt-free by Oct 2028');
+    await expect(pill).toContainText('October 2028');
   });
 
   await test.step('Payday 2 (6 Nov)', async () => {
@@ -242,7 +242,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByTestId('buffer-first')).toBeVisible();
     await expect(page.getByRole('checkbox', { name: /Car loan.*due Sun 20 Dec/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^I did it/ })).toContainText(near(435)); // 285 + 42.31 + 107.69
-    await expect(pill).toHaveText('Debt-free by Nov 2028');
+    await expect(pill).toContainText('November 2028');
   });
 
   await test.step('Payday 5 (18 Dec)', async () => {
@@ -259,7 +259,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Next payday' })).toBeVisible();
     await expect(page.getByText('Fri 15 Jan').first()).toBeVisible();
-    await expect(pill).toHaveText('Debt-free by Nov 2028'); // 3 Nov 2028
+    await expect(pill).toContainText('November 2028'); // 3 Nov 2028
     await shot(page, '22-sara-missed');
     await goTab(page, 'Progress');
     await expect(page.getByTestId('to-go')).toContainText('$14,134'); // unchanged
@@ -276,7 +276,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await goTab(page, 'Progress');
     await expect(page.getByTestId('to-go')).toContainText('$14,146'); // 14,145.53
     await goTab(page, 'Today');
-    await expect(pill).toHaveText('Debt-free by Nov 2028');
+    await expect(pill).toContainText('November 2028');
   });
 
   // ---------------------------------------------------------------- part 11: paydays 7 to 12
@@ -405,7 +405,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await other.getByLabel('Backup file').setInputFiles(file);
     await expect(other.getByRole('dialog')).toContainText('4 debts, 13 paydays logged'); // 12 paid and 1 skipped
     await other.getByRole('button', { name: 'Restore it', exact: true }).click();
-    await expect(other.getByTestId('debt-free-pill')).toHaveText('Debt-free by Nov 2028');
+    await expect(other.getByTestId('debt-free-pill')).toContainText('November 2028');
     await expect(other.getByTestId('greeting')).toBeVisible();
     await goTab(other, 'Plan');
     await showPaydays(other, 'Done');
@@ -524,7 +524,7 @@ test('Case B: a debt that grows, paid twice a month (15th and last day)', async 
     await expect(page.getByRole('checkbox', { name: /Buffer/ })).toContainText(near(74.17));
     await expect(page.getByRole('button', { name: /^I did it/ })).toContainText(near(250)); // 130 + 45.83 + 74.17
     await expect(page.getByTestId('buffer-first')).toBeVisible();
-    await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Mar 2032');
+    await expect(page.getByTestId('debt-free-pill')).toContainText('March 2032');
   });
 });
 

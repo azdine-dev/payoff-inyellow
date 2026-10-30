@@ -3,6 +3,7 @@ import { ZERO, type PaydayStep, type PlanResult } from '../engine';
 import type { AppData, Debt } from '../data/types';
 import { formatMoney, formatMoneyAuto, toCents } from '../lib/money';
 import { totalOf, type BillsWindow } from '../state/billsDue';
+import { addMonths, daysInMonth, parseISO, toISO } from '../engine/dates';
 import { addDaysISO, dayMonth, diffDays, monthYear, nextDueDate, shortDate } from '../lib/today';
 
 export interface PaydayLine {
@@ -115,19 +116,45 @@ export function focusDebt(data: AppData, result: PlanResult): FocusInfo | null {
 }
 
 export interface DueItem {
+  debtId: string;
   name: string;
   date: string;
   amount: number;
   autopay: boolean;
+  /** upcoming = still ahead, paid = a payday already covered it, late = past its date and not paid yet */
+  state: 'upcoming' | 'paid' | 'late';
 }
 
-/** Due dates in the next 14 days. */
+/** True when a payday that was recorded as done paid this bill (the bill with this due date). */
+export function billPaid(data: Pick<AppData, 'paydays'>, debtId: string, due: string): boolean {
+  return data.paydays.some((p) => p.status === 'done' && p.bills?.some((b) => b.debtId === debtId && b.due === due));
+}
+
+/** The last date before `fromISO` that a debt with this due day was due (clamped to the month end). */
+export function prevDueDate(dueDay: number, fromISO: string): string {
+  const from = parseISO(fromISO);
+  const thisMonth = { y: from.y, m: from.m, d: Math.min(dueDay, daysInMonth(from.y, from.m)) };
+  if (thisMonth.d < from.d) return toISO(thisMonth);
+  const prev = addMonths({ y: from.y, m: from.m, d: 1 }, -1);
+  return toISO({ ...prev, d: Math.min(dueDay, daysInMonth(prev.y, prev.m)) });
+}
+
+/**
+ * Due dates in the next 14 days, plus a bill from the last 14 days that no payday has paid yet.
+ * A late bill only shows once a payday has been done, so a new plan never opens on "not paid".
+ */
 export function comingUp(data: AppData, today: string): DueItem[] {
-  return data.debts
-    .filter((d) => d.status === 'active' && d.dueDay)
-    .map((d) => ({ name: d.name, date: nextDueDate(d.dueDay!, today), amount: d.minMonthly, autopay: d.autopay }))
-    .filter((i) => diffDays(today, i.date) <= 14)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const items: DueItem[] = [];
+  const firstDone = data.paydays.filter((p) => p.status === 'done').map((p) => p.date).sort()[0];
+  for (const d of data.debts) {
+    if (d.status !== 'active' || !d.dueDay) continue;
+    const base = { debtId: d.id, name: d.name, amount: d.minMonthly, autopay: d.autopay };
+    const next = nextDueDate(d.dueDay, today);
+    if (diffDays(today, next) <= 14) items.push({ ...base, date: next, state: billPaid(data, d.id, next) ? 'paid' : 'upcoming' });
+    const prev = prevDueDate(d.dueDay, today);
+    if (firstDone && prev >= firstDone && d.minMonthly > 0 && diffDays(prev, today) <= 14 && !billPaid(data, d.id, prev)) items.push({ ...base, date: prev, state: 'late' });
+  }
+  return items.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function dueLine(i: DueItem, data: AppData): string {
@@ -142,6 +169,8 @@ export interface PayRow {
   kind: 'debt' | 'yearly' | 'buffer';
   /** "Store Card" */
   title: string;
+  /** The small labels: Bill, Extra, Buffer, Yearly */
+  tags: ('Bill' | 'Extra' | 'Buffer' | 'Yearly')[];
   /** "Bill $35 + extra $250 · due Sun 2 Nov" */
   sub: string;
   /** What the card says once it is paid: "Store Card, bill + extra" */
@@ -172,6 +201,7 @@ export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): 
       key: `debt-${b.debtId}`,
       kind: 'debt',
       title: b.name,
+      tags: extra > 0 ? ['Bill', 'Extra'] : ['Bill'],
       sub: extra > 0 ? `Bill ${money(b.amount)} + extra ${money(extra)} · due ${shortDate(b.due)}${auto}` : `Bill, due ${shortDate(b.due)}${auto}`,
       paidLabel: extra > 0 ? `${b.name}, bill + extra` : `${b.name} bill`,
       amount: toCents(b.amount) + extra,
@@ -182,16 +212,16 @@ export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): 
     const extra = extras.get(d.id);
     if (!extra || done.has(d.id)) continue;
     const name = debts.get(d.id)?.name ?? '';
-    rows.push({ key: `debt-${d.id}`, kind: 'debt', title: name, sub: `Extra ${money(extra)}`, paidLabel: `${name}, extra`, amount: extra, debtId: d.id });
+    rows.push({ key: `debt-${d.id}`, kind: 'debt', title: name, tags: ['Extra'], sub: `Extra ${money(extra)}`, paidLabel: `${name}, extra`, amount: extra, debtId: d.id });
   }
   if (toCents(row.toYearlyBills) > 0) {
     const names = data.funds.map((f) => f.name);
     const shown = names.length > 3 ? `${names.slice(0, 3).join(', ')}…` : names.join(', ');
-    rows.push({ key: 'yearly', kind: 'yearly', title: 'Yearly bills pot', sub: shown, paidLabel: 'Yearly bills pot', amount: toCents(row.toYearlyBills) });
+    rows.push({ key: 'yearly', kind: 'yearly', title: 'Yearly bills pot', tags: ['Yearly'], sub: shown, paidLabel: 'Yearly bills pot', amount: toCents(row.toYearlyBills) });
   }
   if (toCents(row.toBuffer) > 0) {
     const sub = `${formatMoney(data.buffer.amount, data.settings.currency, { whole: true })} of ${formatMoney(data.settings.bufferGoal, data.settings.currency, { whole: true })}`;
-    rows.push({ key: 'buffer', kind: 'buffer', title: 'Buffer', sub, paidLabel: 'Buffer', amount: toCents(row.toBuffer) });
+    rows.push({ key: 'buffer', kind: 'buffer', title: 'Buffer', tags: ['Buffer'], sub, paidLabel: 'Buffer', amount: toCents(row.toBuffer) });
   }
   return { rows, total: totalOf(bills, row), noDueDay: bills.noDueDay };
 }

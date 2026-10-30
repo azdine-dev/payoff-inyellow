@@ -11,10 +11,10 @@ const FUTURE_STEP = 26;
 
 /** What a payday held, as small tags. Outline for what is ahead, yellow once it is paid. */
 const TAG_KINDS = [
-  { kind: 'minimum', label: 'Minimum' },
+  { kind: 'minimum', label: 'Bill' },
   { kind: 'extra', label: 'Extra' },
   { kind: 'buffer', label: 'Buffer' },
-  { kind: 'fund', label: 'Yearly bill' },
+  { kind: 'fund', label: 'Yearly' },
 ] as const;
 
 /** Items in date order, grouped by month ("2026-11"). */
@@ -90,10 +90,11 @@ function Body() {
                         {p.status === 'done' && (
                           <div class="tags" aria-hidden="true">
                             {TAG_KINDS.filter((t) => kinds.has(t.kind)).map((t) => (
-                              <span key={t.kind} class="tag paid">
+                              <span key={t.kind} class="tag">
                                 {t.label}
                               </span>
                             ))}
+                            <span class="tag paid">Paid</span>
                           </div>
                         )}
                         {open === key && (
@@ -143,10 +144,10 @@ function Body() {
                           <span class="num pd-amt">{formatMoneyAuto(rowTotals[i]!, cur)}</span>
                         </button>
                         <div class="tags" aria-hidden="true">
-                          {bills.due.length > 0 && <span class="tag">Minimum</span>}
+                          {bills.due.length > 0 && <span class="tag">Bill</span>}
                           {row.extraGoesTo && <span class="tag">Extra</span>}
                           {row.toBuffer > 0.004 && <span class="tag">Buffer</span>}
-                          {row.toYearlyBills > 0.004 && <span class="tag">Yearly bill</span>}
+                          {row.toYearlyBills > 0.004 && <span class="tag">Yearly</span>}
                         </div>
                         {open === key && (
                           <div class="stack pd-detail" style={{ gap: 6 }} role="group" aria-label={`${shortDate(row.date)} details`}>

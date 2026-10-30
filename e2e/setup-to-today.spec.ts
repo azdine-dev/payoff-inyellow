@@ -72,7 +72,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await revealEarly(page);
 
   // Today: payday 1 of the fixture
-  await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Oct 2028');
+  await expect(page.getByTestId('debt-free-pill')).toContainText('October 2028');
   // The bills due before the next payday, each with its full monthly minimum and its due date
   await expect(page.getByRole('checkbox', { name: /Medical bill.*due Sun 1 Nov/ })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Store card.*due Thu 5 Nov/ })).toBeVisible();
@@ -86,7 +86,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
 
   await didIt.click(); // the payday is still a week away: no question, Undo covers a mistake
   await expect(page.getByRole('status').filter({ hasText: 'Fri 23 Oct is paid.' })).toContainText('Next payday: Fri 6 Nov.');
-  await expect(page.getByTestId('debt-free-pill')).toHaveText('Debt-free by Oct 2028');
+  await expect(page.getByTestId('debt-free-pill')).toContainText('October 2028');
   await shot(page, '08-paid');
 
   // Everything stays after a reload (IndexedDB)
