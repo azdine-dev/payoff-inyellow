@@ -133,8 +133,9 @@ export interface DueItem {
   date: string;
   amount: number;
   autopay: boolean;
-  /** upcoming = still ahead, paid = a payday already covered it, late = past its date and not paid yet */
-  state: 'upcoming' | 'paid' | 'late';
+  /** upcoming = still ahead, paid = a payday already covered it, late = past its date and not paid yet,
+   *  current = due before the plan's first payday, so it comes out of the pay you have now */
+  state: 'upcoming' | 'paid' | 'late' | 'current';
 }
 
 /** True when a payday that was recorded as done paid this bill (the bill with this due date). */
@@ -165,14 +166,16 @@ export function prevDueDate(dueDay: number, fromISO: string): string {
  * Due dates in the next 14 days, plus a bill from the last 14 days that no payday has paid yet.
  * A late bill only shows once a payday has been done, so a new plan never opens on "not paid".
  */
-export function comingUp(data: AppData, today: string): DueItem[] {
+export function comingUp(data: AppData, today: string, firstPayday?: string): DueItem[] {
   const items: DueItem[] = [];
+  // Before the first payday of the plan is done or skipped, a bill due earlier than that payday is paid from current pay
+  const beforePlan = (date: string) => data.paydays.length === 0 && firstPayday !== undefined && date < firstPayday;
   const firstDone = data.paydays.filter((p) => p.status === 'done').map((p) => p.date).sort()[0];
   for (const d of data.debts) {
     if (d.status !== 'active' || !d.dueDay) continue;
     const base = { debtId: d.id, name: d.name, amount: d.minMonthly, autopay: d.autopay };
     const next = nextDueDate(d.dueDay, today);
-    if (diffDays(today, next) <= 14) items.push({ ...base, date: next, state: billPaid(data, d.id, next) ? 'paid' : 'upcoming' });
+    if (diffDays(today, next) <= 14) items.push({ ...base, date: next, state: billPaid(data, d.id, next) ? 'paid' : beforePlan(next) ? 'current' : 'upcoming' });
     const prev = prevDueDate(d.dueDay, today);
     if (firstDone && prev >= firstDone && d.minMonthly > 0 && diffDays(prev, today) <= 14 && !billPaid(data, d.id, prev)) items.push({ ...base, date: prev, state: 'late' });
   }

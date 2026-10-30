@@ -136,9 +136,9 @@ test.describe('5 · small animations', () => {
   test('a debt paid off: the card turns yellow with the stamp, then the next one slides in', async ({ page }) => {
     await quickSetup(page);
     await revealEarly(page);
-    await page.getByRole('button', { name: '+ Extra payment' }).click();
-    await page.getByRole('textbox', { name: 'Extra payment' }).fill('640');
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await page.getByRole('textbox', { name: 'Extra money' }).fill('640');
+    await page.getByRole('button', { name: 'Use it', exact: true }).click();
     await expect(page.getByTestId('paid-moment')).toBeVisible();
     await page.getByRole('button', { name: /Next payday|Done/ }).click();
     await goTab(page, 'Debts');

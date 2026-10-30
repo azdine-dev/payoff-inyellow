@@ -102,3 +102,15 @@ describe('the first name is kept on this device only', () => {
     expect('firstName' in buildSetupData(toSetupValues(d), '2026-10-15', 1000).settings).toBe(false);
   });
 });
+
+describe('a bill due before the first payday of the plan', () => {
+  const medical = debt('m', 'Medical', 3, 50);
+  it('is "current": it comes out of the pay you have now', () => {
+    const items = comingUp({ debts: [medical], paydays: [] } as never, '2026-10-30', '2026-11-06');
+    expect(items.map((i) => [i.date, i.state])).toEqual([['2026-11-03', 'current']]);
+  });
+  it('is upcoming once a payday has been done, or when it falls after the first payday', () => {
+    expect(comingUp({ debts: [medical], paydays: [done(1, '2026-10-09')] } as never, '2026-10-30', '2026-11-06').find((i) => i.date === '2026-11-03')?.state).toBe('upcoming');
+    expect(comingUp({ debts: [debt('s', 'Store', 12, 30)], paydays: [] } as never, '2026-10-30', '2026-11-06')[0]?.state).toBe('upcoming');
+  });
+});

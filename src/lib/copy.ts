@@ -10,7 +10,6 @@ export const COPY = {
   startPlan: 'Start my plan',
   didIt: 'I did it',
   differentAmount: 'I got a different amount',
-  extraPayment: '+ Extra payment',
   missed: 'Life happens. Never miss twice. Here’s your updated date.',
   buffer:
     'Your buffer comes first. Until it reaches your goal, the extra goes there, so one surprise bill doesn’t land back on a card.',

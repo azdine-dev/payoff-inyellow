@@ -96,7 +96,7 @@ export function Today() {
   // Undo lasts 10 seconds.
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [backedUp, setBackedUp] = useState(false);
-  const [sheet, setSheet] = useState<'amount' | 'extra' | 'redo' | 'windfall' | null>(null);
+  const [sheet, setSheet] = useState<'amount' | 'redo' | 'windfall' | null>(null);
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
   // "add a due day" for a debt that has none
@@ -129,7 +129,7 @@ export function Today() {
   const focus = focusDebt(d, r);
   const growingNow = new Set(growingDebts(d.debts.filter((x) => x.status === 'active').map(toDebtInput)));
   const active = activeDebts(d);
-  const due = comingUp(d, today.value);
+  const due = comingUp(d, today.value, nextDate);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
   // Before the payday: a countdown. Done: the yellow card stays until the next payday, even after a reload.
   // The full card shows until the first "I did it", and when the payday is 2 days away or less (early direct deposit).
@@ -209,7 +209,7 @@ export function Today() {
     setDueDebtId(null);
   };
 
-  const openSheet = (which: 'amount' | 'extra' | 'windfall') => {
+  const openSheet = (which: 'amount' | 'windfall') => {
     setInput(which === 'amount' ? String(override ?? s.extraPerPayday) : '');
     setInputNote('');
     setSheet(which);
@@ -244,7 +244,7 @@ export function Today() {
       setSheet(null);
       return;
     }
-    if (amount === null || amount < 0 || ((sheet === 'extra' || sheet === 'windfall') && amount === 0)) {
+    if (amount === null || amount < 0 || (sheet === 'windfall' && amount === 0)) {
       setInputNote('Type an amount, like 50.');
       return;
     }
@@ -620,14 +620,9 @@ export function Today() {
                   <p data-testid="focus-why">{whyFirst(s.method, growingNow.has(focus.debt.id))}</p>
                 </HelpTip>
               </div>
-              <span class="row" style={{ justifyContent: 'flex-start', gap: 18 }}>
-                <button type="button" class="link small" onClick={() => openSheet('extra')}>
-                  {COPY.extraPayment}
-                </button>
-                <button type="button" class="link small" data-testid="got-extra" onClick={() => openSheet('windfall')}>
-                  I got extra money
-                </button>
-              </span>
+              <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} data-testid="got-extra" onClick={() => openSheet('windfall')}>
+                I got extra money
+              </button>
             </section>
           )}
 
@@ -665,6 +660,7 @@ export function Today() {
                     <span class="pc-tags">
                       <span class="tag">Bill</span>
                       {i.state === 'paid' && <span class="tag paid">Paid</span>}
+                      {i.state === 'current' && <span class="tag">From your current pay</span>}
                       {i.state === 'late' && <span class="tag">Not paid yet</span>}
                     </span>{' '}
                     {i.state !== 'late' && <span class="muted small">{relativeDay(today.value, i.date)}</span>}
@@ -696,12 +692,12 @@ export function Today() {
         </button>
       </Sheet>
 
-      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : sheet === 'windfall' ? 'I got extra money' : 'Extra payment'}>
+      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : 'I got extra money'}>
         {sheet === 'amount' || sheet === 'redo' ? (
           <Field label="How much can go to the plan this payday?" hint={`Usually ${money(s.extraPerPayday)}. Your minimums stay the same, and the rest follows the same order.`}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Money for the plan this payday" />
           </Field>
-        ) : sheet === 'windfall' ? (
+        ) : (
           <>
             <Field label="How much did you get?" hint={focus ? `See what it would do first. If you use it, it goes to ${focus.debt.name}.` : undefined}>
               <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Extra money" />
@@ -720,14 +716,10 @@ export function Today() {
               </section>
             )}
           </>
-        ) : (
-          <Field label="How much extra did you pay?" hint={focus ? `It goes to ${focus.debt.name}. Anything over its balance goes to the next debt.` : undefined}>
-            <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Extra payment" />
-          </Field>
         )}
         {inputNote && <Note>{inputNote}</Note>}
         <button type="button" class="btn" onClick={saveSheet}>
-          {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : sheet === 'windfall' ? 'Use it' : 'Save'}
+          {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : 'Use it'}
         </button>
         <button type="button" class="link" onClick={() => setSheet(null)}>
           Cancel

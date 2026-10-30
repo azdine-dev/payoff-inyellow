@@ -73,8 +73,8 @@ test('"Change what I paid" goes away once something else moved the balances', as
   await expect(page.getByTestId('paid-card')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('change-paid')).toBeVisible();
-  await page.getByRole('button', { name: '+ Extra payment' }).click();
-  await page.getByRole('textbox', { name: 'Extra payment' }).fill('10');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('button', { name: 'I got extra money' }).click();
+  await page.getByRole('textbox', { name: 'Extra money' }).fill('10');
+  await page.getByRole('button', { name: 'Use it', exact: true }).click();
   await expect(page.getByTestId('change-paid')).toHaveCount(0);
 });

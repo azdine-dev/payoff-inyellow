@@ -101,9 +101,9 @@ test.describe('Part 4 · Debts', () => {
 
   test('a paid debt moves to the bottom, yellow, crossed out, with the PAID stamp', async ({ page }) => {
     await quickSetup(page);
-    await page.getByRole('button', { name: '+ Extra payment' }).click();
-    await page.getByRole('textbox', { name: 'Extra payment' }).fill('640');
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await page.getByRole('textbox', { name: 'Extra money' }).fill('640');
+    await page.getByRole('button', { name: 'Use it', exact: true }).click();
     await page.getByRole('button', { name: /Next payday|Done/ }).click();
     await goTab(page, 'Debts');
     const paid = page.getByRole('region', { name: 'Store card' });
@@ -196,11 +196,12 @@ test.describe('Part 6 · every number is a door', () => {
     await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
   });
 
-  test('the focus debt card keeps its "+ Extra payment" link, and it is not inside the door', async ({ page }) => {
+  test('the focus debt card keeps one "I got extra money" link, and it is not inside the door', async ({ page }) => {
     await quickSetup(page);
     const door = page.getByRole('button', { name: 'Store card, open in Debts' });
     await expect(door.getByRole('button')).toHaveCount(0); // no button inside a button
-    await page.getByRole('button', { name: '+ Extra payment' }).click();
-    await expect(page.getByRole('dialog', { name: 'Extra payment' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await expect(page.getByRole('dialog', { name: 'I got extra money' })).toBeVisible();
   });
 });

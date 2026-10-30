@@ -164,6 +164,8 @@ export async function runWizard(page: Page, c: WizardConfig) {
   }
   await next.click();
   await page.getByLabel('Money for the plan each payday').fill(c.extra);
+  // The buffer fields may sit inside a collapsed "change" section
+  if (!(await page.getByLabel('Buffer now').isVisible())) await page.getByText('Change what you have set aside or the goal').click();
   await page.getByLabel('Buffer now').fill(c.bufferNow);
   if (c.bufferGoal !== undefined) await page.getByLabel('Buffer goal').fill(c.bufferGoal);
   await next.click();
