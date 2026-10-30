@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { COPY } from '../lib/copy';
 import wordmark from './wordmark.svg';
 import wordmarkDark from './wordmark-dark.svg';
 
@@ -150,6 +151,38 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
         {props.children}
       </div>
     </div>
+  );
+}
+
+/** A small (?) that opens a bottom sheet with the explanation, so the card itself stays short. */
+export function HelpTip(props: { title: string; children: ComponentChildren }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" class="help-tip" aria-label={`Help: ${props.title}`} onClick={() => setOpen(true)}>
+        ?
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title={props.title}>
+        <div class="stack help-body" style={{ gap: 8 }}>
+          {props.children}
+        </div>
+        <button type="button" class="btn" onClick={() => setOpen(false)}>
+          Got it
+        </button>
+      </Sheet>
+    </>
+  );
+}
+
+/** The line under Today and the result: privacy and the disclaimer, with the "figures are estimates" part behind a (?). */
+export function FooterNote({ privacy }: { privacy: string }) {
+  return (
+    <p class="footer-note">
+      {privacy} {COPY.disclaimerShort}
+      <HelpTip title="About the figures">
+        <p>{COPY.figuresNote}</p>
+      </HelpTip>
+    </p>
   );
 }
 

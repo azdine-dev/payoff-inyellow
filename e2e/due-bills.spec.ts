@@ -19,7 +19,7 @@ test('setup needs the due day, and says where to find it', async ({ page }) => {
   await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(page.getByLabel('Due day')).toBeVisible();
-  await expect(page.getByText('It’s on your statement. The plan needs it to place the bill.')).toBeVisible();
+  await expect(page.getByText('It’s on your statement.')).toBeVisible();
   await expect(page.getByLabel('Due day (optional)')).toHaveCount(0);
   await shot(page, '31-due-day-setup');
 });

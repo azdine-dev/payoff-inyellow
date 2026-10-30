@@ -19,7 +19,7 @@ import { activeDebts } from '../state/planInput';
 import { act, data, today } from '../state/store';
 import { Empty } from '../ui/Empty';
 import { useCountUp } from '../ui/useCountUp';
-import { Bar, Checkbox, ChevronRight, Field, Note, NumberInput, Sheet } from '../ui/controls';
+import { Bar, Checkbox, ChevronRight, Field, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 
 type Mode = 'use-buffer' | 'goal' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
 
@@ -102,6 +102,9 @@ export function Money() {
       <section class="card stack" aria-labelledby="buffer-title">
         <p class="label" id="buffer-title">
           Surprise buffer
+          <HelpTip title="Surprise buffer">
+            <p>Kept in a plain separate account or an envelope. If you use some, your plan refills it first.</p>
+          </HelpTip>
         </p>
         <div class="row" style={{ justifyContent: 'flex-start', alignItems: 'baseline', gap: 10 }}>
           <span class="buffer-big num" data-testid="buffer-amount">
@@ -120,7 +123,7 @@ export function Money() {
           </span>
         </div>
         <Bar pct={bufferPct} label="Buffer" />
-        {usedNote ? <Note>{COPY.bufferUsed}</Note> : <p class="muted">Kept in a plain separate account or an envelope. If you use some, your plan refills it first.</p>}
+        {usedNote && <Note>{COPY.bufferUsed}</Note>}
         <button type="button" class="btn" onClick={() => setMode('use-buffer')}>
           I used some of it
         </button>
@@ -183,7 +186,7 @@ export function Money() {
         <span class="stack" style={{ gap: 2, textAlign: 'left' }}>
           <b>{findTitle}</b>
           <span class="muted small">
-            {items.length} small ideas, with a live total{total > 0 ? ` · ${formatMoney(total, cur, { whole: true })} so far` : ''}
+            {items.length} small ideas{total > 0 ? ` · ${formatMoney(total, cur, { whole: true })} so far` : ''}
           </span>
         </span>
         <ChevronRight />

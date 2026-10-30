@@ -29,7 +29,7 @@ test('four steps, each with its own label and bar, and Back keeps what was typed
   await expect(page.getByLabel('Step 2 of 4')).toBeVisible();
   await expect(page.getByText('2 of 4')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'What do you owe?' })).toBeVisible();
-  await expect(page.getByText('Everything is on your statement. Rough numbers are fine for now.')).toBeVisible();
+  await expect(page.getByText('Rough numbers are fine for now.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'That’s all of them' })).toBeVisible();
   await expectBrandRules(page);
   const card = page.locator('fieldset');
@@ -72,7 +72,10 @@ test('an empty rate uses 24%, marks the debt, and Today offers to add the real o
   await card.getByLabel('Balance').fill('3200');
   await card.getByLabel('Monthly minimum').fill('96');
   await card.getByLabel('Due day').fill('12');
-  await expect(card).toContainText('Don’t know the rate? Leave it. We’ll use 24% and remind you.');
+  await expect(card).toContainText('Don’t know the rate? Leave it.');
+  await card.getByRole('button', { name: 'Help: About the rate' }).click();
+  await expect(page.getByRole('dialog', { name: 'About the rate' })).toContainText('We’ll use 24% and remind you.');
+  await page.getByRole('button', { name: 'Got it' }).click();
   await next(page).click(); // not blocked
   await page.getByLabel('Money for the plan each payday').fill('100');
   await page.getByLabel('Buffer now').fill('500');

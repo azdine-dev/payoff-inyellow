@@ -61,7 +61,7 @@ test.describe('Part 3 · Path', () => {
   test('a Next milestone card sits above the list, and "This month: X of Y planned" shows after a payday', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await expect(page.getByTestId('next-milestone')).toContainText(/^Next milestone\s*Next: Store card gone · /);
+    await expect(page.getByTestId('next-milestone')).toContainText(/^Next milestone\s*Store card gone · /);
     await expect(page.getByTestId('planned-vs-actual')).toHaveCount(0);
     await goTab(page, 'Today');
     await tapDidIt(page);

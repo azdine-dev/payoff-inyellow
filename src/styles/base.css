@@ -2223,3 +2223,35 @@ textarea {
 .payday-grid[hidden] {
   display: none;
 }
+
+/* ---------- the small (?) ---------- */
+.help-tip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0 0 0 6px;
+  padding: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* the tap area is 44px even though the circle is small */
+.help-tip::after {
+  content: '';
+  position: absolute;
+  inset: -11px;
+}
+
+.payday-card .help-tip {
+  color: var(--pc-fg);
+}

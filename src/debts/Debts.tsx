@@ -14,7 +14,7 @@ import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, u
 import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, freshPaidDebts, openDebtId, plan, today } from '../state/store';
 import { Count } from '../ui/useCountUp';
-import { CheckIcon, Choice, Field, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
+import { CheckIcon, Choice, Field, HelpTip, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
 import { Empty } from '../ui/Empty';
 import { Ring } from '../ui/Ring';
 
@@ -312,7 +312,10 @@ export function Debts() {
         <div class="stack" style={{ gap: 2 }}>
           <h1>Debts</h1>
           <p class="muted num" data-testid="owed-line">
-            {active.length ? `${formatMoney(owedTotal, cur, { whole: true })} left · in the order you pay them` : 'Nothing left to pay'}
+            {active.length ? `${formatMoney(owedTotal, cur, { whole: true })} left` : 'Nothing left to pay'}
+            <HelpTip title="Your debts">
+              <p>They are listed in the order you pay them. Tap a debt to update it from your statement, add a new charge or fee, or edit or archive it.</p>
+            </HelpTip>
           </p>
         </div>
         <button type="button" class="round-btn dark" aria-label="Add a debt" onClick={() => setMode({ kind: 'add' })}>
@@ -323,14 +326,6 @@ export function Debts() {
       {!active.length && (
         <section class="card" aria-label="No debts">
           <Empty art="debts" line="No debts to pay right now. Tap the plus if one comes up." />
-        </section>
-      )}
-      {active.length > 0 && (
-        <section class="card stack" aria-label="Tap a debt to">
-          <p class="label">Tap a debt to</p>
-          <p>Update from my statement</p>
-          <p>Add a new charge or fee</p>
-          <p>Edit or archive</p>
         </section>
       )}
       {paid.length > 0 && (

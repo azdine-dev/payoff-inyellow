@@ -25,7 +25,7 @@ import type { AppData } from '../data/types';
 import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
 import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
-import { Bar, Checkbox, CheckIcon, ChevronRight, Field, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
+import { Bar, Checkbox, CheckIcon, ChevronRight, Field, FooterNote, GearIcon, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
@@ -489,7 +489,6 @@ export function Today() {
                 Your payday on <b>{shortDate(nextDate)}</b> went by. Did you do it?
               </p>
               <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
-                <span class="muted small">Tick it below if you did.</span>
                 <button type="button" class="link" onClick={skip}>
                   I skipped it
                 </button>
@@ -613,12 +612,14 @@ export function Today() {
                 </span>
                 <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
               </button>
-              <p class="muted" data-testid="focus-sentence">
-                {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
-              </p>
-              <p class="muted small" data-testid="focus-why">
-                {whyFirst(s.method, growingNow.has(focus.debt.id))}
-              </p>
+              <div class="row" style={{ justifyContent: 'flex-start', gap: 0 }}>
+                <p class="muted" data-testid="focus-sentence">
+                  {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
+                </p>
+                <HelpTip title="Why this one?">
+                  <p data-testid="focus-why">{whyFirst(s.method, growingNow.has(focus.debt.id))}</p>
+                </HelpTip>
+              </div>
               <span class="row" style={{ justifyContent: 'flex-start', gap: 18 }}>
                 <button type="button" class="link small" onClick={() => openSheet('extra')}>
                   {COPY.extraPayment}
@@ -632,14 +633,18 @@ export function Today() {
 
           <div class="tile-row">
             <div class="card tile-card" data-testid="daily-cost">
-              <p class="muted small">Your debt costs</p>
+              <p class="muted small">
+                Daily cost
+                <HelpTip title="Daily cost">
+                  <p>It is the interest your debts add each day. It drops as balances go down.</p>
+                </HelpTip>
+              </p>
               <p class="tile-val num">{formatMoney(daily, cur)} a day</p>
-              <p class="muted small">{lastMonth !== null ? `Last month ${formatMoney(lastMonth, cur)}` : 'It drops as balances go down.'}</p>
+              {lastMonth !== null && <p class="muted small">Last month {formatMoney(lastMonth, cur)}</p>}
             </div>
             <button type="button" class="card tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
               <p class="muted small">Safety net</p>
               <p class="tile-val num">{bufferFull ? `${money(d.buffer.amount)} ready` : `${money(d.buffer.amount)} of ${money(s.bufferGoal)}`}</p>
-              <p class="muted small">{bufferFull ? 'Goal reached' : 'Filling first'}</p>
             </button>
           </div>
 
@@ -675,9 +680,7 @@ export function Today() {
       )}
 
       <p class="hand">{COPY.slogan}</p>
-      <p class="footer-note">
-        {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
-      </p>
+      <FooterNote privacy={syncOn.value ? COPY.privacySynced : COPY.privacy} />
 
 
       <Sheet open={dueDebtId !== null} onClose={() => setDueDebtId(null)} title={`Due day for ${d.debts.find((x) => x.id === dueDebtId)?.name ?? ''}`}>

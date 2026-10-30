@@ -18,7 +18,7 @@ import { act, data, editSeed, licenseState, plan, tab, today, view } from '../st
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
 import { NeedsHelp } from '../ui/NeedsHelp';
-import { SetupBar } from '../ui/controls';
+import { FooterNote, HelpTip, SetupBar } from '../ui/controls';
 import { RoadIllustration, roadDone } from '../ui/Road';
 import { HowWeGotThis } from './HowWeGotThis';
 import { LaterChips } from './LaterChips';
@@ -158,7 +158,14 @@ export function Result() {
               {parts}
             </p>
           )}
-          <p class="first-why">{r.rows[0]?.bufferFirst ? COPY.buffer : first.kind === 'debt' ? methodReason(s.method) : ''}</p>
+          {(r.rows[0]?.bufferFirst || first.kind === 'debt') && (
+            <p class="first-why">
+              Why this step?
+              <HelpTip title="Why this step?">
+                <p>{r.rows[0]?.bufferFirst ? COPY.buffer : methodReason(s.method)}</p>
+              </HelpTip>
+            </p>
+          )}
         </section>
       )}
 
@@ -219,9 +226,7 @@ export function Result() {
       )}
       <HowWeGotThis open={how} onClose={() => setHow(false)} />
       <p class="hand">{COPY.slogan}</p>
-      <p class="footer-note">
-        {syncOn.value ? COPY.privacySynced : COPY.privacy} {COPY.disclaimer}
-      </p>
+      <FooterNote privacy={syncOn.value ? COPY.privacySynced : COPY.privacy} />
     </main>
   );
 }

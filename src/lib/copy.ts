@@ -32,6 +32,8 @@ export const COPY = {
   syncNeedsCode: 'Sync needs your unlock code. Add it in Settings, then open the link again.',
   syncBlocked: 'Sync is turned off for this code. Your plan on this device is untouched.',
   disclaimer: 'A planning tool, not financial advice. Figures are estimates based on what you enter.',
+  disclaimerShort: 'A planning tool, not financial advice.',
+  figuresNote: 'Figures are estimates based on what you enter.',
   unlocked: 'Unlocked. Thank you.',
   codeSaved: 'Code saved. Your full planner opens when setup is done.',
   codeRefused: 'This code looks incomplete. Copy it again, or tap the button in your purchase email.',

@@ -69,7 +69,7 @@ test('Path: the order opens from "change", and print or export is one sheet', as
 test('Debts: cards in payoff order with a position tag, and a sheet of what to do', async ({ page }) => {
   await quickSetup(page);
   await goTab(page, 'Debts');
-  await expect(page.getByTestId('owed-line')).toContainText('left · in the order you pay them');
+  await expect(page.getByTestId('owed-line')).toContainText('left');
   await expect(page.getByRole('region', { name: 'Store card' })).toContainText('1 · Paying now');
   await expect(page.getByRole('region', { name: 'Visa' })).toContainText('2 · Next');
   await expect(page.getByRole('button', { name: 'Add a debt' })).toBeVisible(); // the round + button
@@ -86,7 +86,9 @@ test('Safety net: buffer ready on yellow, yearly bills with ink bars, "I paid a 
   await goTab(page, 'Safety net');
   await expect(page.getByTestId('buffer-amount')).toHaveText('$500');
   await expect(page.getByTestId('buffer-ready')).toHaveText('ready');
+  await page.getByRole('button', { name: 'Help: Surprise buffer' }).click();
   await expect(page.getByText('Kept in a plain separate account or an envelope.')).toBeVisible();
+  await page.getByRole('button', { name: 'Got it' }).click();
   await expect(page.getByRole('button', { name: 'I paid a bill' })).toBeDisabled(); // no bills yet
 
   await page.getByRole('button', { name: '+ Add a bill' }).click();

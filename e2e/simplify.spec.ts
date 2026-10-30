@@ -207,3 +207,78 @@ test.describe('6 · first name', () => {
     expect(stored).toBe('Marco');
   });
 });
+
+test.describe('1 · fewer words, explanations behind a (?)', () => {
+  test('a (?) opens a bottom sheet with the explanation, and Got it closes it', async ({ page }) => {
+    await quickSetup(page);
+    const focus = page.getByRole('region', { name: 'Focus debt' });
+    await focus.getByRole('button', { name: 'Help: Why this one?' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Why this one?' });
+    await expect(sheet).toContainText('Smallest balance, so it disappears first.');
+    await sheet.getByRole('button', { name: 'Got it' }).click();
+    await expect(sheet).toHaveCount(0);
+    // Escape closes it too
+    await page.getByTestId('daily-cost').getByRole('button', { name: 'Help: Daily cost' }).click();
+    await expect(page.getByRole('dialog', { name: 'Daily cost' })).toContainText('interest your debts add each day');
+    await expect(page.getByRole('button', { name: 'Got it' })).toBeFocused(); // the sheet is ready
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    // the footer keeps the disclaimer, and the estimates line sits behind a (?)
+    await expect(page.locator('.footer-note')).toContainText('A planning tool, not financial advice.');
+    await expect(page.locator('.footer-note')).not.toContainText('Figures are estimates');
+    await page.locator('.footer-note').getByRole('button', { name: 'Help: About the figures' }).click();
+    await expect(page.getByRole('dialog', { name: 'About the figures' })).toContainText('Figures are estimates based on what you enter.');
+  });
+
+  test('the (?) has a 44px tap area', async ({ page }) => {
+    await quickSetup(page);
+    const tip = page.getByRole('region', { name: 'Focus debt' }).getByRole('button', { name: 'Help: Why this one?' });
+    await tip.scrollIntoViewIfNeeded();
+    const box = (await tip.boundingBox())!;
+    expect(box.width).toBeLessThan(30);
+    // a tap 9px off the circle still lands on it
+    await page.mouse.click(box.x - 9, box.y - 9);
+    await expect(page.getByRole('dialog', { name: 'Why this one?' })).toBeVisible();
+  });
+
+  test('every card on Today, Path, Debts and Safety net has a title of 2 to 4 words', async ({ page }) => {
+    await quickSetup(page);
+    const titles = async () =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll<HTMLElement>('main .card'))
+          .map((c) => c.querySelector<HTMLElement>('.label, h2, .tile-label')?.cloneNode(true) as HTMLElement | undefined)
+          .filter((el): el is HTMLElement => Boolean(el))
+          .map((el) => {
+            el.querySelectorAll('button').forEach((b) => b.remove());
+            return (el.textContent ?? '').trim();
+          })
+          .filter(Boolean),
+      );
+    for (const tab of ['Today', 'Path', 'Safety net'] as const) {
+      await goTab(page, tab);
+      const list = await titles();
+      expect(list.length, `${tab} has cards`).toBeGreaterThan(1);
+      for (const t of list) {
+        const n = t.split(/\s+/).length;
+        expect(n >= 1 && n <= 4, `"${t}" on ${tab} has ${n} words`).toBe(true);
+      }
+    }
+  });
+
+  test('Debts no longer lists what to tap, it is behind a (?)', async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, 'Debts');
+    await expect(page.getByRole('region', { name: 'Tap a debt to' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Help: Your debts' }).click();
+    await expect(page.getByRole('dialog', { name: 'Your debts' })).toContainText('update it from your statement');
+  });
+
+  test('setup keeps its (?) on the welcome, the schedule, the rate and the money', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Help: What you need' }).click();
+    await expect(page.getByRole('dialog', { name: 'What you need' })).toContainText('card statements');
+    await page.getByRole('button', { name: 'Got it' }).click();
+    await page.getByRole('button', { name: 'Help: Why paydays?' }).click();
+    await expect(page.getByRole('dialog', { name: 'Why paydays?' })).toContainText('not the calendar month');
+  });
+});

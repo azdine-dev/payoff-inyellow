@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { PAYDAYS_PER_YEAR } from '../../engine';
 import { COPY } from '../../lib/copy';
 import { parseAmount } from '../../lib/money';
-import { Field, NumberInput, Sheet } from '../../ui/controls';
+import { Field, HelpTip, NumberInput, Sheet } from '../../ui/controls';
 import { filledDebts, type Draft } from '../draft';
 import type { StepProps } from '../Wizard';
 
@@ -79,7 +79,12 @@ export function MoneyStep({ draft, set }: StepProps) {
           Other
         </button>
       </div>
-      <p class="muted small">It fills your yearly bills and your buffer first, then goes to one debt at a time.</p>
+      <p class="muted small">
+        Where does it go?
+        <HelpTip title="Where it goes">
+          <p>It fills your yearly bills and your buffer first, then goes to one debt at a time.</p>
+        </HelpTip>
+      </p>
 
       <Sheet open={help} onClose={() => setHelp(false)} title="Help me work it out">
         <p class="muted">Two numbers per paycheck. We do the rest.</p>

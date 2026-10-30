@@ -294,6 +294,7 @@ test('the focus debt card says what to pay this payday, when it is gone, and why
   await expect(focus).toContainText('Store card');
   await expect(page.getByTestId('focus-sentence')).toContainText(/\d+% gone\./);
   await expect(focus).toContainText('gone by');
+  await focus.getByRole('button', { name: 'Help: Why this one?' }).click(); // the reason sits behind the (?)
   await expect(page.getByTestId('focus-why')).toHaveText('Smallest balance, so it disappears first.');
 });
 

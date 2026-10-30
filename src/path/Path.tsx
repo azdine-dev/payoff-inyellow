@@ -20,7 +20,7 @@ import { comparisonLine } from '../state/whatIf';
 import { worthKnowing } from '../state/worthKnowing';
 import { Chart } from '../progress/Chart';
 import { Count, useCountUp } from '../ui/useCountUp';
-import { Bar, CheckIcon, Choice, Sheet } from '../ui/controls';
+import { Bar, CheckIcon, Choice, HelpTip, Sheet } from '../ui/controls';
 import { PaydayCalendar } from './PaydayCalendar';
 import { PaydayListSheet } from './PaydayListSheet';
 import { WhatIfSheet } from './WhatIfSheet';
@@ -219,6 +219,9 @@ export function Path() {
         <div class="row" style={{ alignItems: 'center' }}>
           <p class="label" id="grid-title">
             Every payday
+            <HelpTip title="Every payday">
+              <p>The first two squares are done already: debts listed, plan made. Each payday you record turns yellow.</p>
+            </HelpTip>
           </p>
           <div class="seg" role="group" aria-label="Show paydays as">
             {(['list', 'calendar'] as const).map((v) => (
@@ -249,7 +252,6 @@ export function Path() {
             />
           ))}
         </div>
-        {paydayView === 'list' && <p class="muted small">The first two squares are done already: debts listed, plan made.</p>}
         {paydayView === 'list' && ahead > aheadShown && <p class="muted small">+ {ahead - aheadShown} more paydays after these.</p>}
       </section>
 
@@ -264,7 +266,7 @@ export function Path() {
           <p class="label">Next milestone</p>
           <p>
             <b>
-              Next: {timeline[0]!.title} · {timeline[0]!.short}
+              {timeline[0]!.title} · {timeline[0]!.short}
             </b>
           </p>
         </section>
@@ -381,8 +383,13 @@ export function Path() {
         </p>
       )}
 
-      <section class="card stack">
-        <p class="muted small">A picture of your progress to share. It shows percentages only, never amounts or names.</p>
+      <section class="card stack" aria-label="Share progress">
+        <p class="label">
+          Share progress
+          <HelpTip title="Share progress">
+            <p>A picture of your progress to share. It shows percentages only, never amounts or names.</p>
+          </HelpTip>
+        </p>
         <button type="button" class="btn ghost" onClick={share}>
           Share my progress
         </button>

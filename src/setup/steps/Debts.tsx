@@ -4,7 +4,7 @@ import { COPY } from '../../lib/copy';
 import { parseAmount } from '../../lib/money';
 import { ordinal } from '../../lib/today';
 import { DEFAULT_RATE } from '../../state/debtActions';
-import { Field, Note, NumberInput } from '../../ui/controls';
+import { Field, HelpTip, Note, NumberInput } from '../../ui/controls';
 import { emptyDebt, type DraftDebt } from '../draft';
 import type { StepProps } from '../Wizard';
 import { DEBT_TYPES } from '../../lib/debtTypes';
@@ -96,11 +96,16 @@ function DebtCard(props: {
         <Field label="Monthly minimum">
           <NumberInput pre={props.symbol} value={d.min} onInput={(v) => props.onChange({ min: v })} label="Monthly minimum" />
         </Field>
-        <Field label="Due day" hint="It’s on your statement. The plan needs it to place the bill.">
+        <Field label="Due day" hint="It’s on your statement.">
           <input type="text" inputMode="numeric" maxLength={2} value={d.dueDay} onInput={(e) => props.onChange({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
         </Field>
       </div>
-      <p class="muted small">Don’t know the rate? Leave it. We’ll use {DEFAULT_RATE}% and remind you. Example: 22.9.</p>
+      <p class="muted small">
+        Don’t know the rate? Leave it.
+        <HelpTip title="About the rate">
+          <p>We’ll use {DEFAULT_RATE}% and remind you. Example: 22.9.</p>
+        </HelpTip>
+      </p>
       {debtChecks(d).map((n) => (
         <Note key={n}>{n}</Note>
       ))}
@@ -162,7 +167,7 @@ export function DebtsStep({ draft, set }: StepProps) {
   return (
     <div class="stack">
       <h1>What do you owe?</h1>
-      <p class="muted">Everything is on your statement. Rough numbers are fine for now.</p>
+      <p class="muted">Rough numbers are fine for now.</p>
       {draft.debts.map((d, i) => {
         if (d.key === openKey) return null;
         const row = debtRow(d, draft.currencySymbol, i);

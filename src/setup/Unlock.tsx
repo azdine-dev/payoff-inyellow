@@ -7,7 +7,7 @@ import { cleanCode, verifyCode } from '../lib/license';
 import { isEmail, submitEmail } from '../lib/leadCapture';
 import { saveLicense } from '../state/settingsActions';
 import { act } from '../state/store';
-import { Field, Note } from '../ui/controls';
+import { Field, HelpTip, Note } from '../ui/controls';
 
 export const UNLOCK_BENEFITS = [
   'Tick off every payday and watch it turn yellow',
@@ -36,12 +36,17 @@ export function UnlockCard() {
       <h2 id="unlock-title" style={{ fontFamily: 'var(--font-head)', fontSize: '1.3rem' }}>
         Unlock the full planner
       </h2>
-      <p class="muted">The calculator shows your date and your first step. The full planner keeps you going every payday:</p>
-      <ul class="stack" style={{ margin: 0, paddingLeft: '1.1rem', gap: 4 }}>
-        {UNLOCK_BENEFITS.map((b) => (
-          <li key={b}>{b}</li>
-        ))}
-      </ul>
+      <p class="muted">
+        Keeps you going every payday.
+        <HelpTip title="What the full planner adds">
+          <p>The calculator shows your date and your first step. The full planner keeps you going every payday:</p>
+          <ul class="stack" style={{ margin: 0, paddingLeft: '1.1rem', gap: 4 }} data-testid="unlock-benefits">
+            {UNLOCK_BENEFITS.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </HelpTip>
+      </p>
       <p class="muted small">One price. No subscription. No bank login.</p>
       <a class="btn" href={STORE_URL} target="_blank" rel="noopener">
         Get the full planner

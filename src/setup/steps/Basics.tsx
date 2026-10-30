@@ -5,7 +5,7 @@ import { VIDEO_URL } from '../../lib/config';
 import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
 import { shortDate } from '../../lib/today';
 import { editSeed } from '../../state/store';
-import { Choice, Field, NumberInput, Wordmark } from '../../ui/controls';
+import { Choice, Field, HelpTip, NumberInput, Wordmark } from '../../ui/controls';
 import { FREQUENCIES } from '../draft';
 import { TwicePicker } from '../TwicePicker';
 import type { StepProps } from '../Wizard';
@@ -64,13 +64,18 @@ function Welcome({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
       <Wordmark height={30} />
       <h1 style={{ fontSize: '1.7rem' }}>{COPY.welcome}</h1>
       <p style={{ fontSize: '1.05rem' }}>{COPY.welcome2}</p>
-      <p class="muted">About 5 minutes. Have your card statements or banking app close by.</p>
+      <p class="muted">
+        About 5 minutes.
+        <HelpTip title="What you need">
+          <p>Have your card statements or banking app close by.</p>
+        </HelpTip>
+      </p>
       {VIDEO_URL && (
         <a href={VIDEO_URL} target="_blank" rel="noopener" class="link">
           {COPY.watchVideo}
         </a>
       )}
-      <Field label="What should we call you? (optional)" hint="Only used to say hi on Today. It stays on this device.">
+      <Field label="What should we call you? (optional)" hint="Stays on this device.">
         <input type="text" maxLength={24} autoComplete="given-name" value={draft.firstName ?? ''} onInput={(e) => set({ firstName: (e.target as HTMLInputElement).value })} />
       </Field>
     </div>
@@ -81,8 +86,12 @@ export function PayStep({ draft, set, today }: StepProps) {
   return (
     <div class="stack">
       {!editSeed.value && <Welcome draft={draft} set={set} />}
-      <h2 style={{ fontSize: '1.5rem' }}>Your pay schedule</h2>
-      <p class="muted">Your whole plan follows your paydays, not the calendar month.</p>
+      <h2 style={{ fontSize: '1.5rem' }}>
+        Your pay schedule
+        <HelpTip title="Why paydays?">
+          <p>Your whole plan follows your paydays, not the calendar month.</p>
+        </HelpTip>
+      </h2>
       <CurrencyLine draft={draft} set={set} />
       <div class="stack" role="radiogroup" aria-label="How often you get paid" style={{ gap: 8 }}>
         {FREQUENCIES.map((f) => (
@@ -96,7 +105,7 @@ export function PayStep({ draft, set, today }: StepProps) {
         <input type="date" min={today} value={draft.nextPayday} onInput={(e) => set({ nextPayday: (e.target as HTMLInputElement).value, ifThenDay: '' })} />
       </Field>
       {draft.nextPayday && draft.nextPayday >= today && <p class="muted small">That's {shortDate(draft.nextPayday)}.</p>}
-      <Field label="Your usual paycheck (optional)" hint="Only used to check that the plan fits. It stays on this device.">
+      <Field label="Your usual paycheck (optional)" hint="Stays on this device.">
         <NumberInput pre={draft.currencySymbol} value={draft.paycheck} onInput={(v) => set({ paycheck: v })} label="Usual paycheck" />
       </Field>
     </div>
