@@ -49,12 +49,12 @@ Product titles keep the search words "paycheck payoff" and "debt payoff / credit
 Listing line: "They show you a spreadsheet of your debt. PaidInYellow tells you what to pay this payday, protects you from the next surprise bill, and turns every paid payment yellow."
 
 **Why we win** (from the competitor analysis of the top Etsy sellers: HayeCreatives, My Productive Life Co, AYxSTUDIOS, This Girl Budgets; plus EveryDollar, YNAB and Simplifi):
-1. **Per paycheck, not per month.** Nobody else plans by payday.
+1. **A to-do for this payday:** bills due before the next payday, then buffer, then one debt for the extra, one "I did it". Others offer pay frequencies but show a schedule.
 2. **Buffer first, plus predictable yearly bills.** Nobody else protects against the surprise bill, and the surprise bill is the #1 reason people fall back.
 3. **One clear next step.** Competitors are either dense sheets or 15-screen apps. We have 3 payoff methods, not 6.
 4. **Yellow = paid.** A visual idea we own.
 5. **No borrowing advice, ever.** AYxSTUDIOS pushes balance transfers and consolidation loans. We don't, which is a trust and halal difference.
-6. **One-time price, no subscription, no bank login, data stays on the phone.** That's our angle against YNAB and EveryDollar.
+6. **No bank login, works offline, numbers never leave the phone, optional sync without an account (encrypted on the phone).** One-time price, no subscription. That's our angle against YNAB and EveryDollar.
 
 A "real app" is no longer an edge by itself: AYxSTUDIOS already sells an offline HTML app. Our edge is the payday-first flow, the buffer, simplicity and the brand.
 
