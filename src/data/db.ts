@@ -1,4 +1,5 @@
 /** IndexedDB storage. Data lives only on this device. */
+import { capFirst } from '../lib/text';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { payoffOrderIds } from '../engine';
 import type {
@@ -126,6 +127,8 @@ export async function loadAll(db: PiyDB): Promise<AppData | null> {
   ]);
   // Fields added after v1 get their defaults
   // Older plans have no stored payoff order yet: make it once, from the debts as they are
+  // Debt names are shown with a capital letter, whatever was typed
+  for (const x of debts) x.name = capFirst(x.name);
   const counted = debts.filter((d) => d.status !== 'archived').sort((a, b) => a.position - b.position);
   const settings: Settings = {
     ...stored,

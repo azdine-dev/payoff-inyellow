@@ -2,6 +2,7 @@
  * Everything that changes stored data. Each action writes IndexedDB in one transaction and
  * returns the new AppData. The screens call these through store.ts.
  */
+import { capFirst } from '../lib/text';
 import {
   dailyInterestCost,
   paydayNumberOnOrAfter,
@@ -116,6 +117,7 @@ export function buildSetupData(v: SetupValues, today: string, now = Date.now(), 
     id: newId(),
     updatedAt: now,
     ...d,
+    name: capFirst(d.name),
     startBalance: d.balance,
     status: d.balance > ZERO ? 'active' : 'paid',
     position: i,

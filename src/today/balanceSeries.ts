@@ -1,60 +1,80 @@
 /**
- * "Balance, payday by payday": the numbers behind the small chart on Today. A line of what was owed at each payday
- * done, then what the plan says for the paydays ahead, down to zero on the debt-free date.
+ * "Balance, payday by payday": the numbers behind the small chart on Today. One point per payday: what was owed at the
+ * start, after each payday that is done, then what the plan says for the paydays ahead, down to zero.
  */
 import type { PlanResult } from '../engine';
 import type { AppData } from '../data/types';
-import { diffDays } from '../lib/today';
 
-export interface Pt {
-  /** days since the start of the chart */
-  x: number;
+export interface ChartPoint {
+  /** the payday: 0 is the start, 1 the first payday done, and so on */
+  i: number;
   /** total owed */
   y: number;
 }
+
+export type Caption = 'dayOne' | 'lower' | 'same' | 'higher';
 
 export interface MiniChartModel {
   /** What was owed at the start */
   start: number;
   /** What is owed now */
   owed: number;
-  /** Start minus owed: "Down $X since you started" */
+  /** Start minus owed */
   down: number;
-  /** From the start to now: the paydays that are done */
-  history: Pt[];
-  /** From now to the end of the plan */
-  ahead: Pt[];
-  /** Where "you are here" is */
-  here: Pt;
+  /** The whole line, from the start to the end of the plan */
+  line: ChartPoint[];
+  /** Paydays that are done (the yellow dots) */
+  paid: ChartPoint[];
+  /** Where you are now (the highlighted dot) */
+  here: ChartPoint;
+  /** The paydays that are done */
+  doneCount: number;
   xMax: number;
   yMax: number;
-  /** The plan reaches zero: the last point of `ahead` is 0 */
+  /** The plan reaches zero: the last point of the line is 0 */
   endsAtZero: boolean;
+  caption: Caption;
 }
 
 const MAX_AHEAD = 120;
 
-export function miniChartModel(d: AppData, r: PlanResult, stats: { start: number; owed: number }, today: string): MiniChartModel {
-  const done = [...d.paydays].filter((p) => p.status === 'done' && p.debtLeft !== undefined).sort((a, b) => a.number - b.number);
-  const origin = done.length ? done[0]!.date : today;
-  const dayOf = (iso: string) => Math.max(0, diffDays(origin, iso));
+export function miniChartModel(d: Pick<AppData, 'paydays'>, r: Pick<PlanResult, 'rows' | 'debtFreeDate'>, stats: { start: number; owed: number }): MiniChartModel {
+  const done = [...d.paydays].filter((p) => p.status === 'done').sort((a, b) => a.number - b.number);
   const start = Math.max(stats.start, stats.owed);
+  const line: ChartPoint[] = [{ i: 0, y: start }];
+  const paid: ChartPoint[] = [];
+  let carry = start;
+  done.forEach((p, k) => {
+    // older logs may not know what was left: keep the line where it was
+    const y = p.debtLeft ?? carry;
+    carry = y;
+    const pt = { i: k + 1, y };
+    line.push(pt);
+    paid.push(pt);
+  });
+  const n = done.length;
+  // "You are here" is after the last payday done, and after any extra money paid since
+  const here: ChartPoint = { i: n, y: stats.owed };
+  if (n > 0) line[line.length - 1] = { ...here };
+  else if (Math.abs(stats.owed - start) > 0.005) line.push({ ...here });
 
-  const history: Pt[] = [{ x: 0, y: start }];
-  for (const p of done) history.push({ x: dayOf(p.date), y: p.debtLeft! });
-  const hereX = Math.max(dayOf(today), history[history.length - 1]!.x);
-  const here: Pt = { x: hereX, y: stats.owed };
-  if (history[history.length - 1]!.x !== hereX || history[history.length - 1]!.y !== stats.owed) history.push(here);
-
-  const ahead: Pt[] = [here];
   const rows = r.rows.slice(0, MAX_AHEAD);
-  for (const row of rows) ahead.push({ x: Math.max(hereX, dayOf(row.date)), y: row.debtLeft });
+  rows.forEach((row, k) => line.push({ i: n + 1 + k, y: row.debtLeft }));
   const endsAtZero = Boolean(r.debtFreeDate) && r.rows.length <= MAX_AHEAD;
   if (endsAtZero) {
-    const last = ahead[ahead.length - 1]!;
-    if (last.y > 0.005) ahead.push({ x: last.x, y: 0 });
+    const last = line[line.length - 1]!;
+    if (last.y > 0.005) line.push({ i: last.i, y: 0 });
     else last.y = 0;
   }
 
-  return { start, owed: stats.owed, down: Math.max(0, stats.start - stats.owed), history, ahead, here, xMax: Math.max(1, ahead[ahead.length - 1]!.x), yMax: Math.max(1, start), endsAtZero };
+  const prev = n >= 2 ? line[n - 1]!.y : start;
+  const caption: Caption = n === 0 ? 'dayOne' : stats.owed < prev - 0.005 ? 'lower' : stats.owed > prev + 0.005 ? 'higher' : 'same';
+  return { start, owed: stats.owed, down: Math.max(0, stats.start - stats.owed), line, paid, here, doneCount: n, xMax: Math.max(1, line[line.length - 1]!.i), yMax: Math.max(1, start), endsAtZero, caption };
 }
+
+export const CAPTIONS: Record<Caption, string> = {
+  dayOne: 'Day one. Your line starts here.',
+  lower: 'Lower than last payday.',
+  same: 'The same as last payday.',
+  higher: 'A little higher than last payday. That happens.',
+};

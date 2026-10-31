@@ -461,6 +461,8 @@ export function Today() {
             </div>
           </section>
 
+          <MiniChart />
+
           <section class="card stack" style={{ gap: 10 }} data-testid="after-sentence">
             <p>
               {afterPaySentence(focus ? { name: focus.debt.name, left: formatMoney(focus.left, cur, { whole: true }), goneBy: focus.goneBy } : null, untilGone, rollTo)}
@@ -609,9 +611,9 @@ export function Today() {
             </section>
           )}
 
-          <NeedsHelp reasons={reasons} />
+          {!paidView && <MiniChart />}
 
-          <MiniChart />
+          <NeedsHelp reasons={reasons} />
 
           {focus && (
             <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">

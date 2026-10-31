@@ -525,6 +525,14 @@ select {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  /* the sage band grows with the headline, so a long one never spills out of it */
+  margin: -20px calc(var(--gutter) * -1) 0;
+  padding: 20px var(--gutter) 30px;
+  background: var(--calm-band);
+}
+
+.today-head + * {
+  margin-top: -14px;
 }
 
 .date-line {
@@ -534,7 +542,7 @@ select {
 
 .today-h1 {
   font-family: var(--font-head);
-  font-size: 2rem;
+  font-size: 1.75rem;
   line-height: 1.1;
   font-weight: 800;
 }

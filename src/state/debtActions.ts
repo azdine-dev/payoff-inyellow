@@ -1,4 +1,5 @@
 /** Debts tab: add, edit, archive, new charges, update from statement. */
+import { capFirst } from '../lib/text';
 import { ZERO } from '../engine';
 import { commit, newId, type PiyDB } from '../data/db';
 import type { AppData, Charge, ChargeTag, Debt } from '../data/types';
@@ -38,6 +39,7 @@ export async function addDebt(db: PiyDB, data: AppData, f: DebtFields, now = Dat
     id: newId(),
     updatedAt: now,
     ...f,
+    name: capFirst(f.name),
     myOrder: data.settings.method === 'my-order' ? position + 1 : null,
     startBalance: f.balance,
     status: f.balance > ZERO ? 'active' : 'paid',
@@ -56,7 +58,7 @@ export async function editDebt(db: PiyDB, data: AppData, id: string, f: DebtFiel
   const debt = data.debts.find((d) => d.id === id)!;
   const balance = f.balance <= ZERO ? 0 : f.balance;
   return commit(db, data, {
-    debts: [{ ...debt, ...f, balance, startBalance: Math.max(debt.startBalance, balance), status: statusFor(balance, debt.status), updatedAt: now }],
+    debts: [{ ...debt, ...f, name: capFirst(f.name), balance, startBalance: Math.max(debt.startBalance, balance), status: statusFor(balance, debt.status), updatedAt: now }],
   });
 }
 

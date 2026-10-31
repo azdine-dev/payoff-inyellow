@@ -84,12 +84,12 @@ test.describe('2 · balance, payday by payday', () => {
     await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   });
 
-  test('after money is paid the line says how much is down, and the paid part is yellow', async ({ page }) => {
+  test('extra money paid before the first payday lowers where you are, and it is still day one', async ({ page }) => {
     await nadiaSetup(page);
     await payExtra(page, 450);
-    await expect(page.getByTestId('mini-line')).toHaveText('Down $450 since you started.');
-    await expect(page.getByTestId('mini-paid')).toHaveCount(1);
-    await expect(page.getByTestId('mini-paid')).toHaveAttribute('fill', 'var(--yellow)');
+    await expect(page.getByTestId('mini-start')).toHaveText('You · $2,800');
+    await expect(page.getByTestId('mini-line')).toHaveText('Day one. Your line starts here.');
+    await expect(page.getByTestId('mini-here')).toHaveCount(1);
     await expectBrandRules(page);
   });
 });

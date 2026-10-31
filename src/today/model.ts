@@ -4,6 +4,7 @@ import type { AppData, Debt } from '../data/types';
 import { formatMoney, formatMoneyAuto, toCents } from '../lib/money';
 import { totalOf, type BillsWindow } from '../state/billsDue';
 import { addMonths, daysInMonth, parseISO, toISO } from '../engine/dates';
+import { capFirst, tidyName } from '../lib/text';
 import { addDaysISO, dayMonth, diffDays, monthYear, nextDueDate, shortDate } from '../lib/today';
 
 export interface PaydayLine {
@@ -84,7 +85,7 @@ export function methodReason(method: AppData['settings']['method']): string {
  * `base` is the plain sentence, `kind` says which one it is.
  */
 export function greetingWithName(base: string, kind: 'payday' | 'back' | 'other', name: string | undefined): string {
-  const n = (name ?? '').trim();
+  const n = tidyName(name ?? '');
   if (!n) return base;
   if (kind === 'payday') return `Hi ${n}, it’s payday.`;
   if (kind === 'back') return `Welcome back, ${n}.`;
@@ -311,7 +312,7 @@ export function paidFromLog(data: AppData, number: number): { date: string; tota
   const name = (id: string | null | undefined) => data.debts.find((x) => x.id === id)?.name ?? '';
   const pays = data.payments.filter((p) => p.paydayNumber === number);
   const rows: { key: string; label: string; amount: number }[] = [];
-  if (log.bills) for (const b of log.bills) rows.push({ key: `b${b.debtId}`, label: `${b.name} bill`, amount: b.amount });
+  if (log.bills) for (const b of log.bills) rows.push({ key: `b${b.debtId}`, label: `${capFirst(b.name)} bill`, amount: b.amount });
   for (const p of pays) {
     if (p.kind === 'minimum' && !log.bills) rows.push({ key: p.id, label: `${name(p.debtId)} bill`, amount: p.amount });
     if (p.kind === 'extra') rows.push({ key: p.id, label: `${name(p.debtId)}, extra`, amount: p.amount });
