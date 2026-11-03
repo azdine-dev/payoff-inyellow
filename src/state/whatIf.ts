@@ -23,6 +23,13 @@ export function extraMoneyPlan(data: AppData, amount: number, today: string, sen
   return simulatePlan(toPlanInput({ ...data, debts: data.debts.map((d) => byId.get(d.id) ?? d) }));
 }
 
+/** The plan if money arrives on a later payday (nothing is saved). The payday's own money counts it, as if it had arrived. */
+export function comingLaterPlan(data: AppData, amount: number, date: string): PlanResult {
+  const s = data.settings;
+  const entry = { id: 'preview', date, amount, note: 'Money coming later', later: true, arrived: true };
+  return simulatePlan(toPlanInput({ ...data, settings: { ...s, oneOffs: [...s.oneOffs, entry] } }));
+}
+
 export interface WhatIfSummary {
   newDate: string | null;
   monthsSaved: number | null;

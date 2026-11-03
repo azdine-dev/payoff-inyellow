@@ -128,7 +128,7 @@ test.describe('4 · "I got extra money" on Today', () => {
     const focus = page.getByRole('region', { name: 'Focus debt' });
     await expect(focus).toContainText('$640 left');
     await page.getByTestId('got-extra').click();
-    const sheet = page.getByRole('dialog', { name: 'I got extra money' });
+    const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await expect(sheet.getByTestId('windfall-preview')).toHaveCount(0); // nothing until an amount is typed
     await sheet.getByLabel('Extra money').fill('300');
     const preview = sheet.getByTestId('windfall-preview');

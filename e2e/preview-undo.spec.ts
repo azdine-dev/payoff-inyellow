@@ -1,12 +1,11 @@
 /** Path: a read-only preview of a future payday, undo of the latest paid payday, and "Mark it done early" for the next payday only. */
 import { expect, test, type Page } from '@playwright/test';
 import { nadiaSetup } from './nadia';
-import { expectBrandRules, goTab, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, showPaydays, tapDidIt } from './scenario';
 
-async function openList(page: Page, which: 'Upcoming' | 'Done') {
+async function openList(page: Page, _which?: 'Upcoming' | 'Done') {
   await goTab(page, 'Path');
-  await page.getByRole('button', { name: 'List', exact: true }).click();
-  await page.getByRole('button', { name: new RegExp(`^${which === 'Upcoming' ? 'Coming up' : which}`) }).click();
+  await showPaydays(page);
 }
 
 test.describe('preview of a future payday', () => {

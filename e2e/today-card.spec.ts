@@ -1,7 +1,7 @@
 /** When Today shows the full card, and "Change what I paid" on the yellow card. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab } from './scenario';
+import { expectBrandRules, goTab, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026, the first payday is Fri 23 Oct
@@ -62,8 +62,7 @@ test('"Change what I paid" redoes the payday with another amount, and stays unti
   await page.reload();
   await expect(page.getByTestId('change-paid')).toBeVisible();
   await goTab(page, 'Path');
-  await page.getByRole('button', { name: 'List', exact: true }).click();
-  await page.getByRole('button', { name: 'Done (1)' }).click();
+  await showPaydays(page);
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, paid' })).toHaveCount(1);
 });
 

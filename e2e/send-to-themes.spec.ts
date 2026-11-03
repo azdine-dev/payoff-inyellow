@@ -7,7 +7,7 @@ test.describe('I got extra money: Send it to', () => {
   test('the focus debt is selected, the others are options, and the choice takes the money', async ({ page }) => {
     await nadiaSetup(page);
     await page.getByRole('button', { name: 'I got extra money' }).click();
-    const sheet = page.getByRole('dialog', { name: 'I got extra money' });
+    const sheet = page.getByRole('dialog', { name: 'Extra money' });
     const select = sheet.getByLabel('Send it to');
     await expect(select).toHaveValue(/.+/);
     await expect(select.locator('option:checked')).toHaveText(/Store Card.*focus debt/);

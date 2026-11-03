@@ -23,6 +23,8 @@ export const freshMilestones = signal<string[]>([]);
 export const freshPayday = signal<number | null>(null);
 /** Path, Preview: the future payday being looked at (read-only), or null */
 export const previewDate = signal<string | null>(null);
+/** Path, Your whole plan: the detail screen is open */
+export const wholePlanOpen = signal(false);
 /** A number on another screen was tapped: Debts opens that debt's sheet when it shows */
 export const openDebtId = signal<string | null>(null);
 export const freshPaidDebts = signal<string[]>([]);

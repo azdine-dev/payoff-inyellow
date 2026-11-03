@@ -1,7 +1,7 @@
 /** Found on the live app: the freeze, the paid state, the currency in the copy, "Add another", and the small animations. */
 import { expect, test, type Page } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, revealEarly, setDay, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, revealEarly, setDay, tapDidIt, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -13,7 +13,7 @@ async function expectResponsive(page: Page) {
   await page.getByRole('button', { name: 'More options' }).click();
   await expect(page.getByRole('dialog', { name: 'More options' })).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await showPaydays(page);
   await expect(page.getByRole('button', { name: 'Fri 6 Nov, to come' })).toBeVisible();
   await page.getByRole('button', { name: 'Road', exact: true }).click();
 }
@@ -43,8 +43,8 @@ test('1 · the same with two paydays marked early, and with a payday marked on t
   await expect(page.getByText('Fri 6 Nov is paid.')).toBeVisible();
   await goTab(page, 'Path');
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
-  await page.getByRole('button', { name: 'List', exact: true }).click();
-  await expect(page.getByRole('group', { name: 'Which paydays' })).toBeVisible();
+  await showPaydays(page);
+  await expect(page.getByTestId('chapters')).toBeVisible();
 });
 
 test('4 · "How we got this" is one link, and the first step says "Move" like Today does', async ({ page }) => {

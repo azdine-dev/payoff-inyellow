@@ -54,6 +54,12 @@ export function shortDate(iso: string, today = todayISO()): string {
   return `${WEEKDAYS[weekdayIndex(iso)]!.slice(0, 3)} ${d} ${MONTHS[m - 1]!.slice(0, 3)}${yearSuffix(y, today)}`;
 }
 
+/** "Fri 16 Jul 2027": the year is always there */
+export function fullDate(iso: string): string {
+  const { y, m, d } = parseISO(iso);
+  return `${WEEKDAYS[weekdayIndex(iso)]!.slice(0, 3)} ${d} ${MONTHS[m - 1]!.slice(0, 3)} ${y}`;
+}
+
 /** " 2027" when the date is not in the current year, "" when it is. "next Fri 8 Oct" must not hide that it is a year away. */
 function yearSuffix(year: number, today: string): string {
   return year === parseISO(today).y ? '' : ` ${year}`;

@@ -1,7 +1,7 @@
 /** ux-v2.md section 1: four tabs (Today, Path, Debts, Safety net), the active one on a soft pill, never yellow. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { goTab, revealEarly } from './scenario';
+import { goTab, revealEarly, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -32,7 +32,7 @@ test('each tab opens its screen, and Path holds what Plan and Progress showed', 
   await page.getByRole('button', { name: 'More options' }).click();
   await expect(page.getByRole('dialog', { name: 'More options' })).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await showPaydays(page);
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toBeVisible();
 
   await nav(page).getByRole('button', { name: 'Debts', exact: true }).click();

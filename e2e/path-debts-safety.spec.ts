@@ -1,7 +1,7 @@
 /** ux-v2.md sections 5, 6 and 7: Path, Debts and Safety net. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab } from './scenario';
+import { expectBrandRules, goTab, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -28,7 +28,7 @@ test('Path: the header, three stats, the road, and the footer links', async ({ p
   await expect(page.getByTestId('next-milestone')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'What if I add more?' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'More options' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'List', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Chapters', exact: true })).toBeVisible();
   await expect(page.getByText('Order: smallest first')).toBeVisible();
   for (const name of ['Order', 'Print', 'Export']) await expect(page.getByRole('navigation', { name: 'Order, print and export' }).getByRole('button', { name })).toBeVisible();
   await expectBrandRules(page);
@@ -48,7 +48,7 @@ test('Path: what-if and the payday list are bottom sheets, and "Use this in my p
   await expect(page.getByTestId('status-line')).not.toHaveText(before);
 
   // Payday list: tap a payday and it opens in place
-  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await showPaydays(page);
   await page.getByRole('button', { name: 'Fri 23 Oct, to come' }).click();
   await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 23 Oct 2026');
   await page.getByRole('button', { name: 'Back to today' }).click();

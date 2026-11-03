@@ -1,7 +1,7 @@
 /** The simpler look: the countdown card with the road, the small labels, the calendar, empty states, first name. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, tapDidIt, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -67,7 +67,7 @@ test.describe('3 · labels on payday rows and Coming up', () => {
   test('the payday list uses Bill, Extra, Buffer and Yearly, with a yellow Paid once done', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'List', exact: true }).click();
+    await showPaydays(page);
     const next = page.getByRole('button', { name: 'Fri 23 Oct, to come' }).locator('xpath=..');
     await expect(next.locator('.tag', { hasText: 'Bill' })).toBeVisible();
     await expect(next.locator('.tag', { hasText: 'Minimum' })).toHaveCount(0);
@@ -118,10 +118,8 @@ test.describe('4 · Path: List / Calendar', () => {
     await expect(paid).toHaveClass(/paid/);
     await expect(paid.locator('.cal-num')).toHaveCSS('background-color', 'rgb(255, 225, 77)');
     await expect(paid.locator('.dot-pay')).toHaveCount(0);
-    await paid.click();
-    const lines = page.getByTestId('calendar-day');
-    await expect(lines.locator('.tag.paid').first()).toHaveText('Paid');
-    await expect(lines).toContainText('Total');
+    await paid.click(); // the latest paid payday opens Undo
+    await expect(page.getByRole('dialog', { name: 'Fri 23 Oct' })).toContainText('You paid');
   });
 
   test('an empty day says so with a small picture', async ({ page }) => {
@@ -151,9 +149,8 @@ test.describe('5 · empty lists', () => {
     await page.getByRole('button', { name: 'Close' }).click();
     // Path: the payday list when nothing is done yet
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'List', exact: true }).click();
-    await page.getByRole('button', { name: /^Done/ }).click();
-    await expect(page.getByTestId('empty')).toContainText('No paydays done yet.');
+    await showPaydays(page);
+    await expect(page.getByRole('button', { name: /, paid$/ })).toHaveCount(0);
     await expectBrandRules(page);
   });
 

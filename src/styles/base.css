@@ -2941,3 +2941,261 @@ textarea {
 .pv-band b {
   font-size: 1.1rem;
 }
+
+/* ---------- Path, Chapters (design/path-features/Chapters) ---------- */
+.chapter {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.chapter.here {
+  border: 1.5px solid var(--ink);
+}
+.chapter-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 16px 16px 14px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.chapter-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chapter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+.chapter-pill {
+  background: var(--ink);
+  color: var(--on-ink);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.chapter-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+.chapter-span {
+  font-size: 0.875rem;
+  color: var(--gray);
+}
+.chapter-squares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.chapter-squares i {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1.5px solid color-mix(in srgb, var(--ink) 28%, transparent);
+}
+.chapter-squares.small {
+  gap: 5px;
+}
+.chapter-squares.small i {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+.chapter-squares i.paid {
+  background: var(--yellow);
+  border-color: var(--ink);
+}
+.chapter-squares i.next {
+  border: 2px solid var(--ink);
+}
+.chapter-squares i.skipped {
+  border-style: dashed;
+}
+.chapter-note {
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.chapter-days {
+  padding: 0 12px 12px;
+  margin: 0;
+}
+.chapter-flag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px 10px 18px;
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+.chapter-flag b {
+  color: var(--ink);
+}
+.chapter-flag .bar {
+  align-self: stretch;
+  width: 2px;
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+.chapter-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 6px 0 18px;
+  font-size: 0.95rem;
+}
+
+/* ---------- Your whole plan (design/path-features/WholePlan) ---------- */
+.wp-band {
+  background: var(--calm-band);
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 18px var(--gutter) 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wp-back {
+  align-self: flex-start;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--action);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.wp-total {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 2.6rem;
+  letter-spacing: -0.5px;
+  line-height: 1.05;
+}
+.wp-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--calm);
+}
+.wp-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+}
+.wp-bar > i.plan {
+  background: var(--ink);
+}
+.wp-bar > i.min {
+  background: var(--gray);
+  opacity: 0.55;
+}
+.wp-card-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Extra money: Now / Later (design/path-features/ComingLater) ---------- */
+.el-switch {
+  display: flex;
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 4px;
+}
+.el-switch button {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 10px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.el-switch button[aria-pressed='true'] {
+  background: var(--card);
+  border-color: var(--ink);
+  font-weight: 700;
+}
+.el-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.el-chips button {
+  min-height: var(--tap);
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.el-chips button[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+}
+.el-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+.el-select select {
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0 40px 0 14px;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.el-select::after {
+  content: '›';
+  position: absolute;
+  right: 16px;
+  color: var(--gray);
+  pointer-events: none;
+}
+.el-effect {
+  background: var(--calm);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label-strong {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}

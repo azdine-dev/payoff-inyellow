@@ -65,6 +65,11 @@ export interface OneOff {
   date: string;
   amount: number;
   note: string;
+  /** Money coming later: the type the buyer tapped (Tax refund, Bonus, Gift, Other) */
+  kind?: string;
+  /** Money coming later: it is only used once the buyer says it arrived */
+  later?: boolean;
+  arrived?: boolean;
 }
 
 export interface Baseline {

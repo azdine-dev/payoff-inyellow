@@ -62,11 +62,11 @@ export async function iDidIt(page: Page, paidLabel: string) {
   await expect(page.getByText(`${paidLabel} is paid.`)).toBeVisible();
 }
 
-/** Opens the "Payday list" sheet on Path (if it is not open) and shows the Upcoming or the Done paydays. */
-export async function showPaydays(page: Page, which: 'Upcoming' | 'Done') {
-  // The payday list is the List view of the switch on Path
-  if (!(await page.getByRole('group', { name: 'Which paydays' }).isVisible())) await page.getByRole('button', { name: 'List', exact: true }).click();
-  await page.getByRole('group', { name: 'Which paydays' }).getByRole('button', { name: new RegExp(`^${which === 'Upcoming' ? 'Coming up' : which}`) }).click();
+/** Path > Chapters with every chapter open, so each payday is a row. (`which` is kept for older tests: all paydays are shown.) */
+export async function showPaydays(page: Page, _which?: 'Upcoming' | 'Done') {
+  if (!(await page.getByTestId('chapters').isVisible())) await page.getByRole('button', { name: 'Chapters', exact: true }).click();
+  const heads = page.locator('.chapter-head[aria-expanded="false"]');
+  while ((await heads.count()) > 0) await heads.first().click();
 }
 
 /** Opens a payday on the Plan tab and returns the dialog, then the caller closes it. */

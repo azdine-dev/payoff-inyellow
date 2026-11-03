@@ -11,7 +11,7 @@ import { isDebtFree } from '../state/debtFree';
 import { MILESTONE_LABELS, progressStats } from '../state/milestones';
 import { setMethod } from '../state/planActions';
 import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
-import { act, data, freshPaidDebts, freshPayday, plan, previewDate, today } from '../state/store';
+import { act, data, freshPaidDebts, freshPayday, plan, previewDate, today, wholePlanOpen } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
 import { worthKnowing } from '../state/worthKnowing';
 import { focusDebt } from '../today/model';
@@ -21,7 +21,8 @@ import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { PaydayCalendar } from './PaydayCalendar';
 import { PathPreview } from './Preview';
-import { PaydayListBody } from './PaydayListSheet';
+import { Chapters } from './Chapters';
+import { WholePlan, WholePlanCard } from './WholePlan';
 import { PayMore } from './PayMore';
 import { Road } from './Road';
 import { buildRoad, finishIndexFor, type RoadFlag } from './roadModel';
@@ -42,7 +43,7 @@ const ORDER_NAME: Record<PayoffMethod, string> = {
   'my-order': 'my own order',
 };
 
-type View = 'road' | 'list' | 'calendar';
+type View = 'road' | 'chapters' | 'calendar';
 
 function IconOrder() {
   return (
@@ -161,6 +162,8 @@ export function Path() {
     <main class="screen with-tabs">
       {previewDate.value && r.rows.some((x) => x.date === previewDate.value) ? (
         <PathPreview d={d} r={r} today={today.value} />
+      ) : wholePlanOpen.value ? (
+        <WholePlan d={d} r={r} today={today.value} />
       ) : (
       <>
       <header class="stack path-head" style={{ gap: 4 }}>
@@ -189,6 +192,8 @@ export function Path() {
           </p>
         )}
       </header>
+
+      {!debtFree && <WholePlanCard d={d} r={r} today={today.value} />}
 
       <div class="path-stats" role="group" aria-label="Your numbers">
         <div>
@@ -220,9 +225,9 @@ export function Path() {
             </HelpTip>
           </p>
           <div class="seg wide" role="group" aria-label="Show paydays as">
-            {(['road', 'list', 'calendar'] as const).map((v) => (
+            {(['road', 'chapters', 'calendar'] as const).map((v) => (
               <button key={v} type="button" class="seg-btn" aria-pressed={view === v} onClick={() => setView(v)}>
-                {v === 'road' ? 'Road' : v === 'list' ? 'List' : 'Calendar'}
+                {v === 'road' ? 'Road' : v === 'chapters' ? 'Chapters' : 'Calendar'}
               </button>
             ))}
           </div>
@@ -233,7 +238,7 @@ export function Path() {
             {d.paydays.length === 0 && !debtFree && <p data-testid="day-one">Day one. Your first yellow square is {shortDate(nextPayday, today.value)}.</p>}
           </>
         )}
-        {view === 'list' && <PaydayListBody />}
+        {view === 'chapters' && <Chapters />}
         {view === 'calendar' && <PaydayCalendar d={d} r={r} today={today.value} />}
       </section>
 

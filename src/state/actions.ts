@@ -27,6 +27,7 @@ import {
   nextPaydayISO,
   nextPaydayNumber,
   oneOffPayday,
+  waitingForArrival,
   plannedMoney,
   toDebtInput,
   toPlanInput,
@@ -257,7 +258,7 @@ export async function didPayday(
   };
   const log: PaydayLog = { id: `payday-${number}`, snap, updatedAt: now, number, date, status: 'done', planMoney, total, plannedTotal, debtLeft: step.debtLeft, dailyCost: dailyInterestCost(activeDebts(data)), bills: bills.due.map(({ debtId, name, amount, due }) => ({ debtId, name, amount, due })) };
   // One-off money planned for this payday is used now
-  const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1);
+  const oneOffs = s.oneOffs.filter((o) => oneOffPayday(s, o.date) !== 1 || waitingForArrival(o));
   const settings: Settings = { ...s, oneOffs, paydayIndex: s.paydayIndex + 1, updatedAt: now };
 
   const tx = db.transaction(['settings', 'debts', 'funds', 'buffer', 'payments', 'paydays'], 'readwrite');

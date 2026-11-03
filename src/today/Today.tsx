@@ -24,6 +24,7 @@ import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput 
 import type { AppData } from '../data/types';
 import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
+import { ArrivalCard, ComingLaterPanel } from './ComingLater';
 import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, FooterNote, GearIcon, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
@@ -99,6 +100,7 @@ export function Today() {
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [backedUp, setBackedUp] = useState(false);
   const [sheet, setSheet] = useState<'amount' | 'redo' | 'windfall' | null>(null);
+  const [later, setLater] = useState(false); // "Extra money": I have it now / It's coming later
   const [sendTo, setSendTo] = useState<string | null>(null); // "Send it to": null means the focus debt
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
@@ -215,6 +217,7 @@ export function Today() {
     setInput(which === 'amount' ? String(override ?? s.extraPerPayday) : '');
     setInputNote('');
     setSendTo(null);
+    setLater(false);
     setSheet(which);
   };
 
@@ -531,6 +534,8 @@ export function Today() {
             <p class="muted small">Your plan starts on {shortDate(nextDate)}. Until then, keep paying your minimums.</p>
           )}
 
+          {!countdownMode && !paidView && <ArrivalCard />}
+
           {countdownMode ? (
             paidView ? null : <CountdownCard nextDate={nextDate} onEarly={markEarly} />
           ) : (
@@ -733,12 +738,23 @@ export function Today() {
         </button>
       </Sheet>
 
-      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : 'I got extra money'}>
+      <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : 'Extra money'}>
         {sheet === 'amount' || sheet === 'redo' ? (
           <Field label="How much can go to the plan this payday?" hint={`Usually ${money(s.extraPerPayday)}. Your minimums stay the same, and the rest follows the same order.`}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Money for the plan this payday" />
           </Field>
         ) : (
+          <div class="el-switch" role="group" aria-label="When">
+            <button type="button" aria-pressed={!later} onClick={() => setLater(false)}>
+              I have it now
+            </button>
+            <button type="button" aria-pressed={later} onClick={() => setLater(true)}>
+              It’s coming later
+            </button>
+          </div>
+        )}
+        {sheet === 'windfall' && later && <ComingLaterPanel onDone={() => setSheet(null)} />}
+        {sheet === 'windfall' && !later && (
           <>
             <Field label="How much did you get?" hint={focus ? `See what it would do first. Anything over what the debt needs goes to the next one.` : undefined}>
               <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Extra money" />
@@ -771,9 +787,11 @@ export function Today() {
           </>
         )}
         {inputNote && <Note>{inputNote}</Note>}
-        <button type="button" class="btn" onClick={saveSheet}>
-          {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : 'Use it'}
-        </button>
+        {!(sheet === 'windfall' && later) && (
+          <button type="button" class="btn" onClick={saveSheet}>
+            {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : 'Use it'}
+          </button>
+        )}
         <button type="button" class="link" onClick={() => setSheet(null)}>
           Cancel
         </button>

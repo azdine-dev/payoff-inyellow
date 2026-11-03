@@ -1,13 +1,12 @@
 /** Path > List > Done: mark the most recent paid payday as not paid. Setup step 3: the buffer fields and the yearly bills row. */
 import { expect, test, type Page } from '@playwright/test';
 import { nadiaSetup } from './nadia';
-import { goTab, tapDidIt } from './scenario';
+import { goTab, showPaydays, tapDidIt } from './scenario';
 import { unlockOnResult } from './helpers';
 
 async function openDone(page: Page) {
   await goTab(page, 'Path');
-  await page.getByRole('button', { name: 'List', exact: true }).click();
-  await page.getByRole('button', { name: /^Done/ }).click();
+  await showPaydays(page);
 }
 
 test.describe('mark a payday as not paid', () => {
@@ -39,7 +38,6 @@ test.describe('mark a payday as not paid', () => {
     await page.getByRole('button', { name: 'Yes, mark as not paid' }).click();
     await expect(page.getByText('Fri 6 Nov is not paid now.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fri 6 Nov, paid' })).toHaveCount(0);
-    await expect(page.getByTestId('empty')).toContainText('No paydays done yet.');
     await goTab(page, 'Today');
     await expect(page.getByTestId('paid-card')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'I did it · $180' })).toBeVisible();

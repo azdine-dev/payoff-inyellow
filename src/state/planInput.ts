@@ -33,11 +33,21 @@ export function oneOffPayday(s: Settings, date: string): number {
   return Math.max(1, (abs ?? s.paydayIndex + 1) - s.paydayIndex);
 }
 
+/** Money coming later that has not been confirmed yet */
+export const waitingForArrival = (o: { later?: boolean; arrived?: boolean }) => Boolean(o.later && !o.arrived);
+
+/** The money coming later that is due on the next payday and waits for "Did it arrive?" */
+export function arrivalDue(s: Settings): Settings['oneOffs'][number] | null {
+  return s.oneOffs.find((o) => waitingForArrival(o) && oneOffPayday(s, o.date) === 1) ?? null;
+}
+
 /** Planned one-off money, as "+/- this payday" amounts keyed by relative payday number. */
 export function oneOffAdjustments(s: Settings): Record<number, number> {
   const adj: Record<number, number> = {};
   for (const o of s.oneOffs) {
     const n = oneOffPayday(s, o.date);
+    // Money coming later is not counted on its payday until the buyer says it arrived
+    if (n === 1 && waitingForArrival(o)) continue;
     adj[n] = (adj[n] ?? 0) + o.amount;
   }
   return adj;

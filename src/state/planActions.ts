@@ -34,6 +34,19 @@ export async function applyWhatIf(
   });
 }
 
+/** "It's coming later": money with a payday and an optional type. Today asks "Did it arrive?" on that payday. */
+export async function addComingLater(db: PiyDB, data: AppData, money: { amount: number; date: string; kind: string | null }, now = Date.now()): Promise<AppData> {
+  const s = data.settings;
+  const entry = { id: newId(), date: money.date, amount: money.amount, note: money.kind ?? 'Money coming later', ...(money.kind ? { kind: money.kind } : {}), later: true, arrived: false };
+  return commit(db, data, { settings: { ...s, oneOffs: [...s.oneOffs, entry], updatedAt: now } });
+}
+
+/** "Yes" on "Did it arrive?": from now on the payday counts it. */
+export async function confirmArrived(db: PiyDB, data: AppData, id: string, now = Date.now()): Promise<AppData> {
+  const s = data.settings;
+  return commit(db, data, { settings: { ...s, oneOffs: s.oneOffs.map((o) => (o.id === id ? { ...o, arrived: true } : o)), updatedAt: now } });
+}
+
 export async function removeOneOff(db: PiyDB, data: AppData, id: string, now = Date.now()): Promise<AppData> {
   const s = data.settings;
   return commit(db, data, { settings: { ...s, oneOffs: s.oneOffs.filter((o) => o.id !== id), updatedAt: now } });

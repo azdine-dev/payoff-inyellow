@@ -9,7 +9,9 @@ import type { PlanResult } from '../engine';
 import type { AppData } from '../data/types';
 import { formatMoneyAuto } from '../lib/money';
 import { shortDate, weekdayIndex } from '../lib/today';
+import { changeablePayday } from '../state/actions';
 import { previewDate } from '../state/store';
+import { UndoPayday } from './UndoPayday';
 import { billState, paidFromLog } from '../today/model';
 import { Empty } from '../ui/Empty';
 
@@ -25,6 +27,8 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
   const t = parseISO(today);
   const [cursor, setCursor] = useState({ y: t.y, m: t.m });
   const [picked, setPicked] = useState<string | null>(null);
+  const [undoOpen, setUndoOpen] = useState(false);
+  const latest = changeablePayday(d)?.date ?? null;
 
   // Every payday we know of: the ones done or skipped, then the ones in the plan
   const paydays = useMemo(() => {
@@ -119,7 +123,7 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
             class={`cal-day${c.iso === today ? ' today' : ''}${picked === c.iso ? ' picked' : ''}${c.pay?.status === 'paid' ? ' paid' : ''}${c.pay?.status === 'skipped' ? ' skipped' : ''}`}
             aria-label={c.label}
             aria-pressed={picked === c.iso}
-            onClick={() => (c.pay?.status === 'ahead' ? (previewDate.value = c.iso) : setPicked(picked === c.iso ? null : c.iso))}
+            onClick={() => (c.pay?.status === 'ahead' ? (previewDate.value = c.iso) : c.pay?.status === 'paid' && c.iso === latest ? setUndoOpen(true) : setPicked(picked === c.iso ? null : c.iso))}
           >
             <span class="cal-num num">{c.n}</span>
             <span class="cal-dots" aria-hidden="true">
@@ -162,6 +166,7 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
           )}
         </div>
       )}
+      <UndoPayday open={undoOpen} onClose={() => setUndoOpen(false)} />
     </div>
   );
 }

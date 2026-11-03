@@ -1,7 +1,7 @@
 /** The last change list before beta: Path tiles and details, Debts rings and History, wide screens, every number a door. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, tapDidIt, showPaydays } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -68,11 +68,10 @@ test.describe('Part 3 · Path', () => {
     await tapDidIt(page);
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await goTab(page, 'Path');
-    await page.getByRole('button', { name: 'List', exact: true }).click();
+    await showPaydays(page);
     const next = page.getByRole('button', { name: /to come$/ }).first();
     await expect(next).toHaveAttribute('aria-current', 'step');
     expect(await next.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('solid');
-    await page.getByRole('button', { name: 'Done (1)' }).click();
     const paid = page.getByRole('button', { name: 'Fri 23 Oct, paid' });
     expect((await paid.evaluate((el) => getComputedStyle(el).backgroundColor)).replace(/\s/g, '')).toBe('rgb(255,225,77)');
     expect(await paid.locator('.pd-date').evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('line-through');
@@ -195,6 +194,6 @@ test.describe('Part 6 · every number is a door', () => {
     await expect(door.getByRole('button')).toHaveCount(0); // no button inside a button
     await expect(page.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
     await page.getByRole('button', { name: 'I got extra money' }).click();
-    await expect(page.getByRole('dialog', { name: 'I got extra money' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Extra money' })).toBeVisible();
   });
 });
