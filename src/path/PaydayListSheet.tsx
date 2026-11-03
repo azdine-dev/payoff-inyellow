@@ -2,9 +2,11 @@
 import { useMemo, useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto } from '../lib/money';
-import { dayMonth, monthYear, shortDate } from '../lib/today';
+import { dayMonth, monthYear, shortDate, shortMonthYear } from '../lib/today';
 import { billsForPlanRow, totalOf } from '../state/billsDue';
-import { data, plan } from '../state/store';
+import { changeablePayday, markNotPaid, notPaidPreview } from '../state/actions';
+import { showNotice } from '../state/notice';
+import { act, data, plan, today } from '../state/store';
 import { CheckIcon, Sheet } from '../ui/controls';
 import { Empty } from '../ui/Empty';
 
@@ -38,7 +40,11 @@ export function PaydayListBody() {
   const [shown, setShown] = useState(FUTURE_STEP);
   const [open, setOpen] = useState<string | null>(null);
   const [list, setList] = useState<'upcoming' | 'done'>('upcoming');
+  // "Mark as not paid": only the most recent paid payday, and only while nothing else moved since
+  const [notPaid, setNotPaid] = useState<number | null>(null);
+  const preview = notPaid !== null ? notPaidPreview(d) : null;
   const toggle = (key: string) => setOpen(open === key ? null : key);
+  const changeable = changeablePayday(d)?.number ?? null;
 
   // Per payday: the bills due before the next payday, and the total (bills + yearly bills + buffer + extra)
   const rowBills = useMemo(() => r.rows.map((_, i) => billsForPlanRow(d, r, i)), [d, r]);
@@ -50,6 +56,35 @@ export function PaydayListBody() {
       <span class="num">{formatMoney(amount, cur)}</span>
     </div>
   );
+
+  const doneDetail = (p: (typeof d.paydays)[number]) => {
+    const payments = d.payments.filter((x) => x.paydayNumber === p.number);
+    return (
+        <div class="stack pd-detail" style={{ gap: 6 }} role="group" aria-label={`${shortDate(p.date)} details`}>
+          {p.status === 'skipped' ? (
+            <p>{COPY.missed}</p>
+          ) : (
+            <>
+              {p.bills?.map((b) => line('', b.amount, `b${b.debtId}`, `${b.name}, due ${dayMonth(b.due)}`))}
+              {payments
+                .filter((x) => x.kind !== 'fund' && !(x.kind === 'minimum' && p.bills !== undefined))
+                .map((x) => line('', x.amount, x.id, x.kind === 'minimum' ? `${nameOf(x.debtId!)} minimum` : x.kind === 'extra' ? `Extra to ${nameOf(x.debtId!)}` : 'Buffer'))}
+              {payments.some((x) => x.kind === 'fund') &&
+                line('Yearly bills', payments.filter((x) => x.kind === 'fund').reduce((sum, x) => sum + x.amount, 0), 'funds')}
+              <div class="row" style={{ borderTop: '1px solid var(--ink)', paddingTop: 6, fontWeight: 600 }}>
+                <span>Total</span>
+                <span class="num">{formatMoney(p.total, cur)}</span>
+              </div>
+              {p.debtLeft !== undefined && (
+                <p class="muted small num" data-testid="debt-left-after">
+                  Debt left after: {formatMoney(p.debtLeft, cur)}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+    );
+  };
 
   return (
     <>
@@ -81,7 +116,8 @@ export function PaydayListBody() {
                           class={`pd${p.status === 'done' ? ' on' : ''}`}
                           aria-expanded={open === key}
                           aria-label={`${shortDate(p.date)}, ${p.status === 'done' ? 'paid' : 'skipped'}`}
-                          onClick={() => toggle(key)}
+                          aria-haspopup={p.status === 'done' && changeable === p.number ? 'dialog' : undefined}
+                          onClick={() => (p.status === 'done' && changeable === p.number ? setNotPaid(p.number) : toggle(key))}
                         >
                           <span class="pd-box">{p.status === 'done' && <CheckIcon />}</span>
                           <span class="pd-date">{shortDate(p.date)}</span>
@@ -98,31 +134,7 @@ export function PaydayListBody() {
                             <span class="tag paid">Paid</span>
                           </div>
                         )}
-                        {open === key && (
-                          <div class="stack pd-detail" style={{ gap: 6 }} role="group" aria-label={`${shortDate(p.date)} details`}>
-                            {p.status === 'skipped' ? (
-                              <p>{COPY.missed}</p>
-                            ) : (
-                              <>
-                                {p.bills?.map((b) => line('', b.amount, `b${b.debtId}`, `${b.name}, due ${dayMonth(b.due)}`))}
-                                {payments
-                                  .filter((x) => x.kind !== 'fund' && !(x.kind === 'minimum' && p.bills !== undefined))
-                                  .map((x) => line('', x.amount, x.id, x.kind === 'minimum' ? `${nameOf(x.debtId!)} minimum` : x.kind === 'extra' ? `Extra to ${nameOf(x.debtId!)}` : 'Buffer'))}
-                                {payments.some((x) => x.kind === 'fund') &&
-                                  line('Yearly bills', payments.filter((x) => x.kind === 'fund').reduce((sum, x) => sum + x.amount, 0), 'funds')}
-                                <div class="row" style={{ borderTop: '1px solid var(--ink)', paddingTop: 6, fontWeight: 600 }}>
-                                  <span>Total</span>
-                                  <span class="num">{formatMoney(p.total, cur)}</span>
-                                </div>
-                                {p.debtLeft !== undefined && (
-                                  <p class="muted small num" data-testid="debt-left-after">
-                                    Debt left after: {formatMoney(p.debtLeft, cur)}
-                                  </p>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        )}
+                        {open === key && doneDetail(p)}
                       </li>
                     );
                   })}
@@ -186,6 +198,34 @@ export function PaydayListBody() {
           Show more paydays
         </button>
       )}
+
+      <Sheet open={preview !== null} onClose={() => setNotPaid(null)} title={preview ? `Mark ${shortDate(preview.log.date, today.value)} as not paid?` : ''}>
+        {preview && (
+          <>
+            {doneDetail(d.paydays.find((x) => x.number === preview.log.number) ?? preview.log)}
+            <p data-testid="not-paid-line">
+              {preview.debtFreeDate
+                ? `Debt-free ${preview.debtFreeDate.slice(0, 7) === r.debtFreeDate?.slice(0, 7) ? 'stays' : 'moves to'} ${shortMonthYear(preview.debtFreeDate)}.`
+                : 'Debt-free moves to more than 20 years from now.'}
+            </p>
+            <button
+              type="button"
+              class="btn"
+              onClick={async () => {
+                const date = shortDate(preview.log.date, today.value);
+                setNotPaid(null);
+                await act((db, x) => markNotPaid(db, x));
+                showNotice('info', `${date} is not paid now.`);
+              }}
+            >
+              Yes, mark as not paid
+            </button>
+            <button type="button" class="btn ghost" onClick={() => setNotPaid(null)}>
+              Keep it
+            </button>
+          </>
+        )}
+      </Sheet>
     </>
   );
 }

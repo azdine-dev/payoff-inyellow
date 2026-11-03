@@ -76,7 +76,8 @@ describe('debts', () => {
     const visa = byName(data, 'Visa');
     const after = await updateBalance(db, data, visa.id, 3150.25);
     expect(byName(after, 'Visa').balance).toBe(3150.25);
-    expect(byName(after, 'Visa').startBalance).toBe(3200);
+    // a typed-in balance is a correction, not progress: the debt starts again from it
+    expect(byName(after, 'Visa').startBalance).toBe(3150.25);
   });
 
   it('edits name, rate and minimum', async () => {

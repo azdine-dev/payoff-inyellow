@@ -57,9 +57,41 @@ export async function addDebt(db: PiyDB, data: AppData, f: DebtFields, now = Dat
 export async function editDebt(db: PiyDB, data: AppData, id: string, f: DebtFields, now = Date.now()): Promise<AppData> {
   const debt = data.debts.find((d) => d.id === id)!;
   const balance = f.balance <= ZERO ? 0 : f.balance;
-  return commit(db, data, {
-    debts: [{ ...debt, ...f, name: capFirst(f.name), balance, startBalance: Math.max(debt.startBalance, balance), status: statusFor(balance, debt.status), updatedAt: now }],
-  });
+  const edited: Debt = {
+    ...debt,
+    ...f,
+    name: capFirst(f.name),
+    balance,
+    // A balance typed in here is a correction, not a payment: the debt's starting point moves with it
+    startBalance: baselineAfterCorrection(data, debt, balance),
+    status: statusFor(balance, debt.status),
+    updatedAt: now,
+  };
+  // The rate, the minimum and the balance decide the order: make it again from the chosen method
+  const after: AppData = { ...data, debts: data.debts.map((d) => (d.id === id ? edited : d)) };
+  return commit(db, data, { debts: [edited], ...orderChange(data, after, now) });
+}
+
+/** The settings to save when the payoff order is not the stored one any more. Nothing when it is the same (so nothing is written or synced for nothing). */
+function orderChange(before: AppData, after: AppData, now: number): { settings?: AppData['settings'] } {
+  const next = orderFor(after);
+  const same = next.length === before.settings.payoffOrder.length && next.every((id, i) => id === before.settings.payoffOrder[i]);
+  return same ? {} : { settings: { ...after.settings, payoffOrder: next, updatedAt: now } };
+}
+
+/** What was really paid to a debt (bills and extras). Corrections and statement updates are not in it. */
+export function paidToDebt(data: Pick<AppData, 'payments'>, debtId: string): number {
+  return data.payments.filter((p) => p.debtId === debtId && (p.kind === 'minimum' || p.kind === 'extra') && p.amount > 0).reduce((sum, p) => sum + p.amount, 0);
+}
+
+/**
+ * The starting balance of a debt after its balance was typed in by hand (Edit, or "Update from statement").
+ * It becomes the new balance plus what was really paid so far, so progress and milestones come from real payments only
+ * and a correction moves the progress neither forward nor back. An unchanged balance keeps its starting point.
+ */
+export function baselineAfterCorrection(data: Pick<AppData, 'payments'>, debt: Debt, to: number): number {
+  if (Math.abs(to - debt.balance) <= ZERO) return debt.startBalance;
+  return to + paidToDebt(data, debt.id);
 }
 
 /** "Update from statement": the real balance replaces the stored one. */
@@ -68,9 +100,10 @@ export async function updateBalance(db: PiyDB, data: AppData, id: string, balanc
   const to = balance <= ZERO ? 0 : balance;
   // The change is written down for the debt's History list
   const statements = Math.abs(to - debt.balance) > ZERO ? [...(debt.statements ?? []), { date: today, from: debt.balance, to }] : debt.statements;
-  return commit(db, data, {
-    debts: [{ ...debt, balance: to, startBalance: Math.max(debt.startBalance, to), status: statusFor(to, debt.status), ...(statements ? { statements } : {}), updatedAt: now }],
-  });
+  const corrected: Debt = { ...debt, balance: to, startBalance: baselineAfterCorrection(data, debt, to), status: statusFor(to, debt.status), ...(statements ? { statements } : {}), updatedAt: now };
+  const after: AppData = { ...data, debts: data.debts.map((d) => (d.id === id ? corrected : d)) };
+  // A new balance can change which debt is the smallest: make the order again
+  return commit(db, data, { debts: [corrected], ...orderChange(data, after, now) });
 }
 
 /** "Log a new charge or fee": the balance goes up and the plan updates. A paid debt becomes active again. */

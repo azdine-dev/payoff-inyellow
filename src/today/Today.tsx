@@ -269,16 +269,18 @@ export function Today() {
   };
 
   // ---------------------------------------------------------------- what the screen says
-  const plainGreeting = paidView
-    ? 'Done for this payday.'
-    : !active.length
-      ? 'You’re debt-free.'
+  // After the last debt the header is only "Debt-free.": no payday, no next payday, and it changes at once (no reload)
+  const debtFreeNow = active.length === 0;
+  const plainGreeting = debtFreeNow
+    ? 'Debt-free.'
+    : paidView
+      ? 'Done for this payday.'
       : missed > 0
         ? 'Welcome back.'
         : isPayday
           ? 'Hi, it’s payday.'
           : `Next payday is ${shortDate(nextDate)}.`;
-  const greeting = greetingWithName(plainGreeting, !paidView && active.length > 0 && missed > 0 ? 'back' : !paidView && active.length > 0 && missed === 0 && isPayday ? 'payday' : 'other', s.firstName);
+  const greeting = greetingWithName(plainGreeting, !debtFreeNow && !paidView && missed > 0 ? 'back' : !debtFreeNow && !paidView && missed === 0 && isPayday ? 'payday' : 'other', s.firstName);
 
   const goneLabel = (iso: string | null) => (iso ? (diffDays(today.value, iso) <= 100 ? shortDate(iso) : shortMonthYear(iso)) : null);
   // Paydays left for the focus debt after the one on the card (0 = this payday pays it off)
@@ -299,7 +301,7 @@ export function Today() {
   const showNudge = justPaid && (doneCount === 1 || doneCount % 4 === 0);
 
   // One short line for this payday: for what just happened if there is something, else the line of the payday
-  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0, freshHalfway: freshMilestones.value.includes('pct-50') });
+  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0, today: today.value });
   const noteCard = (
     <section class="card note-card" aria-label="A note for this payday" data-testid="pay-note-card">
       <span class="note-icon" aria-hidden="true">
@@ -335,9 +337,13 @@ export function Today() {
     <main class="screen with-tabs">
       <header class="today-head">
         <div class="stack" style={{ gap: 2 }}>
-          {paidView ? (
+          {debtFreeNow ? (
+            <p class="date-line">
+              {weekdayName(today.value)} {dayMonth(today.value)}
+            </p>
+          ) : paidView ? (
             <p class="date-line" role="status">
-              <b>{shortDate(paidView.date)} is paid.</b> Next payday: {shortDate(nextDate)}.
+              <b>{shortDate(paidView.date)} is paid.</b>
             </p>
           ) : (
             <p class="date-line">
@@ -393,7 +399,7 @@ export function Today() {
       {paidIds.length > 0 && (
         <div class="paid-moment" role="dialog" aria-modal="true" aria-label="Debt paid" data-testid="paid-moment">
           <div class="paid-moment-body">
-            <p class="paid-moment-title">{COPY.debtPaid}</p>
+            <p class="paid-moment-title">{active.length === 0 ? 'Debt-free.' : COPY.debtPaid}</p>
             {paidIds.map((id) => {
               const debt = d.debts.find((x) => x.id === id);
               if (!debt) return null;
@@ -470,7 +476,7 @@ export function Today() {
             {focus && (
               <>
                 <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
-                <p class="muted small num">{Math.floor(focus.pctGone)}% gone</p>
+                {!focus.grown && <p class="muted small num">{Math.floor(focus.pctGone)}% gone</p>}
               </>
             )}
           </section>
@@ -641,7 +647,7 @@ export function Today() {
               </button>
               <div class="row" style={{ justifyContent: 'flex-start', gap: 0 }}>
                 <p class="muted" data-testid="focus-sentence">
-                  {focusSentence(focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
+                  {focusSentence(focus.grown ? null : focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
                 </p>
                 <HelpTip title="Why this one?">
                   <p data-testid="focus-why">{whyFirst(s.method, growingNow.has(focus.debt.id))}</p>

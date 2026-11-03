@@ -5,6 +5,7 @@
 import { capFirst } from '../lib/text';
 import {
   dailyInterestCost,
+  simulatePlan,
   paydayNumberOnOrAfter,
   paydayISO,
   payoffOrderIds,
@@ -59,6 +60,8 @@ export interface SetupValues {
   bufferGoal: number;
   extraPerPayday: number;
   funds: { name: string; perYear: number; month: string }[];
+  /** "I have none" for yearly bills, chosen in setup */
+  yearlyNone?: boolean;
   method: PayoffMethod;
   startMode: StartMode;
   ifThen: { day: string; time: string };
@@ -112,6 +115,7 @@ export function buildSetupData(v: SetupValues, today: string, now = Date.now(), 
     textSize: carry.textSize ?? 1,
     license: carry.license ?? null,
     ...(v.firstName?.trim() ? { firstName: v.firstName.trim() } : {}),
+    ...(v.yearlyNone && v.funds.length === 0 ? { later: { yearly: true } } : {}),
   };
   const debts: Debt[] = v.debts.map((d, i) => ({
     id: newId(),
@@ -337,6 +341,24 @@ function beforePayday(data: AppData, log: PaydayLog): AppData {
     payments: data.payments.filter((p) => p.paydayNumber !== log.number),
     paydays: data.paydays.filter((p) => p.number !== log.number),
   };
+}
+
+/**
+ * "Mark as not paid": the most recent paid payday goes back to how things were before it, and its payments are removed.
+ * Only for that payday, and only while nothing else moved since (the same rule as "Change what I paid").
+ */
+export async function markNotPaid(db: PiyDB, data: AppData, now = Date.now()): Promise<AppData> {
+  const log = changeablePayday(data);
+  if (!log) throw new Error('This payday can no longer be marked as not paid.');
+  return undoPayday(db, beforePayday(data, log), data, now);
+}
+
+/** What marking the most recent paid payday as not paid would do to the debt-free date. Null when it cannot be done. */
+export function notPaidPreview(data: AppData): { log: PaydayLog; debtFreeDate: string | null } | null {
+  const log = changeablePayday(data);
+  if (!log) return null;
+  const r = simulatePlan(toPlanInput(beforePayday(data, log)));
+  return { log, debtFreeDate: r.debtFreeDate };
 }
 
 /** "Change what I paid": put the last payday back, then do it again with the money the buyer really put toward the plan. */

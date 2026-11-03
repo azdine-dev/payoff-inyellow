@@ -12,7 +12,7 @@ export interface ChartPoint {
   y: number;
 }
 
-export type Caption = 'dayOne' | 'lower' | 'same' | 'higher';
+export type Caption = 'dayOne' | 'firstLower' | 'lower' | 'same' | 'higher';
 
 export interface MiniChartModel {
   /** What was owed at the start */
@@ -68,12 +68,18 @@ export function miniChartModel(d: Pick<AppData, 'paydays'>, r: Pick<PlanResult, 
   }
 
   const prev = n >= 2 ? line[n - 1]!.y : start;
-  const caption: Caption = n === 0 ? 'dayOne' : stats.owed < prev - 0.005 ? 'lower' : stats.owed > prev + 0.005 ? 'higher' : 'same';
+  const caption: Caption = n === 0 ? 'dayOne' : stats.owed < prev - 0.005 ? (n === 1 ? 'firstLower' : 'lower') : stats.owed > prev + 0.005 ? 'higher' : 'same';
   return { start, owed: stats.owed, down: Math.max(0, stats.start - stats.owed), line, paid, here, doneCount: n, xMax: Math.max(1, line[line.length - 1]!.i), yMax: Math.max(1, start), endsAtZero, caption };
+}
+
+/** The one line under the chart. After the first payday it says how far below day one you are: "$6 lower than day one." */
+export function captionText(m: Pick<MiniChartModel, 'caption' | 'start' | 'owed'>, money: (n: number) => string): string {
+  return m.caption === 'firstLower' ? `${money(Math.max(0, m.start - m.owed))} lower than day one.` : CAPTIONS[m.caption];
 }
 
 export const CAPTIONS: Record<Caption, string> = {
   dayOne: 'Day one. Your line starts here.',
+  firstLower: 'Lower than day one.',
   lower: 'Lower than last payday.',
   same: 'The same as last payday.',
   higher: 'A little higher than last payday. That happens.',

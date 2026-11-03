@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PaydayLog } from '../data/types';
-import { CAPTIONS, miniChartModel } from './balanceSeries';
+import { CAPTIONS, captionText, miniChartModel } from './balanceSeries';
 
 const log = (number: number, debtLeft: number, status: 'done' | 'skipped' = 'done') => ({ number, status, debtLeft, date: `2026-11-${String(number).padStart(2, '0')}` }) as PaydayLog;
 const rows = (...left: number[]) => left.map((debtLeft) => ({ debtLeft })) as never;
@@ -22,7 +22,8 @@ describe('the balance chart, one point per payday', () => {
     expect(m.line.map((p) => [p.i, p.y])).toEqual([[0, 3250], [1, 3000], [2, 2000], [3, 1000], [4, 0]]);
     expect(m.paid).toHaveLength(1);
     expect(m.here).toEqual({ i: 1, y: 3000 });
-    expect(m.caption).toBe('lower');
+    expect(m.caption).toBe('firstLower');
+    expect(captionText(m, (n) => `$${n}`)).toBe('$250 lower than day one.'); // after the first payday: how far below day one
     expect(CAPTIONS.lower).toBe('Lower than last payday.');
   });
 
@@ -31,6 +32,7 @@ describe('the balance chart, one point per payday', () => {
     expect(m.paid.map((p) => p.i)).toEqual([1, 2]);
     expect(m.here.i).toBe(2);
     expect(m.caption).toBe('lower');
+    expect(captionText(m, (n) => `$${n}`)).toBe('Lower than last payday.');
   });
 
   it('a new charge makes it higher, with a calm caption, and no change says the same', () => {

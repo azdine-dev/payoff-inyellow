@@ -13,6 +13,7 @@ import { simulatePlan } from '../engine';
 import { addDebt, archiveDebt, DEFAULT_RATE, editDebt, logCharge, restoreDebt, updateBalance, type DebtFields } from '../state/debtActions';
 import { toDebtInput, toPlanInput } from '../state/planInput';
 import { act, data, freshPaidDebts, openDebtId, plan, today } from '../state/store';
+import { goneShare } from '../today/model';
 import { Count } from '../ui/useCountUp';
 import { CheckIcon, Choice, Field, HelpTip, Note, NumberInput, PlusIcon, Sheet } from '../ui/controls';
 import { Empty } from '../ui/Empty';
@@ -225,7 +226,8 @@ export function Debts() {
   const tagFor = (i: number) => (i === 0 ? '1 · Paying now' : i === 1 ? '2 · Next' : `${i + 1} · Later`);
 
   const card = (debt: Debt, index: number) => {
-    const pct = debt.startBalance > 0 ? (1 - debt.balance / debt.startBalance) * 100 : 100;
+    const { pct: shownPct, grown } = goneShare(debt);
+    const pct = debt.startBalance > 0 ? shownPct : 100;
     const goneBy = r.paidOff[debt.id];
     const isPaid = debt.status === 'paid';
     const bill = debt.minPending ? null : formatMoneyAuto(debt.minMonthly, cur);
@@ -269,7 +271,7 @@ export function Debts() {
                 <Ring pct={pct} size={60} label={`${debt.name} paid off`} />
               </div>
               <p class="muted small num">
-                {Math.floor(pct)}% gone · {debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}%`}
+                {grown ? '' : `${Math.floor(pct)}% gone · `}{debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}%`}
                 {bill ? ` · ${bill} bill${debt.dueDay ? ` on the ${ordinal(debt.dueDay)}` : ''}` : ''}
                 {debt.autopay ? ' · autopay' : ''}
               </p>

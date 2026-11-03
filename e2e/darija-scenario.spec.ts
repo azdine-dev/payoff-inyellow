@@ -105,7 +105,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028'); // 6 Oct 2028
     await expect(page.getByTestId('tile-sooner')).toContainText('30 months');
     await expect(page.getByTestId('tile-interest')).toContainText('$1,763');
-    await expect(page.getByTestId('minimums-only')).toContainText(/Paying only minimums, it would take until [A-Z][a-z]+ 20\d\d\./);
+    await expect(page.getByTestId('minimums-only')).toContainText(/Paying only minimums, counting from today, it would take until [A-Z][a-z]+ 20\d\d\./);
     // New rule: only the bills due before the next payday (Medical bill $50 on 1 Nov, Store card $35 on 5 Nov)
     await expect(page.getByTestId('first-step')).toHaveText('Move $235.');
     await expect(page.getByTestId('first-step-parts')).toContainText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');

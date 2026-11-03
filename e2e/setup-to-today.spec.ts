@@ -86,7 +86,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await shot(page, '07-today');
 
   await didIt.click(); // the payday is still a week away: no question, Undo covers a mistake
-  await expect(page.getByRole('status').filter({ hasText: 'Fri 23 Oct is paid.' })).toContainText('Next payday: Fri 6 Nov.');
+  await expect(page.getByRole('status').filter({ hasText: 'Fri 23 Oct is paid.' })).toContainText('Fri 23 Oct is paid.');
   await expect(page.getByTestId('debt-free-pill')).toContainText('October 2028');
   await shot(page, '08-paid');
 

@@ -42,7 +42,7 @@ test.describe('the balance chart, payday by payday', () => {
     });
     expect(gap).toBeGreaterThanOrEqual(0);
     expect(gap).toBeLessThan(40);
-    await expect(page.getByTestId('mini-line')).toHaveText('Lower than last payday.');
+    await expect(page.getByTestId('mini-line')).toHaveText(/^\$\d+(\.\d\d)? lower than day one\.$/); // the first payday: how far below day one
     // "You are here" moved down from $3,250
     const owed = Number((await page.getByTestId('mini-start').textContent() ?? '').replace(/[^0-9]/g, ''));
     expect(owed).toBeLessThan(3250);
@@ -51,7 +51,7 @@ test.describe('the balance chart, payday by payday', () => {
     // and after a reload
     await page.reload();
     await expect(page.getByTestId('mini-chart')).toHaveCount(1);
-    await expect(page.getByTestId('mini-line')).toHaveText('Lower than last payday.');
+    await expect(page.getByTestId('mini-line')).toHaveText(/lower than day one\.$/);
   });
 
   test('paid paydays are yellow dots and the one you are on is highlighted', async ({ page }) => {

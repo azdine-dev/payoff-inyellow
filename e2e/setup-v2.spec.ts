@@ -153,7 +153,7 @@ test('the result screen: the chips are there, and "start on the 1st" moves the f
 test('the date on the result screen has no "set aside" wording left, and it names the extra', async ({ page }) => {
   await quickSetup(page, { unlock: false });
   await expect(page.getByTestId('first-step')).toHaveText('Move $185. The extra $150 goes to Store card.');
-  await expect(page.getByTestId('minimums-only')).toContainText('Paying only minimums, it would take until');
+  await expect(page.getByTestId('minimums-only')).toContainText('Paying only minimums, counting from today, it would take until');
   await expect(page.getByTestId('tile-sooner')).toContainText('months');
   await expect(page.getByTestId('tile-interest')).toContainText('less interest');
   await expect(page.getByText(/set aside/i)).toHaveCount(0);

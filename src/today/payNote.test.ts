@@ -10,9 +10,9 @@ const base = { paydays: [] as PaydayLog[], debts: [] as never[], payments: [] as
 describe('the lines', () => {
   const all = [...Object.values(STATE_NOTES), ...ROTATING_NOTES];
 
-  it('there are 30 rotating lines and 5 for what just happened', () => {
+  it('there are 30 rotating lines and 7 for what just happened', () => {
     expect(ROTATING_NOTES).toHaveLength(30);
-    expect(Object.keys(STATE_NOTES)).toHaveLength(5);
+    expect(Object.keys(STATE_NOTES)).toHaveLength(7);
     expect(new Set(ROTATING_NOTES).size).toBe(30);
   });
 
@@ -22,7 +22,8 @@ describe('the lines', () => {
 
   it('no exclamation marks, no dashes or hyphens, no hype, no shame', () => {
     for (const line of all) {
-      expect(line, line).not.toMatch(/[!—–-]/);
+      // "Debt-free" is the brand word, written with its hyphen
+      expect(line.replace(/Debt-free/g, 'Debt free'), line).not.toMatch(/[!—–-]/);
       expect(line.toLowerCase(), line).not.toMatch(/amazing|incredible|crush|smash|guarantee|never fail|you failed|lazy|behind schedule|shame/);
     }
   });
@@ -33,6 +34,8 @@ describe('the lines', () => {
     expect(STATE_NOTES.afterSkip).toBe('Life happens. Never miss twice.');
     expect(STATE_NOTES.debtPaid).toBe('PAID. One down.');
     expect(STATE_NOTES.halfway).toBe('Halfway. You did this with paychecks, not luck.');
+    expect(STATE_NOTES.almostHome).toBe('Almost home.');
+    expect(STATE_NOTES.debtFree).toBe('Debt-free.');
   });
 });
 
@@ -43,12 +46,40 @@ describe('which note shows', () => {
 
   it('a debt just paid comes first, then halfway, then the rest', () => {
     const d = { ...base, paydays: [log(1, '2026-11-06')] };
-    expect(pickNote(d, { freshPaidDebt: true, freshHalfway: true }).kind).toBe('debtPaid');
-    expect(pickNote(d, { freshHalfway: true }).kind).toBe('halfway');
-    const paid = { ...d, debts: [{ id: 'a', status: 'paid' }] as never, payments: [{ debtId: 'a', paydayNumber: 1, date: '2026-11-06' }] as never };
+    expect(pickNote(d, { freshPaidDebt: true }).kind).toBe('debtPaid');
+    const paid = { ...d, debts: [{ id: 'a', status: 'paid' }, { id: 'b', status: 'active' }] as never, payments: [{ debtId: 'a', paydayNumber: 1, date: '2026-11-06' }] as never };
     expect(pickNote(paid).kind).toBe('debtPaid');
     const half = { ...d, milestones: [{ id: 'pct-50', reachedOn: '2026-11-06' }] as never };
     expect(pickNote(half).kind).toBe('halfway');
+  });
+
+  it('halfway shows once: on the payday it was reached, never on the paydays after', () => {
+    const half = [{ id: 'pct-50', reachedOn: '2026-11-20' }] as never;
+    const onThatPayday = { ...base, milestones: half, paydays: [log(1, '2026-11-06'), log(2, '2026-11-20')] };
+    expect(pickNote(onThatPayday).kind).toBe('halfway');
+    const nextPayday = { ...base, milestones: half, paydays: [log(1, '2026-11-06'), log(2, '2026-11-20'), log(3, '2026-12-04')] };
+    expect(pickNote(nextPayday).kind).toBe('rotating');
+    // the same app session, the same day: it is still the payday it was reached, so still the same line
+    expect(pickNote(onThatPayday, { today: '2026-11-21' }).kind).toBe('halfway');
+  });
+
+  it('reached today with extra money counts as just now, and not tomorrow', () => {
+    const half = { ...base, milestones: [{ id: 'pct-50', reachedOn: '2026-11-10' }] as never, paydays: [log(1, '2026-11-06'), log(2, '2026-11-20')] };
+    expect(pickNote(half, { today: '2026-11-10' }).kind).toBe('halfway');
+    expect(pickNote(half, { today: '2026-11-11' }).kind).toBe('rotating');
+  });
+
+  it('75% says "Almost home." once, ahead of halfway', () => {
+    const ms = [{ id: 'pct-50', reachedOn: '2026-11-06' }, { id: 'pct-75', reachedOn: '2026-11-06' }] as never;
+    const d = { ...base, milestones: ms, paydays: [log(1, '2026-10-23'), log(2, '2026-11-06')] };
+    expect(pickNote(d)).toEqual({ kind: 'almostHome', text: 'Almost home.' });
+    expect(pickNote({ ...d, paydays: [...d.paydays, log(3, '2026-11-20')] }).kind).toBe('rotating');
+  });
+
+  it('when the last debt is paid the line is "Debt-free.", not "One down"', () => {
+    const d = { ...base, paydays: [log(1, '2026-11-06')], debts: [{ id: 'a', status: 'paid' }, { id: 'b', status: 'paid' }] as never, payments: [{ debtId: 'b', paydayNumber: 1, date: '2026-11-06' }] as never };
+    expect(pickNote(d)).toEqual({ kind: 'debtFree', text: 'Debt-free.' });
+    expect(pickNote(d, { freshPaidDebt: true }).text).not.toMatch(/One down/);
   });
 
   it('after the first payday the buffer note, then the skip note, then a rotating line', () => {

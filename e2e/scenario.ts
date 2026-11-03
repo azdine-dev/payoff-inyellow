@@ -79,6 +79,8 @@ export async function openPayday(page: Page, label: string) {
 
 export async function closeSheet(page: Page) {
   // The payday list is inline now, so there may be nothing to close
+  const keep = page.getByRole('button', { name: 'Keep it' }); // the not-paid sheet of the latest paid payday
+  if (await keep.count()) await keep.first().click();
   const close = page.getByRole('button', { name: 'Close' });
   if (await close.count()) await close.first().click();
 }

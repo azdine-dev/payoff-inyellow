@@ -54,6 +54,8 @@ export interface DebtInput {
   deferred?: boolean;
   /** Position for "My own order". Missing = last. */
   myOrder?: number | null;
+  /** The minimum was never entered (quick add): its 0 is "not known yet", so the debt does not count as growing */
+  noMinimum?: boolean;
 }
 
 export interface YearlyBillInput {
@@ -171,8 +173,8 @@ export interface PlanResult {
 }
 
 /** A debt that charges interest and whose minimum doesn't cover it. A 0% debt never grows, even with a $0 minimum. */
-export function isGrowing(d: Pick<DebtInput, 'balance' | 'apr' | 'minMonthly'>): boolean {
-  return d.apr > 0 && d.minMonthly <= (d.balance * d.apr) / 1200;
+export function isGrowing(d: Pick<DebtInput, 'balance' | 'apr' | 'minMonthly' | 'noMinimum'>): boolean {
+  return d.apr > 0 && !d.noMinimum && d.minMonthly <= (d.balance * d.apr) / 1200;
 }
 
 type SortKey = number[];

@@ -110,9 +110,21 @@ export function payThisPayday(row: PaydayStep | undefined, bills: BillsWindow, d
   return toCents(extra) + toCents(bill);
 }
 
+/**
+ * How much of a debt is gone. Never below 0%: when the balance has grown (a new charge, a bigger balance typed in)
+ * the share is 0 and `grown` is true, so no "gone" text is shown.
+ */
+export function goneShare(d: Pick<Debt, 'balance' | 'startBalance'>): { pct: number; grown: boolean } {
+  const grown = d.balance > d.startBalance + ZERO;
+  const raw = d.startBalance > 0 ? (1 - d.balance / d.startBalance) * 100 : 0;
+  return { pct: grown ? 0 : Math.max(0, Math.min(100, raw)), grown };
+}
+
 export interface FocusInfo {
   debt: Debt;
   pctGone: number;
+  /** The balance is higher than where the debt started: show no "gone" text */
+  grown: boolean;
   left: number;
   goneBy: string | null;
 }
@@ -124,8 +136,8 @@ export function focusDebt(data: AppData, result: PlanResult): FocusInfo | null {
   const id = result.rows[0]?.extraGoesTo ?? result.order.find((x) => (debts.get(x)?.balance ?? 0) > ZERO);
   const debt = id ? debts.get(id) : undefined;
   if (!debt) return null;
-  const pctGone = debt.startBalance > 0 ? Math.max(0, Math.min(100, (1 - debt.balance / debt.startBalance) * 100)) : 0;
-  return { debt, pctGone, left: debt.balance, goneBy: result.paidOff[debt.id] ?? null };
+  const { pct: pctGone, grown } = goneShare(debt);
+  return { debt, pctGone, grown, left: debt.balance, goneBy: result.paidOff[debt.id] ?? null };
 }
 
 export interface DueItem {
@@ -266,17 +278,18 @@ export function betweenPaydays(data: AppData, nextDate: string, nextNumber: numb
 }
 
 /** "64% gone. After today, one payday left." for the focus debt. */
-export function focusSentence(pctGone: number, paydaysAfterToday: number | null, isPayday = true): string {
-  const gone = `${Math.floor(pctGone)}% gone.`;
-  if (paydaysAfterToday === null) return `${gone} Not gone within 20 years at this pace.`;
+export function focusSentence(pctGone: number | null, paydaysAfterToday: number | null, isPayday = true): string {
+  // null: the balance has grown, so there is no "gone" part
+  const gone = pctGone === null ? '' : `${Math.floor(pctGone)}% gone. `;
+  if (paydaysAfterToday === null) return `${gone}Not gone within 20 years at this pace.`;
   if (!isPayday) {
     // Not a payday: count the next payday too, with no "after today"
     const left = paydaysAfterToday + 1;
-    return left === 1 ? `${gone} The next payday pays it off.` : `${gone} ${left} paydays left.`;
+    return `${gone}${left === 1 ? 'The next payday pays it off.' : `${left} paydays left.`}`;
   }
-  if (paydaysAfterToday === 0) return `${gone} This payday pays it off.`;
-  if (paydaysAfterToday === 1) return `${gone} After today, one payday left.`;
-  return `${gone} After today, ${paydaysAfterToday} paydays left.`;
+  if (paydaysAfterToday === 0) return `${gone}This payday pays it off.`;
+  if (paydaysAfterToday === 1) return `${gone}After today, one payday left.`;
+  return `${gone}After today, ${paydaysAfterToday} paydays left.`;
 }
 
 /**

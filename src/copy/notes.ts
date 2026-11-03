@@ -8,6 +8,8 @@ export const STATE_NOTES = {
   afterSkip: 'Life happens. Never miss twice.',
   debtPaid: 'PAID. One down.',
   halfway: 'Halfway. You did this with paychecks, not luck.',
+  almostHome: 'Almost home.',
+  debtFree: 'Debt-free.',
 } as const;
 
 /** 30 lines that rotate, one per payday. The same line shows all payday long, however often the app is opened. */

@@ -90,7 +90,7 @@ export function Result() {
           </button>
           {!mo.neverEnds && minimumsUntil && (
             <p class="muted" data-testid="minimums-only">
-              Paying only minimums, it would take until {minimumsUntil}.
+              Paying only minimums, counting from today, it would take until {minimumsUntil}.
             </p>
           )}
         </div>

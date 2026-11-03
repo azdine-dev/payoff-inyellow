@@ -8,7 +8,7 @@ import { formatMoney } from '../lib/money';
 import { shortMonthYear } from '../lib/today';
 import { progressStats } from '../state/milestones';
 import { data, plan, tab } from '../state/store';
-import { CAPTIONS, miniChartModel, type ChartPoint } from './balanceSeries';
+import { captionText, miniChartModel, type ChartPoint } from './balanceSeries';
 
 const W = 320;
 const H = 120;
@@ -39,7 +39,7 @@ export function MiniChart() {
       type="button"
       class="card minichart"
       data-testid="mini-chart"
-      aria-label={`Balance, payday by payday. You owe ${money(m.owed)}. ${CAPTIONS[m.caption]} Open your path.`}
+      aria-label={`Balance, payday by payday. You owe ${money(m.owed)}. ${captionText(m, money)} Open your path.`}
       onClick={() => (tab.value = 'path')}
     >
       <span class="row" style={{ alignItems: 'baseline' }}>
@@ -73,7 +73,7 @@ export function MiniChart() {
           </text>
         )}
       </svg>
-      <span data-testid="mini-line">{CAPTIONS[m.caption]}</span>
+      <span data-testid="mini-line">{captionText(m, (n) => formatMoney(n, cur))}</span>
     </button>
   );
 }

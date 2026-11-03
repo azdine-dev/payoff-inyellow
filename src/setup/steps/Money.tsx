@@ -4,10 +4,18 @@ import { PAYDAYS_PER_YEAR } from '../../engine';
 import { COPY } from '../../lib/copy';
 import { parseAmount } from '../../lib/money';
 import { Field, HelpTip, NumberInput, Sheet } from '../../ui/controls';
-import { filledDebts, type Draft } from '../draft';
+import { filledDebts, MONTH_CHOICES, newFund, type Draft } from '../draft';
 import type { StepProps } from '../Wizard';
 
 const EXTRA_CHIPS = [20, 50, 100];
+
+/** The yearly bill ideas on this step: a short label, and the name the bill gets */
+const YEARLY_CHIPS = [
+  { label: 'Car', name: 'Car repairs' },
+  { label: 'Gifts', name: 'Gifts and holidays' },
+  { label: 'Insurance', name: 'Insurance renewals' },
+  { label: 'School', name: 'School' },
+];
 const whole = (symbol: string, n: number) => `${symbol}${Math.round(n).toLocaleString('en-US')}`;
 
 /** "Your minimums: $466 a month." Null until a debt has a minimum. */
@@ -37,8 +45,8 @@ export function MoneyStep({ draft, set }: StepProps) {
   const need = parseAmount(essentials);
   const bufferGoal = parseAmount(draft.bufferGoal) ?? 0;
   const bufferSummary = bufferGoal > 0
-    ? `A little set aside for surprise costs, so they don’t go back on a card. Your plan starts with a ${whole(sym, bufferGoal)} goal and fills it before extra debt payments. You can change it now or later.`
-    : 'Your plan starts without a safety net goal. You can add one now or later in Safety net.';
+    ? `Your plan fills it first, up to ${whole(sym, bufferGoal)}, before any extra goes to debt.`
+    : 'Your plan starts without a safety net goal. You can add one later in Safety net.';
   const known = home !== null && home > 0 && need !== null && need >= 0;
   const left = known ? roomLeft(home!, need!, monthly, ppy) : 0;
   const room = Math.floor(left);
@@ -46,6 +54,12 @@ export function MoneyStep({ draft, set }: StepProps) {
     set({ extra: String(n), ...(draft.paycheck.trim() === '' && home ? { paycheck: String(home) } : {}) });
     setHelp(false);
   };
+  // A chip adds the bill (cost and month below it), tapping again takes it away
+  const toggleFund = (name: string) => {
+    const has = draft.funds.some((f) => f.name === name);
+    set({ yearlyNone: false, funds: has ? draft.funds.filter((f) => f.name !== name) : [...draft.funds, newFund(name)] });
+  };
+  const setFund = (key: string, patch: Partial<Draft['funds'][number]>) => set({ funds: draft.funds.map((f) => (f.key === key ? { ...f, ...patch } : f)) });
   const line = minimumsLine(draft);
   const current = parseAmount(draft.extra);
   const isChip = EXTRA_CHIPS.includes(current ?? -1) && draft.extra.trim() === String(current);
@@ -131,20 +145,55 @@ export function MoneyStep({ draft, set }: StepProps) {
         </button>
       </Sheet>
 
-      <section class="stack" style={{ gap: 8, marginTop: 8 }}>
+      <section class="stack" style={{ gap: 8, marginTop: 8 }} aria-label="Your safety net">
         <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Your safety net</h2>
         <p class="muted">{bufferSummary}</p>
-        <details class="faq">
-          <summary>Change what you have set aside or the goal</summary>
-          <div class="grid-2">
-            <Field label="Set aside now" hint="Leave empty if you have not set money aside yet.">
-              <NumberInput pre={draft.currencySymbol} value={draft.bufferNow} onInput={(v) => set({ bufferNow: v })} label="Buffer now" />
-            </Field>
-            <Field label="Safety net goal" hint="Keep it in a plain separate account or an envelope.">
-              <NumberInput pre={draft.currencySymbol} value={draft.bufferGoal} onInput={(v) => set({ bufferGoal: v })} label="Safety net goal" />
-            </Field>
+        <div class="grid-2">
+          <Field label="How much do you have set aside now?" hint="Leave empty if nothing yet.">
+            <NumberInput pre={draft.currencySymbol} value={draft.bufferNow} onInput={(v) => set({ bufferNow: v })} label="Buffer now" />
+          </Field>
+          <Field label="Your goal" hint="A plain separate account or an envelope.">
+            <NumberInput pre={draft.currencySymbol} value={draft.bufferGoal} onInput={(v) => set({ bufferGoal: v })} label="Safety net goal" />
+          </Field>
+        </div>
+      </section>
+
+      <section class="stack" style={{ gap: 8, marginTop: 8 }} aria-label="Yearly bills" data-testid="yearly-row">
+        <h2 style={{ fontSize: '1.3rem', margin: 0 }}>
+          Yearly bills <span class="muted small">(optional)</span>
+        </h2>
+        <p class="muted">Bills you know are coming. A little each payday keeps them off a card.</p>
+        <div class="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8 }} role="group" aria-label="Yearly bill ideas">
+          {YEARLY_CHIPS.map((c) => {
+            const on = draft.funds.some((f) => f.name === c.name);
+            return (
+              <button key={c.label} type="button" class="pill plain chip" aria-pressed={on} style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => toggleFund(c.name)}>
+                {c.label}
+              </button>
+            );
+          })}
+          <button type="button" class="pill plain chip" aria-pressed={draft.yearlyNone} style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => set({ yearlyNone: !draft.yearlyNone, funds: [] })}>
+            I have none
+          </button>
+        </div>
+        {draft.funds.map((f) => (
+          <div key={f.key} class="card stack" style={{ gap: 8 }} data-testid="yearly-fund">
+            <b>{f.name}</b>
+            <div class="grid-2">
+              <Field label="Cost per year">
+                <NumberInput pre={draft.currencySymbol} value={f.perYear} onInput={(v) => setFund(f.key, { perYear: v })} label={`${f.name}, cost per year`} />
+              </Field>
+              <Field label="Needed in">
+                <select aria-label={`${f.name}, needed in`} value={f.month} onChange={(e) => setFund(f.key, { month: (e.target as HTMLSelectElement).value })}>
+                  {MONTH_CHOICES.map((m) => (
+                    <option key={m}>{m}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
           </div>
-        </details>
+        ))}
+        {draft.funds.some((f) => (parseAmount(f.perYear) ?? 0) <= 0) && <p class="muted small">Add a cost for each one, or it is left out.</p>}
       </section>
     </div>
   );

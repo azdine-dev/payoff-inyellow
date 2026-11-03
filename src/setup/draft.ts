@@ -50,6 +50,8 @@ export interface Draft {
   bufferGoal: string;
   extra: string;
   funds: DraftFund[];
+  /** "I have none" was chosen for yearly bills: Today does not offer them later */
+  yearlyNone: boolean;
   method: PayoffMethod;
   /** Debt keys in "My own order" */
   myOrder: string[];
@@ -82,6 +84,7 @@ export function newDraft(): Draft {
     bufferGoal: '500',
     extra: '',
     funds: [],
+    yearlyNone: false,
     method: 'paidinyellow',
     myOrder: [],
     startMode: 'this-payday',
@@ -283,6 +286,7 @@ export function toSetupValues(draft: Draft): SetupValues {
     funds: draft.funds
       .filter((f) => (parseAmount(f.perYear) ?? 0) > 0)
       .map((f) => ({ name: f.name.trim() || 'Yearly bill', perYear: parseAmount(f.perYear)!, month: f.month })),
+    ...(draft.yearlyNone && !draft.funds.some((f) => (parseAmount(f.perYear) ?? 0) > 0) ? { yearlyNone: true } : {}),
     method: draft.method,
     startMode: draft.startMode,
     ifThen: { day: ifThenDefault(draft), time: draft.ifThenTime || '20:00' },
@@ -325,6 +329,7 @@ export function draftFromData(d: AppData): Draft {
     bufferGoal: num(s.bufferGoal),
     extra: num(s.extraPerPayday),
     funds: d.funds.map((f) => ({ key: newKey(), name: f.name, perYear: num(f.perYear), month: f.month })),
+    yearlyNone: d.funds.length === 0 && Boolean(s.later?.yearly),
     method: s.method,
     myOrder: byOrder.map((x) => keyOf.get(x.id)!),
     startMode: 'this-payday',
