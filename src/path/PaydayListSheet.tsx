@@ -6,7 +6,7 @@ import { dayMonth, monthYear, shortDate, shortMonthYear } from '../lib/today';
 import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { changeablePayday, markNotPaid, notPaidPreview } from '../state/actions';
 import { showNotice } from '../state/notice';
-import { act, data, plan, today } from '../state/store';
+import { act, data, plan, previewDate, today } from '../state/store';
 import { CheckIcon, Sheet } from '../ui/controls';
 import { Empty } from '../ui/Empty';
 
@@ -42,6 +42,8 @@ export function PaydayListBody() {
   const [list, setList] = useState<'upcoming' | 'done'>('upcoming');
   // "Mark as not paid": only the most recent paid payday, and only while nothing else moved since
   const [notPaid, setNotPaid] = useState<number | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const latestDone = d.paydays.reduce((m, x) => Math.max(m, x.number), 0);
   const preview = notPaid !== null ? notPaidPreview(d) : null;
   const toggle = (key: string) => setOpen(open === key ? null : key);
   const changeable = changeablePayday(d)?.number ?? null;
@@ -78,6 +80,11 @@ export function PaydayListBody() {
               {p.debtLeft !== undefined && (
                 <p class="muted small num" data-testid="debt-left-after">
                   Debt left after: {formatMoney(p.debtLeft, cur)}
+                </p>
+              )}
+              {p.status === 'done' && p.number < latestDone && (
+                <p class="muted small" data-testid="undo-later-first">
+                  Undo the later ones first.
                 </p>
               )}
             </>
@@ -117,7 +124,7 @@ export function PaydayListBody() {
                           aria-expanded={open === key}
                           aria-label={`${shortDate(p.date)}, ${p.status === 'done' ? 'paid' : 'skipped'}`}
                           aria-haspopup={p.status === 'done' && changeable === p.number ? 'dialog' : undefined}
-                          onClick={() => (p.status === 'done' && changeable === p.number ? setNotPaid(p.number) : toggle(key))}
+                          onClick={() => (p.status === 'done' && changeable === p.number ? (setConfirm(false), setNotPaid(p.number)) : toggle(key))}
                         >
                           <span class="pd-box">{p.status === 'done' && <CheckIcon />}</span>
                           <span class="pd-date">{shortDate(p.date)}</span>
@@ -146,11 +153,10 @@ export function PaydayListBody() {
                 <h3 class="month-head">{monthYear(g.items[0]!.row.date)}</h3>
                 <ul class="payday-list">
                   {g.items.map(({ row, i }) => {
-                    const key = `ahead-${i}`;
                     const bills = rowBills[i]!;
                     return (
                       <li key={row.date + i}>
-                        <button type="button" class={`pd${i === 0 ? ' current' : ''}`} aria-current={i === 0 ? 'step' : undefined} aria-expanded={open === key} aria-label={`${shortDate(row.date)}, to come`} onClick={() => toggle(key)}>
+                        <button type="button" class={`pd${i === 0 ? ' current' : ''}`} aria-current={i === 0 ? 'step' : undefined} aria-haspopup="dialog" aria-label={`${shortDate(row.date)}, to come`} onClick={() => (previewDate.value = row.date)}>
                           <span class="pd-box" />
                           <span class="pd-date">{shortDate(row.date)}</span>
                           <span class="pd-note">{row.extraGoesTo ? `Extra to ${nameOf(row.extraGoesTo)}` : row.bufferFirst ? 'Buffer first' : bills.due.length ? 'Bills due' : 'Nothing due'}</span>
@@ -162,30 +168,6 @@ export function PaydayListBody() {
                           {row.toBuffer > 0.004 && <span class="tag">Buffer</span>}
                           {row.toYearlyBills > 0.004 && <span class="tag">Yearly</span>}
                         </div>
-                        {open === key && (
-                          <div class="stack pd-detail" style={{ gap: 6 }} role="group" aria-label={`${shortDate(row.date)} details`}>
-                            {bills.due.map((b) => line('', b.amount, `b${b.debtId}`, `${b.name}, due ${dayMonth(b.due)}`))}
-                            {row.toYearlyBills > 0.004 && line('Yearly bills', row.toYearlyBills, 'y')}
-                            {row.toBuffer > 0.004 && line('Buffer', row.toBuffer, 'buf')}
-                            {row.debts
-                              .filter((x) => x.extra > 0.004)
-                              .map((x) => (
-                                <div key={`e${x.id}`} class="row">
-                                  <span>
-                                    Extra to <span class="hl">{nameOf(x.id)}</span>
-                                  </span>
-                                  <span class="num">{formatMoney(x.extra, cur)}</span>
-                                </div>
-                              ))}
-                            <div class="row" style={{ borderTop: '1px solid var(--ink)', paddingTop: 6, fontWeight: 600 }}>
-                              <span>Total</span>
-                              <span class="num">{formatMoney(rowTotals[i]!, cur)}</span>
-                            </div>
-                            <p class="muted small num" data-testid="debt-left-after">
-                              Debt left after: {formatMoney(row.debtLeft, cur)}
-                            </p>
-                          </div>
-                        )}
                       </li>
                     );
                   })}
@@ -199,10 +181,24 @@ export function PaydayListBody() {
         </button>
       )}
 
-      <Sheet open={preview !== null} onClose={() => setNotPaid(null)} title={preview ? `Mark ${shortDate(preview.log.date, today.value)} as not paid?` : ''}>
-        {preview && (
+      <Sheet
+        open={preview !== null}
+        onClose={() => setNotPaid(null)}
+        title={preview ? (confirm ? `Mark ${shortDate(preview.log.date, today.value)} as not paid?` : `${shortDate(preview.log.date, today.value)}, paid`) : ''}
+      >
+        {preview && !confirm && (
           <>
             {doneDetail(d.paydays.find((x) => x.number === preview.log.number) ?? preview.log)}
+            <button type="button" class="btn" onClick={() => setConfirm(true)}>
+              Mark as not paid
+            </button>
+            <button type="button" class="link" onClick={() => setNotPaid(null)}>
+              Close
+            </button>
+          </>
+        )}
+        {preview && confirm && (
+          <>
             <p data-testid="not-paid-line">
               {preview.debtFreeDate
                 ? `Debt-free ${preview.debtFreeDate.slice(0, 7) === r.debtFreeDate?.slice(0, 7) ? 'stays' : 'moves to'} ${shortMonthYear(preview.debtFreeDate)}.`
@@ -214,6 +210,7 @@ export function PaydayListBody() {
               onClick={async () => {
                 const date = shortDate(preview.log.date, today.value);
                 setNotPaid(null);
+                setConfirm(false);
                 await act((db, x) => markNotPaid(db, x));
                 showNotice('info', `${date} is not paid now.`);
               }}

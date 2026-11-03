@@ -9,8 +9,8 @@ import type { PlanResult } from '../engine';
 import type { AppData } from '../data/types';
 import { formatMoneyAuto } from '../lib/money';
 import { shortDate, weekdayIndex } from '../lib/today';
-import { billsForPlanRow } from '../state/billsDue';
-import { billState, mergedRows, paidFromLog } from '../today/model';
+import { previewDate } from '../state/store';
+import { billState, paidFromLog } from '../today/model';
 import { Empty } from '../ui/Empty';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -75,11 +75,6 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
       total = log?.total ?? null;
     } else if (sel.pay?.status === 'skipped') {
       lines.push({ key: 'skipped', text: 'Skipped', tags: [] });
-    } else if (sel.pay) {
-      const row = r.rows[sel.pay.index]!;
-      const { rows, total: sum } = mergedRows(row, d, billsForPlanRow(d, r, sel.pay.index));
-      for (const x of rows) lines.push({ key: x.key, text: x.title, tags: x.tags.map((label) => ({ label })), amount: x.amount });
-      total = sum;
     }
     for (const b of sel.bills) {
       const state = billState(d, b, sel.iso, today);
@@ -124,7 +119,7 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
             class={`cal-day${c.iso === today ? ' today' : ''}${picked === c.iso ? ' picked' : ''}${c.pay?.status === 'paid' ? ' paid' : ''}${c.pay?.status === 'skipped' ? ' skipped' : ''}`}
             aria-label={c.label}
             aria-pressed={picked === c.iso}
-            onClick={() => setPicked(picked === c.iso ? null : c.iso)}
+            onClick={() => (c.pay?.status === 'ahead' ? (previewDate.value = c.iso) : setPicked(picked === c.iso ? null : c.iso))}
           >
             <span class="cal-num num">{c.n}</span>
             <span class="cal-dots" aria-hidden="true">

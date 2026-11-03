@@ -11,7 +11,7 @@ import { isDebtFree } from '../state/debtFree';
 import { MILESTONE_LABELS, progressStats } from '../state/milestones';
 import { setMethod } from '../state/planActions';
 import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/planInput';
-import { act, data, freshPaidDebts, freshPayday, plan, today } from '../state/store';
+import { act, data, freshPaidDebts, freshPayday, plan, previewDate, today } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
 import { worthKnowing } from '../state/worthKnowing';
 import { focusDebt } from '../today/model';
@@ -20,6 +20,7 @@ import { Count } from '../ui/useCountUp';
 import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { PaydayCalendar } from './PaydayCalendar';
+import { PathPreview } from './Preview';
 import { PaydayListBody } from './PaydayListSheet';
 import { PayMore } from './PayMore';
 import { Road } from './Road';
@@ -158,6 +159,13 @@ export function Path() {
 
   return (
     <main class="screen with-tabs">
+      {previewDate.value && r.rows.some((x) => x.date === previewDate.value) ? (
+        <>
+          <h1>Your path</h1>
+          <PathPreview d={d} r={r} today={today.value} />
+        </>
+      ) : (
+      <>
       <header class="stack path-head" style={{ gap: 4 }}>
         <h1>Your path</h1>
         {debtFree ? (
@@ -432,6 +440,8 @@ export function Path() {
         </table>
         <p>{COPY.disclaimer}</p>
       </section>}
+      </>
+      )}
     </main>
   );
 }

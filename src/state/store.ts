@@ -21,6 +21,8 @@ export const today = signal(todayISO());
 export const freshMilestones = signal<string[]>([]);
 /** The payday number just done and the debts just paid off: Path and Debts play their small animation once */
 export const freshPayday = signal<number | null>(null);
+/** Path, Preview: the future payday being looked at (read-only), or null */
+export const previewDate = signal<string | null>(null);
 /** A number on another screen was tapped: Debts opens that debt's sheet when it shows */
 export const openDebtId = signal<string | null>(null);
 export const freshPaidDebts = signal<string[]>([]);
