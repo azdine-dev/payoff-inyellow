@@ -216,6 +216,8 @@ export interface PayRow {
   /** Rounded to cents, so the total always equals the sum of the rows */
   amount: number;
   debtId?: string;
+  /** Debt rows: "$3,250 now, $3,006 after this payday" */
+  owed?: string;
 }
 
 /**
@@ -229,6 +231,11 @@ export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): 
   const extras = new Map<string, number>();
   for (const d of row.debts) if (toCents(d.extra) > 0) extras.set(d.id, toCents(d.extra));
 
+  const owedLine = (id: string) => {
+    const step = row.debts.find((x) => x.id === id);
+    const debt = debts.get(id);
+    return step && debt ? `${money(debt.balance)} now, ${money(Math.max(0, step.balanceAfter))} after this payday` : undefined;
+  };
   const rows: PayRow[] = [];
   const done = new Set<string>();
   for (const b of bills.due) {
@@ -244,13 +251,14 @@ export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): 
       paidLabel: extra > 0 ? `${b.name}, bill + extra` : `${b.name} bill`,
       amount: toCents(b.amount) + extra,
       debtId: b.debtId,
+      owed: owedLine(b.debtId),
     });
   }
   for (const d of row.debts) {
     const extra = extras.get(d.id);
     if (!extra || done.has(d.id)) continue;
     const name = debts.get(d.id)?.name ?? '';
-    rows.push({ key: `debt-${d.id}`, kind: 'debt', title: name, tags: ['Extra'], sub: `Extra ${money(extra)}`, paidLabel: `${name}, extra`, amount: extra, debtId: d.id });
+    rows.push({ key: `debt-${d.id}`, kind: 'debt', title: name, tags: ['Extra'], sub: `Extra ${money(extra)}`, paidLabel: `${name}, extra`, amount: extra, debtId: d.id, owed: owedLine(d.id) });
   }
   if (toCents(row.toYearlyBills) > 0) {
     const names = data.funds.map((f) => f.name);

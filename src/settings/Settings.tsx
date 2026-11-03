@@ -32,6 +32,8 @@ type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' |
 const THEMES: { value: Theme; label: string }[] = [
   { value: 'auto', label: 'Match my device' },
   { value: 'light', label: 'Light' },
+  { value: 'cream', label: 'Warm cream' },
+  { value: 'blue', label: 'Soft blue' },
   { value: 'dark', label: 'Dark' },
 ];
 

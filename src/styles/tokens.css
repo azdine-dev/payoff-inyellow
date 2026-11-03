@@ -30,6 +30,24 @@
   color-scheme: light;
 }
 
+/* Warm cream: a warmer paper and tiles. Same ink, same yellow (paid and done only). */
+:root[data-theme='cream'] {
+  --paper: #fbf5e6;
+  --calm: #f2e9d0;
+  --calm-band: #eadfbd;
+  --line: #e0d4b4;
+  --on-ink: #fbf5e6;
+}
+
+/* Soft blue: a cool paper and tiles. */
+:root[data-theme='blue'] {
+  --paper: #f3f6fb;
+  --calm: #e1eaf5;
+  --calm-band: #d2dfef;
+  --line: #d3dce9;
+  --on-ink: #f3f6fb;
+}
+
 /* Dark mode: the dark tokens. Yellow keeps its meaning. The payday card is #24332B. */
 :root[data-theme='dark'] {
   --paper: #1b2433;

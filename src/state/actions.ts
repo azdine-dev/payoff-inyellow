@@ -402,11 +402,13 @@ export async function skipPaydays(db: PiyDB, data: AppData, count: number, now =
  * Where an extra payment goes: the focus debt first, any overflow to the next debt in order. A deferred-interest
  * promo that is still running goes first, like in the plan. Pure: nothing is saved here.
  */
-export function splitExtra(data: AppData, amount: number, today: string, now = Date.now()): { changed: Debt[]; payments: Payment[]; newlyPaid: string[] } {
+export function splitExtra(data: AppData, amount: number, today: string, now = Date.now(), sendTo?: string | null): { changed: Debt[]; payments: Payment[]; newlyPaid: string[] } {
   const debts = activeDebts(data);
   const rank = new Map(data.settings.payoffOrder.map((id, i) => [id, i]));
   const front = (d: Debt) => Boolean(d.deferredInterest && d.promoApr != null && d.promoEnds && d.promoEnds > today);
-  const order = [...debts].sort((a, b) => Number(!front(a)) - Number(!front(b)) || (rank.get(a.id) ?? 1e6) - (rank.get(b.id) ?? 1e6) || a.position - b.position);
+  // A chosen debt goes first, the rest follow in the plan's order
+  const chosen = (d: Debt) => Boolean(sendTo && d.id === sendTo);
+  const order = [...debts].sort((a, b) => Number(!chosen(a)) - Number(!chosen(b)) || Number(!front(a)) - Number(!front(b)) || (rank.get(a.id) ?? 1e6) - (rank.get(b.id) ?? 1e6) || a.position - b.position);
   let left = amount;
   const changed: Debt[] = [];
   const payments: Payment[] = [];
@@ -432,8 +434,9 @@ export async function extraPayment(
   amount: number,
   today: string,
   now = Date.now(),
+  sendTo?: string | null,
 ): Promise<{ data: AppData; newlyPaid: string[] }> {
-  const { changed, payments, newlyPaid } = splitExtra(data, amount, today, now);
+  const { changed, payments, newlyPaid } = splitExtra(data, amount, today, now, sendTo);
   const tx = db.transaction(['debts', 'payments'], 'readwrite');
   for (const d of changed) await tx.objectStore('debts').put(d);
   for (const p of payments) await tx.objectStore('payments').put(p);

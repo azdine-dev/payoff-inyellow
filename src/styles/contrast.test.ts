@@ -17,6 +17,8 @@ function block(selector: RegExp): Record<string, string> {
 
 const light = block(/:root \{([\s\S]*?)\n\}/);
 const darkOverrides = block(/:root\[data-theme='dark'\] \{([\s\S]*?)\n\}/);
+const cream = block(/:root\[data-theme='cream'\] \{([\s\S]*?)\n\}/);
+const blue = block(/:root\[data-theme='blue'\] \{([\s\S]*?)\n\}/);
 const mediaDark = block(/:root:not\(\[data-theme\]\) \{([\s\S]*?)\n  \}/);
 
 function theme(over: Record<string, string>) {
@@ -76,6 +78,8 @@ function pairs(t: ReturnType<typeof theme>) {
 
 describe.each([
   ['light', {}],
+  ['warm cream', cream],
+  ['soft blue', blue],
   ['dark', darkOverrides],
 ] as const)('%s theme', (_name, over) => {
   const t = theme(over);
@@ -93,6 +97,19 @@ describe('yellow on sage', () => {
   it('a ticked box and a Paid label inside the payday card keep an ink edge', () => {
     expect(base).toMatch(/\.pc-rows \.check\[aria-checked='true'\] \.box \{[^}]*border-color: var\(--ink\)/);
     expect(base).toMatch(/\.payday-card \.tag\.paid \{[^}]*border-color: var\(--ink\)/);
+  });
+});
+
+describe('the new themes', () => {
+  it('use the asked-for paper and tiles, and leave yellow alone', () => {
+    expect(cream['paper']).toBe('#fbf5e6');
+    expect(cream['calm']).toBe('#f2e9d0');
+    expect(blue['paper']).toBe('#f3f6fb');
+    expect(blue['calm']).toBe('#e1eaf5');
+    for (const t of [cream, blue]) {
+      expect(t['yellow']).toBeUndefined();
+      expect(t['yellow-soft']).toBeUndefined();
+    }
   });
 });
 

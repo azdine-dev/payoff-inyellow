@@ -17,8 +17,8 @@ export function whatIfPlan(data: AppData, addPerPayday: number, oneOff: { amount
 }
 
 /** The plan if this extra money went to the focus debt today (nothing is saved). */
-export function extraMoneyPlan(data: AppData, amount: number, today: string): PlanResult {
-  const { changed } = splitExtra(data, amount, today);
+export function extraMoneyPlan(data: AppData, amount: number, today: string, sendTo?: string | null): PlanResult {
+  const { changed } = splitExtra(data, amount, today, Date.now(), sendTo);
   const byId = new Map(changed.map((d) => [d.id, d]));
   return simulatePlan(toPlanInput({ ...data, debts: data.debts.map((d) => byId.get(d.id) ?? d) }));
 }

@@ -18,7 +18,7 @@
         var a = JSON.parse(localStorage.getItem('piy-appearance') || 'null');
         if (a) {
           var r = document.documentElement;
-          if (a.theme === 'dark' || a.theme === 'light') r.setAttribute('data-theme', a.theme);
+          if (a.theme === 'dark' || a.theme === 'light' || a.theme === 'cream' || a.theme === 'blue') r.setAttribute('data-theme', a.theme);
           r.style.setProperty('--text-scale', String([0.92, 1, 1.15, 1.3][a.textSize] || 1));
         }
       } catch (e) {}

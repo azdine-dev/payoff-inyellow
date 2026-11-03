@@ -11,7 +11,7 @@ export interface Meta {
 }
 
 export type StartMode = 'this-payday' | 'next-month';
-export type Theme = 'auto' | 'light' | 'dark';
+export type Theme = 'auto' | 'light' | 'cream' | 'blue' | 'dark';
 /** 0 small, 1 default, 2 large, 3 larger */
 export type TextSize = 0 | 1 | 2 | 3;
 

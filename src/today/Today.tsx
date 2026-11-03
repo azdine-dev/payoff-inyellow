@@ -99,6 +99,7 @@ export function Today() {
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [backedUp, setBackedUp] = useState(false);
   const [sheet, setSheet] = useState<'amount' | 'redo' | 'windfall' | null>(null);
+  const [sendTo, setSendTo] = useState<string | null>(null); // "Send it to": null means the focus debt
   const [input, setInput] = useState('');
   const [inputNote, setInputNote] = useState('');
   // "add a due day" for a debt that has none
@@ -213,6 +214,7 @@ export function Today() {
   const openSheet = (which: 'amount' | 'windfall') => {
     setInput(which === 'amount' ? String(override ?? s.extraPerPayday) : '');
     setInputNote('');
+    setSendTo(null);
     setSheet(which);
   };
 
@@ -229,8 +231,8 @@ export function Today() {
     const amount = sheet === 'windfall' ? parseAmount(input) : null;
     if (!amount || amount <= 0) return null;
     const owed = active.reduce((sum, x) => sum + x.balance, 0);
-    return whatIfSummary(plan.value!, extraMoneyPlan(d, Math.min(amount, owed), today.value));
-  }, [sheet, input, d]);
+    return whatIfSummary(plan.value!, extraMoneyPlan(d, Math.min(amount, owed), today.value, sendTo));
+  }, [sheet, input, d, sendTo]);
 
   const saveSheet = async () => {
     const amount = parseAmount(input);
@@ -260,7 +262,7 @@ export function Today() {
     } else {
       const owed = active.reduce((sum, x) => sum + x.balance, 0);
       rememberBalances(d);
-      const res = await extraPayment(await getDB(), d, Math.min(amount, owed), today.value);
+      const res = await extraPayment(await getDB(), d, Math.min(amount, owed), today.value, Date.now(), sendTo);
       setPaidIds(res.newlyPaid);
       freshPaidDebts.value = res.newlyPaid;
       data.value = res.data;
@@ -571,6 +573,11 @@ export function Today() {
                         {checked.has(x.key) && <span class="tag paid">Paid</span>}
                       </span>
                       <span class="pc-rowsub">{x.sub}</span>
+                      {x.owed && (
+                        <span class="pc-rowsub pc-owed num" data-testid="pc-owed">
+                          {x.owed}
+                        </span>
+                      )}
                     </span>
                   </Checkbox>
                 ))}
@@ -733,9 +740,21 @@ export function Today() {
           </Field>
         ) : (
           <>
-            <Field label="How much did you get?" hint={focus ? `See what it would do first. If you use it, it goes to ${focus.debt.name}.` : undefined}>
+            <Field label="How much did you get?" hint={focus ? `See what it would do first. Anything over what the debt needs goes to the next one.` : undefined}>
               <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Extra money" />
             </Field>
+            {active.length > 1 && (
+              <Field label="Send it to">
+                <select aria-label="Send it to" value={sendTo ?? focus?.debt.id ?? ''} onChange={(e) => setSendTo((e.target as HTMLSelectElement).value)}>
+                  {[...active].sort((a, b) => Number(b.id === focus?.debt.id) - Number(a.id === focus?.debt.id)).map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {nameOf(x.id)}
+                      {x.id === focus?.debt.id ? ' (your focus debt)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
             {windfall && (
               <section class="card stack" style={{ gap: 4 }} data-testid="windfall-preview">
                 {windfall.newDate ? (
