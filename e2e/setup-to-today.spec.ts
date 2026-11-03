@@ -3,7 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
-import { addYearlyBills, showPaydays, tapDidIt, goTab, revealEarly } from './scenario';
+import { addYearlyInStep, addYearlyBills, showPaydays, tapDidIt, goTab, revealEarly } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult, openBufferFields } from './helpers';
@@ -56,15 +56,15 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   await openBufferFields(page);
   await page.getByLabel('Buffer now').fill('200');
   await expect(page.getByLabel('Safety net goal')).toHaveValue('500');
-  await shot(page, '03-money');
-  await next.click();
-
-  // 4 Your date. Yearly bills come after, from "Do these later" (the planner is unlocked first).
-  await unlockOnResult(page);
-  await addYearlyBills(page, [
+  await addYearlyInStep(page, [
     { idea: 'Car repairs', amount: '600' },
     { idea: 'Gifts and holidays', amount: '500' },
   ]);
+  await shot(page, '03-money');
+  await next.click();
+
+  // 4 Your date. The yearly bills were chosen on the step before.
+  await unlockOnResult(page);
   await expect(page.getByTestId('debt-free-date')).toHaveText('October 2028'); // same date as the Sheet (2028-10-06)
   await expect(page.getByTestId('first-step')).toHaveText('Move $235.');
   await expect(page.getByTestId('first-step-parts')).toHaveText('Medical bill $50 (due 1 Nov) · Store card $35 (due 5 Nov) · Yearly bills $42.31 · Buffer $107.69');

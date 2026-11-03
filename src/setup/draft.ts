@@ -80,7 +80,7 @@ export function newDraft(): Draft {
     twiceB: '',
     paycheck: '',
     debts: [emptyDebt()],
-    bufferNow: '',
+    bufferNow: '0',
     bufferGoal: '500',
     extra: '',
     funds: [],

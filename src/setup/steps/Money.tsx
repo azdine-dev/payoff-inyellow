@@ -11,9 +11,9 @@ const EXTRA_CHIPS = [20, 50, 100];
 
 /** The yearly bill ideas on this step: a short label, and the name the bill gets */
 const YEARLY_CHIPS = [
-  { label: 'Car', name: 'Car repairs' },
-  { label: 'Gifts', name: 'Gifts and holidays' },
-  { label: 'Insurance', name: 'Insurance renewals' },
+  { label: 'Car repairs', name: 'Car repairs' },
+  { label: 'Gifts and holidays', name: 'Gifts and holidays' },
+  { label: 'Insurance', name: 'Insurance' },
   { label: 'School', name: 'School' },
 ];
 const whole = (symbol: string, n: number) => `${symbol}${Math.round(n).toLocaleString('en-US')}`;
@@ -149,10 +149,10 @@ export function MoneyStep({ draft, set }: StepProps) {
         <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Your safety net</h2>
         <p class="muted">{bufferSummary}</p>
         <div class="grid-2">
-          <Field label="How much do you have set aside now?" hint="Leave empty if nothing yet.">
+          <Field label="Set aside now" hint="Zero is fine.">
             <NumberInput pre={draft.currencySymbol} value={draft.bufferNow} onInput={(v) => set({ bufferNow: v })} label="Buffer now" />
           </Field>
-          <Field label="Your goal" hint="A plain separate account or an envelope.">
+          <Field label="Goal" hint="A plain separate account or an envelope.">
             <NumberInput pre={draft.currencySymbol} value={draft.bufferGoal} onInput={(v) => set({ bufferGoal: v })} label="Safety net goal" />
           </Field>
         </div>

@@ -88,7 +88,7 @@ test.describe('setup step 3', () => {
 
   test('the buffer is two fields you can see, with the question and the goal', async ({ page }) => {
     await toMoneyStep(page);
-    await expect(page.getByText('How much do you have set aside now?')).toBeVisible();
+    await expect(page.getByText('Set aside now', { exact: true })).toBeVisible();
     await expect(page.getByLabel('Buffer now')).toBeVisible(); // no section to open first
     await expect(page.getByLabel('Safety net goal')).toBeVisible();
     await expect(page.getByLabel('Safety net goal')).toHaveValue('500');
@@ -103,20 +103,20 @@ test.describe('setup step 3', () => {
     const row = page.getByTestId('yearly-row');
     await expect(row).toContainText('Yearly bills');
     await expect(row).toContainText('(optional)');
-    for (const name of ['Car', 'Gifts', 'Insurance', 'School', 'I have none']) await expect(row.getByRole('button', { name, exact: true })).toBeVisible();
+    for (const name of ['Car repairs', 'Gifts and holidays', 'Insurance', 'School', 'I have none']) await expect(row.getByRole('button', { name, exact: true })).toBeVisible();
   });
 
   test('chips add bills with a cost and a month, and they end up in the plan', async ({ page }) => {
     await toMoneyStep(page);
     const row = page.getByTestId('yearly-row');
-    await row.getByRole('button', { name: 'Gifts', exact: true }).click();
-    await row.getByRole('button', { name: 'Car', exact: true }).click();
+    await row.getByRole('button', { name: 'Gifts and holidays', exact: true }).click();
+    await row.getByRole('button', { name: 'Car repairs', exact: true }).click();
     await expect(row.getByTestId('yearly-fund')).toHaveCount(2);
     await row.getByLabel('Gifts and holidays, cost per year').fill('260');
     await row.getByLabel('Gifts and holidays, needed in').selectOption('December');
     await row.getByLabel('Car repairs, cost per year').fill('600');
     // tapping a chip again takes the bill away
-    await row.getByRole('button', { name: 'Car', exact: true }).click();
+    await row.getByRole('button', { name: 'Car repairs', exact: true }).click();
     await expect(row.getByTestId('yearly-fund')).toHaveCount(1);
     await page.getByLabel('Money for the plan each payday').fill('150');
     await page.getByRole('button', { name: 'See my plan' }).click();
@@ -136,8 +136,8 @@ test.describe('setup step 3', () => {
     await page.getByRole('button', { name: 'See my plan' }).click();
     await expect(page.getByTestId('debt-free-date')).toBeVisible();
     await unlockOnResult(page);
-    // on the result it shows as done (a check), and Today does not offer it
-    await expect(page.getByRole('button', { name: 'Yearly bills' })).toHaveClass(/done/);
+    // the result does not offer it, and Today does not either
+    await expect(page.getByRole('button', { name: 'Yearly bills' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Start my plan' }).click();
     await expect(page.getByRole('button', { name: 'Yearly bills' })).toHaveCount(0);
   });

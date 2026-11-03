@@ -7,7 +7,7 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { FIXED, shot, unlockOnResult, openBufferFields } from './helpers';
-import { addYearlyBills,
+import { addYearlyInStep, addYearlyBills,
   closeSheet,
   expectBrandRules,
   expectBuffer,
@@ -80,6 +80,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await openBufferFields(page);
     await expect(page.getByLabel('Safety net goal')).toHaveValue('500');
     await page.getByLabel('Buffer now').fill('200');
+    // Yearly bills: car repairs 600 and gifts 500 (December)
+    await addYearlyInStep(page, [{ idea: 'Car repairs', amount: '600' }, { idea: 'Gifts and holidays', amount: '500', month: 'December' }]);
     await next.click();
   });
 
@@ -88,8 +90,6 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByLabel('Step 4 of 4')).toBeVisible();
     await expect(page.getByTestId('debt-free-date')).toBeVisible();
     await unlockOnResult(page);
-    // Yearly bills: car repairs 600 and gifts 500 (December)
-    await addYearlyBills(page, [{ idea: 'Car repairs', amount: '600' }, { idea: 'Gifts and holidays', amount: '500', month: 'December' }]);
     // Payday reminder: Friday at 7 pm
     await page.getByRole('button', { name: 'Payday reminder', exact: true }).click();
     const sheet = page.getByRole('dialog', { name: 'Payday reminder' });
@@ -98,7 +98,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(sheet.getByText('When I get paid on Friday, I open PaidInYellow at 7 pm.')).toBeVisible();
     await sheet.getByRole('button', { name: 'Save my reminder' }).click();
     await expect(page.getByRole('button', { name: 'Payday reminder', exact: true })).toHaveClass(/done/);
-    await expect(page.getByRole('button', { name: 'Yearly bills', exact: true })).toHaveClass(/done/);
+    await expect(page.getByRole('button', { name: 'Yearly bills', exact: true })).toHaveCount(0); // chosen on step 3
   });
 
   await test.step('Result screen', async () => {

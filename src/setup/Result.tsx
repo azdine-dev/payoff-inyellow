@@ -115,7 +115,7 @@ export function Result() {
 
       <p class="muted small" data-testid="buffer-plan-note">
         {s.bufferGoal > 0
-          ? `Your plan starts with a ${formatMoneyAuto(s.bufferGoal, cur)} goal for surprise costs. It fills this before extra debt payments. You can change the goal in Safety net.`
+          ? `Your plan starts with a ${formatMoneyAuto(s.bufferGoal, cur)} goal for surprise costs. It fills this before extra debt payments. You can change it later in Safety net.`
           : 'Your plan has no safety net goal. You can add one later in Safety net.'}
       </p>
 
@@ -196,7 +196,7 @@ export function Result() {
       {!example && !locked && (
         <section class="stack" style={{ gap: 8 }} aria-label="Do these later">
           <p class="label">Do these later, on Today</p>
-          <LaterChips />
+          <LaterChips skip={['yearly']} />
         </section>
       )}
 

@@ -133,7 +133,17 @@ export interface WizardConfig {
   yearly?: { idea: string; amount: string; month?: string }[];
 }
 
-/** Adds yearly bills from the "Yearly bills" chip (the planner must be unlocked). */
+/** Setup step 3: a chip for each yearly bill, then the cost per year and the month (picked by tap). */
+export async function addYearlyInStep(page: Page, bills: { idea: string; amount: string; month?: string }[]) {
+  const row = page.getByTestId('yearly-row');
+  for (const y of bills) {
+    await row.getByRole('button', { name: y.idea, exact: true }).click();
+    await row.getByLabel(`${y.idea}, cost per year`).fill(y.amount);
+    if (y.month) await row.getByLabel(`${y.idea}, needed in`).selectOption(y.month);
+  }
+}
+
+/** Adds yearly bills from the "Yearly bills" chip on Today (the planner must be unlocked). */
 export async function addYearlyBills(page: Page, bills: { idea: string; amount: string; month?: string }[]) {
   await page.getByRole('button', { name: 'Yearly bills', exact: true }).click();
   const sheet = page.getByRole('dialog', { name: 'Yearly bills' });
@@ -175,12 +185,9 @@ export async function runWizard(page: Page, c: WizardConfig) {
   if (!(await page.getByLabel('Buffer now').isVisible())) await page.getByText('Change what you have set aside or the goal').click();
   await page.getByLabel('Buffer now').fill(c.bufferNow);
   if (c.bufferGoal !== undefined) await page.getByLabel('Safety net goal').fill(c.bufferGoal);
+  await addYearlyInStep(page, c.yearly ?? []);
   await next.click();
   await expect(page.getByTestId('debt-free-date').or(page.getByRole('heading', { name: /more than 20 years/i }))).toBeVisible();
-  if (c.yearly?.length) {
-    await unlockOnResult(page);
-    await addYearlyBills(page, c.yearly);
-  }
 }
 
 /** Unlocks with the test code (if that is not done yet) and opens the full planner. */

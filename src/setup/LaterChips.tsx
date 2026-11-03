@@ -8,12 +8,12 @@ import { LATER_LABELS, laterStatus, ReminderSheet, YearlyBillsSheet, type LaterK
 
 const ORDER: LaterKey[] = ['yearly', 'reminder', 'backup'];
 
-export function LaterChips(props: { onlyPending?: boolean }) {
+export function LaterChips(props: { onlyPending?: boolean; skip?: LaterKey[] }) {
   const d = data.value;
   const [sheet, setSheet] = useState<'yearly' | 'reminder' | null>(null);
   if (!d) return null;
   const status = laterStatus(d);
-  const keys = ORDER.filter((k) => !props.onlyPending || !status[k]);
+  const keys = ORDER.filter((k) => (!props.onlyPending || !status[k]) && !props.skip?.includes(k));
   if (!keys.length) return null;
 
   const open = async (k: LaterKey) => {

@@ -146,7 +146,7 @@ test('the result screen: the chips are there, and "start on the 1st" moves the f
 
   await unlockOnResult(page);
   const chips = page.getByRole('group', { name: 'Do these later' });
-  await expect(chips.getByRole('button')).toHaveText(['Yearly bills', 'Payday reminder', 'Save a backup']);
+  await expect(chips.getByRole('button')).toHaveText(['Payday reminder', 'Save a backup']);
   await expectBrandRules(page);
 });
 
