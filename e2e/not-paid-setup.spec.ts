@@ -17,12 +17,12 @@ test.describe('mark a payday as not paid', () => {
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await openDone(page);
     await page.getByRole('button', { name: 'Fri 6 Nov, paid' }).click();
-    const first = page.getByRole('dialog', { name: 'Fri 6 Nov, paid' });
-    await expect(first).toContainText('Total'); // what was paid
+    const first = page.getByRole('dialog', { name: 'Fri 6 Nov' });
+    await expect(first).toContainText('You paid'); // what was paid
     await first.getByRole('button', { name: 'Mark as not paid' }).click();
     const sheet = page.getByRole('dialog', { name: 'Mark Fri 6 Nov as not paid?' });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByTestId('not-paid-line')).toHaveText(/^Debt-free (moves to|stays) [A-Z][a-z]{2} 20\d\d\.$/);
+    await expect(sheet.getByTestId('not-paid-line')).toHaveText(/^(Still|Moves to) [A-Z][a-z]+ 20\d\d, if you pay it this week$/);
     await expect(sheet.getByRole('button', { name: 'Yes, mark as not paid' })).toBeVisible();
     await sheet.getByRole('button', { name: 'Keep it' }).click();
     await expect(sheet).toHaveCount(0);
@@ -62,7 +62,7 @@ test.describe('mark a payday as not paid', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     // the latest one: the sheet
     await page.getByRole('button', { name: 'Fri 20 Nov, paid' }).click();
-    await expect(page.getByRole('dialog', { name: 'Fri 20 Nov, paid' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Fri 20 Nov' })).toBeVisible();
   });
 });
 

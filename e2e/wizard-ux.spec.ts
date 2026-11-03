@@ -261,7 +261,7 @@ test('Plan is a timeline by month with tags, and an Upcoming / Done switch', asy
   await expect(page.getByRole('button', { name: 'Fri 23 Oct, to come' })).toHaveCount(0);
   // Tapping a row still opens its details
   await done.getByRole('button').click();
-  await expect(page.getByRole('group', { name: 'Fri 23 Oct details' })).toContainText('Total');
+  await expect(page.getByRole('dialog', { name: 'Fri 23 Oct' })).toContainText('You paid');
 });
 
 test('the what-if shows three small cards and says nothing changes until you apply', async ({ page }) => {

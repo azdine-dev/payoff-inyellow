@@ -133,7 +133,8 @@ export function Note({ children }: { children: ComponentChildren }) {
   );
 }
 
-export function Sheet(props: { open: boolean; onClose: () => void; title: string; children: ComponentChildren }) {
+/** A bottom sheet. `center` makes it a centred card with an optional icon; `aside` is a small line right of the title. */
+export function Sheet(props: { open: boolean; onClose: () => void; title: string; children: ComponentChildren; center?: boolean; icon?: ComponentChildren; aside?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!props.open) return;
@@ -145,9 +146,18 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
   }, [props.open]);
   if (!props.open) return null;
   return (
-    <div class="sheet-backdrop" onClick={props.onClose}>
-      <div class="sheet" role="dialog" aria-modal="true" aria-label={props.title} ref={ref} onClick={(e) => e.stopPropagation()}>
-        <h2 style={{ fontSize: '1.3rem' }}>{props.title}</h2>
+    <div class={`sheet-backdrop${props.center ? ' center' : ''}`} onClick={props.onClose}>
+      <div class={`sheet${props.center ? ' center' : ''}`} role="dialog" aria-modal="true" aria-label={props.title} ref={ref} onClick={(e) => e.stopPropagation()}>
+        {!props.center && <span class="sheet-grip" aria-hidden="true" />}
+        {props.icon && <span class="sheet-icon" aria-hidden="true">{props.icon}</span>}
+        {props.aside ? (
+          <div class="row sheet-headrow">
+            <h2 style={{ fontSize: '1.3rem' }}>{props.title}</h2>
+            <span class="muted small num">{props.aside}</span>
+          </div>
+        ) : (
+          <h2 style={{ fontSize: '1.3rem' }}>{props.title}</h2>
+        )}
         {props.children}
       </div>
     </div>

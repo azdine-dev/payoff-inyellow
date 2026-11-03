@@ -66,7 +66,7 @@ export async function iDidIt(page: Page, paidLabel: string) {
 export async function showPaydays(page: Page, which: 'Upcoming' | 'Done') {
   // The payday list is the List view of the switch on Path
   if (!(await page.getByRole('group', { name: 'Which paydays' }).isVisible())) await page.getByRole('button', { name: 'List', exact: true }).click();
-  await page.getByRole('group', { name: 'Which paydays' }).getByRole('button', { name: new RegExp(`^${which}`) }).click();
+  await page.getByRole('group', { name: 'Which paydays' }).getByRole('button', { name: new RegExp(`^${which === 'Upcoming' ? 'Coming up' : which}`) }).click();
 }
 
 /** Opens a payday on the Plan tab and returns the dialog, then the caller closes it. */
@@ -79,8 +79,8 @@ export async function openPayday(page: Page, label: string) {
 
 export async function closeSheet(page: Page) {
   // The payday list is inline now, so there may be nothing to close
-  const keep = page.getByRole('button', { name: 'Keep it' }); // the not-paid sheet of the latest paid payday
-  if (await keep.count()) await keep.first().click();
+  // the sheet of the latest paid payday closes with Escape
+  if (await page.getByRole('dialog').count()) await page.keyboard.press('Escape');
   const close = page.getByRole('button', { name: 'Close' });
   if (await close.count()) await close.first().click();
 }
@@ -100,15 +100,17 @@ export interface PaydayExpect {
 /** Checks a paid payday on the Plan tab, the way the scenario table lists it. */
 export async function expectPaidPayday(page: Page, e: PaydayExpect) {
   const sheet = await openPayday(page, `${e.date}, paid`);
-  await expect(sheet).toContainText(new RegExp(`Total\\s*${near(e.total).source}`));
+  // The latest paid payday opens a sheet ("You paid $X"); an older one opens its lines in the list ("Total")
+  if (await page.getByRole('dialog').count()) await expect(page.getByRole('dialog')).toContainText(new RegExp(`You paid\\s*${near(e.total).source}`));
+  else await expect(sheet).toContainText(new RegExp(`Total\\s*${near(e.total).source}`));
   await expect(page.getByTestId('debt-left-after')).toContainText(near(e.debtLeft));
   if (e.buffer !== undefined) {
     if (e.buffer === 0) await expect(sheet).not.toContainText(/Buffer\s*\$/);
     else await expect(sheet).toContainText(new RegExp(`Buffer\\s*${near(e.buffer).source}`));
   }
-  if (e.yearly !== undefined) await expect(sheet).toContainText(new RegExp(`Yearly bills\\s*${near(e.yearly).source}`));
-  if (e.extra) await expect(sheet).toContainText(new RegExp(`Extra to ${e.extra.to}\\s*${near(e.extra.amount).source}`));
-  for (const b of e.bills ?? []) await expect(sheet).toContainText(new RegExp(`${b.name}, due ${b.due}\\s*${near(b.amount).source}`));
+  if (e.yearly !== undefined) await expect(sheet).toContainText(new RegExp(`Yearly bills( pot)?\\s*${near(e.yearly).source}`));
+  if (e.extra) await expect(sheet).toContainText(new RegExp(`(Extra to ${e.extra.to}|${e.extra.to}, extra)\\s*${near(e.extra.amount).source}`));
+  for (const b of e.bills ?? []) await expect(sheet).toContainText(new RegExp(`${b.name}( bill|, due ${b.due})?\\s*${near(b.amount).source}`));
   await closeSheet(page);
 }
 

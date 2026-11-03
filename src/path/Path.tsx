@@ -160,10 +160,7 @@ export function Path() {
   return (
     <main class="screen with-tabs">
       {previewDate.value && r.rows.some((x) => x.date === previewDate.value) ? (
-        <>
-          <h1>Your path</h1>
-          <PathPreview d={d} r={r} today={today.value} />
-        </>
+        <PathPreview d={d} r={r} today={today.value} />
       ) : (
       <>
       <header class="stack path-head" style={{ gap: 4 }}>

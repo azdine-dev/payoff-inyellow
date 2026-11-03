@@ -6,7 +6,7 @@ import { expectBrandRules, goTab, tapDidIt } from './scenario';
 async function openList(page: Page, which: 'Upcoming' | 'Done') {
   await goTab(page, 'Path');
   await page.getByRole('button', { name: 'List', exact: true }).click();
-  await page.getByRole('button', { name: new RegExp(`^${which}`) }).click();
+  await page.getByRole('button', { name: new RegExp(`^${which === 'Upcoming' ? 'Coming up' : which}`) }).click();
 }
 
 test.describe('preview of a future payday', () => {
@@ -16,12 +16,18 @@ test.describe('preview of a future payday', () => {
     await page.getByRole('button', { name: 'Fri 20 Nov, to come' }).click();
     const preview = page.getByTestId('path-preview');
     await expect(preview).toBeVisible();
-    await expect(page.getByTestId('preview-banner')).toContainText('Preview of Fri 20 Nov. Nothing changes.');
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 20 Nov 2026');
+    await expect(page.getByTestId('preview-banner')).toContainText('Nothing changes. Just looking ahead.');
     await expect(page.getByTestId('preview-owed')).toHaveText(/^\$[\d,]+$/);
-    await expect(page.getByTestId('preview-months')).toHaveText(/month|Less than a month|Debt-free/);
-    await expect(page.getByTestId('preview-paid')).toBeVisible();
-    await expect(page.getByTestId('preview-buffer')).toContainText('of $500');
-    await expect(page.getByTestId('preview-stage')).toHaveText(/Dawn|Morning|Halfway|Almost|Home/);
+    await expect(page.getByTestId('preview-months')).toHaveText(/% gone · debt-free \d+ months? later, in [A-Z][a-z]+ 20\d\d/);
+    await expect(page.getByTestId('preview-debt')).toHaveCount(3);
+    await expect(page.getByTestId('preview-paid-off')).toHaveText(/^\$[\d,]+$/);
+    await expect(page.getByTestId('preview-buffer')).toContainText('$500');
+    await expect(page.getByTestId('preview-scene')).toBeVisible();
+    await expect(page.getByTestId('path-preview')).toContainText('No buttons here, nothing to mark.');
+    // a month chip jumps to the first payday of that month
+    await page.getByRole('button', { name: 'December 2026' }).click();
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 4 Dec 2026');
     // read-only: nothing to tick, no "I did it"
     await expect(preview.getByRole('checkbox')).toHaveCount(0);
     await expect(preview.getByRole('button', { name: /I did it/ })).toHaveCount(0);
@@ -55,7 +61,7 @@ test.describe('preview of a future payday', () => {
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
     await page.getByRole('button', { name: 'Next month' }).click();
     await page.getByRole('gridcell', { name: /Friday 20 November, payday/ }).click();
-    await expect(page.getByTestId('preview-banner')).toContainText('Preview of Fri 20 Nov. Nothing changes.');
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 20 Nov 2026');
   });
 
   test('leaving Path takes the preview away', async ({ page }) => {
@@ -75,11 +81,14 @@ test.describe('undo a past payday', () => {
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await openList(page, 'Done');
     await page.getByRole('button', { name: 'Fri 6 Nov, paid' }).click();
-    const sheet = page.getByRole('dialog', { name: 'Fri 6 Nov, paid' });
-    await expect(sheet.getByRole('group', { name: 'Fri 6 Nov details' })).toContainText('Total');
+    const sheet = page.getByRole('dialog', { name: 'Fri 6 Nov' });
+    await expect(sheet).toContainText('You paid');
+    await expect(sheet.getByRole('group', { name: 'Fri 6 Nov details' })).toContainText('Buffer');
+    await expect(sheet.getByRole('button', { name: 'Change what I paid' })).toBeVisible();
     await sheet.getByRole('button', { name: 'Mark as not paid' }).click();
     const confirm = page.getByRole('dialog', { name: 'Mark Fri 6 Nov as not paid?' });
-    await expect(confirm.getByTestId('not-paid-line')).toHaveText(/^Debt-free (moves to|stays) [A-Z][a-z]{2} 20\d\d\.$/);
+    await expect(confirm.getByTestId('not-paid-line')).toHaveText(/^(Still|Moves to) [A-Z][a-z]+ 20\d\d, if you pay it this week$/);
+    await expect(confirm.getByTestId('undo-box')).toContainText('goes back to');
     await confirm.getByRole('button', { name: 'Keep it' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Fri 6 Nov, paid' })).toBeVisible();

@@ -91,9 +91,8 @@ test.describe('4 · Path: List / Calendar', () => {
     await expect(bill.locator('.dot-bill')).toHaveCount(1);
     // tap a payday ahead: a read-only preview with its lines and total
     await payday.click();
-    await expect(page.getByTestId('preview-banner')).toContainText('Preview of Fri 23 Oct. Nothing changes.');
-    await expect(page.getByTestId('path-preview')).toContainText('Store card');
-    await expect(page.getByTestId('path-preview')).toContainText('Total');
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 23 Oct 2026');
+    await expect(page.getByTestId('preview-debts')).toContainText('Store card');
     await page.getByRole('button', { name: 'Back to today' }).click();
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
     const lines = page.getByTestId('calendar-day');

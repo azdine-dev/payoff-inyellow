@@ -62,14 +62,11 @@ test('the Today card: bills due before the next payday, and the window moves wit
   await goTab(page, 'Plan');
   await showPaydays(page, 'Upcoming');
   await page.getByRole('button', { name: 'Fri 20 Nov, to come', exact: true }).click();
-  const ahead = page.getByRole('group', { name: 'Fri 20 Nov details' });
-  await expect(ahead).toContainText(new RegExp(`Car loan, due 28 Nov\\s*${near(285).source}`));
-  await expect(ahead).toContainText(new RegExp(`Total\\s*${near(435).source}`));
-  await expect(ahead).not.toContainText('minimum');
+  await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 20 Nov 2026');
   await page.getByRole('button', { name: 'Back to today' }).click();
   await showPaydays(page, 'Done');
   await page.getByRole('button', { name: 'Fri 6 Nov, paid', exact: true }).click();
-  await expect(page.getByRole('group', { name: 'Fri 6 Nov details' })).toContainText(new RegExp(`Total\\s*${near(150).source}`)); // what was set aside that payday
+  await expect(page.getByRole('dialog', { name: 'Fri 6 Nov' })).toContainText(new RegExp(`You paid\\s*${near(150).source}`)); // what was set aside that payday
 });
 
 test('a debt with no due day: "Visa $96, add a due day", not counted, and the link sets it', async ({ page }) => {

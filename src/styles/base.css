@@ -2796,3 +2796,148 @@ textarea {
 .next-read b {
   font-size: 0.95rem;
 }
+
+/* ---------- Undo sheet, undo confirm and Preview (design canvas boards) ---------- */
+.sheet-grip {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin-top: -8px;
+}
+.sheet-headrow {
+  align-items: baseline;
+}
+.sheet-backdrop.center {
+  align-items: center;
+  padding: 0 var(--gutter);
+}
+.sheet.center {
+  border-radius: 24px;
+  background: var(--card);
+  padding: 24px 22px;
+  max-height: 86vh;
+}
+.sheet-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--calm);
+  color: var(--ink);
+}
+.undo-box {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+}
+.undo-box .row {
+  align-items: baseline;
+  gap: 12px;
+}
+.undo-box .row > b {
+  text-align: right;
+}
+.pd-lines > .row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pd-lines > .row:last-child {
+  border-bottom: 0;
+}
+.btn.sage {
+  background: var(--calm);
+  color: var(--ink);
+  border: 0;
+}
+.btn.outline {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+}
+.pv-band {
+  background: var(--ink);
+  color: var(--on-ink);
+  padding: 14px var(--gutter);
+  margin: 0 calc(var(--gutter) * -1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pv-band b {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+}
+.pv-band span {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.pv-band .pv-back {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.pv-months {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.pv-months .pill {
+  flex: none;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.pv-months .pill[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.pv-scene {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pv-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.pv-tiles > div {
+  background: var(--calm);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: grid;
+  gap: 2px;
+}
+.pv-tiles b {
+  font-size: 1.25rem;
+}
+.pv-hand {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: 1.3rem;
+  text-align: center;
+  color: var(--ink);
+}
+
+.undo-box .row > span {
+  white-space: nowrap;
+}
+.sheet.center h2,
+.sheet-headrow h2 {
+  font-weight: 800;
+}
+.pv-band b {
+  font-size: 1.1rem;
+}

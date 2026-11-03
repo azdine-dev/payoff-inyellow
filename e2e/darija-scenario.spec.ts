@@ -551,7 +551,7 @@ test('Case C: the well-known $8,000 at 24%', async ({ page }) => {
     await expect(page.getByTestId('paydays-left')).toHaveText('56 paydays left');
   await showPaydays(page, 'Upcoming');
   await page.getByRole('button', { name: 'Sun 1 Nov, to come', exact: true }).click();
-  await expect(page.getByTestId('debt-left-after')).toContainText('$7,920.00');
+  await expect(page.getByTestId('preview-owed')).toHaveText('$7,920');
 });
 
 test('Case D: the plan needs help, calmly, and never points to a loan', async ({ page }) => {
