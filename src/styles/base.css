@@ -3199,3 +3199,15 @@ textarea {
   font-size: 0.8125rem;
   font-weight: 600;
 }
+
+.cl-item {
+  width: 100%;
+  min-height: var(--tap);
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 8px 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}

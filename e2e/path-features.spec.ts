@@ -178,3 +178,55 @@ test.describe('Money coming later', () => {
     await expect(page.getByTestId('arrival-card')).toBeVisible();
   });
 });
+
+test.describe('Coming later list in Path', () => {
+  async function planLater(page: import('@playwright/test').Page) {
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Extra money' });
+    await sheet.getByRole('button', { name: /coming later/ }).click();
+    await sheet.getByRole('button', { name: 'Tax refund', exact: true }).click();
+    await sheet.getByRole('textbox', { name: 'Money coming later' }).fill('800');
+    await sheet.getByLabel('Which payday?').selectOption({ label: 'Fri 9 Apr 2027' });
+    await sheet.getByRole('button', { name: 'Add to my plan' }).click();
+  }
+
+  test('a small list under Your whole plan: Tax refund · $800 · Fri 9 Apr 2027', async ({ page }) => {
+    await nadiaSetup(page);
+    await goTab(page, 'Path');
+    await expect(page.getByTestId('coming-later-list')).toHaveCount(0); // nothing planned yet
+    await goTab(page, 'Today');
+    await planLater(page);
+    await goTab(page, 'Path');
+    const list = page.getByTestId('coming-later-list');
+    await expect(list).toContainText('Coming later');
+    await expect(list.getByRole('button', { name: /Tax refund/ })).toHaveText('Tax refund · $800 · Fri 9 Apr 2027›');
+    const a = await page.getByTestId('whole-plan-card').boundingBox();
+    const b = await list.boundingBox();
+    expect(b!.y).toBeGreaterThan(a!.y); // under Whole plan
+    await expectBrandRules(page);
+  });
+
+  test('tap an item: move it to another payday with Undo, or remove it with Undo', async ({ page }) => {
+    await nadiaSetup(page);
+    await planLater(page);
+    await goTab(page, 'Path');
+    const list = page.getByTestId('coming-later-list');
+    await list.getByRole('button', { name: /Tax refund/ }).click();
+    const sheet = page.getByRole('dialog', { name: 'Tax refund · $800' });
+    await sheet.getByLabel('Move to payday').selectOption({ label: 'Fri 7 May 2027' });
+    await expect(list.getByRole('button', { name: /Tax refund/ })).toContainText('Fri 7 May 2027');
+    await expect(page.getByTestId('coming-later-line')).toBeVisible();
+    await expect(page.getByTestId('coming-later-undo')).toContainText('Moved to Fri 7 May 2027.');
+    await page.getByTestId('coming-later-undo').getByRole('button', { name: 'Undo' }).click();
+    await expect(list.getByRole('button', { name: /Tax refund/ })).toContainText('Fri 9 Apr 2027');
+    // remove
+    await list.getByRole('button', { name: /Tax refund/ }).click();
+    await page.getByRole('dialog', { name: 'Tax refund · $800' }).getByRole('button', { name: 'Remove' }).click();
+    await expect(list.getByRole('button', { name: /Tax refund/ })).toHaveCount(0);
+    await expect(page.getByTestId('coming-later-line')).toHaveCount(0); // no line without money coming
+    await expect(page.getByTestId('coming-later-undo')).toContainText('Removed tax refund.');
+    await page.getByTestId('coming-later-undo').getByRole('button', { name: 'Undo' }).click();
+    await expect(list.getByRole('button', { name: /Tax refund/ })).toContainText('Fri 9 Apr 2027');
+    await expect(page.getByTestId('coming-later-line')).toHaveText('With your $800 tax refund: May 2027');
+  });
+});

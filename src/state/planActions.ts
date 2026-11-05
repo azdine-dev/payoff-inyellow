@@ -47,6 +47,19 @@ export async function confirmArrived(db: PiyDB, data: AppData, id: string, now =
   return commit(db, data, { settings: { ...s, oneOffs: s.oneOffs.map((o) => (o.id === id ? { ...o, arrived: true } : o)), updatedAt: now } });
 }
 
+/** Move money coming later to another payday */
+export async function moveComingLater(db: PiyDB, data: AppData, id: string, date: string, now = Date.now()): Promise<AppData> {
+  const s = data.settings;
+  return commit(db, data, { settings: { ...s, oneOffs: s.oneOffs.map((o) => (o.id === id ? { ...o, date } : o)), updatedAt: now } });
+}
+
+/** Put a removed one-off back (Undo) */
+export async function restoreOneOff(db: PiyDB, data: AppData, entry: AppData['settings']['oneOffs'][number], now = Date.now()): Promise<AppData> {
+  const s = data.settings;
+  if (s.oneOffs.some((o) => o.id === entry.id)) return data;
+  return commit(db, data, { settings: { ...s, oneOffs: [...s.oneOffs, entry], updatedAt: now } });
+}
+
 export async function removeOneOff(db: PiyDB, data: AppData, id: string, now = Date.now()): Promise<AppData> {
   const s = data.settings;
   return commit(db, data, { settings: { ...s, oneOffs: s.oneOffs.filter((o) => o.id !== id), updatedAt: now } });

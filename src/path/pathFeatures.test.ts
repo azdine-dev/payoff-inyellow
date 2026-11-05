@@ -6,7 +6,7 @@ import type { AppData } from '../data/types';
 import { simulatePlan } from '../engine';
 import { completeSetup, didPayday, type SetupValues } from '../state/actions';
 import { arrivalDue, plannedMoney, toPlanInput } from '../state/planInput';
-import { addComingLater, confirmArrived } from '../state/planActions';
+import { addComingLater, confirmArrived, moveComingLater, removeOneOff, restoreOneOff } from '../state/planActions';
 import { comingLaterPlan, whatIfSummary } from '../state/whatIf';
 import { comingLaterLine } from '../state/comingLater';
 import { buildChapters } from './chaptersModel';
@@ -106,6 +106,21 @@ describe('Money coming later', () => {
     const yes = await confirmArrived(db, added, added.settings.oneOffs[0]!.id);
     expect(plan(yes).debtFreeDate).toBe('2027-05-21'); // counted now
     expect(comingLaterLine(yes)).toBeNull();
+  });
+
+  it('move to another payday and remove, each with an undo that restores the same entry', async () => {
+    const db = await openAppDB('coming-later-edit');
+    const added = await addComingLater(db, d, { amount: 800, date: '2027-04-09', kind: 'Tax refund' });
+    const id = added.settings.oneOffs[0]!.id;
+    const moved = await moveComingLater(db, added, id, '2027-05-07');
+    expect(moved.settings.oneOffs[0]!.date).toBe('2027-05-07');
+    expect(comingLaterLine(moved)?.text).toMatch(/^With your \$800 tax refund: [A-Z][a-z]+ 2027$/);
+    const back = await moveComingLater(db, moved, id, '2027-04-09');
+    expect(back.settings.oneOffs[0]).toEqual(added.settings.oneOffs[0]);
+    const entry = back.settings.oneOffs[0]!;
+    const gone = await removeOneOff(db, back, id);
+    expect(gone.settings.oneOffs).toHaveLength(0);
+    expect((await restoreOneOff(db, gone, entry)).settings.oneOffs).toEqual([entry]);
   });
 
   it('on its payday it waits for Yes: not counted before, kept through "I did it" without it, counted after', async () => {
