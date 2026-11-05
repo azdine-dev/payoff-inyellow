@@ -25,6 +25,7 @@ import type { AppData } from '../data/types';
 import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
 import { ArrivalCard, ComingLaterPanel } from './ComingLater';
+import { comingLaterLine } from '../state/comingLater';
 import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, FooterNote, GearIcon, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
@@ -370,6 +371,7 @@ export function Today() {
         debtFreeDate={r.debtFreeDate}
         hasDebts={active.length > 0}
         pctGone={progressStats(d).pct}
+        withLine={comingLaterLine(d)?.text}
         onOpen={() => {
           pathView.value = 'progress';
           tab.value = 'path';

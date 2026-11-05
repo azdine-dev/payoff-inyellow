@@ -15,8 +15,8 @@ export function countdownParts(months: number): { years: number; months: number 
 
 const plural = (n: number, word: string) => `${word}${n === 1 ? '' : 's'}`;
 
-export function DebtFreeCard(props: { today: string; debtFreeDate: string | null; hasDebts: boolean; pctGone: number; onOpen: () => void }) {
-  const { today, debtFreeDate, hasDebts, pctGone, onOpen } = props;
+export function DebtFreeCard(props: { today: string; debtFreeDate: string | null; hasDebts: boolean; pctGone: number; withLine?: string | null; onOpen: () => void }) {
+  const { today, debtFreeDate, hasDebts, pctGone, withLine, onOpen } = props;
   const stage = sceneStage(pctGone, hasDebts);
   // A stage reached for the first time fades in once. The very first open just shows the scene.
   const [fadeStage, setFadeStage] = useState<number | null>(() => {
@@ -66,6 +66,11 @@ export function DebtFreeCard(props: { today: string; debtFreeDate: string | null
           </span>
         )}
       </span>
+      {withLine && (
+        <span class="muted small" data-testid="debt-free-with">
+          {withLine}
+        </span>
+      )}
     </button>
   );
 }

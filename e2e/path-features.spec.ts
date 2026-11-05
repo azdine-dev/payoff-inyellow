@@ -138,7 +138,10 @@ test.describe('Money coming later', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     // the plan has it now
     await goTab(page, 'Path');
-    await expect(page.getByTestId('status-line')).toContainText('May 2027');
+    await expect(page.getByTestId('status-line')).toContainText('Jul 2027'); // the plan date does not move
+    await expect(page.getByTestId('coming-later-line')).toHaveText('With your $800 tax refund: May 2027');
+    await goTab(page, 'Today');
+    await expect(page.getByTestId('debt-free-with')).toHaveText('With your $800 tax refund: May 2027');
   });
 
   test('on its payday Today asks "Did it arrive?", and counts it only after Yes', async ({ page }) => {

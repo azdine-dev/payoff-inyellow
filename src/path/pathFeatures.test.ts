@@ -8,6 +8,7 @@ import { completeSetup, didPayday, type SetupValues } from '../state/actions';
 import { arrivalDue, plannedMoney, toPlanInput } from '../state/planInput';
 import { addComingLater, confirmArrived } from '../state/planActions';
 import { comingLaterPlan, whatIfSummary } from '../state/whatIf';
+import { comingLaterLine } from '../state/comingLater';
 import { buildChapters } from './chaptersModel';
 import { buildWholePlan } from './wholePlanModel';
 
@@ -89,6 +90,22 @@ describe('Money coming later', () => {
     expect(s.paydaysSooner).toBe(4);
     expect(Math.round(s.interestSaved)).toBe(36);
     expect(next.rows.find((x) => x.date === '2027-04-09')?.extraGoesTo).toBe(d.debts.find((x) => x.name === 'Visa')!.id);
+  });
+
+  it('does not move the main debt-free date: it adds one line, and counts only after Yes', async () => {
+    const db = await openAppDB('coming-later-line');
+    const added = await addComingLater(db, d, { amount: 800, date: '2027-04-09', kind: 'Tax refund' });
+    expect(plan(added).debtFreeDate).toBe('2027-07-16'); // the plan date stays
+    expect(plan(added).totalInterest).toBe(plan(d).totalInterest);
+    expect(comingLaterLine(added)?.text).toBe('With your $800 tax refund: May 2027');
+    const none = await addComingLater(db, d, { amount: 100, date: '2027-04-09', kind: null });
+    expect(comingLaterLine(none)?.text).toMatch(/^With your \$100 extra money: /);
+    const two = await addComingLater(db, added, { amount: 100, date: '2027-05-07', kind: 'Gift' });
+    expect(comingLaterLine(two)?.text).toMatch(/^With your \$900 coming later: /);
+    expect(comingLaterLine(d)).toBeNull();
+    const yes = await confirmArrived(db, added, added.settings.oneOffs[0]!.id);
+    expect(plan(yes).debtFreeDate).toBe('2027-05-21'); // counted now
+    expect(comingLaterLine(yes)).toBeNull();
   });
 
   it('on its payday it waits for Yes: not counted before, kept through "I did it" without it, counted after', async () => {

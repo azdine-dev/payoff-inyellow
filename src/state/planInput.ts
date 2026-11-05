@@ -46,8 +46,8 @@ export function oneOffAdjustments(s: Settings): Record<number, number> {
   const adj: Record<number, number> = {};
   for (const o of s.oneOffs) {
     const n = oneOffPayday(s, o.date);
-    // Money coming later is not counted on its payday until the buyer says it arrived
-    if (n === 1 && waitingForArrival(o)) continue;
+    // Money coming later is not in the plan until the buyer says it arrived
+    if (waitingForArrival(o)) continue;
     adj[n] = (adj[n] ?? 0) + o.amount;
   }
   return adj;

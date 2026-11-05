@@ -15,6 +15,7 @@ import { act, data, freshPaidDebts, freshPayday, plan, previewDate, today, whole
 import { comparisonLine } from '../state/whatIf';
 import { worthKnowing } from '../state/worthKnowing';
 import { focusDebt } from '../today/model';
+import { comingLaterLine } from '../state/comingLater';
 import { Chart } from '../progress/Chart';
 import { Count } from '../ui/useCountUp';
 import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
@@ -106,6 +107,7 @@ export function Path() {
   const avoided = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
   const paydaysLeft = r.paydaysToDebtFree;
 
+  const laterLine = useMemo(() => comingLaterLine(d), [d]);
   const nextPayday = nextPaydayISO(s);
   const road = useMemo(() => buildRoad(d, r, stats.start, stats.pct, today.value), [d, r]);
   const finishIndex =
@@ -180,6 +182,11 @@ export function Path() {
             <p class="num" data-testid="status-line">
               <span class="hl">Debt-free · {shortMonthYear(r.debtFreeDate)}</span>
             </p>
+            {laterLine && (
+              <p class="muted small" data-testid="coming-later-line">
+                {laterLine.text}
+              </p>
+            )}
             {paydaysLeft !== null && (
               <p class="muted small num" data-testid="paydays-left">
                 {paydaysLeft} payday{paydaysLeft === 1 ? '' : 's'} left
