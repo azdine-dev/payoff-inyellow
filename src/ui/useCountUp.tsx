@@ -41,7 +41,16 @@ export function useCountUp(value: number, key?: string, ms = 200): number {
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    // The roll is only for show. If the browser holds back animation frames (a page in the background, a busy phone),
+    // the real number still lands a moment later, so a balance is never left showing the old value.
+    const settle = setTimeout(() => {
+      remember(value);
+      setShown(value);
+    }, ms + 80);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(settle);
+    };
   }, [value]);
   useEffect(() => {
     if (key !== undefined && !shownBefore.has(key)) shownBefore.set(key, value);
