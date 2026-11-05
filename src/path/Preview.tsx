@@ -9,7 +9,7 @@ import { formatMoney } from '../lib/money';
 import { monthsBetween, shortDate } from '../lib/today';
 import { progressStats } from '../state/milestones';
 import { previewDate } from '../state/store';
-import { sceneStage, STAGE_NAMES } from '../ui/Scene';
+import { Scene, sceneStage, STAGE_NAMES } from '../ui/Scene';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const monthYearName = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
@@ -73,9 +73,15 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
   const stage = sceneStage(pctGone, row.debtLeft > 0.005);
   const label = fullDate(date, today);
 
-  // One chip per month the plan covers: a chip opens the first payday of that month
+  // One chip per month the plan covers: a chip opens the last payday of that month. The debt-free month ends on the debt-free day.
   const months: { key: string; iso: string }[] = [];
-  for (const x of r.rows.slice(0, 120)) if (!months.some((m) => m.key === x.date.slice(0, 7))) months.push({ key: x.date.slice(0, 7), iso: x.date });
+  for (const x of r.rows.slice(0, 120)) {
+    const key = x.date.slice(0, 7);
+    const at = months.findIndex((m) => m.key === key);
+    if (at < 0) months.push({ key, iso: x.date });
+    else months[at] = { key, iso: x.date };
+  }
+  const debtFreeDay = row.debtLeft <= 0.005;
 
   // Debts in payoff order: gone by then, or still being paid
   const order = r.order.map((id) => d.debts.find((x) => x.id === id)).filter((x): x is NonNullable<typeof x> => Boolean(x) && x!.status !== 'archived');
@@ -118,7 +124,11 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
       </div>
 
       <section class="card stack" style={{ gap: 6, padding: 0, overflow: 'hidden' }} aria-label="Your scene then">
-        <PreviewScene total={d.paydays.length + r.rows.length} done={d.paydays.filter((x) => x.status === 'done').length} at={d.paydays.length + i} label={`Your scene then: ${STAGE_NAMES[stage]}`} />
+        {debtFreeDay ? (
+          <Scene stage={5} label={`Your scene then: ${STAGE_NAMES[5]}`} />
+        ) : (
+          <PreviewScene total={d.paydays.length + r.rows.length} done={d.paydays.filter((x) => x.status === 'done').length} at={d.paydays.length + i} label={`Your scene then: ${STAGE_NAMES[stage]}`} />
+        )}
         <div class="stack" style={{ gap: 4, padding: '4px 16px 16px' }}>
           <p class="muted">On {label} you’ll owe</p>
           <p class="num" data-testid="preview-owed" style={{ fontFamily: 'var(--font-head)', fontSize: '2.6rem', fontWeight: 800, lineHeight: 1.1 }}>
@@ -127,7 +137,7 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
           <p data-testid="preview-months">
             <b>{Math.floor(pctGone)}% gone</b>
             {row.debtLeft <= 0.005
-              ? ' · debt-free by then'
+              ? ' · this is your debt-free day'
               : r.debtFreeDate
                 ? ` · debt-free ${later === 0 ? 'that same month' : `${later} month${later === 1 ? '' : 's'} later`}, in ${monthYearName(r.debtFreeDate)}`
                 : ' · more than 20 years at this pace'}

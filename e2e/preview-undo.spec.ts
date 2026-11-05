@@ -24,9 +24,17 @@ test.describe('preview of a future payday', () => {
     await expect(page.getByTestId('preview-buffer')).toContainText('$500');
     await expect(page.getByTestId('preview-scene')).toBeVisible();
     await expect(page.getByTestId('path-preview')).toContainText('No buttons here, nothing to mark.');
-    // a month chip jumps to the first payday of that month
+    // a month chip opens the last payday of that month
     await page.getByRole('button', { name: 'December 2026' }).click();
-    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 4 Dec 2026');
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 18 Dec 2026');
+    // the debt-free month opens the debt-free day, with the Home scene
+    await page.getByRole('button', { name: 'July 2027' }).click();
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 16 Jul 2027');
+    await expect(page.getByTestId('preview-owed')).toHaveText('$0');
+    await expect(page.getByTestId('preview-months')).toContainText('this is your debt-free day');
+    await expect(page.getByTestId('scene')).toHaveAttribute('data-stage', '5');
+    await expect(page.getByTestId('preview-scene')).toHaveCount(0);
+    await expect(page.getByTestId('preview-debt').locator('.tag.paid')).toHaveCount(3);
     // read-only: nothing to tick, no "I did it"
     await expect(preview.getByRole('checkbox')).toHaveCount(0);
     await expect(preview.getByRole('button', { name: /I did it/ })).toHaveCount(0);
