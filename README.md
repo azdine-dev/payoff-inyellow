@@ -71,7 +71,7 @@ node scripts/check-code.js "<code>"                 # checks it the way the app 
 ### Use a code
 
 - Paste it in the app: **I have a code** on the result screen, or Settings, Unlock code.
-- Or open the link: `https://app.paidinyellow.com/#unlock=<code>`. The code is after the `#`, which
+- Or open the link: `https://app.paidinyellow.com/unlock#<code>` (the older `/#unlock=<code>` works too). The code is after the `#`, which
   the browser never sends to a server. It is checked, removed from the address bar and saved. If the
   buyer opens the link before making a plan, it is kept until the plan is ready.
 - A code with one letter changed is refused: "This code doesn't look right. Check that you copied all of it."

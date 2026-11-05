@@ -77,3 +77,39 @@ test('the "code saved" message goes away by itself and never blocks a tap', asyn
   // And it is gone after a few seconds, with no tap on OK
   await expect(notice).toHaveCount(0, { timeout: 8000 });
 });
+
+test('app.paidinyellow.com/unlock#CODE: the code is after the #, checked on the phone, and the address goes home', async ({ page, context }) => {
+  await quickSetup(page, { unlock: false });
+  await expect(page.getByTestId('unlock-card')).toBeVisible();
+  const code = await testCode('shopify-1042');
+  const link = await context.newPage();
+  await link.clock.setFixedTime(FIXED);
+  // nothing but the word /unlock may be asked of the server: the code is in the part after the #
+  const asked: string[] = [];
+  link.on('request', (r) => asked.push(r.url()));
+  await link.goto(`/unlock#${code}`);
+  await expect(link.getByTestId('notice')).toHaveText(/Unlocked\. Thank you\./);
+  expect(link.url()).not.toContain('unlock');
+  expect(link.url()).not.toContain(code.slice(0, 12));
+  expect(asked.some((u) => u.includes(code.slice(0, 12)))).toBe(false); // the code never left the phone
+  expect(asked.some((u) => /\/unlock(\?|$)/.test(u))).toBe(true);
+  await expect(link.getByRole('navigation', { name: 'Main' })).toBeVisible();
+  await link.reload();
+  await expect(link.getByRole('navigation', { name: 'Main' })).toBeVisible(); // stays unlocked
+});
+
+test('/unlock with a code changed by one letter is refused, and /unlock alone just goes home', async ({ page, context }) => {
+  await quickSetup(page, { unlock: false });
+  const code = await testCode('shopify-1042');
+  const edited = code.slice(0, 20) + (code[20] === 'A' ? 'B' : 'A') + code.slice(21);
+  const link = await context.newPage();
+  await link.clock.setFixedTime(FIXED);
+  await link.goto(`/unlock#${edited}`);
+  await expect(link.getByTestId('notice')).toHaveText(/This code looks incomplete/);
+  await expect(link.getByTestId('unlock-card')).toBeVisible(); // still calculator mode
+  const bare = await context.newPage();
+  await bare.clock.setFixedTime(FIXED);
+  await bare.goto('/unlock');
+  await expect(bare.getByTestId('unlock-card')).toBeVisible();
+  expect(new URL(bare.url()).pathname).toBe('/');
+});
