@@ -6,7 +6,7 @@ import { loadAll, openAppDB, type PiyDB } from '../data/db';
 import { BackupError, backupDue, buildBackup, parseBackup, restoreBackup, summarizeBackup } from '../data/backup';
 import type { AppData } from '../data/types';
 import { applyAppearance, TEXT_SCALES } from '../lib/appearance';
-import { buildIcs, foldLine, googleCalendarUrl, monthlyDay } from '../lib/ics';
+import { buildIcs, foldLine, googleCalendarUrl, monthlyDay, paydayRule, twelveMonthsOn } from '../lib/ics';
 import { b64urlDecode, b64urlEncode, cleanCode, publicKeyOf, verifyToken } from '../lib/licenseCore';
 import { makeCode } from '../lib/license';
 import { completeSetup, didPayday, skipPaydays, type SetupValues } from './actions';
@@ -116,15 +116,32 @@ describe('calendar file', () => {
     for (const line of ics.split('\r\n')) expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
   });
 
-  it('has a payday and a payday check on every payday for a year', () => {
+  it('has one repeating payday and one repeating payday check, following the pay schedule for 12 months', () => {
     const paydays = events.filter((e) => e.includes('SUMMARY:Payday\r\n'));
     const checks = events.filter((e) => e.includes('payday check'));
-    expect(paydays).toHaveLength(26);
-    expect(checks).toHaveLength(26);
+    expect(paydays).toHaveLength(1);
+    expect(checks).toHaveLength(1);
     expect(paydays[0]).toContain('DTSTART;VALUE=DATE:20261023');
-    expect(paydays[1]).toContain('DTSTART;VALUE=DATE:20261106');
+    expect(paydays[0]).toContain('RRULE:FREQ=WEEKLY;INTERVAL=2;UNTIL=20271015');
     expect(checks[0]).toContain('DTSTART:20261023T200000');
+    expect(checks[0]).toContain('RRULE:FREQ=WEEKLY;INTERVAL=2;UNTIL=20271015T235959');
     expect(checks[0]).toContain('TRIGGER:PT0S');
+  });
+
+  it('writes the repeat rule for every pay schedule', () => {
+    expect(paydayRule('weekly', '2026-10-23', '2026-10-30')).toBe('FREQ=WEEKLY');
+    expect(paydayRule('biweekly', '2026-10-23', '2026-11-06')).toBe('FREQ=WEEKLY;INTERVAL=2');
+    expect(paydayRule('monthly', '2026-10-12', '2026-11-12')).toBe('FREQ=MONTHLY;BYMONTHDAY=12');
+    expect(paydayRule('monthly', '2026-10-31', '2026-11-30')).toBe('FREQ=MONTHLY;BYMONTHDAY=31,-1;BYSETPOS=1'); // month end stays month end
+    expect(paydayRule('twice-monthly', '2026-11-01', '2026-11-15')).toBe('FREQ=MONTHLY;BYMONTHDAY=1,15');
+    expect(paydayRule('twice-monthly', '2026-10-15', '2026-10-31')).toBe('FREQ=MONTHLY;BYMONTHDAY=15,-1'); // 15th and last day
+    expect(paydayRule('twice-monthly', '2026-11-15', '2026-11-30')).toBe('FREQ=MONTHLY;BYMONTHDAY=15,-1');
+  });
+
+  it('covers 12 months: the repeat ends a year from today, for paydays and for due dates', () => {
+    expect(twelveMonthsOn('2026-10-15')).toBe('20271015'.replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3'));
+    expect(twelveMonthsOn('2028-02-29')).toBe('2029-02-28');
+    for (const e of events.filter((x) => x.includes('RRULE:'))) expect(e).toMatch(/UNTIL=20271015/);
   });
 
   it('puts due dates on the due day with a reminder 3 days before, clamped to the month end', () => {

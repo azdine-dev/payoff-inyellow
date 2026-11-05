@@ -120,32 +120,70 @@ export function googleCalendarUrl(data: AppData, today: string): string | null {
 }
 
 export interface IcsOptions {
-  /** how far ahead to write events, in days. Default 365. */
+  /** how far ahead to write events, in days. Default: 12 months. */
   days?: number;
   now?: Date;
+}
+
+/** The same date 12 months on (the 29th of February becomes the 28th) */
+export function twelveMonthsOn(iso: string): string {
+  const t = parseISO(iso);
+  const m = addMonths({ y: t.y, m: t.m, d: 1 }, 12);
+  return toISO({ ...m, d: Math.min(t.d, daysInMonth(m.y, m.m)) });
+}
+
+/** A day of the month for a payday date: the last day of the month stays "-1", so short months still match. */
+function paydayMonthDay(iso: string): string {
+  const { y, m, d } = parseISO(iso);
+  return d >= 29 && d === daysInMonth(y, m) ? '-1' : String(d);
+}
+
+/**
+ * The repeat rule of the pay schedule, from the first two paydays on or after today:
+ * every week, every 2 weeks, one day a month, or two days a month. Month-end paydays use the last day.
+ */
+export function paydayRule(frequency: AppData['settings']['frequency'], first: string, second: string): string {
+  switch (frequency) {
+    case 'weekly':
+      return 'FREQ=WEEKLY';
+    case 'biweekly':
+      return 'FREQ=WEEKLY;INTERVAL=2';
+    case 'monthly':
+      return `FREQ=MONTHLY;${monthlyDay(parseISO(first).d)}`;
+    default: {
+      const days = [paydayMonthDay(first), paydayMonthDay(second)].sort((a, b) => (a === '-1' ? 1 : b === '-1' ? -1 : Number(a) - Number(b)));
+      return `FREQ=MONTHLY;BYMONTHDAY=${[...new Set(days)].join(',')}`;
+    }
+  }
 }
 
 export function buildIcs(data: AppData, today: string, opts: IcsOptions = {}): string {
   const s = data.settings;
   const cur = s.currency;
   const now = opts.now ?? new Date();
-  const end = addDaysISO(today, opts.days ?? 365);
+  const end = opts.days !== undefined ? addDaysISO(today, opts.days) : twelveMonthsOn(today);
   const events: string[] = [];
 
-  // Paydays and the payday check (from the next payday on)
-  for (let i = 1; i <= 600; i++) {
+  // Paydays and the payday check: one event each, repeating with the pay schedule for 12 months
+  const upcoming: string[] = [];
+  for (let i = 1; i <= 600 && upcoming.length < 2; i++) {
     const date = paydayISO(s.anchorPayday, s.frequency, s.paydayIndex + i, s.otherPayday);
-    if (date > end) break;
-    if (date < today) continue;
-    events.push(...vevent({ uid: `payday-${date}`, summary: 'Payday', date }, now));
+    if (date >= today) upcoming.push(date);
+  }
+  if (upcoming.length === 2 && upcoming[0]! <= end) {
+    const first = upcoming[0]!;
+    const rule = paydayRule(s.frequency, first, upcoming[1]!);
+    events.push(...vevent({ uid: 'payday', summary: 'Payday', date: first, rrule: `${rule};UNTIL=${compact(end)}` }, now));
     events.push(
       ...vevent(
         {
-          uid: `check-${date}`,
+          uid: 'check',
           summary: 'Open PaidInYellow: payday check',
           description: 'One clear step: see what to pay this payday and tick it off.',
-          date,
+          date: first,
           time: s.ifThen.time || '20:00',
+          // a timed event ends its repeat with a time, written the same way as its start (no zone)
+          rrule: `${rule};UNTIL=${compact(end)}T235959`,
         },
         now,
       ),
