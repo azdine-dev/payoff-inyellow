@@ -25,6 +25,7 @@ import type { AppData } from '../data/types';
 import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
 import { ArrivalCard, ComingLaterPanel } from './ComingLater';
+import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
 import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, FooterNote, GearIcon, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
@@ -304,7 +305,6 @@ export function Today() {
   const daily = dailyInterestCost(active);
   const lastMonth = dailyCostLastMonth(d, today.value);
   const bufferFull = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
-  const showNudge = justPaid && (doneCount === 1 || doneCount % 4 === 0);
 
   // One short line for this payday: for what just happened if there is something, else the line of the payday
   const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0, today: today.value });
@@ -490,23 +490,7 @@ export function Today() {
 
           {countdownMode && <CountdownCard nextDate={nextDate} onEarly={markEarly} />}
 
-          {showNudge && (
-            <section class="nudge" aria-label="Save a copy" data-testid="backup-nudge">
-              <span>{backedUp ? 'Saved. Keep the file somewhere safe.' : 'Your plan lives only on this device. Save a copy.'}</span>
-              {!backedUp && (
-                <button
-                  type="button"
-                  class="btn small"
-                  onClick={async () => {
-                    await downloadBackup();
-                    setBackedUp(true);
-                  }}
-                >
-                  Save backup
-                </button>
-              )}
-            </section>
-          )}
+          <SafeCard />
         </>
       )}
 

@@ -59,6 +59,8 @@ export interface InstallPrompt {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 export const installPrompt = signal<InstallPrompt | null>(null);
+/** A card on another screen asks Settings to open a sheet ("How" to add the app to the home screen) */
+export const settingsSheet = signal<'install' | null>(null);
 
 /** True when the app runs from the Home Screen (installed). */
 export function isInstalled(): boolean {

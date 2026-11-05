@@ -32,7 +32,7 @@ test('I did it: yellow PAID card, a countdown, a backup nudge, and it stays afte
   await expect(card).toBeVisible();
   await expect(card).toContainText('PAID');
   await expect(page.getByTestId('after-sentence')).toBeVisible();
-  await expect(page.getByTestId('backup-nudge')).toContainText('Save a copy');
+  await expect(page.getByTestId('safe-card')).toContainText('Add PaidInYellow to your home screen and save a backup, so your plan stays safe.');
   await page.reload();
   await expect(page.getByTestId('paid-card')).toBeVisible();
   await expect(page.getByTestId('countdown-card')).toContainText('Nothing to do until then');

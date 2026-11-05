@@ -5,6 +5,24 @@
  */
 const SCENE = 'piy.scene';
 const READS = 'piy.reads';
+const SAFE = 'piy.safe';
+
+/** "Not now" on the card that asks for a home screen icon and a backup */
+export function getSafeDismissed(): boolean {
+  try {
+    return localStorage.getItem(SAFE) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function setSafeDismissed(): void {
+  try {
+    localStorage.setItem(SAFE, '1');
+  } catch {
+    // blocked storage: the card comes back next time, which is harmless
+  }
+}
 
 /** The highest scene stage already shown, or null when nothing was stored yet (the very first open). */
 export function getSceneSeen(): number | null {

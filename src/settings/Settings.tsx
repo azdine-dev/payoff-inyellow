@@ -1,5 +1,5 @@
 /** Settings: plan basics, backup, calendar, appearance, install, unlock code, help. */
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { buildBackup, backupFilename } from '../data/backup';
 import { eraseEverything } from '../data/erase';
 import type { TextSize, Theme } from '../data/types';
@@ -18,7 +18,7 @@ import { setBufferGoal, setPaycheck } from '../state/moneyActions';
 import { setMethod } from '../state/planActions';
 import { nextPaydayISO } from '../state/planInput';
 import { changeSchedule, clearLicense, markBackedUp, saveLicense, setAppearance, setCurrency, setExtraPerPayday, setIfThen } from '../state/settingsActions';
-import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, licenseState, tab, today, updateReady, view } from '../state/store';
+import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, licenseState, settingsSheet, tab, today, updateReady, view } from '../state/store';
 import { Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 import { FAQ, INSTALL_HELP } from './faq';
 import { downloadBackup } from '../state/backupActions';
@@ -42,6 +42,13 @@ export function Settings() {
   const s = d.settings;
   const cur = s.currency;
   const [edit, setEdit] = useState<Edit>(null);
+  // The home screen card on Today opens the how-to sheet here
+  useEffect(() => {
+    if (settingsSheet.value === 'install') {
+      setEdit('install');
+      settingsSheet.value = null;
+    }
+  }, []);
   const [text, setText] = useState('');
   const [freq, setFreq] = useState(s.frequency);
   const [date, setDate] = useState('');
