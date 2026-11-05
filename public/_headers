@@ -1,0 +1,6 @@
+# Sent by the host with every page. Only this app's own scripts may run, and nothing can be framed in.
+# That keeps any toolbar, badge or script the hosting service would add (a Netlify HUD, for one) out of production.
+/*
+  Content-Security-Policy: script-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
