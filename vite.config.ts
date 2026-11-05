@@ -52,6 +52,8 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2,webmanifest}'],
           navigateFallback: '/index.html',
           cleanupOutdatedCaches: true,
+          // After "Restart now" the new version takes control of the open page at once, so one tap is enough
+          clientsClaim: true,
         },
       }),
     ],

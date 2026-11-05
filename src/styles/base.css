@@ -89,7 +89,7 @@ select {
   gap: 16px;
 }
 
-/* Netlify adds a "Powered by Netlify" badge to the page on its own. It sat over the Continue button. */
+/* A badge added by the host is also taken off the page by removeHostingOverlays (src/lib/restart.ts). */
 #nl-badge-frame {
   display: none !important;
 }
