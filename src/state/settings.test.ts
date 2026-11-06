@@ -128,6 +128,12 @@ describe('calendar file', () => {
     expect(checks[0]).toContain('TRIGGER:PT0S');
   });
 
+  it('has no amounts anywhere: no money sign, no digits next to one, no "minimum"', () => {
+    expect(ics).not.toMatch(/[$€£]/);
+    expect(ics).not.toMatch(/minimum/i);
+    for (const e of events.filter((x) => /SUMMARY:.* due/.test(x))) expect(/SUMMARY:([^\r]*)/.exec(e)![1]).toMatch(/^[A-Za-z ]+ due$/);
+  });
+
   it('writes the repeat rule for every pay schedule', () => {
     expect(paydayRule('weekly', '2026-10-23', '2026-10-30')).toBe('FREQ=WEEKLY');
     expect(paydayRule('biweekly', '2026-10-23', '2026-11-06')).toBe('FREQ=WEEKLY;INTERVAL=2');
@@ -148,7 +154,8 @@ describe('calendar file', () => {
     const visa = events.filter((e) => e.includes('SUMMARY:Visa due'));
     expect(visa[0]).toContain('DTSTART;VALUE=DATE:20261112');
     expect(visa[0]).toContain('TRIGGER:-P3D');
-    expect(visa[0]).toContain('autopay');
+    expect(visa[0]).toContain('SUMMARY:Visa due\r\n'); // "Visa due" only
+    expect(visa[0]).toContain('DESCRIPTION:Autopay is on.');
     const store = events.filter((e) => e.includes('SUMMARY:Store card due'));
     expect(store).toHaveLength(1);
     expect(/DTSTART;VALUE=DATE:(\d+)/.exec(store[0]!)![1]).toBe('20261031');

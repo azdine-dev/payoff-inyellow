@@ -1,10 +1,9 @@
 /**
  * Calendar file (.ics): paydays, the if-then payday check, and due dates with a reminder
- * 3 days before. Works in Apple, Google and Outlook calendars.
+ * 3 days before. Names and dates only, never an amount. Works in Apple, Google and Outlook calendars.
  */
 import { addMonths, daysInMonth, paydayISO, parseISO, toISO } from '../engine/dates';
 import type { AppData } from '../data/types';
-import { formatMoneyAuto } from './money';
 import { addDaysISO } from './today';
 
 const CRLF = '\r\n';
@@ -159,7 +158,6 @@ export function paydayRule(frequency: AppData['settings']['frequency'], first: s
 
 export function buildIcs(data: AppData, today: string, opts: IcsOptions = {}): string {
   const s = data.settings;
-  const cur = s.currency;
   const now = opts.now ?? new Date();
   const end = opts.days !== undefined ? addDaysISO(today, opts.days) : twelveMonthsOn(today);
   const events: string[] = [];
@@ -201,12 +199,13 @@ export function buildIcs(data: AppData, today: string, opts: IcsOptions = {}): s
       const c = toISO({ ...month, d: Math.min(debt.dueDay, daysInMonth(month.y, month.m)) });
       if (c >= today) date = c;
     }
-    const amount = debt.minMonthly > 0 ? ` (minimum ${formatMoneyAuto(debt.minMonthly, cur)})` : '';
     events.push(
       ...vevent(
         {
           uid: `due-${debt.id}`,
-          summary: `${debt.name} due${amount}${debt.autopay ? ', autopay' : ''}`,
+          // Names and dates only: no amounts leave the app in a calendar file
+          summary: `${debt.name} due`,
+          ...(debt.autopay ? { description: 'Autopay is on.' } : {}),
           date,
           alarmBeforeDays: 3,
           rrule: `FREQ=MONTHLY;${monthlyDay(debt.dueDay)};UNTIL=${compact(end)}`,
