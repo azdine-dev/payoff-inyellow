@@ -122,6 +122,24 @@ export function milestoneDate(key: MilestoneKey, data: AppData, fallback: string
   return found && found < fallback ? found : fallback;
 }
 
+/** The first done payday whose total shows at least `pct` percent of the debt gone, or null */
+export function firstPaydayAtPct(data: Pick<AppData, 'paydays' | 'debts'>, pct: number): number | null {
+  const start = data.debts.filter((x) => x.status !== 'archived').reduce((s, x) => s + x.startBalance, 0);
+  if (start <= 0) return null;
+  const log = [...data.paydays]
+    .filter((p) => p.status === 'done' && p.debtLeft !== undefined)
+    .sort((a, b) => a.number - b.number)
+    .find((p) => ((start - p.debtLeft!) / start) * 100 >= pct);
+  return log?.number ?? null;
+}
+
+/** The payday a milestone belongs to: the first payday that shows it, or the latest payday logged when it came by other means */
+function paydayOf(key: MilestoneKey, data: AppData): number {
+  const lastNumber = data.paydays.reduce((m, p) => Math.max(m, p.number), 0);
+  const n = PCT[key];
+  return (n ? firstPaydayAtPct(data, n) : null) ?? lastNumber;
+}
+
 /** The short sentence for a milestone reached today. Null for the ones that have their own moment (plan made, first debt gone). */
 export function momentText(key: MilestoneKey, focusName: string | null, firstExtraTo: string | null): string | null {
   switch (key) {
@@ -176,7 +194,7 @@ export async function syncMilestones(db: PiyDB, data: AppData, result: PlanResul
   const real = hasRealPayments(data);
   const fresh: Milestone[] = [...reachedKeys(data, result)]
     .filter((k) => !have.has(k))
-    .map((k) => ({ id: k, updatedAt: now, reachedOn: k === 'plan-made' ? today : milestoneDate(k, data, today) }));
+    .map((k) => ({ id: k, updatedAt: now, reachedOn: k === 'plan-made' ? today : milestoneDate(k, data, today), payday: paydayOf(k, data) }));
   const stale = real ? [] : data.milestones.filter((m) => m.id !== 'plan-made').map((m) => m.id);
   const redated: Milestone[] = real
     ? data.milestones.flatMap((m) => {

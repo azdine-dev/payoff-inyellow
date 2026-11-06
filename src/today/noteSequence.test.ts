@@ -21,24 +21,25 @@ const setup: SetupValues = {
   bufferNow: 500,
   bufferGoal: 500,
   extraPerPayday: 400,
-  funds: [],
+  funds: [{ name: 'Gifts and holidays', perYear: 260, month: 'December' }], // Nadia's plan
   method: 'paidinyellow',
   startMode: 'this-payday',
   ifThen: { day: 'Friday', time: '20:00' },
 };
 
 /** Does every payday the way Today does, as long as the plan has debts left, up to `max` paydays */
-async function notesFor(name: string, extraPerPayday: number, max: number) {
+/** `markedOn`: every payday is marked on that one calendar day (marked early), instead of on its own date */
+async function notesFor(name: string, extraPerPayday: number, max: number, markedOn?: string, bufferNow = 200) {
   const db = await openAppDB(name);
-  let d = await completeSetup(db, { ...setup, extraPerPayday }, '2026-11-03');
+  let d = await completeSetup(db, { ...setup, extraPerPayday, bufferNow }, '2026-11-03');
   const seen: { kind: string; text: string; date: string }[] = [];
   while (seen.length < max && d.debts.some((x) => x.status === 'active')) {
     const res = await didPayday(db, d, {});
     d = res.data;
     const date = d.paydays[d.paydays.length - 1]!.date;
-    d = await syncMilestones(db, d, simulatePlan(toPlanInput(d)), date);
-    // the debt paid just now is "fresh", and today is the payday
-    seen.push({ ...pickNote(d, { freshPaidDebt: res.newlyPaid.length > 0, today: date }), date });
+    d = await syncMilestones(db, d, simulatePlan(toPlanInput(d)), markedOn ?? date);
+    // the debt paid just now is "fresh"
+    seen.push({ ...pickNote(d, { freshPaidDebt: res.newlyPaid.length > 0 }), date });
   }
   return seen;
 }
@@ -64,6 +65,23 @@ describe('ten paydays in a row', () => {
     const paid = seen.filter((x) => x.kind === 'debtPaid').map((x) => x.text);
     expect(paid[0]).toBe('PAID. One down.');
     expect(paid[1]).toBe('PAID. Two down.');
+    expect(seen[seen.length - 1]!.text).toBe('Debt-free.');
+  });
+
+  it('19 paydays marked early on one day: Halfway and Almost home each show exactly once, and the notes after use the rotating lines', async () => {
+    const seen = await notesFor('note-sequence-early', 150, 19, '2026-11-05'); // Nadia's plan: 19 paydays, all marked on Thu 5 Nov
+    expect(seen).toHaveLength(19);
+    expect(seen.filter((x) => x.text === 'Halfway.' || x.kind === 'halfway')).toHaveLength(1);
+    expect(seen.filter((x) => x.kind === 'almostHome')).toHaveLength(1);
+    expectNoRepeat(seen);
+    // each milestone sits on the payday that first showed it, and the paydays after it rotate
+    const at = (kind: string) => seen.findIndex((x) => x.kind === kind);
+    expect(at('halfway')).toBeGreaterThan(0);
+    expect(at('almostHome')).toBeGreaterThan(at('halfway'));
+    for (const kind of ['halfway', 'almostHome']) {
+      const next = seen[at(kind) + 1];
+      if (next && next.kind !== 'debtFree') expect(['rotating', 'debtPaid', 'bufferUsed', 'afterSkip']).toContain(next.kind);
+    }
     expect(seen[seen.length - 1]!.text).toBe('Debt-free.');
   });
 });

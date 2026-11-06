@@ -59,14 +59,22 @@ describe('which note shows', () => {
     expect(pickNote(onThatPayday).kind).toBe('halfway');
     const nextPayday = { ...base, milestones: half, paydays: [log(1, '2026-11-06'), log(2, '2026-11-20'), log(3, '2026-12-04')] };
     expect(pickNote(nextPayday).kind).toBe('rotating');
-    // the same app session, the same day: it is still the payday it was reached, so still the same line
-    expect(pickNote(onThatPayday, { today: '2026-11-21' }).kind).toBe('halfway');
+    // opened again later that day or the next: it is still the payday it was reached on, so still the same line
+    expect(pickNote(onThatPayday).kind).toBe('halfway');
   });
 
-  it('reached today with extra money counts as just now, and not tomorrow', () => {
-    const half = { ...base, milestones: [{ id: 'pct-50', reachedOn: '2026-11-10' }] as never, paydays: [log(1, '2026-11-06'), log(2, '2026-11-20')] };
-    expect(pickNote(half, { today: '2026-11-10' }).kind).toBe('halfway');
-    expect(pickNote(half, { today: '2026-11-11' }).kind).toBe('rotating');
+  it('reached by extra money after payday 2: it belongs to payday 2, and the next payday rotates', () => {
+    const half = [{ id: 'pct-50', reachedOn: '2026-11-10', payday: 2 }] as never;
+    const at2 = { ...base, milestones: half, paydays: [log(1, '2026-11-06'), log(2, '2026-11-20')] };
+    expect(pickNote(at2).kind).toBe('halfway');
+    expect(pickNote({ ...at2, paydays: [...at2.paydays, log(3, '2026-12-04')] }).kind).toBe('rotating');
+  });
+
+  it('counts by payday, not by calendar day: four paydays marked on the same day show Halfway on one of them only', () => {
+    // all reached on the same calendar day (everything was marked early), but the milestone belongs to payday 2
+    const half = [{ id: 'pct-50', reachedOn: '2026-11-05', payday: 2 }] as never;
+    const early = (n: number) => ({ ...base, milestones: half, paydays: Array.from({ length: n }, (_, i) => log(i + 1, `2026-12-${String(i + 1).padStart(2, '0')}`)) });
+    expect([1, 2, 3, 4, 5].map((n) => pickNote(early(n)).kind === 'halfway')).toEqual([false, true, false, false, false]);
   });
 
   it('75% says "Almost home." once, ahead of halfway', () => {

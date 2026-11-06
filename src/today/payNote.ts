@@ -1,12 +1,11 @@
 /** Which note shows on Today: a line for what just happened if there is one, else the line for this payday. */
 import { debtPaidLine, ROTATING_NOTES, STATE_NOTES } from '../copy/notes';
 import type { AppData } from '../data/types';
+import { firstPaydayAtPct } from '../state/milestones';
 
 export interface NoteContext {
   /** A debt reached zero just now (the "debt paid" moment is on screen or was a moment ago) */
   freshPaidDebt?: boolean;
-  /** Today's date: a milestone reached today, by extra money, also counts as "just now" */
-  today?: string;
 }
 
 export type NoteKind = 'debtFree' | 'debtPaid' | 'halfway' | 'almostHome' | 'firstPayday' | 'bufferUsed' | 'afterSkip' | 'rotating';
@@ -30,10 +29,14 @@ export function pickNote(d: NoteData, ctx: NoteContext = {}): { kind: NoteKind; 
   if (d.debts.length > 0 && d.debts.every((x) => x.status !== 'active') && d.debts.some((x) => x.status === 'paid')) return { kind: 'debtFree', text: STATE_NOTES.debtFree };
   if (ctx.freshPaidDebt || paidOnLast) return { kind: 'debtPaid', text: debtPaidLine(d.debts.filter((x) => x.status === 'paid').length) };
 
-  // 2 A milestone shows once: on the payday it was reached (or the day it was reached by extra money). Later paydays rotate.
+  // 2 A milestone shows once, on the payday where it was first reached, counted by payday and never by calendar day:
+  // paydays marked early on one day are different paydays. Later paydays use the rotating lines.
   const reachedNow = (id: 'pct-50' | 'pct-75') => {
     const m = d.milestones.find((x) => x.id === id);
-    return m !== undefined && ((last !== undefined && m.reachedOn === last.date) || (ctx.today !== undefined && m.reachedOn === ctx.today));
+    if (m === undefined || last === undefined) return false;
+    // saved with its payday; older data works it out from the paydays, or from the payday's own date
+    const payday = m.payday ?? firstPaydayAtPct(d, id === 'pct-75' ? 75 : 50);
+    return payday != null ? last.number === payday : m.reachedOn === last.date;
   };
   if (reachedNow('pct-75')) return { kind: 'almostHome', text: STATE_NOTES.almostHome };
   if (reachedNow('pct-50')) return { kind: 'halfway', text: STATE_NOTES.halfway };

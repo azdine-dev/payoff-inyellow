@@ -192,6 +192,9 @@ export type MilestoneKey =
 export interface Milestone extends Meta {
   id: MilestoneKey;
   reachedOn: string;
+  /** The payday it was first reached on (the payday number). Notes count by payday, never by calendar day, so
+   *  paydays marked early on one day cannot repeat a milestone note. */
+  payday?: number;
 }
 
 export interface FindMoneyItem {

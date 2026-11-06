@@ -307,7 +307,7 @@ export function Today() {
   const bufferFull = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
 
   // One short line for this payday: for what just happened if there is something, else the line of the payday
-  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0, today: today.value });
+  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0 });
   const noteCard = (
     <section class="card note-card" aria-label="A note for this payday" data-testid="pay-note-card">
       <span class="note-icon" aria-hidden="true">
