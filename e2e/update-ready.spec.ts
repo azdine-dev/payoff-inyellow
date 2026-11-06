@@ -1,6 +1,7 @@
 /** "An update is ready" on the next app open, when a new version was found earlier and is still waiting. */
 import { expect, test } from '@playwright/test';
 import { nadiaSetup } from './nadia';
+import { goTab, tapDidIt } from './scenario';
 
 test('a waiting update is shown on the next open, and Not now hides it for that open only', async ({ page }) => {
   await nadiaSetup(page);
@@ -24,4 +25,26 @@ test('when the new version already runs, the old note is cleared and nothing is 
   await expect(page.getByTestId('debt-free-pill')).toBeVisible();
   await expect(page.getByTestId('update-bar')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('piy.updatePending'))).toBeNull();
+});
+
+test('an update never erases saved data: with the old files and caches thrown away, the plan is still there', async ({ page }) => {
+  await nadiaSetup(page);
+  await tapDidIt(page);
+  await expect(page.getByTestId('paid-card')).toBeVisible();
+  await goTab(page, 'Debts');
+  await page.waitForTimeout(500); // the short number roll is over
+  const balance = (await page.getByRole('region', { name: 'Store Card' }).locator('.debt-left').first().textContent())!;
+  // what an update replaces: the service worker and the cached app files (never the database)
+  await page.evaluate(async () => {
+    for (const reg of await navigator.serviceWorker.getRegistrations()) await reg.unregister();
+    for (const key of await caches.keys()) await caches.delete(key);
+  });
+  await page.reload();
+  await goTab(page, 'Today');
+  await expect(page.getByTestId('paid-card')).toBeVisible(); // the payday is still done
+  await goTab(page, 'Debts');
+  await page.waitForTimeout(500);
+  await expect(page.getByRole('region', { name: 'Store Card' }).locator('.debt-left').first()).toHaveText(balance);
+  await goTab(page, 'Path');
+  await expect(page.getByTestId('whole-plan-card')).toBeVisible();
 });
