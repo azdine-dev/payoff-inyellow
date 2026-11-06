@@ -132,3 +132,28 @@ test.describe('Mark it done early', () => {
     await expect(page.getByTestId('path-preview').getByRole('button', { name: /done early|I did it/i })).toHaveCount(0);
   });
 });
+
+test.describe('the real gone date of a debt that is already paid', () => {
+  test('Preview shows when each debt is gone: Store Card Fri 1 Jan 2027, Medical Fri 12 Feb 2027', async ({ page }) => {
+    await nadiaSetup(page);
+    await openList(page);
+    await page.getByRole('button', { name: 'Fri 20 Nov, to come' }).click();
+    await page.getByRole('button', { name: 'March 2027' }).click(); // the last payday of March
+    const debts = page.getByTestId('preview-debts');
+    await expect(debts.getByTestId('preview-debt').filter({ hasText: 'Store Card' })).toContainText('Gone Fri 1 Jan 2027');
+    await expect(debts.getByTestId('preview-debt').filter({ hasText: 'Medical' })).toContainText('Gone Fri 12 Feb 2027');
+  });
+
+  test('a debt paid off today keeps today as its gone date, in the preview of a later day', async ({ page }) => {
+    await nadiaSetup(page);
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Extra money' });
+    await sheet.getByRole('textbox', { name: 'Extra money' }).fill('450');
+    await sheet.getByRole('button', { name: 'Use it', exact: true }).click();
+    await page.getByRole('button', { name: /Next payday|Close|Continue/ }).first().click().catch(() => undefined);
+    await goTab(page, 'Path');
+    await showPaydays(page);
+    await page.getByRole('button', { name: 'Fri 20 Nov, to come' }).click();
+    await expect(page.getByTestId('preview-debts').getByTestId('preview-debt').filter({ hasText: 'Store Card' })).toContainText('Gone Fri 30 Oct 2026');
+  });
+});

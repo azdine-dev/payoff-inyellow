@@ -8,6 +8,7 @@ import type { AppData } from '../data/types';
 import { formatMoney } from '../lib/money';
 import { monthsBetween, shortDate } from '../lib/today';
 import { progressStats } from '../state/milestones';
+import { goneDates } from './goneDates';
 import { previewDate } from '../state/store';
 import { Scene, sceneStage, STAGE_NAMES } from '../ui/Scene';
 
@@ -85,7 +86,7 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
 
   // Debts in payoff order: gone by then, or still being paid
   const order = r.order.map((id) => d.debts.find((x) => x.id === id)).filter((x): x is NonNullable<typeof x> => Boolean(x) && x!.status !== 'archived');
-  const goneRow = (id: string) => r.rows.findIndex((x) => x.debts.some((y) => y.id === id && y.balanceAfter <= 0.005));
+  const goneOn = goneDates(d, r);
   const stepOf = (id: string) => row.debts.find((x) => x.id === id);
   const isGone = (id: string) => (stepOf(id)?.balanceAfter ?? 0) <= 0.005;
   const payingNow = order.find((x) => !isGone(x.id))?.id;
@@ -151,8 +152,7 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
       <section class="card stack" style={{ gap: 0 }} aria-label="Debts then" data-testid="preview-debts">
         {order.map((x, k) => {
           const gone = isGone(x.id);
-          const at = goneRow(x.id);
-          const goneDate = at >= 0 ? r.rows[at]!.date : null;
+          const goneDate = goneOn.get(x.id) ?? null;
           return (
             <div key={x.id} class="row" style={{ padding: '12px 0', borderTop: k ? '1px solid var(--line)' : undefined, alignItems: 'center' }} data-testid="preview-debt">
               <span class="stack" style={{ gap: 0 }}>

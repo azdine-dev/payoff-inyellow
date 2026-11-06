@@ -4,11 +4,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { openAppDB } from '../data/db';
 import type { AppData } from '../data/types';
 import { simulatePlan } from '../engine';
-import { completeSetup, didPayday, type SetupValues } from '../state/actions';
+import { completeSetup, didPayday, extraPayment, type SetupValues } from '../state/actions';
 import { arrivalDue, plannedMoney, toPlanInput } from '../state/planInput';
 import { addComingLater, confirmArrived, moveComingLater, removeOneOff, restoreOneOff } from '../state/planActions';
 import { comingLaterPlan, whatIfSummary } from '../state/whatIf';
 import { comingLaterLine } from '../state/comingLater';
+import { goneDates } from './goneDates';
 import { buildChapters } from './chaptersModel';
 import { buildWholePlan } from './wholePlanModel';
 
@@ -139,5 +140,33 @@ describe('Money coming later', () => {
     // after yes it is used with the payday
     const used = (await didPayday(db, yes, {})).data;
     expect(used.settings.oneOffs).toHaveLength(0);
+  });
+});
+
+describe('the day each debt is gone', () => {
+  const id = (data: AppData, name: string) => data.debts.find((x) => x.name === name)!.id;
+
+  it('in the plan: Store Card Fri 1 Jan 2027, Medical Fri 12 Feb 2027, Visa Fri 16 Jul 2027', () => {
+    const g = goneDates(d, plan(d));
+    expect(g.get(id(d, 'Store Card'))).toBe('2027-01-01');
+    expect(g.get(id(d, 'Medical'))).toBe('2027-02-12');
+    expect(g.get(id(d, 'Visa'))).toBe('2027-07-16');
+  });
+
+  it('a debt already paid has its real date, not the first payday of the plan', async () => {
+    const db = await openAppDB('gone-dates');
+    const paid = (await extraPayment(db, d, 450, '2026-11-04')).data; // Store Card is paid off on Wed 4 Nov
+    expect(paid.debts.find((x) => x.name === 'Store Card')!.status).toBe('paid');
+    const g = goneDates(paid, plan(paid));
+    expect(g.get(id(paid, 'Store Card'))).toBe('2026-11-04');
+    expect(g.get(id(paid, 'Medical'))).toBe('2027-01-15'); // the others still come from the plan
+  });
+
+  it('paid through paydays: the date of the payday that did it', async () => {
+    const db = await openAppDB('gone-dates-paydays');
+    let x = d;
+    for (let i = 0; i < 5; i++) x = (await didPayday(db, x, {})).data;
+    expect(x.debts.find((y) => y.name === 'Store Card')!.status).toBe('paid');
+    expect(goneDates(x, plan(x)).get(id(x, 'Store Card'))).toBe('2027-01-01');
   });
 });
