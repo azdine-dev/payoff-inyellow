@@ -11,12 +11,21 @@ import './styles/base.css';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App';
 import { makeApplyUpdate, removeHostingOverlays } from './lib/restart';
+import { pendingUpdateOnOpen, rememberPendingUpdate } from './lib/updateNotice';
 import { setApplyUpdate, updateReady } from './state/store';
 
 // Updates download quietly. Nothing reloads mid-payday: the buyer taps "Restart now" (Today or Settings) once.
 // "An update is ready" only when an older version was already running this page. A first open has nothing to update.
 const hadVersion = Boolean(navigator.serviceWorker?.controller);
-const update = registerSW({ onNeedRefresh: () => (updateReady.value = hadVersion) });
+const update = registerSW({
+  onNeedRefresh: () => {
+    updateReady.value = hadVersion;
+    // written down, so the next app open says it again if the update still has not been applied
+    if (hadVersion) rememberPendingUpdate();
+  },
+});
+// An update that was found last time and is still waiting shows "An update is ready" on this open too
+if (pendingUpdateOnOpen()) updateReady.value = true;
 // "Restart now" is one tap: the new version takes over and the page reloads into it
 setApplyUpdate(makeApplyUpdate(update, () => location.reload()));
 removeHostingOverlays();

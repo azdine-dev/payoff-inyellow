@@ -20,9 +20,12 @@ function editionHtml(free: boolean): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const free = mode === 'free';
   return {
+    // A label that changes with every build, so the app can tell whether an update it noted earlier is still waiting
+    // (a real build only: the dev server and the tests run as "dev")
+    define: command === 'build' ? { __BUILD_ID__: JSON.stringify(`${Date.now()}`) } : {},
     plugins: [
       preact(),
       editionHtml(free),
