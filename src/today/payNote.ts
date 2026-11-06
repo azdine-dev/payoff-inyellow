@@ -1,5 +1,5 @@
 /** Which note shows on Today: a line for what just happened if there is one, else the line for this payday. */
-import { ROTATING_NOTES, STATE_NOTES } from '../copy/notes';
+import { debtPaidLine, ROTATING_NOTES, STATE_NOTES } from '../copy/notes';
 import type { AppData } from '../data/types';
 
 export interface NoteContext {
@@ -28,7 +28,7 @@ export function pickNote(d: NoteData, ctx: NoteContext = {}): { kind: NoteKind; 
     d.debts.some((x) => x.status === 'paid' && d.payments.some((p) => p.debtId === x.id && p.paydayNumber === last.number && p.date >= last.date));
   // Every debt is paid: the line is "Debt-free.", not "One down"
   if (d.debts.length > 0 && d.debts.every((x) => x.status !== 'active') && d.debts.some((x) => x.status === 'paid')) return { kind: 'debtFree', text: STATE_NOTES.debtFree };
-  if (ctx.freshPaidDebt || paidOnLast) return { kind: 'debtPaid', text: STATE_NOTES.debtPaid };
+  if (ctx.freshPaidDebt || paidOnLast) return { kind: 'debtPaid', text: debtPaidLine(d.debts.filter((x) => x.status === 'paid').length) };
 
   // 2 A milestone shows once: on the payday it was reached (or the day it was reached by extra money). Later paydays rotate.
   const reachedNow = (id: 'pct-50' | 'pct-75') => {

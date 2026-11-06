@@ -13,6 +13,14 @@ export const STATE_NOTES = {
 } as const;
 
 /** 30 lines that rotate, one per payday. The same line shows all payday long, however often the app is opened. */
+const NUMBER_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+
+/** "PAID. One down." for the first debt, "PAID. Two down." for the second, so two paid paydays in a row never say the same thing */
+export function debtPaidLine(paidSoFar: number): string {
+  if (paidSoFar <= 1) return STATE_NOTES.debtPaid;
+  return `PAID. ${paidSoFar <= 10 ? NUMBER_WORDS[paidSoFar] : paidSoFar} down.`;
+}
+
 export const ROTATING_NOTES: readonly string[] = [
   'One paycheck at a time. That is all this is.',
   'Small payments add up quietly.',
