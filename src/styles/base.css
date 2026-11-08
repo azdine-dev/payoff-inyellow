@@ -2351,8 +2351,8 @@ textarea {
 }
 
 .road-sq .sq-body {
-  fill: var(--line);
-  stroke: var(--line);
+  fill: var(--square-fill);
+  stroke: var(--square-line);
   stroke-width: 1.8;
 }
 
@@ -3008,7 +3008,7 @@ textarea {
   height: 22px;
   border-radius: 6px;
   background: var(--card);
-  border: 1.5px solid color-mix(in srgb, var(--ink) 28%, transparent);
+  border: 1.5px solid var(--square-line);
 }
 .chapter-squares.small {
   gap: 5px;

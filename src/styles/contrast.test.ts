@@ -91,6 +91,17 @@ describe.each([
   }
 });
 
+describe('empty payday squares in the dark theme', () => {
+  const t = theme(darkOverrides);
+  it('the border is at least 3:1 against the card (Chapters and Road), and against the page', () => {
+    expect(ratio(t.color('square-line'), t.color('card'))).toBeGreaterThanOrEqual(3);
+    expect(ratio(t.color('square-line'), t.color('paper'))).toBeGreaterThanOrEqual(3);
+  });
+  it('the Road square fill does not hide its border', () => {
+    expect(ratio(t.color('square-line'), t.color('square-fill'))).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe('yellow on sage', () => {
   // Yellow and sage are close in lightness (about 1.1:1 in the light theme), so yellow never relies on color alone there
   const base = readFileSync('src/styles/base.css', 'utf8');
