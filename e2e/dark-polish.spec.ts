@@ -49,3 +49,16 @@ test.describe('empty payday squares in dark mode', () => {
     expect(await ratio(page, stroke, card)).toBeGreaterThanOrEqual(3);
   });
 });
+
+test.describe('the dark scene', () => {
+  test('Today in dark: lighter hills and a soft sun, so the scene reads as calm night', async ({ page }) => {
+    await nadiaSetup(page);
+    await useDark(page);
+    const fill = (sel: string) => page.locator(`[data-testid="scene"] ${sel}`).first().evaluate((el) => getComputedStyle(el).fill);
+    expect(await fill('.sc-hill1')).toBe('rgb(46, 69, 55)'); // #2E4537
+    expect(await fill('.sc-hill2')).toBe('rgb(58, 85, 68)'); // #3A5544
+    expect(await fill('.sc-sun')).toBe('rgba(255, 246, 194, 0.35)');
+    const sky = await fill('.sc-sky');
+    expect(await ratio(page, await fill('.sc-hill2'), sky)).toBeGreaterThanOrEqual(1.6);
+  });
+});

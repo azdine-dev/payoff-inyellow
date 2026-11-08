@@ -2640,16 +2640,16 @@ textarea {
 
 :root[data-theme='dark'] .read-art {
   --sc-sky: #1f2b27;
-  --sc-sun: #4a4528;
-  --sc-h2: #324838;
+  --sc-sun: rgba(255, 246, 194, 0.35);
+  --sc-h2: #3a5544;
   --sc-sq: #1b2433;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .read-art {
     --sc-sky: #1f2b27;
-    --sc-sun: #4a4528;
-    --sc-h2: #324838;
+    --sc-sun: rgba(255, 246, 194, 0.35);
+    --sc-h2: #3a5544;
     --sc-sq: #1b2433;
   }
 }
@@ -2724,9 +2724,9 @@ textarea {
 
 :root[data-theme='dark'] .scene {
   --sc-sky: #1f2b27;
-  --sc-sun: #4a4528;
-  --sc-h1: #2a3b31;
-  --sc-h2: #324838;
+  --sc-sun: rgba(255, 246, 194, 0.35); /* yellow-soft, soft but visible on the night sky */
+  --sc-h1: #2e4537;
+  --sc-h2: #3a5544;
   --sc-tree: #4f6b58;
   --sc-water: #5b7f9e;
   --sc-field: #5f8a6b;
@@ -2735,16 +2735,16 @@ textarea {
 
 :root[data-theme='dark'] .scene-4,
 :root[data-theme='dark'] .scene-5 {
-  --sc-h1: #30463a;
-  --sc-h2: #3a5444;
+  --sc-h1: #34503f;
+  --sc-h2: #416150;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .scene {
     --sc-sky: #1f2b27;
-    --sc-sun: #4a4528;
-    --sc-h1: #2a3b31;
-    --sc-h2: #324838;
+    --sc-sun: rgba(255, 246, 194, 0.35);
+    --sc-h1: #2e4537;
+    --sc-h2: #3a5544;
     --sc-tree: #4f6b58;
     --sc-water: #5b7f9e;
     --sc-field: #5f8a6b;
@@ -2752,8 +2752,8 @@ textarea {
   }
   :root:not([data-theme]) .scene-4,
   :root:not([data-theme]) .scene-5 {
-    --sc-h1: #30463a;
-    --sc-h2: #3a5444;
+    --sc-h1: #34503f;
+    --sc-h2: #416150;
   }
 }
 
