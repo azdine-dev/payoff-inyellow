@@ -62,3 +62,27 @@ test.describe('the dark scene', () => {
     expect(await ratio(page, await fill('.sc-hill2'), sky)).toBeGreaterThanOrEqual(1.6);
   });
 });
+
+test.describe('the PAID card in dark mode', () => {
+  test('still yellow, a little muted, with text at least 4.5:1', async ({ page }) => {
+    await nadiaSetup(page);
+    await useDark(page);
+    await tapDidIt(page);
+    const card = page.getByTestId('paid-card');
+    await expect(card).toBeVisible();
+    const bg = await card.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg).toBe('rgb(232, 204, 69)'); // #E8CC45, softer than the day yellow
+    const [r, g, b] = (bg.match(/\d+/g) ?? []).map(Number);
+    expect(r! > b! + 100 && g! > b! + 100).toBe(true); // it is still plainly yellow
+    for (const sel of ['.paid-stamp', '.paid-rows li', '.link']) {
+      const text = await card.locator(sel).first().evaluate((el) => getComputedStyle(el).color);
+      expect(await ratio(page, text, bg), sel).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test('in the day theme the card keeps the full yellow', async ({ page }) => {
+    await nadiaSetup(page);
+    await tapDidIt(page);
+    await expect(page.getByTestId('paid-card')).toHaveCSS('background-color', 'rgb(255, 225, 77)');
+  });
+});

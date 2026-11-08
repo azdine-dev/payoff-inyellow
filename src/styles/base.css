@@ -748,7 +748,7 @@ select {
 
 /* Done: the card is yellow, with a stamp */
 .paid-card {
-  background: var(--yellow);
+  background: var(--paid-bg);
   color: var(--on-yellow);
   border: 1.5px solid var(--on-yellow);
   border-radius: 28px;

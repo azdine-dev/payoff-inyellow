@@ -16,6 +16,7 @@
   --pc-bg: var(--calm); /* the payday card on Today */
   --pc-fg: var(--ink);
   --row-bg: rgba(255, 255, 255, 0.75); /* rows inside a calm card */
+  --paid-bg: var(--yellow); /* the PAID card on Today: still yellow */
   --square-line: #c9c3b5; /* the border of an empty payday square (Chapters, Road) */
   --square-fill: var(--line); /* its fill on the Road */
 
@@ -65,6 +66,7 @@
   --on-ink: #1b2433;
   --pc-bg: #24332b;
   --row-bg: rgba(34, 45, 63, 0.75);
+  --paid-bg: #e8cc45; /* a slightly muted yellow at night, still yellow, with the same dark text (8.9 to 1) */
   --square-line: #74829a; /* 3.5 to 1 against the card, so an empty square can be seen */
   --square-fill: #222d3f;
   color-scheme: dark;
@@ -86,6 +88,7 @@
     --on-ink: #1b2433;
     --pc-bg: #24332b;
     --row-bg: rgba(34, 45, 63, 0.75);
+    --paid-bg: #e8cc45;
     --square-line: #74829a;
     --square-fill: #222d3f;
     color-scheme: dark;

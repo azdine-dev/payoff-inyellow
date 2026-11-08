@@ -70,6 +70,7 @@ function pairs(t: ReturnType<typeof theme>) {
     ['link (action) on calm band', c('action'), c('calm-band'), 4.5],
     ['text on yellow', c('on-yellow'), c('yellow'), 4.5],
     ['text on soft yellow', c('ink'), c('yellow-soft'), 4.5],
+    ['text on the PAID card', c('on-yellow'), c('paid-bg'), 4.5],
     ['chip text on ink', c('on-ink'), c('ink'), 4.5],
     ['ink hairline-free button edge (action vs paper)', c('action'), c('paper'), 3],
   ];
