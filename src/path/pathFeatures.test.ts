@@ -10,7 +10,7 @@ import { addComingLater, confirmArrived, moveComingLater, removeOneOff, restoreO
 import { comingLaterPlan, whatIfSummary } from '../state/whatIf';
 import { comingLaterLine } from '../state/comingLater';
 import { goneDates } from './goneDates';
-import { buildChapters } from './chaptersModel';
+import { buildChapters, extraNote } from './chaptersModel';
 import { buildWholePlan } from './wholePlanModel';
 
 const nadia: SetupValues = {
@@ -54,6 +54,14 @@ describe('Chapters', () => {
     expect(m.chapters[0]!.rollsOn).toBe(30);
     expect(m.chapters[0]!.extraFrom).toBe('2026-12-04'); // the buffer fills first
     expect(m.chapters[1]!.extraFrom).toBeNull();
+  });
+
+  it('the chapter note says when the extra starts, and "The extra goes here now." once that date has come', () => {
+    const day = (iso: string) => `day ${iso}`;
+    expect(extraNote('2026-12-04', '2026-11-03', day)).toBe('Your buffer fills first. From day 2026-12-04 the extra goes here.');
+    expect(extraNote('2026-12-04', '2026-12-03', day)).toBe('Your buffer fills first. From day 2026-12-04 the extra goes here.');
+    expect(extraNote('2026-12-04', '2026-12-04', day)).toBe('The extra goes here now.'); // the day it starts
+    expect(extraNote('2026-12-04', '2027-01-10', day)).toBe('The extra goes here now.'); // after it
   });
 
   it('after the first payday is done: one yellow square, the next payday is "here"', async () => {

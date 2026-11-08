@@ -130,3 +130,11 @@ export function buildChapters(d: AppData, r: PlanResult): ChaptersModel {
   });
   return { chapters, debtFreeDate: r.debtFreeDate };
 }
+
+/**
+ * The note under a chapter whose extra starts after the buffer is full. Before that day it says when the extra starts;
+ * once the day has come it says the extra goes there now.
+ */
+export function extraNote(extraFrom: string, today: string, dayText: (iso: string) => string): string {
+  return extraFrom <= today ? 'The extra goes here now.' : `Your buffer fills first. From ${dayText(extraFrom)} the extra goes here.`;
+}

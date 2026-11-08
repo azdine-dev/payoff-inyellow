@@ -11,7 +11,7 @@ import { changeablePayday } from '../state/actions';
 import { data, plan, previewDate, today } from '../state/store';
 import { CheckIcon } from '../ui/controls';
 import { Empty } from '../ui/Empty';
-import { buildChapters, type Chapter, type ChapterDay } from './chaptersModel';
+import { buildChapters, extraNote, type Chapter, type ChapterDay } from './chaptersModel';
 import { UndoPayday } from './UndoPayday';
 
 /** What a payday held, as small tags. Outline for what is ahead. */
@@ -201,7 +201,7 @@ export function Chapters() {
                 </span>
                 {c.extraFrom && (
                   <span class="chapter-note">
-                    Your buffer fills first. From {shortDate(c.extraFrom, today.value)} the extra goes here.
+                    {extraNote(c.extraFrom, today.value, (iso) => shortDate(iso, today.value))}
                   </span>
                 )}
               </button>

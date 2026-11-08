@@ -230,3 +230,21 @@ test.describe('Coming later list in Path', () => {
     await expect(page.getByTestId('coming-later-line')).toHaveText('With your $800 tax refund: May 2027');
   });
 });
+
+test.describe('the Chapter 1 note', () => {
+  test('before the date it says when the extra starts, after it says the extra goes here now', async ({ page }) => {
+    await nadiaSetup(page); // Fri 30 Oct: the buffer fills first
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Chapters', exact: true }).click();
+    const first = page.getByTestId('chapter').nth(0);
+    await expect(first).toContainText('Your buffer fills first. From Fri 4 Dec the extra goes here.');
+    // once Fri 4 Dec has come
+    await page.clock.setFixedTime(new Date('2026-12-05T10:00:00'));
+    await page.reload();
+    await goTab(page, 'Path');
+    await page.getByRole('button', { name: 'Chapters', exact: true }).click();
+    const later = page.getByTestId('chapter').nth(0);
+    await expect(later).toContainText('The extra goes here now.');
+    await expect(later).not.toContainText('Your buffer fills first');
+  });
+});
