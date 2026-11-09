@@ -261,3 +261,32 @@ test('Chapter 1 note: once the payday where the extra starts is marked done (ear
   await expect(first).toContainText('The extra goes here now.');
   await expect(first).not.toContainText('From Fri');
 });
+
+test.describe('Look ahead', () => {
+  test('Path has a month row under the date; a month opens the last payday of that month, July opens the debt-free day', async ({ page }) => {
+    await nadiaSetup(page);
+    await goTab(page, 'Path');
+    const row = page.getByTestId('look-ahead');
+    await expect(row).toContainText('Look ahead');
+    const a = await page.getByTestId('status-line').boundingBox();
+    const b = await row.boundingBox();
+    expect(b!.y).toBeGreaterThan(a!.y); // under the date
+    await row.getByRole('button', { name: 'Look ahead to March 2027' }).click();
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 26 Mar 2027');
+    await page.getByRole('button', { name: 'Back to today' }).click();
+    await page.getByTestId('look-ahead').getByRole('button', { name: 'Look ahead to July 2027' }).click();
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 16 Jul 2027');
+    await expect(page.getByTestId('scene')).toHaveAttribute('data-stage', '5'); // the Home scene
+    await expect(page.getByTestId('preview-months')).toContainText('this is your debt-free day');
+  });
+
+  test('the Debt-free in card on Today opens the preview of the debt-free day', async ({ page }) => {
+    await nadiaSetup(page);
+    await page.getByTestId('debt-free-pill').click();
+    await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 16 Jul 2027');
+    await expect(page.getByTestId('scene')).toHaveAttribute('data-stage', '5');
+    await expect(page.getByTestId('preview-owed')).toHaveText('$0');
+    await page.getByRole('button', { name: 'Back to today' }).click();
+    await expect(page.getByTestId('look-ahead')).toBeVisible(); // back on Path
+  });
+});

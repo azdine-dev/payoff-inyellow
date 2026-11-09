@@ -230,7 +230,9 @@ export async function expectNoSidewaysScroll(page: Page) {
     const outside = Array.from(document.querySelectorAll<HTMLElement>('body *'))
       .filter((el) => {
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && (r.right > w + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed';
+        // a row that scrolls sideways on purpose (the months of Look ahead) is allowed to hold things outside the screen
+        const scrolls = (n: HTMLElement | null): boolean => (n ? (['auto', 'scroll'].includes(getComputedStyle(n).overflowX) && n.scrollWidth > n.clientWidth) || scrolls(n.parentElement) : false);
+        return r.width > 0 && r.height > 0 && (r.right > w + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed' && !scrolls(el.parentElement);
       })
       .map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
     return { wide, outside: outside.slice(0, 5) };

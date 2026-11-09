@@ -21,7 +21,7 @@ import { Count } from '../ui/useCountUp';
 import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { PaydayCalendar } from './PaydayCalendar';
-import { PathPreview } from './Preview';
+import { LookAhead, PathPreview } from './Preview';
 import { Chapters } from './Chapters';
 import { ComingLaterList } from './ComingLaterList';
 import { WholePlan, WholePlanCard } from './WholePlan';
@@ -193,6 +193,7 @@ export function Path() {
                 {paydaysLeft} payday{paydaysLeft === 1 ? '' : 's'} left
               </p>
             )}
+            <LookAhead r={r} />
           </>
         ) : (
           <p class="path-count" data-testid="status-line">

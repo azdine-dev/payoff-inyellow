@@ -20,6 +20,36 @@ const fullDate = (iso: string, today: string) => {
   return /\d{4}$/.test(s) ? s : `${s} ${iso.slice(0, 4)}`;
 };
 
+/** One chip per month the plan covers. A chip opens the last payday of that month; the debt-free month ends on the debt-free day. */
+export function lookAheadMonths(r: PlanResult, cap = 120): { key: string; iso: string }[] {
+  const months: { key: string; iso: string }[] = [];
+  for (const x of r.rows.slice(0, cap)) {
+    const key = x.date.slice(0, 7);
+    const at = months.findIndex((m) => m.key === key);
+    if (at < 0) months.push({ key, iso: x.date });
+    else months[at] = { key, iso: x.date };
+  }
+  return months;
+}
+
+/** Path, under the date: "Look ahead" and a row of months. A tap opens the preview of that month. */
+export function LookAhead(props: { r: PlanResult }) {
+  const months = lookAheadMonths(props.r, 60);
+  if (months.length < 1) return null;
+  return (
+    <div class="stack look-ahead" style={{ gap: 4 }} data-testid="look-ahead">
+      <p class="label">Look ahead</p>
+      <div class="pv-months" role="group" aria-label="Look ahead, pick a month">
+        {months.map((m) => (
+          <button key={m.key} type="button" class="pill plain chip" aria-label={`Look ahead to ${monthYearName(m.iso)}`} onClick={() => (previewDate.value = m.iso)}>
+            {MONTHS[Number(m.key.slice(5, 7)) - 1]!.slice(0, 3)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** The words for "how long to go" from the previewed date */
 export function monthsToGoText(debtLeft: number, date: string, debtFreeDate: string | null): string {
   if (debtLeft <= 0.005) return 'Debt-free by then';
@@ -83,13 +113,7 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
   const label = fullDate(date, today);
 
   // One chip per month the plan covers: a chip opens the last payday of that month. The debt-free month ends on the debt-free day.
-  const months: { key: string; iso: string }[] = [];
-  for (const x of r.rows.slice(0, 120)) {
-    const key = x.date.slice(0, 7);
-    const at = months.findIndex((m) => m.key === key);
-    if (at < 0) months.push({ key, iso: x.date });
-    else months[at] = { key, iso: x.date };
-  }
+  const months = lookAheadMonths(r);
   const debtFreeDay = row.debtLeft <= 0.005;
 
   // Debts in payoff order: gone by then, or still being paid

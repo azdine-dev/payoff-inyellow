@@ -29,7 +29,7 @@ import { ArrivalCard, ComingLaterPanel } from './ComingLater';
 import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
-import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, previewDate, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Bar, Checkbox, CheckIcon, ChevronRight, Field, FooterNote, GearIcon, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -395,6 +395,9 @@ export function Today() {
         pctGone={progressStats(d).pct}
         withLine={comingLaterLine(d)?.text}
         onOpen={() => {
+          // the debt-free day, as a preview (read-only); without a date it just opens Path
+          const last = plan.value?.rows[plan.value.rows.length - 1];
+          previewDate.value = plan.value?.debtFreeDate && last ? last.date : null;
           pathView.value = 'progress';
           tab.value = 'path';
         }}

@@ -21,9 +21,11 @@ test.describe('2 · the countdown card', () => {
     await expectBrandRules(page);
   });
 
-  test('opens Path, and the result screen carries a small road too', async ({ page }) => {
+  test('opens the preview of the debt-free day, and the result screen carries a small road too', async ({ page }) => {
     await quickSetup(page);
     await page.getByTestId('debt-free-pill').click();
+    await expect(page.getByTestId('preview-banner')).toBeVisible();
+    await page.getByRole('button', { name: 'Back to today' }).click();
     await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   });
 

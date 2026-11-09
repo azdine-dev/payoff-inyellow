@@ -175,7 +175,7 @@ test.describe('Part 6 · every number is a door', () => {
   test('the debt-free pill opens Path, the focus debt card opens that debt, the safety net tile opens Safety net', async ({ page }) => {
     await quickSetup(page);
     await page.getByTestId('debt-free-pill').click();
-    await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
+    await expect(page.getByTestId('preview-banner')).toBeVisible(); // the debt-free day, as a preview
 
     await goTab(page, 'Today');
     await page.getByRole('button', { name: 'Store card, open in Debts' }).click();

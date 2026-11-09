@@ -17,6 +17,8 @@ test('the payday card shows its parts, even a week before the payday', async ({ 
   await expectBrandRules(page);
   await page.getByTestId('debt-free-pill').click();
   await expect(page.getByRole('button', { name: 'Path', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByTestId('preview-banner')).toContainText('Preview ·'); // the debt-free day, as a preview
+  await expect(page.getByTestId('preview-months')).toContainText('this is your debt-free day');
 });
 
 test('the safety tile opens Safety net', async ({ page }) => {
