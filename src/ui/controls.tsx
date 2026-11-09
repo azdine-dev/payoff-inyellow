@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
+import { useBackLayer } from '../lib/useBackLayer';
 import wordmark from './wordmark.svg';
 import wordmarkDark from './wordmark-dark.svg';
 
@@ -178,6 +179,7 @@ export function Note({ children }: { children: ComponentChildren }) {
 /** A bottom sheet. `center` makes it a centred card with an optional icon; `aside` is a small line right of the title. */
 export function Sheet(props: { open: boolean; onClose: () => void; title: string; children: ComponentChildren; center?: boolean; icon?: ComponentChildren; aside?: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  useBackLayer(props.open, props.onClose); // the back button closes a sheet
   useEffect(() => {
     if (!props.open) return;
     // Focus the first field, unless the buyer already put the cursor somewhere in the sheet (typing must never be moved)

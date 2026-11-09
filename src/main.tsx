@@ -11,6 +11,7 @@ import './styles/base.css';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App';
 import { makeApplyUpdate, removeHostingOverlays } from './lib/restart';
+import { startBackStack } from './lib/backStack';
 import { startUpdateChecks } from './lib/updateCheck';
 import { pendingUpdateOnOpen, rememberPendingUpdate } from './lib/updateNotice';
 import { setApplyUpdate, updateReady } from './state/store';
@@ -35,4 +36,5 @@ if (pendingUpdateOnOpen()) updateReady.value = true;
 setApplyUpdate(makeApplyUpdate(update, () => location.reload()));
 removeHostingOverlays();
 
+startBackStack(); // the back button closes the sub-screen you are on
 render(<App />, document.getElementById('app')!);

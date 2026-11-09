@@ -17,6 +17,7 @@ import { worthKnowing } from '../state/worthKnowing';
 import { focusDebt } from '../today/model';
 import { comingLaterLine } from '../state/comingLater';
 import { Chart } from '../progress/Chart';
+import { useBackLayer } from '../lib/useBackLayer';
 import { Count } from '../ui/useCountUp';
 import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
@@ -110,6 +111,9 @@ export function Path() {
 
   const laterLine = useMemo(() => comingLaterLine(d), [d]);
   const nextPayday = nextPaydayISO(s);
+  // The back button closes Whole plan and Preview, one at a time, instead of leaving the app
+  useBackLayer(wholePlanOpen.value, () => (wholePlanOpen.value = false));
+  useBackLayer(previewDate.value !== null, () => (previewDate.value = null));
   const road = useMemo(() => buildRoad(d, r, stats.start, stats.pct, today.value), [d, r]);
   const finishIndex =
     road.finishIndex === null ? null : previewRows === null ? road.finishIndex : Math.min(road.squares.length - 1, Math.max(road.firstAhead, finishIndexFor(road, previewRows)));

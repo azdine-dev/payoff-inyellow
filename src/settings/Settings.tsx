@@ -9,6 +9,7 @@ import { TwicePicker } from '../setup/TwicePicker';
 import { downloadText } from '../lib/csv';
 import { buildIcs, googleCalendarUrl } from '../lib/ics';
 import { versionText } from '../lib/version';
+import { useBackLayer } from '../lib/useBackLayer';
 import { COPY } from '../lib/copy';
 import { HARDSHIP_SCRIPT_URL, SUPPORT_EMAIL, VIDEO_URL } from '../lib/config';
 import { cleanCode, verifyCode } from '../lib/license';
@@ -43,6 +44,7 @@ export function Settings() {
   const s = d.settings;
   const cur = s.currency;
   const [edit, setEdit] = useState<Edit>(null);
+  useBackLayer(true, () => (tab.value = 'today')); // the back button comes home to Today
   // The home screen card on Today opens the how-to sheet here
   useEffect(() => {
     if (settingsSheet.value === 'install') {
@@ -176,7 +178,7 @@ export function Settings() {
     <main class="screen with-tabs">
       <div class="row">
         <h1>Settings</h1>
-        <button type="button" class="link" onClick={() => (tab.value = 'today')}>
+        <button type="button" class="link settings-back" onClick={() => (tab.value = 'today')}>
           Back to Today
         </button>
       </div>

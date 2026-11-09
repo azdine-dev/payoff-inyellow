@@ -3439,3 +3439,23 @@ textarea {
   cursor: pointer;
   text-align: left;
 }
+
+/* every back button is at least 44 by 44 points */
+.reads-back,
+.wp-back,
+.pv-back,
+.back-circle,
+.settings-back,
+.round-btn.small {
+  min-width: 44px;
+  min-height: 44px;
+}
+.settings-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.round-btn.small {
+  width: 44px;
+  height: 44px;
+}

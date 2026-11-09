@@ -6,6 +6,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { planNeedsHelp } from '../engine';
 import { READS, readWords, type Read, type ReadTarget } from '../copy/reads';
 import { getReadIds, markReadId } from '../lib/seen';
+import { useBackLayer } from '../lib/useBackLayer';
 import { toPlanInput } from '../state/planInput';
 import { data, plan, readsFrom, readsId, safetyIntent, tab, today } from '../state/store';
 import { CheckIcon, ChevronRight } from '../ui/controls';
@@ -46,6 +47,13 @@ export function ReadsScreen() {
   const [done, setDone] = useState<string[]>(getReadIds);
   const id = readsId.value;
   const current = id ? READS.find((r) => r.id === id) : undefined;
+  const fromToday = readsFrom.value === 'today';
+  // Back closes a read first (the list is under it), then the reads. A read opened from the card on Today goes straight home.
+  useBackLayer(true, () => {
+    readsId.value = null;
+    tab.value = readsFrom.value;
+  });
+  useBackLayer(Boolean(current) && !fromToday, () => (readsId.value = null));
 
   // Opening a read marks it read
   useEffect(() => {
