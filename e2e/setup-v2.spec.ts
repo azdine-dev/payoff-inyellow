@@ -169,7 +169,7 @@ test('a debt with a minimum cannot start the plan without its due day, and the n
   await card.getByLabel('Balance').fill('3200');
   await card.getByLabel('Monthly minimum').fill('96');
   await next(page).click();
-  await expect(page.getByText('Visa: add the due day.')).toBeVisible();
+  await expect(page.getByTestId('field-error').filter({ hasText: 'Add the due day.' })).toBeVisible(); // under its own field
   await expect(page.getByLabel('Step 2 of 4')).toBeVisible(); // still on the debts step
   await expectBrandRules(page);
   await card.getByLabel('Due day').fill('12');

@@ -1,33 +1,22 @@
 /** Pay schedule, with the welcome words on top and the currency as a small line */
-import { useState } from 'preact/hooks';
 import { COPY } from '../../lib/copy';
 import { VIDEO_URL } from '../../lib/config';
 import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
 import { shortDate } from '../../lib/today';
 import { editSeed } from '../../state/store';
-import { Choice, Field, HelpTip, NumberInput, Wordmark } from '../../ui/controls';
+import { Choice, Field, FieldError, HelpTip, NumberInput, Wordmark } from '../../ui/controls';
 import { FREQUENCIES } from '../draft';
 import { TwicePicker } from '../TwicePicker';
 import type { StepProps } from '../Wizard';
 
-/** "Currency: USD ($) · Change". Picked from the device. The choices open only when asked for. */
-function CurrencyLine({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
+/** "Currency [USD ($) v]": a select you can see, picked from the device language and region (USD when there is none) */
+function CurrencyField({ draft, set, errors }: Pick<StepProps, 'draft' | 'set' | 'errors'>) {
   const other = draft.currencyCode === '';
-  const [open, setOpen] = useState(false);
-  const shown = other ? draft.currencySymbol.trim() || 'your own symbol' : `${draft.currencyCode} (${draft.currencySymbol})`;
   return (
-    <div class="stack" style={{ gap: 6 }}>
-      <p class="muted small" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span data-testid="currency-line">Currency: {shown}</span>
-        {!open && !other && (
-          <button type="button" class="link small" onClick={() => setOpen(true)}>
-            Change
-          </button>
-        )}
-      </p>
-      {(open || other) && (
+    <div class="stack" style={{ gap: 8 }}>
       <Field label="Currency">
         <select
+          data-testid="currency-select"
           value={draft.currencyCode}
           onChange={(e) => {
             const code = (e.target as HTMLSelectElement).value;
@@ -47,9 +36,8 @@ function CurrencyLine({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
           <option value="">Other: type my own symbol</option>
         </select>
       </Field>
-      )}
-      {(open || other) && other && (
-        <Field label="Your symbol" hint="Any symbol works, like $, €, DH or ₦.">
+      {other && (
+        <Field label="Your symbol" hint="Any symbol works, like $, €, DH or ₦." name="currency" error={errors.currency}>
           <input type="text" maxLength={5} value={draft.currencySymbol} onInput={(e) => set({ currencySymbol: (e.target as HTMLInputElement).value })} />
         </Field>
       )}
@@ -82,7 +70,7 @@ function Welcome({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
   );
 }
 
-export function PayStep({ draft, set, today }: StepProps) {
+export function PayStep({ draft, set, today, errors }: StepProps) {
   return (
     <div class="stack">
       {!editSeed.value && <Welcome draft={draft} set={set} />}
@@ -92,20 +80,26 @@ export function PayStep({ draft, set, today }: StepProps) {
           <p>Your whole plan follows your paydays, not the calendar month.</p>
         </HelpTip>
       </h2>
-      <CurrencyLine draft={draft} set={set} />
-      <div class="stack" role="radiogroup" aria-label="How often you get paid" style={{ gap: 8 }}>
-        {FREQUENCIES.map((f) => (
-          <Choice key={f.value} checked={draft.frequency === f.value} onSelect={() => set({ frequency: f.value, ifThenDay: '' })} title={f.label} />
-        ))}
+      <CurrencyField draft={draft} set={set} errors={errors} />
+      <div class={`field-wrap${errors.frequency ? ' has-error' : ''}`} data-field="frequency">
+        <div class="stack" role="radiogroup" aria-label="How often you get paid" aria-invalid={errors.frequency ? true : undefined} aria-describedby={errors.frequency ? 'err-frequency' : undefined} style={{ gap: 8 }}>
+          {FREQUENCIES.map((f) => (
+            <Choice key={f.value} checked={draft.frequency === f.value} onSelect={() => set({ frequency: f.value, ifThenDay: '' })} title={f.label} />
+          ))}
+        </div>
+        {errors.frequency && <FieldError id="err-frequency">{errors.frequency}</FieldError>}
       </div>
       {draft.frequency === 'twice-monthly' && (
-        <TwicePicker pair={draft.twicePair} a={draft.twiceA} b={draft.twiceB} onChange={(p) => set({ ...p, ifThenDay: '' })} />
+        <div class={`field-wrap${errors.twice ? ' has-error' : ''}`} data-field="twice">
+          <TwicePicker pair={draft.twicePair} a={draft.twiceA} b={draft.twiceB} onChange={(p) => set({ ...p, ifThenDay: '' })} />
+          {errors.twice && <FieldError id="err-twice">{errors.twice}</FieldError>}
+        </div>
       )}
-      <Field label="Your next payday" hint={draft.frequency === 'twice-monthly' ? 'It should be one of your two pay days.' : undefined}>
+      <Field label="Your next payday" hint={draft.frequency === 'twice-monthly' ? 'It should be one of your two pay days.' : undefined} name="nextPayday" error={errors.nextPayday}>
         <input type="date" min={today} value={draft.nextPayday} onInput={(e) => set({ nextPayday: (e.target as HTMLInputElement).value, ifThenDay: '' })} />
       </Field>
       {draft.nextPayday && draft.nextPayday >= today && <p class="muted small">That's {shortDate(draft.nextPayday)}.</p>}
-      <Field label="Your usual paycheck (optional)" hint="Stays on this device.">
+      <Field label="Your usual paycheck (optional)" hint="Stays on this device." name="paycheck" error={errors.paycheck}>
         <NumberInput pre={draft.currencySymbol} value={draft.paycheck} onInput={(v) => set({ paycheck: v })} label="Usual paycheck" />
       </Field>
     </div>

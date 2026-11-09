@@ -27,6 +27,10 @@ describe('money', () => {
     expect(detectCurrency(['en-GB']).code).toBe('GBP');
     expect(detectCurrency(['fr-FR']).code).toBe('EUR');
     expect(detectCurrency([]).code).toBe('USD');
+    expect(detectCurrency(['xx-not a tag!']).code).toBe('USD'); // a bad tag falls back
+    expect(detectCurrency(['en', 'fr-MA']).code).toBe('MAD'); // a region that is written down beats one that is guessed
+    expect(detectCurrency(['fr']).code).toBe('EUR'); // language only: the likely region
+    expect(detectCurrency(['en-CA', 'en-US']).code).toBe('CAD'); // the first one that has a region
   });
 });
 

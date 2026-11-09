@@ -3396,3 +3396,34 @@ textarea {
 .road-trail-dash {
   stroke: var(--card);
 }
+
+/* ---------- form errors: under their own field, a thick action-colored border and a small icon. Never red. ---------- */
+.field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.field-wrap.has-error .field input,
+.field-wrap.has-error .field select {
+  border: 3px solid var(--action);
+}
+.field-wrap.has-error [role='radiogroup'] {
+  outline: 3px solid var(--action);
+  outline-offset: 4px;
+  border-radius: 14px;
+}
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.field-error-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--action);
+}

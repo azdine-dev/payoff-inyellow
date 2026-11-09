@@ -186,51 +186,67 @@ function validDate(iso: string): boolean {
 }
 
 /**
- * Calm notes for a step; empty = ready to continue. Written in ink, never red.
+ * What is wrong on a step, field by field. `field` is the name of the field that shows the message under it,
+ * `message` is the short line under the field, and `full` is the same thing with the field named, for a list.
+ * Empty = ready to continue. Written in ink, never red. The order is the order of the fields on the screen.
  * @param step 0 pay, 1 debts, 2 money
  */
-export function stepNotes(step: number, draft: Draft, today: string): string[] {
-  const notes: string[] = [];
+export interface StepError {
+  field: string;
+  message: string;
+  full: string;
+}
+
+export function stepErrors(step: number, draft: Draft, today: string): StepError[] {
+  const errors: StepError[] = [];
+  const add = (field: string, message: string, full = message) => errors.push({ field, message, full });
   const amount = (s: string) => parseAmount(s);
   switch (step) {
     case 0:
-      if (!draft.currencySymbol.trim()) notes.push('Type the symbol you use for money, like $ or €.');
-      if (!draft.frequency) notes.push('Choose how often you get paid.');
-      if (!draft.nextPayday || !validDate(draft.nextPayday)) notes.push('Pick the date of your next payday.');
-      else if (draft.nextPayday < today) notes.push('Pick your next payday: today or a day after today.');
-      else if (draft.nextPayday > addDaysISO(today, 62)) notes.push('Pick your next payday. It looks more than 2 months away.');
-      notes.push(...twiceNotes(draft.frequency, draft.nextPayday, draft.twicePair, draft.twiceA, draft.twiceB));
-      if (draft.paycheck.trim() && (amount(draft.paycheck) ?? -1) < 0) notes.push('The paycheck amount should be a number, like 1400.');
+      if (!draft.currencySymbol.trim()) add('currency', 'Type the symbol you use for money, like $ or €.');
+      if (!draft.frequency) add('frequency', 'Choose how often you get paid.');
+      for (const n of twiceNotes(draft.frequency, draft.nextPayday, draft.twicePair, draft.twiceA, draft.twiceB)) add('twice', n);
+      if (!draft.nextPayday || !validDate(draft.nextPayday)) add('nextPayday', 'Pick the date of your next payday.');
+      else if (draft.nextPayday < today) add('nextPayday', 'Pick your next payday: today or a day after today.');
+      else if (draft.nextPayday > addDaysISO(today, 62)) add('nextPayday', 'Pick your next payday. It looks more than 2 months away.');
+      if (draft.paycheck.trim() && (amount(draft.paycheck) ?? -1) < 0) add('paycheck', 'The paycheck amount should be a number, like 1400.');
       break;
     case 1: {
       const debts = filledDebts(draft);
-      if (!debts.length) notes.push('Add at least one debt with its balance.');
+      if (!debts.length) add('debts', 'Add at least one debt with its balance.');
       debts.forEach((d, i) => {
         const name = debtName(d, i);
         const bal = amount(d.balance);
         const apr = amount(d.apr);
         const min = amount(d.min);
-        if (bal === null || bal < 0) notes.push(`${name}: add the balance you owe.`);
+        const at = (what: string) => `debt-${d.key}-${what}`;
+        if (bal === null || bal < 0) add(at('balance'), 'Add the balance you owe.', `${name}: add the balance you owe.`);
         // The rate can be left empty: 24% is used and the debt is marked "rate missing"
-        if (d.apr.trim() && (apr === null || apr < 0 || apr > 10000)) notes.push(`${name}: add the interest rate, like 22.9, or leave it empty.`);
-        if (min === null || min < 0) notes.push(`${name}: add the monthly minimum. Type 0 if there is none.`);
+        if (d.apr.trim() && (apr === null || apr < 0 || apr > 10000)) add(at('apr'), 'Add the interest rate, like 22.9, or leave it empty.', `${name}: add the interest rate, like 22.9, or leave it empty.`);
+        if (min === null || min < 0) add(at('min'), 'Add the monthly minimum. Type 0 if there is none.', `${name}: add the monthly minimum. Type 0 if there is none.`);
         // The due day is what places the bill on a payday, so a debt with a minimum can't start the plan without it
-        if (!d.dueDay.trim() && min !== null && min > 0) notes.push(`${name}: add the due day. It’s on your statement, and the plan needs it to place the bill.`);
+        if (!d.dueDay.trim() && min !== null && min > 0) add(at('due'), 'Add the due day. It’s on your statement, and the plan needs it to place the bill.', `${name}: add the due day. It’s on your statement, and the plan needs it to place the bill.`);
         if (d.dueDay.trim()) {
           const day = Number(d.dueDay);
-          if (!Number.isInteger(day) || day < 1 || day > 31) notes.push(`${name}: the due day is a day of the month, from 1 to 31.`);
+          if (!Number.isInteger(day) || day < 1 || day > 31) add(at('due'), 'The due day is a day of the month, from 1 to 31.', `${name}: the due day is a day of the month, from 1 to 31.`);
         }
       });
-      if (debts.length && !debts.some((d) => (amount(d.balance) ?? 0) > 0)) notes.push('Add at least one debt with a balance above zero.');
+      // (when a balance is missing, its own field already says so)
+      if (debts.length && !debts.some((d) => (amount(d.balance) ?? 0) > 0) && debts.every((d) => amount(d.balance) !== null)) add('debts', 'Add at least one debt with a balance above zero.');
       break;
     }
     case 2:
-      if (draft.bufferNow.trim() && (amount(draft.bufferNow) ?? -1) < 0) notes.push('Set aside now: type what you have set aside, or leave it empty.');
-      if ((amount(draft.bufferGoal) ?? -1) < 0) notes.push('Goal: type a goal for your buffer, like 500.');
-      if ((amount(draft.extra) ?? -1) < 0) notes.push('Money for the plan each payday: type an amount, even 0. You can change it any time.');
+      if ((amount(draft.extra) ?? -1) < 0) add('extra', 'Type an amount, even 0. You can change it any time.', 'Money for the plan each payday: type an amount, even 0. You can change it any time.');
+      if (draft.bufferNow.trim() && (amount(draft.bufferNow) ?? -1) < 0) add('bufferNow', 'Type what you have set aside, or leave it empty.', 'Set aside now: type what you have set aside, or leave it empty.');
+      if ((amount(draft.bufferGoal) ?? -1) < 0) add('bufferGoal', 'Type a goal for your buffer, like 500.', 'Goal: type a goal for your buffer, like 500.');
       break;
   }
-  return notes;
+  return errors;
+}
+
+/** The same errors as plain lines, each with its field named */
+export function stepNotes(step: number, draft: Draft, today: string): string[] {
+  return stepErrors(step, draft, today).map((e) => e.full);
 }
 
 export function draftDebtInputs(draft: Draft): DebtInput[] {

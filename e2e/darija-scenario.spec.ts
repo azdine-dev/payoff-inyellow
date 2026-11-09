@@ -39,8 +39,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByText('You pay every month, but the balance never goes down.')).toBeVisible();
     await expect(page.getByText('You’re not bad at math. The math was hidden from you.')).toBeVisible();
     await expect(page.getByLabel('Step 1 of 4')).toBeVisible(); // progress bar
-    await expect(page.getByTestId('currency-line')).toContainText('USD ($)');
-    await page.getByRole('button', { name: 'Change' }).click();
+    await expect(page.getByLabel('Currency')).toBeVisible(); // a select you can see, no Change link
     await expect(page.getByLabel('Currency')).toHaveValue('USD');
     await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
     await page.getByLabel('Your next payday').fill('2026-10-23');

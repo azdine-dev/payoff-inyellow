@@ -104,15 +104,17 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await expect(page.getByLabel('Buffer now')).toBeVisible();
 });
 
-test('the currency is a small line on the pay schedule step, with Change', async ({ page }) => {
+test('the currency is a select you can see on the pay schedule step: no Change link, USD by default, any currency can be picked', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByLabel('Step 1 of 4')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
-  await expect(page.getByTestId('currency-line')).toHaveText('Currency: USD ($)');
-  await expect(page.getByLabel('Currency')).toHaveCount(0); // closed until asked
-  await page.getByRole('button', { name: 'Change' }).click();
-  await page.getByLabel('Currency').selectOption('EUR');
-  await expect(page.getByTestId('currency-line')).toHaveText('Currency: EUR (€)');
+  const select = page.getByLabel('Currency');
+  await expect(select).toBeVisible();
+  await expect(select).toHaveValue('USD');
+  await expect(select.locator('option:checked')).toHaveText('USD ($)');
+  await expect(page.getByRole('button', { name: 'Change' })).toHaveCount(0);
+  await select.selectOption('EUR');
+  await expect(select.locator('option:checked')).toHaveText('EUR (€)');
   await page.getByRole('radio', { name: 'Every 2 weeks', exact: true }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next(page).click();

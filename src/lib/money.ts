@@ -32,17 +32,26 @@ export function currencyFromCode(code: string): Currency {
   return { code, symbol: symbolFor(code) };
 }
 
-/** From the phone's language/region, e.g. en-US gives USD. Falls back to USD. */
+/**
+ * From the phone's language and region, e.g. en-US gives USD and fr-MA gives MAD. A region written in a language tag
+ * wins over a region that is only guessed from the language (en alone is guessed as US). Falls back to USD.
+ */
 export function detectCurrency(
   languages: readonly string[] = typeof navigator === 'undefined' ? [] : navigator.languages,
 ): Currency {
-  for (const tag of languages) {
+  const region = (tag: string, guess: boolean): string | undefined => {
     try {
-      const region = new Intl.Locale(tag).maximize().region;
-      const code = region ? REGION_CURRENCY[region] : undefined;
-      if (code) return currencyFromCode(code);
+      const locale = new Intl.Locale(tag);
+      return (guess ? locale.maximize() : locale).region;
     } catch {
-      /* ignore bad tags */
+      return undefined; // a bad tag
+    }
+  };
+  for (const guess of [false, true]) {
+    for (const tag of languages) {
+      const r = region(tag, guess);
+      const code = r ? REGION_CURRENCY[r] : undefined;
+      if (code) return currencyFromCode(code);
     }
   }
   return currencyFromCode('USD');

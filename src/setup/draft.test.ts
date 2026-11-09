@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAFT_VERSION, newDraft, newFund, resumeStep, SETUP_STEPS, STEP_COUNT, stepNotes, toSetupValues } from './draft';
+import { DRAFT_VERSION, newDraft, newFund, resumeStep, SETUP_STEPS, STEP_COUNT, stepErrors, stepNotes, toSetupValues } from './draft';
 
 describe('a wizard draft saved before the four-step setup', () => {
   it('version 1 (welcome, currency, pay, debts, buffer, extra, yearly, order, fresh start) comes back to the same screen', () => {
@@ -61,7 +61,7 @@ describe('the four steps', () => {
 
   it('step 3 asks for the buffer goal and the money for the plan', () => {
     const d = { ...newDraft(), bufferGoal: '', extra: '' };
-    expect(stepNotes(2, d, '2026-10-15')).toEqual(['Goal: type a goal for your buffer, like 500.', 'Money for the plan each payday: type an amount, even 0. You can change it any time.']); // each message names its field
+    expect(stepNotes(2, d, '2026-10-15')).toEqual(['Money for the plan each payday: type an amount, even 0. You can change it any time.', 'Goal: type a goal for your buffer, like 500.']); // each message names its field, in the order of the screen
     expect(stepNotes(2, { ...newDraft(), bufferGoal: '500', extra: '150' }, '2026-10-15')).toEqual([]);
   });
 
@@ -78,6 +78,35 @@ describe('the four steps', () => {
       { name: 'Gifts and holidays', perYear: 260, month: 'December' },
     ]);
     expect(stepNotes(2, { ...base, extra: '150', bufferGoal: '500', funds: [vet] }, '2026-10-15')).toEqual([]); // a custom bill never blocks the step
+  });
+
+  it('each error belongs to a field, in the order of the screen', () => {
+    const d = { ...newDraft(), frequency: '' as const, nextPayday: '' };
+    expect(stepErrors(0, d, '2026-10-15').map((e) => e.field)).toEqual(['frequency', 'nextPayday']);
+    const debts = {
+      ...newDraft(),
+      debts: [
+        { key: 'a', name: 'Visa', type: '', balance: '', apr: '', min: '96', dueDay: '', autopay: false },
+        { key: 'b', name: 'Medical', type: '', balance: '600', apr: '', min: '', dueDay: '', autopay: false },
+      ],
+    };
+    const e = stepErrors(1, debts, '2026-10-15');
+    expect(e.map((x) => x.field)).toEqual(['debt-a-balance', 'debt-a-due', 'debt-b-min']);
+    expect(e[0]).toMatchObject({ message: 'Add the balance you owe.', full: 'Visa: add the balance you owe.' }); // short under its field, named in a list
+    expect(stepErrors(1, { ...newDraft(), debts: [] }, '2026-10-15').map((x) => x.field)).toEqual(['debts']);
+    const money = { ...newDraft(), extra: '', bufferGoal: '', bufferNow: 'abc' };
+    expect(stepErrors(2, money, '2026-10-15').map((x) => x.field)).toEqual(['extra', 'bufferNow', 'bufferGoal']);
+    expect(stepErrors(2, { ...newDraft(), extra: '0', bufferGoal: '500' }, '2026-10-15')).toEqual([]);
+  });
+
+  it('the messages never use an exclamation mark', () => {
+    const all = [
+      ...stepErrors(0, { ...newDraft(), frequency: '', nextPayday: '' }, '2026-10-15'),
+      ...stepErrors(1, { ...newDraft(), debts: [{ key: 'a', name: '', type: '', balance: '', apr: 'x', min: '', dueDay: '40', autopay: false }] }, '2026-10-15'),
+      ...stepErrors(2, { ...newDraft(), extra: '', bufferGoal: '', bufferNow: 'abc' }, '2026-10-15'),
+    ];
+    expect(all.length).toBeGreaterThan(4);
+    for (const e of all) expect(`${e.message} ${e.full}`).not.toContain('!');
   });
 
   it('the setup defaults are the ones the old steps chose: PaidInYellow order, start this payday', () => {

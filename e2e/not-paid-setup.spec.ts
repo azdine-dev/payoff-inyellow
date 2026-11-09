@@ -162,11 +162,14 @@ test.describe('setup step 3', () => {
     await row.getByRole('button', { name: 'Gifts and holidays', exact: true }).click();
     await row.getByLabel('Gifts and holidays, cost per year').fill('260');
     await page.getByRole('button', { name: 'See my plan' }).click();
-    const note = page.getByTestId('step-notes');
-    await expect(note).toContainText('Money for the plan each payday: type an amount, even 0.');
+    const note = page.getByTestId('field-error');
+    await expect(note).toHaveCount(1); // one thing to fix, under its own field
+    await expect(note).toContainText('Type an amount, even 0.');
     await expect(note).toBeInViewport();
+    await expect(page.getByLabel('Money for the plan each payday')).toBeFocused();
+    await expect(page.getByTestId('fix-count')).toHaveText('1 thing to fix above');
     // the yearly bill is fine: nothing says it needs an amount
-    await expect(note).not.toContainText('Gifts');
+    await expect(page.getByTestId('yearly-row')).not.toContainText('Type an amount');
     await page.getByLabel('Money for the plan each payday').fill('0');
     await page.getByRole('button', { name: 'See my plan' }).click();
     await expect(page.getByTestId('debt-free-date')).toBeVisible();

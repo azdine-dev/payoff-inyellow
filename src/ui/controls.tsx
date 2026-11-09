@@ -54,13 +54,55 @@ export function Choice(props: { checked: boolean; onSelect: () => void; title: C
   );
 }
 
-export function Field(props: { label: ComponentChildren; hint?: ComponentChildren; children: ComponentChildren }) {
+/** A small circle with a mark inside, drawn as a shape (no character), in the action color. Never red. */
+export function ErrorIcon() {
   return (
-    <label class="field">
-      <span>{props.label}</span>
-      {props.children}
-      {props.hint && <small class="hint">{props.hint}</small>}
-    </label>
+    <svg class="field-error-icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+      <circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2" />
+      <path d="M10 5.5v5.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+      <circle cx="10" cy="14.3" r="1.3" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** The message under a field: the icon and a short line, written in ink */
+export function FieldError(props: { id: string; children: ComponentChildren }) {
+  return (
+    <p class="field-error" id={props.id} data-testid="field-error">
+      <ErrorIcon />
+      <span>{props.children}</span>
+    </p>
+  );
+}
+
+/**
+ * A labelled field. With `name` and `error` it shows its own message under it, a thick action-colored border and the
+ * icon, and the control gets aria-invalid and aria-describedby. `name` is also how the form finds it to focus it.
+ */
+export function Field(props: { label: ComponentChildren; hint?: ComponentChildren; children: ComponentChildren; name?: string; error?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const errorId = props.name ? `err-${props.name}` : '';
+  const error = props.error && errorId ? props.error : '';
+  useEffect(() => {
+    const control = ref.current?.querySelector<HTMLElement>('input, select, textarea');
+    if (!control) return;
+    if (error) {
+      control.setAttribute('aria-invalid', 'true');
+      control.setAttribute('aria-describedby', errorId);
+    } else {
+      control.removeAttribute('aria-invalid');
+      control.removeAttribute('aria-describedby');
+    }
+  }, [error, errorId]);
+  return (
+    <div class={`field-wrap${error ? ' has-error' : ''}`} data-field={props.name} ref={ref}>
+      <label class="field">
+        <span>{props.label}</span>
+        {props.children}
+        {props.hint && <small class="hint">{props.hint}</small>}
+      </label>
+      {error && <FieldError id={errorId}>{error}</FieldError>}
+    </div>
   );
 }
 

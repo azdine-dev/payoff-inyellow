@@ -28,7 +28,7 @@ test('a new user gets a debt-free date and marks the first payday paid', async (
   // 1 Pay: the welcome words are on top, the currency is a small line
   await expect(page.getByText('You’re not bad at math.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your pay schedule' })).toBeVisible();
-  await expect(page.getByTestId('currency-line')).toContainText('USD ($)');
+  await expect(page.getByLabel('Currency')).toHaveValue('USD');
   await shot(page, '01-pay');
 
   // Calm note when nothing is picked yet

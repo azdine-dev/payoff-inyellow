@@ -1,10 +1,10 @@
 /** Debts: the ones already added are one line each above the form. Only the debt being filled in is open. */
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { COPY } from '../../lib/copy';
 import { parseAmount } from '../../lib/money';
 import { ordinal } from '../../lib/today';
 import { DEFAULT_RATE } from '../../state/debtActions';
-import { Field, HelpTip, Note, NumberInput } from '../../ui/controls';
+import { Field, FieldError, HelpTip, Note, NumberInput } from '../../ui/controls';
 import { emptyDebt, type DraftDebt } from '../draft';
 import type { StepProps } from '../Wizard';
 import { DEBT_TYPES } from '../../lib/debtTypes';
@@ -60,6 +60,7 @@ export function debtRow(d: DraftDebt, symbol: string, index: number): { name: st
 }
 
 function DebtCard(props: {
+  errors: Record<string, string>;
   debt: DraftDebt;
   index: number;
   symbol: string;
@@ -68,7 +69,8 @@ function DebtCard(props: {
   onRemove: () => void;
   onAdd: () => void;
 }) {
-  const { debt: d, index } = props;
+  const { debt: d, index, errors } = props;
+  const at = (what: string) => `debt-${d.key}-${what}`;
   const [more, setMore] = useState(Boolean(d.type || d.autopay));
   return (
     <fieldset class="card stack open-debt" style={{ margin: 0 }}>
@@ -85,18 +87,18 @@ function DebtCard(props: {
         <input type="text" placeholder="Visa, Store card, Mom…" value={d.name} onInput={(e) => props.onChange({ name: (e.target as HTMLInputElement).value })} />
       </Field>
       <div class="grid-2">
-        <Field label="Balance">
+        <Field label="Balance" name={at('balance')} error={errors[at('balance')]}>
           <NumberInput pre={props.symbol} value={d.balance} onInput={(v) => props.onChange({ balance: v })} label="Balance" />
         </Field>
-        <Field label="Interest rate">
+        <Field label="Interest rate" name={at('apr')} error={errors[at('apr')]}>
           <NumberInput post="%" value={d.apr} onInput={(v) => props.onChange({ apr: v })} label="Interest rate" />
         </Field>
       </div>
       <div class="grid-2">
-        <Field label="Monthly minimum">
+        <Field label="Monthly minimum" name={at('min')} error={errors[at('min')]}>
           <NumberInput pre={props.symbol} value={d.min} onInput={(v) => props.onChange({ min: v })} label="Monthly minimum" />
         </Field>
-        <Field label="Due day" hint="It’s on your statement.">
+        <Field label="Due day" hint="It’s on your statement." name={at('due')} error={errors[at('due')]}>
           <input type="text" inputMode="numeric" maxLength={2} value={d.dueDay} onInput={(e) => props.onChange({ dueDay: (e.target as HTMLInputElement).value.replace(/\D/g, '') })} />
         </Field>
       </div>
@@ -137,12 +139,18 @@ function DebtCard(props: {
   );
 }
 
-export function DebtsStep({ draft, set }: StepProps) {
+export function DebtsStep({ draft, set, errors }: StepProps) {
   const update = (key: string, patch: Partial<DraftDebt>) => set({ debts: draft.debts.map((d) => (d.key === key ? { ...d, ...patch } : d)) });
   // Only the debt being filled in is open. The rest are one line each: tap one to change it.
   const [openKey, setOpenKey] = useState<string | null>(() => draft.debts.find((d) => !debtComplete(d))?.key ?? null);
   const [tried, setTried] = useState<string[] | null>(null);
   const open = draft.debts.find((d) => d.key === openKey);
+  // A debt with something to fix opens, so its message is under its own field
+  const firstBad = Object.keys(errors).find((k) => k.startsWith('debt-'));
+  const badKey = firstBad ? firstBad.slice(5, firstBad.lastIndexOf('-')) : null;
+  useEffect(() => {
+    if (badKey && badKey !== openKey && draft.debts.some((d) => d.key === badKey)) setOpenKey(badKey);
+  }, [badKey]);
 
   const addAnother = () => {
     // The debt in front of you must be done first, so a half-filled one is never left behind as a one-line row
@@ -187,6 +195,7 @@ export function DebtsStep({ draft, set }: StepProps) {
       {open && (
         <DebtCard
           key={open.key}
+          errors={errors}
           debt={open}
           index={draft.debts.indexOf(open)}
           symbol={draft.currencySymbol}
@@ -203,6 +212,11 @@ export function DebtsStep({ draft, set }: StepProps) {
         <button type="button" class="btn dashed" onClick={addAnother}>
           + Add another debt
         </button>
+      )}
+      {errors.debts && (
+        <div class="field-wrap has-error" data-field="debts">
+          <FieldError id="err-debts">{errors.debts}</FieldError>
+        </div>
       )}
       {tried && tried.length > 0 && <Note>Finish this debt first. It still needs its {tried.join(' and ')}.</Note>}
     </div>

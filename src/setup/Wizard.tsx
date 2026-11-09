@@ -10,8 +10,8 @@ import { completeSetup } from '../state/actions';
 import { showExample } from '../state/example';
 import { data, editSeed, getDB, today, view } from '../state/store';
 import { RestoreButton } from '../settings/Restore';
-import { Note, SetupBar } from '../ui/controls';
-import { DRAFT_VERSION, newDraft, resumeStep, SETUP_STEPS, stepNotes, toSetupValues, type Draft } from './draft';
+import { SetupBar } from '../ui/controls';
+import { DRAFT_VERSION, newDraft, resumeStep, SETUP_STEPS, stepErrors, toSetupValues, type Draft } from './draft';
 import { PayStep } from './steps/Basics';
 import { DebtsStep } from './steps/Debts';
 import { MoneyStep } from './steps/Money';
@@ -20,6 +20,17 @@ export interface StepProps {
   draft: Draft;
   set: (patch: Partial<Draft>) => void;
   today: string;
+  /** What is wrong, by field name, once Continue was tapped. Each field shows its own message. */
+  errors: Record<string, string>;
+}
+
+/** Scrolls to a field by its name and puts the cursor on it */
+function focusField(name: string) {
+  const wrap = document.querySelector<HTMLElement>(`[data-field="${name}"]`);
+  if (!wrap) return;
+  const control = wrap.querySelector<HTMLElement>('input:not([type=radio]), select, textarea, [role=radio], button');
+  wrap.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  control?.focus({ preventScroll: true });
 }
 
 const STEPS = [PayStep, DebtsStep, MoneyStep];
@@ -67,7 +78,12 @@ export function Wizard() {
   if (!draft) return null;
 
   const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
-  const notes = stepNotes(step, draft, today.value);
+  const errors = stepErrors(step, draft, today.value);
+  const notes = errors.map((e) => e.full);
+  // each field shows its own line, once Continue was tapped; the first one wins when a field has two
+  const errorMap: Record<string, string> = {};
+  if (tried) for (const e of errors) errorMap[e.field] ??= e.message;
+  const fixCount = Object.keys(errorMap).length;
   const Step = STEPS[step]!;
   const last = step === STEPS.length - 1;
 
@@ -81,8 +97,8 @@ export function Wizard() {
   const next = async () => {
     if (notes.length) {
       setTried(true);
-      // the message is at the bottom of a long step: bring it into view
-      setTimeout(() => document.querySelector('[data-testid="step-notes"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
+      // the cursor goes to the first field that needs a look (a debt that is folded away opens first)
+      setTimeout(() => focusField(errors[0]!.field), 80);
       return;
     }
     if (!last) return go(step + 1);
@@ -124,15 +140,13 @@ export function Wizard() {
           {step + 1} of {SETUP_STEPS}
         </span>
       </div>
-      <Step draft={draft} set={set} today={today.value} />
-      {tried && notes.length > 0 && (
-        <div class="stack" style={{ gap: 6 }} data-testid="step-notes" role="alert">
-          {notes.map((n) => (
-            <Note key={n}>{n}</Note>
-          ))}
-        </div>
-      )}
+      <Step draft={draft} set={set} today={today.value} errors={errorMap} />
       <div class="spacer" />
+      {fixCount > 0 && (
+        <p class="muted small" role="status" data-testid="fix-count" style={{ textAlign: 'center' }}>
+          {fixCount === 1 ? '1 thing to fix above' : `${fixCount} things to fix above`}
+        </p>
+      )}
       <button type="button" class="btn" onClick={next} disabled={saving}>
         {LABELS[step]}
       </button>

@@ -34,7 +34,7 @@ export function roomLeft(takeHome: number, essentials: number, monthlyMinimums: 
   return takeHome - essentials - minimumsPerPaycheck;
 }
 
-export function MoneyStep({ draft, set }: StepProps) {
+export function MoneyStep({ draft, set, errors }: StepProps) {
   const [help, setHelp] = useState(false);
   const [takeHome, setTakeHome] = useState('');
   const [essentials, setEssentials] = useState('');
@@ -74,7 +74,7 @@ export function MoneyStep({ draft, set }: StepProps) {
           {line}
         </p>
       )}
-      <Field label="How much can you put toward the plan each payday, on top of your minimums?" hint={COPY.extraHint(draft.currencySymbol || '$')}>
+      <Field label="How much can you put toward the plan each payday, on top of your minimums?" hint={COPY.extraHint(draft.currencySymbol || '$')} name="extra" error={errors.extra}>
         <NumberInput pre={draft.currencySymbol} value={draft.extra} onInput={(v) => set({ extra: v })} label="Money for the plan each payday" />
       </Field>
       <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} data-testid="help-work-out" onClick={() => setHelp(true)}>
@@ -152,10 +152,10 @@ export function MoneyStep({ draft, set }: StepProps) {
         <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Your safety net</h2>
         <p class="muted">{bufferSummary}</p>
         <div class="grid-2">
-          <Field label="Set aside now" hint="Zero is fine.">
+          <Field label="Set aside now" hint="Zero is fine." name="bufferNow" error={errors.bufferNow}>
             <NumberInput pre={draft.currencySymbol} value={draft.bufferNow} onInput={(v) => set({ bufferNow: v })} label="Buffer now" />
           </Field>
-          <Field label="Goal" hint="A plain separate account or an envelope.">
+          <Field label="Goal" hint="A plain separate account or an envelope." name="bufferGoal" error={errors.bufferGoal}>
             <NumberInput pre={draft.currencySymbol} value={draft.bufferGoal} onInput={(v) => set({ bufferGoal: v })} label="Safety net goal" />
           </Field>
         </div>
