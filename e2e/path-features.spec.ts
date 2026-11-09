@@ -248,3 +248,16 @@ test.describe('the Chapter 1 note', () => {
     await expect(later).not.toContainText('Your buffer fills first');
   });
 });
+
+test('Chapter 1 note: once the payday where the extra starts is marked done (early), it says the extra goes here now', async ({ page }) => {
+  await nadiaSetup(page); // Fri 30 Oct: Fri 4 Dec has not come yet
+  for (let i = 0; i < 3; i++) {
+    await tapDidIt(page);
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+  }
+  await goTab(page, 'Path');
+  await page.getByRole('button', { name: 'Chapters', exact: true }).click();
+  const first = page.getByTestId('chapter').nth(0);
+  await expect(first).toContainText('The extra goes here now.');
+  await expect(first).not.toContainText('From Fri');
+});

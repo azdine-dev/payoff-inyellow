@@ -201,7 +201,7 @@ export function Chapters() {
                 </span>
                 {c.extraFrom && (
                   <span class="chapter-note">
-                    {extraNote(c.extraFrom, today.value, (iso) => shortDate(iso, today.value))}
+                    {extraNote(c.extraFrom, today.value, (iso) => shortDate(iso, today.value), c.extraStarted)}
                   </span>
                 )}
               </button>

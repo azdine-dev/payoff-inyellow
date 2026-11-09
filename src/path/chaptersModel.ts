@@ -34,6 +34,8 @@ export interface Chapter {
   rollsOn: number | null;
   /** "From Fri 4 Dec the extra goes here": the buffer fills first, then the extra starts */
   extraFrom: string | null;
+  /** That payday is already done (marked, maybe early), so the extra is going there already */
+  extraStarted: boolean;
   /** The chapter that holds the next payday */
   here: boolean;
   /** Other debts that reached zero during this chapter (their own minimums did it) */
@@ -91,13 +93,17 @@ export function buildChapters(d: AppData, r: PlanResult): ChaptersModel {
   for (const id of order) if ((first?.[id]?.[0] ?? byId.get(id)!.startBalance) <= ZERO) gone.set(id, steps[0]?.day.date ?? '');
   const days = new Map<string, ChapterDay[]>(order.map((id) => [id, []]));
   const extraFrom = new Map<string, string>();
+  const extraStarted = new Map<string, boolean>();
   const bufferBefore = new Set<string>();
   const also = new Map<string, { name: string; date: string }[]>(order.map((id) => [id, []]));
   for (const s of steps) {
     const current = order.find((id) => !gone.has(id));
     if (!current) break;
     days.get(current)!.push(s.day);
-    if (s.extraTo.has(current) && !extraFrom.has(current)) extraFrom.set(current, s.day.date);
+    if (s.extraTo.has(current) && !extraFrom.has(current)) {
+      extraFrom.set(current, s.day.date);
+      extraStarted.set(current, s.day.kind === 'paid');
+    }
     if (s.buffer && !extraFrom.has(current)) bufferBefore.add(current);
     for (const id of order) {
       if (gone.has(id) || (s.after.get(id) ?? 1) > ZERO) continue;
@@ -124,6 +130,7 @@ export function buildChapters(d: AppData, r: PlanResult): ChaptersModel {
       goneDate,
       rollsOn: !isLast && debt.minMonthly > 0 ? debt.minMonthly : null,
       extraFrom: bufferBefore.has(id) && extraFrom.has(id) && extraFrom.get(id) !== list[0]!.date ? extraFrom.get(id)! : null,
+      extraStarted: extraStarted.get(id) ?? false,
       here: id === hereId,
       alsoGone: also.get(id)!,
     };
@@ -133,8 +140,8 @@ export function buildChapters(d: AppData, r: PlanResult): ChaptersModel {
 
 /**
  * The note under a chapter whose extra starts after the buffer is full. Before that day it says when the extra starts;
- * once the day has come it says the extra goes there now.
+ * once the day has come, or that payday is already marked done (even early), it says the extra goes there now.
  */
-export function extraNote(extraFrom: string, today: string, dayText: (iso: string) => string): string {
-  return extraFrom <= today ? 'The extra goes here now.' : `Your buffer fills first. From ${dayText(extraFrom)} the extra goes here.`;
+export function extraNote(extraFrom: string, today: string, dayText: (iso: string) => string, started = false): string {
+  return started || extraFrom <= today ? 'The extra goes here now.' : `Your buffer fills first. From ${dayText(extraFrom)} the extra goes here.`;
 }

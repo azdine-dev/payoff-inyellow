@@ -62,6 +62,21 @@ describe('Chapters', () => {
     expect(extraNote('2026-12-04', '2026-12-03', day)).toBe('Your buffer fills first. From day 2026-12-04 the extra goes here.');
     expect(extraNote('2026-12-04', '2026-12-04', day)).toBe('The extra goes here now.'); // the day it starts
     expect(extraNote('2026-12-04', '2027-01-10', day)).toBe('The extra goes here now.'); // after it
+    // that payday is already marked done, even early, before its day
+    expect(extraNote('2026-12-04', '2026-11-03', day, true)).toBe('The extra goes here now.');
+  });
+
+  it('paydays marked early: once the payday where the extra starts is done, the chapter says so, before its calendar day', async () => {
+    const db = await openAppDB('chapters-early');
+    let x = d;
+    const flags: boolean[] = [];
+    for (let i = 0; i < 4; i++) {
+      x = (await didPayday(db, x, {})).data;
+      flags.push(buildChapters(x, plan(x)).chapters[0]!.extraStarted);
+    }
+    // the extra starts on payday 3 (Fri 4 Dec): from the moment it is done, it is "now"
+    expect(flags).toEqual([false, false, true, true]);
+    expect(buildChapters(x, plan(x)).chapters[0]!.extraFrom).toBe('2026-12-04');
   });
 
   it('after the first payday is done: one yellow square, the next payday is "here"', async () => {
