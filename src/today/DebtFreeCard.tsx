@@ -32,7 +32,7 @@ export function DebtFreeCard(props: { today: string; debtFreeDate: string | null
   const aria = debtFreeDate ? `Debt-free in ${monthYear(debtFreeDate)}. Open your path.` : hasDebts ? 'More than 20 years. Open your path.' : 'Debt-free. Open your path.';
   return (
     <button type="button" class="card debt-free-card" data-testid="debt-free-pill" aria-label={aria} onClick={onOpen}>
-      <Scene stage={stage} fadeIn={fadeStage === stage} />
+      <Scene stage={stage} pct={pctGone} fadeIn={fadeStage === stage} />
       <span class="dfc-row">
         {parts && debtFreeDate ? (
           <>

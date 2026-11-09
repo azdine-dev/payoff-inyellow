@@ -79,7 +79,8 @@ export function Road(props: {
     <div class="road-wrap" data-testid="road">
       <div class="road-scroll" ref={scroller} tabIndex={0} aria-label="Your road, one square per payday">
         <svg class="road-svg" viewBox={`0 0 ${W} ${height}`} width="100%" role="group" aria-label="The road to debt-free" focusable="false" style={{ display: 'block', height: 'auto', overflow: 'visible' }}>
-          <path d={road} fill="none" stroke="var(--line)" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 9" />
+          <path d={road} fill="none" class="road-trail" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+          <path d={road} fill="none" class="road-trail-dash" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="1 7" />
 
           {/* halfway: a dashed line across the road */}
           {drawn.filter((f) => f.kind === 'half').map((f) => {

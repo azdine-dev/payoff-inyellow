@@ -18,7 +18,7 @@
   --row-bg: rgba(255, 255, 255, 0.75); /* rows inside a calm card */
   --paid-bg: var(--yellow); /* the PAID card on Today: still yellow */
   --square-line: #c9c3b5; /* the border of an empty payday square (Chapters, Road) */
-  --square-fill: var(--line); /* its fill on the Road */
+  --square-fill: var(--card); /* its fill on the Road */
 
   --radius: 16px;
   --radius-sm: 10px;

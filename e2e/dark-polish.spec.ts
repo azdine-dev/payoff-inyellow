@@ -86,3 +86,44 @@ test.describe('the PAID card in dark mode', () => {
     await expect(page.getByTestId('paid-card')).toHaveCSS('background-color', 'rgb(255, 225, 77)');
   });
 });
+
+test.describe('the scene: a pin, a sun by day and a moon by night', () => {
+  test('the pin stands on the next square, the squares follow the share paid, and the house has no pin', async ({ page }) => {
+    await nadiaSetup(page);
+    const scene = page.getByTestId('scene');
+    await expect(page.getByTestId('scene-pin')).toHaveAttribute('data-index', '2'); // two squares come pre-filled
+    await expect(scene.locator('rect.sc-paid')).toHaveCount(2);
+    await expect(scene.locator('.sc-road')).toHaveCount(1); // a real road under the squares
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await page.getByRole('textbox', { name: 'Extra money' }).fill('850'); // 26%: stage 2
+    await page.getByRole('button', { name: 'Use it', exact: true }).click();
+    await expect(scene).toHaveAttribute('data-stage', '2');
+    await expect(scene.locator('rect.sc-paid')).toHaveCount(3);
+    await expect(page.getByTestId('scene-pin')).toHaveAttribute('data-index', '3');
+  });
+
+  test('day: a sun with rays and clouds, no moon; night: a moon and stars, no clouds', async ({ page }) => {
+    await nadiaSetup(page);
+    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await page.getByRole('textbox', { name: 'Extra money' }).fill('850');
+    await page.getByRole('button', { name: 'Use it', exact: true }).click(); // stage 2 has rays
+    const moment = page.getByTestId('paid-moment'); // a debt that reaches zero opens the paid moment: close it
+    if (await moment.waitFor({ state: 'visible', timeout: 1500 }).then(() => true, () => false)) await page.getByRole('button', { name: /Next payday|Done/ }).click();
+    const shown = (sel: string) => page.locator(`[data-testid="scene"] ${sel}`).first().evaluate((el) => getComputedStyle(el).display);
+    expect(await shown('.sc-cloud')).not.toBe('none');
+    expect(await shown('.sc-ray')).not.toBe('none');
+    expect(await shown('.sc-moon')).toBe('none');
+    expect(await shown('.sc-star')).toBe('none');
+    await useDark(page);
+    expect(await shown('.sc-moon')).not.toBe('none');
+    expect(await shown('.sc-star')).not.toBe('none');
+    expect(await shown('.sc-cloud')).toBe('none');
+    expect(await shown('.sc-ray')).toBe('none');
+  });
+
+  test('with reduced motion the pin stands still', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await nadiaSetup(page);
+    expect(await page.getByTestId('scene-pin').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+  });
+});

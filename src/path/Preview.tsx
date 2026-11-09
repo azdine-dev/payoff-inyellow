@@ -10,7 +10,7 @@ import { monthsBetween, shortDate } from '../lib/today';
 import { progressStats } from '../state/milestones';
 import { goneDates } from './goneDates';
 import { previewDate } from '../state/store';
-import { Scene, sceneStage, STAGE_NAMES } from '../ui/Scene';
+import { Hills, Scene, SCENE_SQUARES, SkyBody, SkyDecor, sceneStage, smoothPath, STAGE_NAMES, Tree } from '../ui/Scene';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const monthYearName = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
@@ -28,32 +28,40 @@ export function monthsToGoText(debtLeft: number, date: string, debtFreeDate: str
   return n === 0 ? 'Less than a month to go' : `${n} month${n === 1 ? '' : 's'} to debt-free`;
 }
 
-/** A small hill with a rising line of squares: yellow = paid so far, the glow = the date being looked at, a flag at the end. */
-function PreviewScene(props: { total: number; done: number; at: number; label: string }) {
+/**
+ * The scene of the preview: the same hills, road and flag as "Your scene", with the squares paid so far in yellow
+ * and the previewed payday marked with a soft glow and a pin. At most twelve squares are drawn, spread over the whole plan.
+ */
+export function PreviewScene(props: { total: number; done: number; at: number; label: string }) {
   const { total, done, at, label } = props;
-  const n = Math.max(2, Math.min(12, total));
-  const spot = (k: number) => {
-    const t = k / (n - 1);
-    return { x: 34 + t * 236, y: 150 - (t * 0.9 + 0.1 * Math.sin(t * 6)) * 100 };
-  };
+  const n = Math.max(2, Math.min(SCENE_SQUARES.length, total));
+  const pick = Array.from({ length: n }, (_, k) => SCENE_SQUARES[Math.round((k * (SCENE_SQUARES.length - 1)) / (n - 1))]!);
+  const centers = pick.map(([x, y]) => [x + 6, y + 6] as const);
   const payIndex = (k: number) => Math.round((k * (total - 1)) / (n - 1));
   const glowAt = Math.min(n - 1, Math.max(0, Math.round((at * (n - 1)) / Math.max(1, total - 1))));
-  const end = spot(n - 1);
+  const here = centers[glowAt]!;
+  const ribbon = smoothPath(centers);
   return (
-    <svg class="pv-scene" viewBox="0 0 340 190" role="img" aria-label={label} data-testid="preview-scene">
-      <rect width="340" height="190" fill="var(--calm)" />
-      <path d="M0 140 C60 110 120 120 180 130 C240 140 290 100 340 90 L340 190 L0 190 Z" fill="var(--calm-band)" opacity="0.7" />
-      <path d="M0 165 C70 135 130 150 200 150 C260 150 300 130 340 125 L340 190 L0 190 Z" fill="var(--calm-band)" />
-      <rect x="44" y="104" width="4" height="34" fill="var(--gray)" />
-      <circle cx="46" cy="98" r="12" fill="var(--gray)" opacity="0.55" />
-      <circle cx={spot(glowAt).x} cy={spot(glowAt).y} r="26" fill="var(--yellow-soft)" />
-      {Array.from({ length: n }, (_, k) => {
-        const p = spot(k);
-        const paid = payIndex(k) < done;
-        return <rect key={k} x={p.x - 9} y={p.y - 9} width="18" height="18" rx="5" fill={paid ? 'var(--yellow)' : 'var(--card)'} stroke="var(--ink)" stroke-width="2" />;
-      })}
-      <line x1={end.x + 14} y1={end.y + 10} x2={end.x + 14} y2={end.y - 30} stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" />
-      <path d={`M${end.x + 14} ${end.y - 30} l22 8 l-22 8 Z`} fill="var(--ink)" />
+    <svg class="pv-scene scene scene-3" viewBox="0 0 320 170" width="100%" role="img" aria-label={label} data-testid="preview-scene" focusable="false">
+      <rect width="320" height="170" class="sc-sky" />
+      <SkyDecor />
+      <SkyBody cx={78} cy={54} rays />
+      <Hills />
+      <Tree x={60} y={112} />
+      <path d={ribbon} fill="none" class="sc-road" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+      <path d={ribbon} fill="none" class="sc-roadline" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1 6" />
+      <circle cx={here[0]} cy={here[1]} r="17" class="sc-glow" />
+      <g class="sc-ink" stroke-width="1.4">
+        {pick.map(([x, y], k) => (
+          <rect key={k} x={x} y={y} width="12" height="12" rx="3" class={payIndex(k) < done ? 'sc-paid' : 'sc-sq'} />
+        ))}
+      </g>
+      <g aria-hidden="true">
+        <circle cx={here[0]} cy={here[1]} r="10" class="sc-pin-ring" fill="none" stroke-width="1.6" />
+        <path d={`M${here[0] - 4.5} ${here[1] - 21} H${here[0] + 4.5} L${here[0]} ${here[1] - 13.5} Z`} class="sc-ink-fill" />
+      </g>
+      <path d="M266 66 V36" class="sc-ink" stroke-width="2" stroke-linecap="round" />
+      <path d="M266 36 Q275 38 284 42 Q275 45 266 48Z" class="sc-ink-fill" />
     </svg>
   );
 }

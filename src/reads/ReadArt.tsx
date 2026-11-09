@@ -4,6 +4,7 @@
  * `ReadIcon` is the small line icon on the list.
  */
 import type { ReadArtKind } from '../copy/reads';
+import { SkyDecor } from '../ui/Scene';
 
 const ink = { stroke: 'var(--ink)', 'stroke-width': 2, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } as const;
 const soft = { stroke: 'var(--line)', 'stroke-width': 3, 'stroke-linecap': 'round' } as const;
@@ -100,6 +101,8 @@ export function ReadArt({ kind }: { kind: ReadArtKind }) {
   return (
     <svg class="read-art" viewBox="0 0 320 150" width="100%" role="img" aria-label="An illustration for this read" focusable="false" data-kind={kind}>
       <rect width="320" height="150" class="sc-sky" />
+      <SkyDecor />
+      <path d="M0 106 Q90 80 180 100 T320 84 V150 H0Z" class="sc-hill1" />
       <path d="M0 118 Q100 96 200 112 T320 100 V150 H0Z" class="sc-hill2" />
       {kind === 'umbrella' ? (
         <>
@@ -110,13 +113,13 @@ export function ReadArt({ kind }: { kind: ReadArtKind }) {
           <path d="M110 70 Q123 62 135 70 Q148 62 160 70 Q173 62 185 70 Q198 62 210 70" fill="none" class="sc-ink" stroke-width="2" />
           <path d="M160 44 V104 q0 8 -8 8" fill="none" class="sc-ink" stroke-width="2" stroke-linecap="round" />
           <g class="sc-ink" stroke-width="1.6">
-            <rect x="140" y="98" width="40" height="8" rx="4" class="sc-sun" />
-            <rect x="142" y="90" width="36" height="8" rx="4" class="sc-sun" />
-            <rect x="144" y="82" width="32" height="8" rx="4" class="sc-sun" />
+            <rect x="140" y="98" width="40" height="8" rx="4" class="sc-coin" />
+            <rect x="142" y="90" width="36" height="8" rx="4" class="sc-coin" />
+            <rect x="144" y="82" width="32" height="8" rx="4" class="sc-coin" />
           </g>
         </>
       ) : (
-        <g transform="translate(94 20) scale(1.1)">
+        <g transform="translate(76 14) scale(1.4)">
           <Motif kind={kind} />
         </g>
       )}

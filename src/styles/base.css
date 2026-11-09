@@ -2634,23 +2634,31 @@ textarea {
   border-radius: 20px;
   --sc-sky: #e6efe8;
   --sc-sun: #fff6c2;
+  --sc-h1: #cfe0d3;
   --sc-h2: #bfd5c4;
   --sc-sq: #f8f6f0;
+  --sc-cloud: rgba(255, 255, 255, 0.78);
+  --sc-star: #d8e0d6;
+  --sc-coin: #fff6c2;
 }
 
 :root[data-theme='dark'] .read-art {
   --sc-sky: #1f2b27;
   --sc-sun: rgba(255, 246, 194, 0.35);
+  --sc-h1: #2e4537;
   --sc-h2: #3a5544;
   --sc-sq: #1b2433;
+  --sc-coin: #e9dfa6;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .read-art {
     --sc-sky: #1f2b27;
     --sc-sun: rgba(255, 246, 194, 0.35);
+    --sc-h1: #2e4537;
     --sc-h2: #3a5544;
     --sc-sq: #1b2433;
+    --sc-coin: #e9dfa6;
   }
 }
 
@@ -2705,6 +2713,19 @@ textarea {
   --sc-water: #7fa9c9;
   --sc-field: #7faa8a;
   --sc-sq: #f8f6f0;
+  --sc-h0: #dbe9df;
+  --sc-road: #f7f4ea;
+  --sc-roadline: #d8d2c1;
+  --sc-halo: rgba(255, 240, 170, 0.3);
+  --sc-halo2: rgba(255, 240, 170, 0.45);
+  --sc-ray: rgba(222, 205, 120, 0.7);
+  --sc-cloud: rgba(255, 255, 255, 0.78);
+  --sc-moon: #e9eedb;
+  --sc-star: #d8e0d6;
+  --sc-glow: rgba(255, 225, 77, 0.22);
+  --sc-smoke: rgba(255, 255, 255, 0.9);
+  --sc-tree-light: #b9d6c0;
+  --sc-water-line: #e8f1f7;
 }
 
 .scene-3,
@@ -2714,6 +2735,7 @@ textarea {
 
 .scene-4,
 .scene-5 {
+  --sc-h0: #d0e3d6;
   --sc-h1: #bfd8c5;
   --sc-h2: #a9cbb1;
 }
@@ -2731,10 +2753,20 @@ textarea {
   --sc-water: #5b7f9e;
   --sc-field: #5f8a6b;
   --sc-sq: #1b2433;
+  --sc-h0: #26392f;
+  --sc-road: #5a7466;
+  --sc-roadline: #9db5a4;
+  --sc-halo: rgba(255, 246, 194, 0.1);
+  --sc-halo2: rgba(255, 246, 194, 0.16);
+  --sc-glow: rgba(255, 225, 77, 0.3);
+  --sc-smoke: rgba(232, 237, 233, 0.35);
+  --sc-tree-light: #5f7f69;
+  --sc-water-line: #8fb0c9;
 }
 
 :root[data-theme='dark'] .scene-4,
 :root[data-theme='dark'] .scene-5 {
+  --sc-h0: #2c4337;
   --sc-h1: #34503f;
   --sc-h2: #416150;
 }
@@ -2749,9 +2781,19 @@ textarea {
     --sc-water: #5b7f9e;
     --sc-field: #5f8a6b;
     --sc-sq: #1b2433;
+    --sc-h0: #26392f;
+    --sc-road: #5a7466;
+    --sc-roadline: #9db5a4;
+    --sc-halo: rgba(255, 246, 194, 0.1);
+    --sc-halo2: rgba(255, 246, 194, 0.16);
+    --sc-glow: rgba(255, 225, 77, 0.3);
+    --sc-smoke: rgba(232, 237, 233, 0.35);
+    --sc-tree-light: #5f7f69;
+    --sc-water-line: #8fb0c9;
   }
   :root:not([data-theme]) .scene-4,
   :root:not([data-theme]) .scene-5 {
+    --sc-h0: #2c4337;
     --sc-h1: #34503f;
     --sc-h2: #416150;
   }
@@ -2763,8 +2805,92 @@ textarea {
 .sc-sun {
   fill: var(--sc-sun);
 }
+.sc-hill0 {
+  fill: var(--sc-h0);
+}
 .sc-hill1 {
   fill: var(--sc-h1);
+}
+.sc-road {
+  stroke: var(--sc-road);
+}
+.sc-roadline {
+  stroke: var(--sc-roadline);
+}
+.sc-halo {
+  fill: var(--sc-halo);
+}
+.sc-halo2 {
+  fill: var(--sc-halo2);
+}
+.sc-ray {
+  stroke: var(--sc-ray);
+}
+.sc-cloud {
+  fill: var(--sc-cloud);
+}
+.sc-moon {
+  fill: var(--sc-moon);
+  display: none;
+}
+.sc-star {
+  fill: var(--sc-star);
+  display: none;
+}
+.sc-glow {
+  fill: var(--sc-glow);
+}
+.sc-smoke {
+  fill: var(--sc-smoke);
+}
+.sc-tree-light {
+  fill: var(--sc-tree-light);
+}
+.sc-water-line {
+  stroke: var(--sc-water-line);
+}
+.sc-pin-ring {
+  stroke: var(--ink);
+}
+.sc-coin {
+  fill: var(--sc-coin);
+}
+/* by night: a moon and stars instead of clouds and rays */
+:root[data-theme='dark'] .sc-cloud,
+:root[data-theme='dark'] .sc-ray {
+  display: none;
+}
+:root[data-theme='dark'] .sc-moon,
+:root[data-theme='dark'] .sc-star {
+  display: inline;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .sc-cloud,
+  :root:not([data-theme]) .sc-ray {
+    display: none;
+  }
+  :root:not([data-theme]) .sc-moon,
+  :root:not([data-theme]) .sc-star {
+    display: inline;
+  }
+}
+/* "You are here" bobs a little, and stands still with reduced motion */
+.sc-pin {
+  animation: sc-bob 2.4s ease-in-out infinite;
+}
+@keyframes sc-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-pin {
+    animation: none;
+  }
 }
 .sc-hill2 {
   fill: var(--sc-h2);
@@ -3210,4 +3336,63 @@ textarea {
   color: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+/* ---------- gallery.html (dev only) ---------- */
+.gal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- the road on the result screen ---------- */
+.road {
+  --rd-halo: rgba(255, 240, 170, 0.35);
+  --rd-sun: #fff6c2;
+}
+:root[data-theme='dark'] .road {
+  --rd-halo: rgba(255, 246, 194, 0.1);
+  --rd-sun: rgba(255, 246, 194, 0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .road {
+    --rd-halo: rgba(255, 246, 194, 0.1);
+    --rd-sun: rgba(255, 246, 194, 0.35);
+  }
+}
+.road-halo {
+  fill: var(--rd-halo);
+}
+.road-sun {
+  fill: var(--rd-sun);
+}
+.road-moon {
+  fill: #e9eedb;
+  display: none;
+}
+:root[data-theme='dark'] .road-moon {
+  display: inline;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .road-moon {
+    display: inline;
+  }
+}
+.road-ribbon {
+  stroke: var(--line);
+}
+.road-dash {
+  stroke: var(--card);
+}
+.pv-scene .sc-glow {
+  fill: var(--sc-glow);
+}
+
+/* the road of paydays on Path: a soft ribbon with a dashed centre line under the squares */
+.road-trail {
+  stroke: var(--line);
+  opacity: 0.85;
+}
+.road-trail-dash {
+  stroke: var(--card);
 }
