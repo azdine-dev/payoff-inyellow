@@ -6,8 +6,10 @@ import type { AppData } from '../data/types';
 import type { Draft } from '../setup/draft';
 import { verifyCode } from '../lib/license';
 import { todayISO } from '../lib/today';
+import { didPayday } from './actions';
 import { syncMilestones } from './milestones';
 import { baselineFor, toPlanInput } from './planInput';
+import { shouldAutoCount } from './zeroPayday';
 
 export type View = 'loading' | 'setup' | 'result' | 'app';
 export type Tab = 'today' | 'path' | 'debts' | 'safety' | 'settings' | 'reads';
@@ -136,6 +138,13 @@ export async function boot(): Promise<void> {
         data.value = next;
       }
     });
+  });
+  // A payday that moves nothing ($0 to move) counts as done by itself when it comes, one after another if there are several
+  effect(() => {
+    const current = data.value;
+    const day = today.value;
+    if (!current || view.value !== 'app' || exampleModeOn() || licenseState.value !== 'unlocked') return;
+    if (shouldAutoCount(current, day)) void act(async (_db, x) => (shouldAutoCount(x, today.peek()) ? (await didPayday(_db, x, {})).data : x));
   });
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();

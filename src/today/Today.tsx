@@ -15,6 +15,7 @@ import { dayMonth, diffDays, monthYear, relativeDay, shortDate, shortMonthYear, 
 import { pathView } from '../path/Path';
 import { changeablePayday, changePaid, didPayday, extraPayment, missedPaydays, skipPaydays, undoPayday } from '../state/actions';
 import { billsForNextPayday } from '../state/billsDue';
+import { nextMove } from '../state/zeroPayday';
 import { deltaPhrase, extraMoneyPlan, whatIfSummary } from '../state/whatIf';
 import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
@@ -147,7 +148,27 @@ export function Today() {
     setUndo(null);
     setPaidIds([]);
   };
-  const paidView = justPaid ?? (countdownMode ? paidFromLog(d, nextPaydayNumber(s) - 1) : null);
+  const lastPaid = countdownMode ? paidFromLog(d, nextPaydayNumber(s) - 1) : null;
+  // A payday that moved nothing has no yellow PAID card: it says what comes next instead
+  const paidView = justPaid ?? (lastPaid && lastPaid.total > 0 ? lastPaid : null);
+  const lastWasEmpty = !justPaid && lastPaid !== null && lastPaid.total <= 0;
+  // The next payday moves nothing: no "Move $0" card, no "I did it". It counts as done by itself when it comes.
+  const emptyNow = !justPaid && Boolean(row) && active.length > 0 && total === 0;
+  const move = emptyNow ? nextMove(d, plan.value!, 1) : lastWasEmpty ? nextMove(d, plan.value!, 0) : null;
+  const nothingCard = (
+    <section class="card calm stack" style={{ gap: 4 }} aria-label="Nothing to move" data-testid="nothing-card">
+      <p>
+        <b>Nothing to move this payday.</b>
+        {move && (
+          <>
+            {' '}
+            Next: {move.name ? `${move.name} ` : ''}
+            <span class="num">{money(move.amount)}</span> on {shortDate(move.date)}.
+          </>
+        )}
+      </p>
+    </section>
+  );
   const isPayday = nextDate === today.value;
 
   const apply = async () => {
@@ -503,7 +524,7 @@ export function Today() {
 
       {!justPaid && active.length > 0 && row && (
         <>
-          {missed > 0 && (
+          {missed > 0 && !emptyNow && (
             <section class="card stack" style={{ gap: 4 }}>
               <p>
                 Your payday on <b>{shortDate(nextDate)}</b> went by. Did you do it?
@@ -522,8 +543,15 @@ export function Today() {
 
           {!countdownMode && !paidView && <ArrivalCard />}
 
-          {countdownMode ? (
-            paidView ? null : <CountdownCard nextDate={nextDate} onEarly={markEarly} />
+          {emptyNow ? (
+            nothingCard
+          ) : countdownMode ? (
+            paidView ? null : (
+              <>
+                {lastWasEmpty && nothingCard}
+                <CountdownCard nextDate={nextDate} onEarly={markEarly} />
+              </>
+            )
           ) : (
             <section class={`payday-card${busy ? ' swiping' : ''}`} aria-labelledby="payday-title">
               <p id="payday-title" class="pc-label">

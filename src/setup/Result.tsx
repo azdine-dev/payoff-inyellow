@@ -14,6 +14,7 @@ import { billsForNextPayday } from '../state/billsDue';
 import { isDebtFree } from '../state/debtFree';
 import { exampleMode, leaveExample } from '../state/example';
 import { toPlanInput } from '../state/planInput';
+import { setExtraPerPayday } from '../state/settingsActions';
 import { act, data, editSeed, licenseState, plan, tab, today, view } from '../state/store';
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
@@ -96,6 +97,19 @@ export function Result() {
         </div>
       ) : (
         <h1 style={{ fontSize: '2rem' }}>{isDebtFree(d) ? 'You’re debt-free.' : 'Right now this plan takes more than 20 years.'}</h1>
+      )}
+
+      {s.extraPerPayday === 0 && r.debtFreeDate && !example && (
+        <section class="card soft stack" style={{ gap: 8 }} aria-label="Minimums only" data-testid="minimums-only-card">
+          <p>You’re paying minimums only. Even {formatMoneyAuto(20, cur)} a payday moves your date.</p>
+          <div class="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8 }} role="group" aria-label="Money for the plan each payday">
+            {[20, 50, 100].map((n) => (
+              <button key={n} type="button" class="pill plain chip" style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => void act((db, x) => setExtraPerPayday(db, x, n))}>
+                {formatMoneyAuto(n, cur)}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       {missingRates.length > 0 && (
