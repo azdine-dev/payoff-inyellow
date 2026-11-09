@@ -6,6 +6,25 @@
 const SCENE = 'piy.scene';
 const READS = 'piy.reads';
 const SAFE = 'piy.safe';
+const TODAY_READ = 'piy.todayRead';
+
+/** The read Today suggests for a payday (the payday number and the read), kept until the next payday */
+export function getTodayRead(): { payday: number; id: string } | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(TODAY_READ) ?? 'null');
+    return v && typeof v.payday === 'number' && typeof v.id === 'string' ? { payday: v.payday, id: v.id } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setTodayRead(v: { payday: number; id: string }): void {
+  try {
+    localStorage.setItem(TODAY_READ, JSON.stringify(v));
+  } catch {
+    // blocked storage: the suggestion is worked out again, which is harmless
+  }
+}
 
 /** "Not now" on the card that asks for a home screen icon and a backup */
 export function getSafeDismissed(): boolean {

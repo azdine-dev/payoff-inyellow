@@ -12,7 +12,8 @@ import { CheckIcon, ChevronRight } from '../ui/controls';
 import { ReadArt, ReadIcon } from './ReadArt';
 import { suggestedRead } from './suggest';
 
-const minutes = (r: Read) => Math.max(1, Math.round(readWords(r) / 200));
+export const readMinutes = (r: Read) => Math.max(1, Math.round(readWords(r) / 200));
+const minutes = readMinutes;
 
 const FROM_LABEL: Record<string, string> = { path: 'Path', settings: 'Settings', today: 'Today', debts: 'Debts', safety: 'Safety net' };
 
@@ -57,7 +58,13 @@ export function ReadsScreen() {
     const next = READS[(i + 1) % READS.length]!;
     return (
       <main class="screen reads-screen" data-testid="read">
-        <Back label="Short reads" onClick={() => (readsId.value = null)} />
+        <Back
+          label={readsFrom.value === 'today' ? 'Today' : 'Short reads'}
+          onClick={() => {
+            readsId.value = null;
+            if (readsFrom.value === 'today') tab.value = 'today'; // opened from the card on Today: Back comes home
+          }}
+        />
         <ReadArt kind={current.art} />
         <p class="label">Short read · {minutes(current)} min</p>
         <h1 class="read-title">{current.title}</h1>

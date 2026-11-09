@@ -3427,3 +3427,15 @@ textarea {
   margin-top: 1px;
   color: var(--action);
 }
+
+/* a short read on Today: one small card under the payday card */
+.read-today {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}

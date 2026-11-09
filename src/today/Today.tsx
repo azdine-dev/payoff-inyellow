@@ -26,6 +26,7 @@ import type { AppData } from '../data/types';
 import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
 import { ArrivalCard, ComingLaterPanel } from './ComingLater';
+import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
 import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, tab, today, updateDismissed, updateReady } from '../state/store';
@@ -512,6 +513,7 @@ export function Today() {
           {countdownMode && <CountdownCard nextDate={nextDate} onEarly={markEarly} />}
 
           <SafeCard />
+          {active.length > 0 && <ReadCard missed={missed} focusPct={focus ? focus.pctGone : null} />}
         </>
       )}
 
@@ -642,6 +644,9 @@ export function Today() {
               </div>
             </section>
           )}
+
+          {/* a short read: only when nothing is due (or after I did it, above), and never above the payday card */}
+          {!paidView && active.length > 0 && (emptyNow || countdownMode) && <ReadCard missed={missed} focusPct={focus ? focus.pctGone : null} />}
 
           {!paidView && <MiniChart />}
 

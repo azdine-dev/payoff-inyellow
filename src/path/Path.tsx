@@ -357,7 +357,9 @@ export function Path() {
           <b>Short reads</b>
           <span class="muted small">Ten calm reads, a minute each</span>
         </span>
-        <ChevronRight />
+        <span class="link small" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          See all reads <ChevronRight />
+        </span>
       </button>
 
       <nav class="path-foot" aria-label="Order, print and export">
