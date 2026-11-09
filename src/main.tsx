@@ -11,6 +11,7 @@ import './styles/base.css';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App';
 import { makeApplyUpdate, removeHostingOverlays } from './lib/restart';
+import { startUpdateChecks } from './lib/updateCheck';
 import { pendingUpdateOnOpen, rememberPendingUpdate } from './lib/updateNotice';
 import { setApplyUpdate, updateReady } from './state/store';
 
@@ -18,6 +19,10 @@ import { setApplyUpdate, updateReady } from './state/store';
 // "An update is ready" only when an older version was already running this page. A first open has nothing to update.
 const hadVersion = Boolean(navigator.serviceWorker?.controller);
 const update = registerSW({
+  // Ask for a new version at start, each time the app comes back to the screen, and every 30 minutes
+  onRegisteredSW: (_url, registration) => {
+    if (registration) startUpdateChecks(registration);
+  },
   onNeedRefresh: () => {
     updateReady.value = hadVersion;
     // written down, so the next app open says it again if the update still has not been applied

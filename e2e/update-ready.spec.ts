@@ -1,4 +1,5 @@
 /** "An update is ready" on the next app open, when a new version was found earlier and is still waiting. */
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { nadiaSetup } from './nadia';
 import { goTab, tapDidIt } from './scenario';
@@ -47,4 +48,13 @@ test('an update never erases saved data: with the old files and caches thrown aw
   await expect(page.getByRole('region', { name: 'Store Card' }).locator('.debt-left').first()).toHaveText(balance);
   await goTab(page, 'Path');
   await expect(page.getByTestId('whole-plan-card')).toBeVisible();
+});
+
+test('Settings says which version this phone runs: Version 0.1.0 and the day it was built', async ({ page }) => {
+  await nadiaSetup(page);
+  await page.getByRole('button', { name: 'Settings' }).click();
+  const text = (await page.getByTestId('app-version').innerText()).trim();
+  expect(text).toMatch(/^Version [0-9]+\.[0-9]+\.[0-9]+ · [0-9]{1,2} [A-Z][a-z]{2}( [0-9]{4})?$/);
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+  expect(text.startsWith(`Version ${pkg.version} · `)).toBe(true);
 });

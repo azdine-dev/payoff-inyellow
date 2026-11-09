@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -25,7 +26,12 @@ export default defineConfig(({ mode, command }) => {
   return {
     // A label that changes with every build, so the app can tell whether an update it noted earlier is still waiting
     // (a real build only: the dev server and the tests run as "dev")
-    define: command === 'build' ? { __BUILD_ID__: JSON.stringify(`${Date.now()}`) } : {},
+    define: {
+      // which version this phone runs (shown in Settings): the one in package.json, and when it was built
+      __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync('package.json', 'utf8')).version),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      ...(command === 'build' ? { __BUILD_ID__: JSON.stringify(`${Date.now()}`) } : {}),
+    },
     plugins: [
       preact(),
       editionHtml(free),

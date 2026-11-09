@@ -4,8 +4,13 @@ import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync('package.json', 'utf8')).version),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [preact(), viteSingleFile()],
   resolve: {
     // No service worker inside a single file

@@ -8,6 +8,7 @@ import { FREQUENCIES, otherPaydayFrom, twiceDays, twiceFromSchedule, twiceNotes,
 import { TwicePicker } from '../setup/TwicePicker';
 import { downloadText } from '../lib/csv';
 import { buildIcs, googleCalendarUrl } from '../lib/ics';
+import { versionText } from '../lib/version';
 import { COPY } from '../lib/copy';
 import { HARDSHIP_SCRIPT_URL, SUPPORT_EMAIL, VIDEO_URL } from '../lib/config';
 import { cleanCode, verifyCode } from '../lib/license';
@@ -290,6 +291,9 @@ export function Settings() {
 
       <p class="muted small" style={{ textAlign: 'center' }}>
         PaidInYellow · one paycheck at a time
+      </p>
+      <p class="muted small num" style={{ textAlign: 'center' }} data-testid="app-version">
+        {versionText()}
       </p>
 
       <Sheet open={erasing} onClose={() => setErasing(false)} title="Erase everything?">
