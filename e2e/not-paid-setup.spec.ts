@@ -126,6 +126,52 @@ test.describe('setup step 3', () => {
     await expect(page.getByRole('region', { name: 'Yearly bills' })).toContainText('$10 each payday');
   });
 
+  test('Other: a yearly bill with a name, a cost and a month, and it ends up in the plan', async ({ page }) => {
+    await toMoneyStep(page);
+    const row = page.getByTestId('yearly-row');
+    await expect(row.getByRole('button', { name: 'Other yearly bill', exact: true })).toBeVisible();
+    await row.getByRole('button', { name: 'Other yearly bill', exact: true }).click();
+    await expect(row.getByTestId('yearly-fund')).toHaveCount(1);
+    await expect(row.getByTestId('yearly-fund')).toContainText('Other yearly bill');
+    await row.getByLabel('Other 1, name').fill('Vet');
+    await row.getByLabel('Other 1, cost per year').fill('300');
+    await row.getByLabel('Other 1, needed in').selectOption('March');
+    await expect(row.getByTestId('yearly-fund')).toContainText('Vet');
+    // a second one, and it can be removed again
+    await row.getByRole('button', { name: 'Other yearly bill', exact: true }).click();
+    await expect(row.getByTestId('yearly-fund')).toHaveCount(2);
+    await row.getByLabel('Other 2, name').fill('Dentist');
+    await row.getByLabel('Other 2, cost per year').fill('240');
+    await row.getByRole('button', { name: 'Remove Other 2' }).click();
+    await expect(row.getByTestId('yearly-fund')).toHaveCount(1);
+    await page.getByLabel('Money for the plan each payday').fill('150');
+    await page.getByRole('button', { name: 'See my plan' }).click();
+    await expect(page.getByTestId('debt-free-date')).toBeVisible();
+    await unlockOnResult(page);
+    await page.getByRole('button', { name: 'Start my plan' }).click();
+    await goTab(page, 'Safety net');
+    const bills = page.getByRole('region', { name: 'Yearly bills' });
+    await expect(bills).toContainText('Vet');
+    await expect(bills).toContainText('March');
+    await expect(bills).not.toContainText('Dentist');
+  });
+
+  test('a category with its amount and an empty plan money: the message names the money for the plan field and is brought into view', async ({ page }) => {
+    await toMoneyStep(page);
+    const row = page.getByTestId('yearly-row');
+    await row.getByRole('button', { name: 'Gifts and holidays', exact: true }).click();
+    await row.getByLabel('Gifts and holidays, cost per year').fill('260');
+    await page.getByRole('button', { name: 'See my plan' }).click();
+    const note = page.getByTestId('step-notes');
+    await expect(note).toContainText('Money for the plan each payday: type an amount, even 0.');
+    await expect(note).toBeInViewport();
+    // the yearly bill is fine: nothing says it needs an amount
+    await expect(note).not.toContainText('Gifts');
+    await page.getByLabel('Money for the plan each payday').fill('0');
+    await page.getByRole('button', { name: 'See my plan' }).click();
+    await expect(page.getByTestId('debt-free-date')).toBeVisible();
+  });
+
   test('I have none: no yearly bills, and Today does not offer them later', async ({ page }) => {
     await toMoneyStep(page);
     await page.getByTestId('yearly-row').getByRole('button', { name: 'I have none' }).click();

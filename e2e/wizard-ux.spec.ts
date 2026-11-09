@@ -97,7 +97,7 @@ test('the money step shows the minimums first and has quick amounts', async ({ p
   await expect(field).toHaveValue('20');
   await field.fill('135'); // still editable
   await expect(page.getByRole('button', { name: '$20' })).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByRole('button', { name: 'Other' })).toHaveAttribute('aria-pressed', 'true'); // 135 is none of the quick amounts
+  await expect(page.getByRole('button', { name: 'Other', exact: true })).toHaveAttribute('aria-pressed', 'true'); // 135 is none of the quick amounts
   // The buffer is on the same screen, with its goal at $500
   await openBufferFields(page);
   await expect(page.getByLabel('Safety net goal')).toHaveValue('500');

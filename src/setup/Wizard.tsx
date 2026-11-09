@@ -81,6 +81,8 @@ export function Wizard() {
   const next = async () => {
     if (notes.length) {
       setTried(true);
+      // the message is at the bottom of a long step: bring it into view
+      setTimeout(() => document.querySelector('[data-testid="step-notes"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
       return;
     }
     if (!last) return go(step + 1);
@@ -124,7 +126,7 @@ export function Wizard() {
       </div>
       <Step draft={draft} set={set} today={today.value} />
       {tried && notes.length > 0 && (
-        <div class="stack" style={{ gap: 6 }}>
+        <div class="stack" style={{ gap: 6 }} data-testid="step-notes" role="alert">
           {notes.map((n) => (
             <Note key={n}>{n}</Note>
           ))}

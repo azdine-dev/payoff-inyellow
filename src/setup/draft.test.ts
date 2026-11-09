@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAFT_VERSION, newDraft, resumeStep, SETUP_STEPS, STEP_COUNT, stepNotes, toSetupValues } from './draft';
+import { DRAFT_VERSION, newDraft, newFund, resumeStep, SETUP_STEPS, STEP_COUNT, stepNotes, toSetupValues } from './draft';
 
 describe('a wizard draft saved before the four-step setup', () => {
   it('version 1 (welcome, currency, pay, debts, buffer, extra, yearly, order, fresh start) comes back to the same screen', () => {
@@ -61,8 +61,23 @@ describe('the four steps', () => {
 
   it('step 3 asks for the buffer goal and the money for the plan', () => {
     const d = { ...newDraft(), bufferGoal: '', extra: '' };
-    expect(stepNotes(2, d, '2026-10-15')).toEqual(['Type a goal for your buffer, like 500.', 'Type an amount, even 0. You can change it any time.']);
+    expect(stepNotes(2, d, '2026-10-15')).toEqual(['Goal: type a goal for your buffer, like 500.', 'Money for the plan each payday: type an amount, even 0. You can change it any time.']); // each message names its field
     expect(stepNotes(2, { ...newDraft(), bufferGoal: '500', extra: '150' }, '2026-10-15')).toEqual([]);
+  });
+
+  it('an "Other" yearly bill keeps the name, the cost and the month the buyer typed; one left empty is dropped', () => {
+    const base = { ...newDraft(), frequency: 'biweekly' as const, nextPayday: '2026-10-23', debts: [{ key: 'a', name: 'Visa', type: '', balance: '3200', apr: '22.9', min: '96', dueDay: '12', autopay: false }] };
+    const vet = { ...newFund('Vet', true), perYear: '300', month: 'March' };
+    const unnamed = { ...newFund('', true), perYear: '120' };
+    const empty = newFund('', true);
+    const noCost = { ...newFund('Dentist', true), perYear: '' };
+    const v = toSetupValues({ ...base, funds: [vet, unnamed, empty, noCost, { ...newFund('Gifts and holidays'), perYear: '260', month: 'December' }] });
+    expect(v.funds).toEqual([
+      { name: 'Vet', perYear: 300, month: 'March' },
+      { name: 'Yearly bill', perYear: 120, month: 'Any time' },
+      { name: 'Gifts and holidays', perYear: 260, month: 'December' },
+    ]);
+    expect(stepNotes(2, { ...base, extra: '150', bufferGoal: '500', funds: [vet] }, '2026-10-15')).toEqual([]); // a custom bill never blocks the step
   });
 
   it('the setup defaults are the ones the old steps chose: PaidInYellow order, start this payday', () => {

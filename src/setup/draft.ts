@@ -27,6 +27,8 @@ export interface DraftFund {
   name: string;
   perYear: string;
   month: string;
+  /** "Other": the buyer types the name (a chip's bill has a fixed name) */
+  custom?: boolean;
 }
 
 /** The two pay days of "twice a month": the 1st and 15th, the 15th and last day, or two chosen days. */
@@ -65,7 +67,7 @@ let keySeq = 0;
 export const newKey = () => `k${Date.now().toString(36)}${(keySeq++).toString(36)}`;
 
 export const emptyDebt = (): DraftDebt => ({ key: newKey(), name: '', type: '', balance: '', apr: '', min: '', dueDay: '', autopay: false });
-export const newFund = (name = ''): DraftFund => ({ key: newKey(), name, perYear: '', month: 'Any time' });
+export const newFund = (name = '', custom = false): DraftFund => ({ key: newKey(), name, perYear: '', month: 'Any time', ...(custom ? { custom: true } : {}) });
 
 export function newDraft(): Draft {
   const c = detectCurrency();
@@ -223,9 +225,9 @@ export function stepNotes(step: number, draft: Draft, today: string): string[] {
       break;
     }
     case 2:
-      if (draft.bufferNow.trim() && (amount(draft.bufferNow) ?? -1) < 0) notes.push('Type what you have set aside, or leave it empty.');
-      if ((amount(draft.bufferGoal) ?? -1) < 0) notes.push('Type a goal for your buffer, like 500.');
-      if ((amount(draft.extra) ?? -1) < 0) notes.push('Type an amount, even 0. You can change it any time.');
+      if (draft.bufferNow.trim() && (amount(draft.bufferNow) ?? -1) < 0) notes.push('Set aside now: type what you have set aside, or leave it empty.');
+      if ((amount(draft.bufferGoal) ?? -1) < 0) notes.push('Goal: type a goal for your buffer, like 500.');
+      if ((amount(draft.extra) ?? -1) < 0) notes.push('Money for the plan each payday: type an amount, even 0. You can change it any time.');
       break;
   }
   return notes;

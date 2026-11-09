@@ -56,9 +56,12 @@ export function MoneyStep({ draft, set }: StepProps) {
   };
   // A chip adds the bill (cost and month below it), tapping again takes it away
   const toggleFund = (name: string) => {
-    const has = draft.funds.some((f) => f.name === name);
-    set({ yearlyNone: false, funds: has ? draft.funds.filter((f) => f.name !== name) : [...draft.funds, newFund(name)] });
+    const has = draft.funds.some((f) => !f.custom && f.name === name);
+    set({ yearlyNone: false, funds: has ? draft.funds.filter((f) => f.custom || f.name !== name) : [...draft.funds, newFund(name)] });
   };
+  // "Other": one more bill with a name, a cost and a month of its own, as many as needed
+  const addOther = () => set({ yearlyNone: false, funds: [...draft.funds, newFund('', true)] });
+  const removeFund = (key: string) => set({ funds: draft.funds.filter((f) => f.key !== key) });
   const setFund = (key: string, patch: Partial<Draft['funds'][number]>) => set({ funds: draft.funds.map((f) => (f.key === key ? { ...f, ...patch } : f)) });
   const line = minimumsLine(draft);
   const current = parseAmount(draft.extra);
@@ -165,26 +168,45 @@ export function MoneyStep({ draft, set }: StepProps) {
         <p class="muted">Bills you know are coming. A little each payday keeps them off a card.</p>
         <div class="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8 }} role="group" aria-label="Yearly bill ideas">
           {YEARLY_CHIPS.map((c) => {
-            const on = draft.funds.some((f) => f.name === c.name);
+            const on = draft.funds.some((f) => !f.custom && f.name === c.name);
             return (
               <button key={c.label} type="button" class="pill plain chip" aria-pressed={on} style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => toggleFund(c.name)}>
                 {c.label}
               </button>
             );
           })}
+          <button type="button" class="pill plain chip" aria-label="Other yearly bill" aria-pressed={draft.funds.some((f) => f.custom)} style={{ minHeight: 44, cursor: 'pointer' }} onClick={addOther}>
+            Other
+          </button>
           <button type="button" class="pill plain chip" aria-pressed={draft.yearlyNone} style={{ minHeight: 44, cursor: 'pointer' }} onClick={() => set({ yearlyNone: !draft.yearlyNone, funds: [] })}>
             I have none
           </button>
         </div>
-        {draft.funds.map((f) => (
+        {draft.funds.map((f) => {
+          // a chip's bill is called by its name; an "Other" bill is Other 1, Other 2 until it has a name
+          const nth = draft.funds.filter((x) => x.custom).findIndex((x) => x.key === f.key) + 1;
+          const who = f.custom ? `Other ${nth}` : f.name;
+          return (
           <div key={f.key} class="card stack" style={{ gap: 8 }} data-testid="yearly-fund">
-            <b>{f.name}</b>
+            <div class="row">
+              <b>{f.custom ? f.name.trim() || 'Other yearly bill' : f.name}</b>
+              {f.custom && (
+                <button type="button" class="link small" aria-label={`Remove ${who}`} onClick={() => removeFund(f.key)}>
+                  Remove
+                </button>
+              )}
+            </div>
+            {f.custom && (
+              <Field label="Name" hint="Like Vet, Dentist or Registration.">
+                <input type="text" aria-label={`${who}, name`} maxLength={40} value={f.name} onInput={(e) => setFund(f.key, { name: (e.target as HTMLInputElement).value })} />
+              </Field>
+            )}
             <div class="grid-2">
               <Field label="Cost per year">
-                <NumberInput pre={draft.currencySymbol} value={f.perYear} onInput={(v) => setFund(f.key, { perYear: v })} label={`${f.name}, cost per year`} />
+                <NumberInput pre={draft.currencySymbol} value={f.perYear} onInput={(v) => setFund(f.key, { perYear: v })} label={`${who}, cost per year`} />
               </Field>
               <Field label="Needed in">
-                <select aria-label={`${f.name}, needed in`} value={f.month} onChange={(e) => setFund(f.key, { month: (e.target as HTMLSelectElement).value })}>
+                <select aria-label={`${who}, needed in`} value={f.month} onChange={(e) => setFund(f.key, { month: (e.target as HTMLSelectElement).value })}>
                   {MONTH_CHOICES.map((m) => (
                     <option key={m}>{m}</option>
                   ))}
@@ -192,7 +214,8 @@ export function MoneyStep({ draft, set }: StepProps) {
               </Field>
             </div>
           </div>
-        ))}
+          );
+        })}
         {draft.funds.some((f) => (parseAmount(f.perYear) ?? 0) <= 0) && <p class="muted small">Add a cost for each one, or it is left out.</p>}
       </section>
     </div>
