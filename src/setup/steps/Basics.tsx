@@ -1,10 +1,10 @@
-/** Pay schedule, with the welcome words on top and the currency as a small line */
+/** Pay schedule, with the welcome words on top. The name and the usual paycheck are in Settings, never asked here. */
 import { COPY } from '../../lib/copy';
 import { VIDEO_URL } from '../../lib/config';
 import { CURRENCY_CHOICES, symbolFor } from '../../lib/money';
 import { shortDate } from '../../lib/today';
 import { editSeed } from '../../state/store';
-import { Choice, Field, FieldError, HelpTip, NumberInput, Wordmark } from '../../ui/controls';
+import { Choice, Field, FieldError, HelpTip, Wordmark } from '../../ui/controls';
 import { FREQUENCIES } from '../draft';
 import { TwicePicker } from '../TwicePicker';
 import type { StepProps } from '../Wizard';
@@ -46,12 +46,12 @@ function CurrencyField({ draft, set, errors }: Pick<StepProps, 'draft' | 'set' |
 }
 
 /** The words that used to be a screen of their own. Skipped when numbers are being changed. */
-function Welcome({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
+function Welcome() {
   return (
     <div class="stack" style={{ gap: 12 }}>
       <Wordmark height={30} />
-      <h1 style={{ fontSize: '1.7rem' }}>{COPY.welcome}</h1>
-      <p style={{ fontSize: '1.05rem' }}>{COPY.welcome2}</p>
+      <h1 style={{ fontSize: '1.4rem' }}>{COPY.welcome}</h1>
+      <p>{COPY.welcome2}</p>
       <p class="muted">
         About 5 minutes.
         <HelpTip title="What you need">
@@ -63,9 +63,6 @@ function Welcome({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
           {COPY.watchVideo}
         </a>
       )}
-      <Field label="What should we call you? (optional)" hint="Stays on this device.">
-        <input type="text" maxLength={24} autoComplete="given-name" value={draft.firstName ?? ''} onInput={(e) => set({ firstName: (e.target as HTMLInputElement).value })} />
-      </Field>
     </div>
   );
 }
@@ -73,7 +70,7 @@ function Welcome({ draft, set }: Pick<StepProps, 'draft' | 'set'>) {
 export function PayStep({ draft, set, today, errors }: StepProps) {
   return (
     <div class="stack">
-      {!editSeed.value && <Welcome draft={draft} set={set} />}
+      {!editSeed.value && <Welcome />}
       <h2 style={{ fontSize: '1.5rem' }}>
         Your pay schedule
         <HelpTip title="Why paydays?">
@@ -99,9 +96,6 @@ export function PayStep({ draft, set, today, errors }: StepProps) {
         <input type="date" min={today} value={draft.nextPayday} onInput={(e) => set({ nextPayday: (e.target as HTMLInputElement).value, ifThenDay: '' })} />
       </Field>
       {draft.nextPayday && draft.nextPayday >= today && <p class="muted small">That's {shortDate(draft.nextPayday)}.</p>}
-      <Field label="Your usual paycheck (optional)" hint="Stays on this device." name="paycheck" error={errors.paycheck}>
-        <NumberInput pre={draft.currencySymbol} value={draft.paycheck} onInput={(v) => set({ paycheck: v })} label="Usual paycheck" />
-      </Field>
     </div>
   );
 }

@@ -28,7 +28,6 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: st
   await page.goto('/');
   const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
   // 1 Pay (the welcome words are on top of it)
-  if (opts.name) await page.getByLabel('What should we call you? (optional)').fill(opts.name);
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
   await page.getByLabel('Your next payday').fill('2026-10-23');
   await next.click();
@@ -58,6 +57,14 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: st
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();
   await expect(page.getByTestId('debt-free-pill')).toBeVisible();
+  if (opts.name) {
+    // the name is not asked in setup: it lives in Settings
+    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('button', { name: 'Change Your name' }).click();
+    await page.getByLabel('What should we call you?').fill(opts.name);
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.getByRole('button', { name: 'Back to Today' }).click();
+  }
 }
 
 export const FIXED = new Date('2026-10-15T10:00:00');

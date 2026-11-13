@@ -16,7 +16,8 @@ import { cleanCode, verifyCode } from '../lib/license';
 import { CURRENCY_CHOICES, currencyFromCode, formatMoney, parseAmount, symbolFor } from '../lib/money';
 import { TEXT_SIZE_LABELS } from '../lib/appearance';
 import { diffDays, shortDate, timeLabel, WEEKDAYS } from '../lib/today';
-import { setBufferGoal, setPaycheck } from '../state/moneyActions';
+import { setBufferGoal, setFirstName, setPaycheck } from '../state/moneyActions';
+import { tidyName } from '../lib/text';
 import { setMethod } from '../state/planActions';
 import { nextPaydayISO } from '../state/planInput';
 import { changeSchedule, clearLicense, markBackedUp, saveLicense, setAppearance, setCurrency, setExtraPerPayday, setIfThen } from '../state/settingsActions';
@@ -29,7 +30,7 @@ import { SyncSection } from './SyncSection';
 import { syncOn } from '../sync/controller';
 import { openReads } from '../reads/ReadsScreen';
 
-type Edit = 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | 'order' | 'theme' | 'text' | 'faq' | 'install' | 'code' | 'about' | null;
+type Edit = 'name' | 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | 'order' | 'theme' | 'text' | 'faq' | 'install' | 'code' | 'about' | null;
 
 const THEMES: { value: Theme; label: string }[] = [
   { value: 'auto', label: 'Match my device' },
@@ -75,6 +76,7 @@ export function Settings() {
     setMsg('');
     if (which === 'extra') setText(String(s.extraPerPayday));
     if (which === 'goal') setText(String(s.bufferGoal));
+    if (which === 'name') setText(s.firstName ?? '');
     if (which === 'paycheck') setText(s.paycheckAmount ? String(s.paycheckAmount) : '');
     if (which === 'schedule') {
       setFreq(s.frequency);
@@ -97,6 +99,8 @@ export function Settings() {
     if (edit === 'extra' || edit === 'goal') {
       if (amount === null || amount < 0) return setMsg('Type an amount, even 0.');
       await act((db, x) => (edit === 'extra' ? setExtraPerPayday(db, x, amount) : setBufferGoal(db, x, amount)));
+    } else if (edit === 'name') {
+      await act((db, x) => setFirstName(db, x, text));
     } else if (edit === 'paycheck') {
       if (text.trim() && (amount === null || amount < 0)) return setMsg('Type an amount, like 1400, or leave it empty.');
       await act((db, x) => setPaycheck(db, x, text.trim() ? amount : null));
@@ -194,6 +198,7 @@ export function Settings() {
 
       <section class="card" aria-labelledby="set-plan">
         <h2 id="set-plan">Your plan</h2>
+        {row('Your name', s.firstName ? tidyName(s.firstName) : 'Not set', 'name')}
         {row('Pay schedule', `${freqLabel}, next ${shortDate(nextPaydayISO(s))}`, 'schedule')}
         {row('Money for the plan each payday', formatMoney(s.extraPerPayday, cur, { whole: Number.isInteger(s.extraPerPayday) }), 'extra')}
         {row('Buffer goal', formatMoney(s.bufferGoal, cur, { whole: Number.isInteger(s.bufferGoal) }), 'goal')}
@@ -355,6 +360,18 @@ export function Settings() {
           <NumberInput pre={cur.symbol} value={text} onInput={setText} label="Amount" />
         </Field>
         {msg && <Note>{msg}</Note>}
+        <button type="button" class="btn" onClick={save}>
+          Save
+        </button>
+        <button type="button" class="link" onClick={close}>
+          Cancel
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'name'} onClose={close} title="Your name">
+        <Field label="What should we call you?" hint="Stays on this device. Leave it empty to remove it.">
+          <input type="text" maxLength={24} autoComplete="given-name" value={text} onInput={(e) => setText((e.target as HTMLInputElement).value)} />
+        </Field>
         <button type="button" class="btn" onClick={save}>
           Save
         </button>

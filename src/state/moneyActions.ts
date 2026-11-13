@@ -28,6 +28,13 @@ export async function setBufferGoal(db: PiyDB, data: AppData, goal: number, now 
   return commit(db, data, { settings: { ...data.settings, bufferGoal: goal, updatedAt: now } });
 }
 
+/** The first name for the greeting on Today. Empty takes it away. */
+export async function setFirstName(db: PiyDB, data: AppData, name: string, now = Date.now()): Promise<AppData> {
+  const { firstName: _old, ...rest } = data.settings;
+  const tidy = name.trim().slice(0, 24);
+  return commit(db, data, { settings: { ...rest, ...(tidy ? { firstName: tidy } : {}), updatedAt: now } });
+}
+
 export async function setPaycheck(db: PiyDB, data: AppData, amount: number | null, now = Date.now()): Promise<AppData> {
   return commit(db, data, { settings: { ...data.settings, paycheckAmount: amount, updatedAt: now } });
 }

@@ -3528,3 +3528,11 @@ textarea {
 .debt-free-card.compact .dfc-month {
   align-self: center;
 }
+
+/* setup: Continue is always in reach, at the bottom of the screen */
+.wizard-next {
+  position: sticky;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 2;
+  box-shadow: 0 0 0 8px var(--paper);
+}

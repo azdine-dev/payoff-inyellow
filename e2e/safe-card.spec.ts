@@ -34,7 +34,11 @@ test('Add to home screen opens the how-to, and Not now hides the card for good',
   await tapDidIt(page);
   await page.getByTestId('safe-card').getByRole('button', { name: 'Add to home screen' }).click();
   await expect(page.getByRole('dialog', { name: 'Put it on your phone' })).toContainText('iPhone');
-  await page.keyboard.press('Escape');
+  await page.getByRole('dialog').getByRole('button').first().waitFor(); // the sheet is ready for the keyboard
+  await expect(async () => {
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 1000 });
+  }).toPass();
   await page.getByRole('button', { name: 'Back to Today' }).click();
   await page.getByTestId('safe-card').getByRole('button', { name: 'Not now' }).click();
   await expect(page.getByTestId('safe-card')).toHaveCount(0);

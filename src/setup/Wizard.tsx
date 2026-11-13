@@ -147,7 +147,7 @@ export function Wizard() {
           {fixCount === 1 ? '1 thing to fix above' : `${fixCount} things to fix above`}
         </p>
       )}
-      <button type="button" class="btn" onClick={next} disabled={saving}>
+      <button type="button" class="btn wizard-next" onClick={next} disabled={saving}>
         {LABELS[step]}
       </button>
       {step === 0 && !editSeed.value && (
