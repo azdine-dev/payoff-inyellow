@@ -18,8 +18,9 @@ async function payExtra(page: Page, amount: number) {
 }
 
 test.describe('1 · your scene', () => {
-  test('day one is stage 1, with the countdown and the month beside it', async ({ page }) => {
+  test('the first payday done is stage 1, with the countdown and the month beside it', async ({ page }) => {
     await nadiaSetup(page);
+    await tapDidIt(page); // the scene shows once the payday card is done
     await expect(scene(page)).toHaveAttribute('data-stage', '1');
     const card = page.getByTestId('debt-free-pill');
     await expect(card).toContainText('Debt-free in');
@@ -30,6 +31,7 @@ test.describe('1 · your scene', () => {
 
   test('five stages as the debt goes: 25%, 50%, 75% and all of it', async ({ page }, info) => {
     await nadiaSetup(page);
+    await tapDidIt(page); // the scene shows once the payday card is done
     const dir = process.env.SHOTS;
     if (dir) mkdirSync(dir, { recursive: true });
     const shot = async (n: number) => {
@@ -64,6 +66,7 @@ test.describe('1 · your scene', () => {
   test('with reduced motion the fade is off', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await nadiaSetup(page);
+    await tapDidIt(page); // the scene shows once the payday card is done
     await payExtra(page, 850);
     await expect(scene(page)).toHaveAttribute('data-stage', '2');
     expect(await scene(page).evaluate((el) => getComputedStyle(el).animationName)).toBe('none');

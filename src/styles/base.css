@@ -3491,3 +3491,40 @@ textarea {
 .dfc-row {
   padding: 10px 18px 14px;
 }
+
+/* On a payday the debt-free card is one slim line, and "I did it" stays in reach on the first screen */
+.debt-free-card.compact {
+  border-radius: 16px;
+}
+.debt-free-card.compact .dfc-row {
+  align-items: center;
+  padding: 8px 16px;
+  min-height: 48px;
+}
+.debt-free-card.compact .dfc-text {
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px !important;
+}
+.debt-free-card.compact .dfc-unit b {
+  font-size: 1.15rem;
+}
+.debt-free-card.compact .dfc-month {
+  font-size: 1rem;
+}
+.debt-free-card.compact > .muted {
+  padding: 0 16px 8px;
+}
+.payday-card {
+  overflow: clip; /* like hidden, but the button below can stick */
+}
+.pc-btn {
+  position: sticky;
+  bottom: calc(64px + env(safe-area-inset-bottom) + 14px); /* just above the tab bar */
+  z-index: 2;
+  box-shadow: 0 0 0 6px var(--pc-bg);
+}
+.debt-free-card.compact .dfc-month {
+  align-self: center;
+}

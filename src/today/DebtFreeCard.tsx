@@ -15,8 +15,9 @@ export function countdownParts(months: number): { years: number; months: number 
 
 const plural = (n: number, word: string) => `${word}${n === 1 ? '' : 's'}`;
 
-export function DebtFreeCard(props: { today: string; debtFreeDate: string | null; hasDebts: boolean; pctGone: number; withLine?: string | null; onOpen: () => void }) {
-  const { today, debtFreeDate, hasDebts, pctGone, withLine, onOpen } = props;
+/** `compact`: one slim line with no scene, for the days the payday card is up, so "I did it" fits on the first screen. */
+export function DebtFreeCard(props: { today: string; debtFreeDate: string | null; hasDebts: boolean; pctGone: number; withLine?: string | null; compact?: boolean; onOpen: () => void }) {
+  const { today, debtFreeDate, hasDebts, pctGone, withLine, compact, onOpen } = props;
   const stage = sceneStage(pctGone, hasDebts);
   // A stage reached for the first time fades in once. The very first open just shows the scene.
   const [fadeStage, setFadeStage] = useState<number | null>(() => {
@@ -24,15 +25,16 @@ export function DebtFreeCard(props: { today: string; debtFreeDate: string | null
     return seen !== null && stage > seen ? stage : null;
   });
   useEffect(() => {
+    if (compact) return; // the scene is not on screen: its fade waits for the day it is
     const seen = getSceneSeen();
     if (seen !== null && stage > seen) setFadeStage(stage);
     if (seen === null || stage > seen) setSceneSeen(stage);
-  }, [stage]);
+  }, [stage, compact]);
   const parts = debtFreeDate ? countdownParts(monthsBetween(today, debtFreeDate)) : null;
   const aria = debtFreeDate ? `Debt-free in ${monthYear(debtFreeDate)}. Open your path.` : hasDebts ? 'More than 20 years. Open your path.' : 'Debt-free. Open your path.';
   return (
-    <button type="button" class="card debt-free-card" data-testid="debt-free-pill" aria-label={aria} onClick={onOpen}>
-      <Scene stage={stage} pct={pctGone} fadeIn={fadeStage === stage} />
+    <button type="button" class={`card debt-free-card${compact ? ' compact' : ''}`} data-testid="debt-free-pill" aria-label={aria} onClick={onOpen}>
+      {!compact && <Scene stage={stage} pct={pctGone} fadeIn={fadeStage === stage} />}
       <span class="dfc-row">
         {parts && debtFreeDate ? (
           <>

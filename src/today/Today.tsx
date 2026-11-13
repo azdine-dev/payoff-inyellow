@@ -187,9 +187,11 @@ export function Today() {
     navigator.vibrate?.(15); // a light tap, where the phone can
     await sleep(reducedMotion() ? 0 : 400); // the highlighter swipe (300 ms) and the boxes turning yellow
     const snapshot = rows.map((x) => ({ key: x.key, label: x.paidLabel, amount: x.amount }));
-    rememberBalances(d);
-    const res = await didPayday(await getDB(), d, { planMoney: override });
-    setUndo({ before: d, after: res.data });
+    // what is saved now, not what this screen was drawn from: a setting changed during the swipe is kept
+    const now = data.peek() ?? d;
+    rememberBalances(now);
+    const res = await didPayday(await getDB(), now, { planMoney: override });
+    setUndo({ before: now, after: res.data });
     setJustPaid({ date: res.step.date, total, rows: snapshot });
     setPaidIds(res.newlyPaid);
     freshPayday.value = res.step ? paydayNumber : null;
@@ -368,6 +370,7 @@ export function Today() {
         hasDebts={active.length > 0}
         pctGone={progressStats(d).pct}
         withLine={comingLaterLine(d)?.text}
+        compact={!justPaid && !paidView && !countdownMode && !emptyNow && active.length > 0 && Boolean(row)}
         onOpen={() => {
           // the debt-free day, as a preview (read-only); without a date it just opens Path
           const last = plan.value?.rows[plan.value.rows.length - 1];

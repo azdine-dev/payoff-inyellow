@@ -16,7 +16,9 @@ test.describe('2 · the countdown card', () => {
     await expect(card.locator('.dfc-unit')).toHaveCount(1);
     await expect(card.locator('.dfc-unit').first()).toContainText(/^\d+\s*months$/);
     await expect(card.locator('.hl')).toHaveText(/^[A-Z][a-z]+ 20\d\d$/);
-    await expect(card.locator('svg.scene')).toBeVisible(); // your scene, stage 1 on day one
+    await expect(card.locator('svg.scene')).toHaveCount(0); // one slim line while the payday card is up
+    await tapDidIt(page);
+    await expect(card.locator('svg.scene')).toBeVisible(); // your scene, once the payday is done
     await expect(card.locator('svg.scene')).toHaveAttribute('data-stage', '1');
     await expectBrandRules(page);
   });
@@ -34,6 +36,7 @@ test.describe('2 · the countdown card', () => {
     await quickSetup(page);
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(bg).not.toBe('rgb(244, 240, 230)');
+    await tapDidIt(page);
     await expect(page.getByTestId('debt-free-pill').locator('svg.scene')).toBeVisible();
   });
 });

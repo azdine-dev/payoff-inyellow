@@ -53,9 +53,11 @@ test.describe('empty payday squares in dark mode', () => {
 test.describe('the dark scene', () => {
   test('Today in dark: lighter hills and a soft sun, so the scene reads as calm night', async ({ page }) => {
     await nadiaSetup(page);
+    await tapDidIt(page); // the scene shows once the payday card is done
+    await expect(page.getByTestId('paid-card')).toBeVisible();
     await useDark(page);
     const fill = (sel: string) => page.locator(`[data-testid="scene"] ${sel}`).first().evaluate((el) => getComputedStyle(el).fill);
-    expect(await fill('.sc-hill1')).toBe('rgb(46, 69, 55)'); // #2E4537
+    await expect.poll(() => fill('.sc-hill1')).toBe('rgb(46, 69, 55)'); // #2E4537
     expect(await fill('.sc-hill2')).toBe('rgb(58, 85, 68)'); // #3A5544
     expect(await fill('.sc-sun')).toBe('rgba(255, 246, 194, 0.35)');
     const sky = await fill('.sc-sky');
@@ -90,6 +92,7 @@ test.describe('the PAID card in dark mode', () => {
 test.describe('the scene: a pin, a sun by day and a moon by night', () => {
   test('the pin stands on the next square, the squares follow the share paid, and the house has no pin', async ({ page }) => {
     await nadiaSetup(page);
+    await tapDidIt(page); // the scene shows once the payday card is done
     const scene = page.getByTestId('scene');
     await expect(page.getByTestId('scene-pin')).toHaveAttribute('data-index', '2'); // two squares come pre-filled
     await expect(scene.locator('rect.sc-paid')).toHaveCount(2);
@@ -108,7 +111,9 @@ test.describe('the scene: a pin, a sun by day and a moon by night', () => {
     await page.getByRole('textbox', { name: 'Extra money' }).fill('850');
     await page.getByRole('button', { name: 'Use it', exact: true }).click(); // stage 2 has rays
     const moment = page.getByTestId('paid-moment'); // a debt that reaches zero opens the paid moment: close it
-    if (await moment.waitFor({ state: 'visible', timeout: 1500 }).then(() => true, () => false)) await page.getByRole('button', { name: /Next payday|Done/ }).click();
+    if (await moment.waitFor({ state: 'visible', timeout: 1500 }).then(() => true, () => false)) await moment.getByRole('button').click();
+    await tapDidIt(page); // the scene shows once the payday card is done
+    await expect(page.getByTestId('scene')).toBeVisible();
     const shown = (sel: string) => page.locator(`[data-testid="scene"] ${sel}`).first().evaluate((el) => getComputedStyle(el).display);
     expect(await shown('.sc-cloud')).not.toBe('none');
     expect(await shown('.sc-ray')).not.toBe('none');
@@ -124,6 +129,7 @@ test.describe('the scene: a pin, a sun by day and a moon by night', () => {
   test('with reduced motion the pin stands still', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await nadiaSetup(page);
+    await tapDidIt(page);
     expect(await page.getByTestId('scene-pin').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
   });
 });
