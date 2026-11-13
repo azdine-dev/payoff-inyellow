@@ -22,7 +22,7 @@ import { Empty } from '../ui/Empty';
 import { useCountUp } from '../ui/useCountUp';
 import { Bar, Checkbox, ChevronRight, Field, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 
-type Mode = 'use-buffer' | 'balance' | 'goal' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
+type Mode = 'use-buffer' | 'change' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
 
 export function Money() {
   const d = data.value!;
@@ -83,12 +83,12 @@ export function Money() {
       if (amount === null || amount <= 0) return bad();
       await act((db, x) => useBuffer(db, x, amount, text2, today.value));
       setUsedNote(true);
-    } else if (mode === 'balance') {
-      if (amount === null || amount < 0) return bad();
-      await act((db, x) => setBuffer(db, x, amount, today.value));
-    } else if (mode === 'goal') {
-      if (amount === null || amount < 0) return bad();
-      await act((db, x) => setBufferGoal(db, x, amount));
+    } else if (mode === 'change') {
+      // one sheet for the goal and the amount set aside: only what changed is saved
+      const aside = parseAmount(text2);
+      if (amount === null || amount < 0 || aside === null || aside < 0) return bad();
+      if (amount !== s.bufferGoal) await act((db, x) => setBufferGoal(db, x, amount));
+      if (aside !== d.buffer.amount) await act((db, x) => setBuffer(db, x, aside, today.value));
     } else if (mode === 'fund-add' || (typeof mode === 'object' && mode?.kind === 'edit')) {
       if (amount === null || amount <= 0) return setMsg('Add how much it costs in a year.');
       const f: FundFields = { name: text2.trim() || 'Yearly bill', perYear: amount, month };
@@ -145,25 +145,10 @@ export function Money() {
         <button type="button" class="btn" onClick={() => setMode('use-buffer')}>
           I used some of it
         </button>
-        <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => { setText(String(s.bufferGoal)); setMode('goal'); }}>
-          Change my goal
+        <button type="button" class="set-row" data-testid="buffer-change" aria-label="Change the goal or the amount set aside" onClick={() => { setText(String(s.bufferGoal)); setText2(String(d.buffer.amount)); setMode('change'); }}>
+          <span class="muted small">Goal, amount set aside, history</span>
+          <span class="link small">Change</span>
         </button>
-        <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} onClick={() => { setText(String(d.buffer.amount)); setMode('balance'); }}>
-          Update amount set aside
-        </button>
-        {d.buffer.history.length > 0 && (
-          <details>
-            <summary class="muted small" style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>History</summary>
-            <ul class="stack small" style={{ margin: 0, paddingLeft: '1.1rem', gap: 4 }}>
-              {[...d.buffer.history].reverse().map((h, i) => (
-                <li key={i} class="num">
-                  {h.date} · {h.amount < 0 ? '-' : '+'}
-                  {money(Math.abs(h.amount), cur)} · {h.note}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
       </section>
 
       <section class="card stack" aria-labelledby="yearly-title">
@@ -255,18 +240,25 @@ export function Money() {
         <button type="button" class="btn" onClick={save}>Save</button>
         <button type="button" class="link" onClick={close}>Cancel</button>
       </Sheet>
-      <Sheet open={mode === 'goal'} onClose={close} title="Buffer goal">
+      <Sheet open={mode === 'change'} onClose={close} title="Surprise buffer">
         <Field label="Goal"><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Buffer goal" /></Field>
+        <Field label="Amount set aside" hint="What is in your separate account or envelope now."><NumberInput pre={cur.symbol} value={text2} onInput={setText2} label="Amount set aside" /></Field>
         {msg && <Note>{msg}</Note>}
         <button type="button" class="btn" onClick={save}>Save</button>
         <button type="button" class="link" onClick={close}>Cancel</button>
-      </Sheet>
-      <Sheet open={mode === 'balance'} onClose={close} title="Amount set aside">
-        <p class="muted">Enter what is in your separate account or envelope now.</p>
-        <Field label="Amount set aside"><NumberInput pre={cur.symbol} value={text} onInput={setText} label="Amount set aside" /></Field>
-        {msg && <Note>{msg}</Note>}
-        <button type="button" class="btn" onClick={save}>Save amount</button>
-        <button type="button" class="link" onClick={close}>Cancel</button>
+        {d.buffer.history.length > 0 && (
+          <div class="stack" style={{ gap: 4 }} data-testid="buffer-history">
+            <p class="label">History</p>
+            <ul class="stack small" style={{ margin: 0, paddingLeft: '1.1rem', gap: 4 }}>
+              {[...d.buffer.history].reverse().map((h, i) => (
+                <li key={i} class="num">
+                  {h.date} · {h.amount < 0 ? '-' : '+'}
+                  {money(Math.abs(h.amount), cur)} · {h.note}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Sheet>
       <Sheet open={mode === 'fund-add' || (typeof mode === 'object' && mode?.kind === 'edit')} onClose={close} title={mode === 'fund-add' ? 'Add a yearly bill' : 'Edit yearly bill'}>
         <Field label="Name"><input type="text" value={text2} onInput={(e) => setText2((e.target as HTMLInputElement).value)} /></Field>

@@ -3544,3 +3544,26 @@ textarea {
   align-items: baseline;
   gap: 4px 10px;
 }
+
+/* a settings row: the whole row is the button */
+.set-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 0;
+  border: 0;
+  border-top: 1px dashed var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.set-row .link {
+  flex: none;
+  min-height: 0;
+}
