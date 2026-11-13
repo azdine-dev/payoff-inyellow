@@ -24,7 +24,7 @@ export function SafeCard() {
         {!installed && (
           <button
             type="button"
-            class="btn small"
+            class="btn ghost small"
             onClick={async () => {
               if (installPrompt.value) {
                 await installPrompt.value.prompt();
@@ -41,7 +41,7 @@ export function SafeCard() {
         {!backedUp && (
           <button
             type="button"
-            class="btn small"
+            class="btn ghost small"
             onClick={async () => {
               await downloadBackup();
               showNotice('info', 'Backup saved. Keep the file somewhere safe, like your email or a cloud folder.');

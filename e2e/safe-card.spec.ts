@@ -15,6 +15,13 @@ test('no card before the first I did it, then one calm card with the sentence an
   await expect(card).toContainText(SENTENCE);
   await expect(card.getByRole('button', { name: 'Add to home screen' })).toBeVisible();
   await expect(card.getByRole('button', { name: 'Save a backup' })).toBeVisible();
+  // two outline buttons: the paid screen keeps one filled button at most
+  for (const name of ['Add to home screen', 'Save a backup']) {
+    const b = card.getByRole('button', { name });
+    await expect(b).toHaveClass(/ghost/);
+    expect(await b.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+    expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
   await expectBrandRules(page);
   expect(await card.innerText()).not.toContain('!');
 });
