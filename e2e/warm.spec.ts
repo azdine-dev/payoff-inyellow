@@ -71,8 +71,9 @@ test.describe('1 · your scene', () => {
 });
 
 test.describe('2 · balance, payday by payday', () => {
-  test('day one starts at $3,250 and says down $0; a tap opens Path', async ({ page }) => {
+  test('day one starts at $3,250 and says down $0, on Path', async ({ page }) => {
     await nadiaSetup(page);
+    await goTab(page, 'Path');
     const chart = page.getByTestId('mini-chart');
     await expect(chart).toContainText('Balance, payday by payday');
     await expect(page.getByTestId('mini-start')).toHaveText('You · $3,250');
@@ -80,13 +81,12 @@ test.describe('2 · balance, payday by payday', () => {
     await expect(page.getByTestId('mini-line')).toHaveText('Day one. Your line starts here.');
     await expect(page.getByTestId('mini-here')).toBeVisible();
     await expect(page.getByTestId('mini-paid')).toHaveCount(0); // nothing is paid yet
-    await chart.click();
-    await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   });
 
   test('extra money paid before the first payday lowers where you are, and it is still day one', async ({ page }) => {
     await nadiaSetup(page);
     await payExtra(page, 450);
+    await goTab(page, 'Path');
     await expect(page.getByTestId('mini-start')).toHaveText('You · $2,800');
     await expect(page.getByTestId('mini-line')).toHaveText('Day one. Your line starts here.');
     await expect(page.getByTestId('mini-here')).toHaveCount(1);
@@ -102,11 +102,12 @@ test.describe('3 · a note for this payday', () => {
     await expect(page.getByTestId('pay-note')).toHaveText('First square. The hardest one is behind you.');
   });
 
-  test('after "I did it" the note sits under the PAID card', async ({ page }) => {
+  test('after "I did it" the note is one line inside the PAID card', async ({ page }) => {
     await nadiaSetup(page);
     await tapDidIt(page);
     await expect(page.getByTestId('paid-card')).toBeVisible();
-    await expect(page.getByTestId('pay-note-card')).toBeVisible();
+    await expect(page.getByTestId('paid-card').getByTestId('pay-note')).toBeVisible();
+    await expect(page.getByTestId('pay-note-card')).toHaveCount(0);
     await expect(page.getByTestId('pay-note')).toHaveText('First square. The hardest one is behind you.');
   });
 

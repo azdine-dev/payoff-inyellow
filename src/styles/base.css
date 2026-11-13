@@ -3459,3 +3459,35 @@ textarea {
   width: 44px;
   height: 44px;
 }
+
+/* the note for this payday: one line inside the payday card */
+.note-line {
+  font-size: 0.9rem;
+  color: inherit;
+  opacity: 0.85;
+  margin: 4px 0 2px;
+}
+.paid-card .note-line,
+.nothing-note {
+  margin-top: 2px;
+}
+.tile-row {
+  align-items: stretch;
+}
+.tile-row > .link {
+  align-self: center;
+  white-space: nowrap;
+  min-height: 44px;
+}
+
+/* Today is short: a compact date and a compact debt-free card */
+.today-head {
+  padding-top: 14px;
+  padding-bottom: 24px;
+}
+.today-h1 {
+  font-size: 1.5rem;
+}
+.dfc-row {
+  padding: 10px 18px 14px;
+}

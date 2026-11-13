@@ -1,4 +1,4 @@
-/** One suggested short read on Today: after "I did it" or when nothing is due, never above the payday card, ticked once read. */
+/** One suggested short read on Today, always under the payday card (or the PAID card), never above it, ticked once read. */
 import { expect, test } from '@playwright/test';
 import { READS } from '../src/copy/reads';
 import { nadiaSetup } from './nadia';
@@ -6,10 +6,16 @@ import { expectBrandRules, goTab, tapDidIt } from './scenario';
 
 const title = (id: string) => READS.find((r) => r.id === id)!.title;
 
-test('not while the payday card is there: day one has no read card', async ({ page }) => {
+test('day one: one read card, under the payday card and above Coming up', async ({ page }) => {
   await nadiaSetup(page);
   await expect(page.locator('.payday-card')).toBeVisible();
-  await expect(page.getByTestId('today-read')).toHaveCount(0);
+  const card = page.getByTestId('today-read');
+  await expect(card).toHaveCount(1);
+  const pay = (await page.locator('.payday-card').boundingBox())!;
+  const read = (await card.boundingBox())!;
+  const coming = (await page.getByRole('region', { name: 'Coming up' }).boundingBox())!;
+  expect(read.y).toBeGreaterThan(pay.y + pay.height - 1);
+  expect(coming.y).toBeGreaterThan(read.y + read.height - 1);
 });
 
 test('after I did it: one small card under the PAID card, with the title and 1 min, and no new tab', async ({ page }) => {
@@ -56,7 +62,6 @@ test('the next payday suggests the next read, and it shows when nothing is due t
   await page.clock.setFixedTime(new Date('2026-11-20T10:00:00'));
   await page.reload();
   await expect(page.locator('.payday-card')).toBeVisible();
-  await expect(page.getByTestId('today-read')).toHaveCount(0); // never above (or beside) the payday card
   await tapDidIt(page);
   await expect(page.getByTestId('paid-card')).toBeVisible();
   const next = page.getByTestId('today-read');

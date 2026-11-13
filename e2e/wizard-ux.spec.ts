@@ -286,6 +286,7 @@ test('the what-if shows three small cards and says nothing changes until you app
 test('the focus debt card says what to pay this payday, when it is gone, and why it is first', async ({ page }) => {
   const { quickSetup } = await import('./helpers');
   await quickSetup(page); // Store card (due the 5th) is the smallest balance
+  await goTab(page, 'Path');
   const focus = page.getByRole('region', { name: 'Focus debt' });
   await expect(focus).toContainText('Store card');
   await expect(page.getByTestId('focus-sentence')).toContainText(/\d+% gone\./);

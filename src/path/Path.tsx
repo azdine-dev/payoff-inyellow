@@ -24,6 +24,7 @@ import { Ring } from '../ui/Ring';
 import { PaydayCalendar } from './PaydayCalendar';
 import { LookAhead, PathPreview } from './Preview';
 import { Chapters } from './Chapters';
+import { FocusSection } from './FocusCard';
 import { ComingLaterList } from './ComingLaterList';
 import { WholePlan, WholePlanCard } from './WholePlan';
 import { PayMore } from './PayMore';
@@ -208,6 +209,7 @@ export function Path() {
 
       {!debtFree && <WholePlanCard d={d} r={r} today={today.value} />}
       {!debtFree && <ComingLaterList />}
+      {!debtFree && <FocusSection />}
 
       <div class="path-stats" role="group" aria-label="Your numbers">
         <div>

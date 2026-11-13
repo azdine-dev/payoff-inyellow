@@ -102,8 +102,8 @@ test.describe('5 · small animations', () => {
 
   test('bars, tab fade and sheets: named, and never longer than 600 ms', async ({ page }) => {
     await quickSetup(page);
-    const bar = await anim(page, '.bar > div'); // the focus debt bar on Today
     await goTab(page, 'Path');
+    const bar = await anim(page, '.bar > div'); // the focus debt bar on Path
     // the "You are here" pin and the finish flag slide for 600 ms at most
     for (const sel of ['.road-pin', '.road-finish']) {
       const ms = await page.locator(sel).first().evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration) * 1000);
@@ -158,8 +158,8 @@ test.describe('5 · small animations', () => {
   test('reduced motion turns all of it off', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await quickSetup(page);
-    expect((await anim(page, '.bar > div')).name).toBe('none');
     await goTab(page, 'Path');
+    expect((await anim(page, '.bar > div')).name).toBe('none');
     expect((await anim(page, 'main.screen')).name).toBe('none');
     // the pin and the finish flag do not slide
     for (const sel of ['.road-pin', '.road-finish']) expect(await page.locator(sel).first().evaluate((el) => getComputedStyle(el).transitionDuration)).toBe('0s');

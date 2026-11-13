@@ -209,6 +209,7 @@ test.describe('6 · first name', () => {
 test.describe('1 · fewer words, explanations behind a (?)', () => {
   test('a (?) opens a bottom sheet with the explanation, and Got it closes it', async ({ page }) => {
     await quickSetup(page);
+    await goTab(page, 'Path');
     const focus = page.getByRole('region', { name: 'Focus debt' });
     await focus.getByRole('button', { name: 'Help: Why this one?' }).click();
     const sheet = page.getByRole('dialog', { name: 'Why this one?' });
@@ -222,6 +223,7 @@ test.describe('1 · fewer words, explanations behind a (?)', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     // the footer keeps the disclaimer, and the estimates line sits behind a (?)
+    await goTab(page, 'Today');
     await expect(page.locator('.footer-note')).toContainText('A planning tool, not financial advice.');
     await expect(page.locator('.footer-note')).not.toContainText('Figures are estimates');
     await page.locator('.footer-note').getByRole('button', { name: 'Help: About the figures' }).click();
@@ -230,6 +232,7 @@ test.describe('1 · fewer words, explanations behind a (?)', () => {
 
   test('the (?) has a 44px tap area', async ({ page }) => {
     await quickSetup(page);
+    await goTab(page, 'Path');
     const tip = page.getByRole('region', { name: 'Focus debt' }).getByRole('button', { name: 'Help: Why this one?' });
     await tip.scrollIntoViewIfNeeded();
     const box = (await tip.boundingBox())!;

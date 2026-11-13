@@ -29,8 +29,8 @@ test.describe('the payoff order after adding a debt', () => {
     await sheet.getByRole('button', { name: /^(Save|Add debt|Add)$/ }).click();
     const order = await page.locator('.debt-card h2').allInnerTexts();
     expect(order).toEqual(['Store Card', 'Medical', 'Visa']);
-    // Today and the focus agree: the extra goes to Store Card first
-    await goTab(page, 'Today');
+    // Path and the focus agree: the extra goes to Store Card first
+    await goTab(page, 'Path');
     await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Store Card');
   });
 });
@@ -62,7 +62,7 @@ test.describe('after the last debt', () => {
     await payExtra(page, 250);
     await page.getByRole('button', { name: /Next payday|Done/ }).click().catch(() => undefined);
     await expect(page.getByTestId('greeting')).toHaveText('Debt-free.');
-    await expect(page.getByTestId('pay-note-card')).toHaveCount(0);
+    await expect(page.getByTestId('pay-note')).toHaveCount(0);
   });
 });
 
@@ -75,6 +75,7 @@ test.describe('the first payday', () => {
     await expect(page.locator('.today-head')).toContainText('is paid.');
     await expect(page.locator('.today-head')).not.toContainText('Next payday');
     await expect(page.getByTestId('countdown-card')).toContainText('Next payday is');
+    await goTab(page, 'Path');
     await expect(page.getByTestId('mini-line')).toHaveText(/^\$\d+(\.\d\d)? lower than day one\.$/);
   });
 });

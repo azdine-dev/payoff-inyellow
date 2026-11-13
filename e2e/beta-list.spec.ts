@@ -177,7 +177,7 @@ test.describe('Part 6 · every number is a door', () => {
     await page.getByTestId('debt-free-pill').click();
     await expect(page.getByTestId('preview-banner')).toBeVisible(); // the debt-free day, as a preview
 
-    await goTab(page, 'Today');
+    await page.getByRole('button', { name: 'Back to today' }).click(); // the preview closes, Path is under it; the focus debt card lives there
     await page.getByRole('button', { name: 'Store card, open in Debts' }).click();
     await expect(page.getByRole('heading', { name: 'Debts', exact: true })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Store card' })).toBeVisible(); // that debt's sheet is open
@@ -190,9 +190,13 @@ test.describe('Part 6 · every number is a door', () => {
 
   test('the focus debt card keeps one "I got extra money" link, and it is not inside the door', async ({ page }) => {
     await quickSetup(page);
+    await expect(page.getByRole('button', { name: 'I got extra money' })).toHaveCount(1); // on Today
+    await goTab(page, 'Path');
     const door = page.getByRole('button', { name: 'Store card, open in Debts' });
+    await expect(door).toBeVisible();
     await expect(door.getByRole('button')).toHaveCount(0); // no button inside a button
     await expect(page.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
+    await goTab(page, 'Today');
     await page.getByRole('button', { name: 'I got extra money' }).click();
     await expect(page.getByRole('dialog', { name: 'Extra money' })).toBeVisible();
   });

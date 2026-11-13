@@ -126,7 +126,9 @@ test.describe('4 · "I got extra money" on Today', () => {
   test('shows the new date and the interest saved first, and "Use it" puts it on the focus debt', async ({ page }) => {
     await quickSetup(page);
     const focus = page.getByRole('region', { name: 'Focus debt' });
+    await goTab(page, 'Path');
     await expect(focus).toContainText('$640 left');
+    await goTab(page, 'Today');
     await page.getByTestId('got-extra').click();
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await expect(sheet.getByTestId('windfall-preview')).toHaveCount(0); // nothing until an amount is typed
@@ -134,8 +136,8 @@ test.describe('4 · "I got extra money" on Today', () => {
     const preview = sheet.getByTestId('windfall-preview');
     await expect(preview).toContainText('Debt-free');
     await expect(preview).toContainText(/less interest|sooner|same date/);
-    await expect(focus).toContainText('$640 left'); // not applied yet
     await sheet.getByRole('button', { name: 'Use it' }).click();
+    await goTab(page, 'Path');
     await expect(focus).toContainText('$340 left');
     await goTab(page, 'Debts');
     await page.getByRole('button', { name: 'Store card, options' }).click();

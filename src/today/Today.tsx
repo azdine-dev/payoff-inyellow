@@ -6,7 +6,7 @@
  */
 import { syncOn } from '../sync/controller';
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { dailyInterestCost, growingDebts, PAYDAYS_PER_YEAR, planNeedsHelp, simulatePlan } from '../engine';
+import { planNeedsHelp, simulatePlan } from '../engine';
 import { backupReminder } from '../data/backup';
 import { downloadBackup } from '../state/backupActions';
 import { COPY } from '../lib/copy';
@@ -21,24 +21,23 @@ import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
-import { activeDebts, nextPaydayISO, nextPaydayNumber, toDebtInput, toPlanInput } from '../state/planInput';
+import { activeDebts, nextPaydayISO, nextPaydayNumber, toPlanInput } from '../state/planInput';
 import type { AppData } from '../data/types';
-import { Count, rememberCount, useCountUp } from '../ui/useCountUp';
+import { rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
 import { ArrivalCard, ComingLaterPanel } from './ComingLater';
 import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
-import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, openDebtId, plan, previewDate, tab, today, updateDismissed, updateReady } from '../state/store';
-import { Bar, Checkbox, CheckIcon, ChevronRight, Field, FooterNote, GearIcon, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, tab, today, updateDismissed, updateReady } from '../state/store';
+import { Checkbox, CheckIcon, Field, FooterNote, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
 import { DebtFreeCard } from './DebtFreeCard';
-import { MiniChart } from './MiniChart';
 import { pickNote } from './payNote';
 import { Empty } from '../ui/Empty';
-import { afterPaySentence, comingUp, dailyCostLastMonth, extraSummary, focusDebt, focusSentence, greetingWithName, mergedRows, paidFromLog, whyFirst } from './model';
+import { comingUp, extraSummary, focusDebt, greetingWithName, mergedRows, paidFromLog } from './model';
 
 interface JustPaid {
   date: string;
@@ -136,7 +135,6 @@ export function Today() {
   const missed = missedPaydays(d, today.value);
   const reasons = planNeedsHelp(toPlanInput(d), plan.value!, s.paycheckAmount);
   const focus = focusDebt(d, r);
-  const growingNow = new Set(growingDebts(d.debts.filter((x) => x.status === 'active').map(toDebtInput)));
   const active = activeDebts(d);
   const due = comingUp(d, today.value, nextDate);
   const nameOf = (id: string) => d.debts.find((x) => x.id === id)?.name ?? '';
@@ -156,6 +154,14 @@ export function Today() {
   // The next payday moves nothing: no "Move $0" card, no "I did it". It counts as done by itself when it comes.
   const emptyNow = !justPaid && Boolean(row) && active.length > 0 && total === 0;
   const move = emptyNow ? nextMove(d, plan.value!, 1) : lastWasEmpty ? nextMove(d, plan.value!, 0) : null;
+  // One short line for this payday: for what just happened if there is something, else the line of the payday
+  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0 });
+  const noteLine =
+    active.length > 0 ? (
+      <p class="note-line" data-testid="pay-note">
+        {note.text}
+      </p>
+    ) : null;
   const nothingCard = (
     <section class="card calm stack" style={{ gap: 4 }} aria-label="Nothing to move" data-testid="nothing-card">
       <p>
@@ -168,6 +174,7 @@ export function Today() {
           </>
         )}
       </p>
+      {noteLine}
     </section>
   );
   const isPayday = nextDate === today.value;
@@ -311,40 +318,7 @@ export function Today() {
           : `Next payday is ${shortDate(nextDate)}.`;
   const greeting = greetingWithName(plainGreeting, !debtFreeNow && !paidView && missed > 0 ? 'back' : !debtFreeNow && !paidView && missed === 0 && isPayday ? 'payday' : 'other', s.firstName);
 
-  const goneLabel = (iso: string | null) => (iso ? (diffDays(today.value, iso) <= 100 ? shortDate(iso) : shortMonthYear(iso)) : null);
-  // Paydays left for the focus debt after the one on the card (0 = this payday pays it off)
-  const focusIdx = focus ? r.rows.findIndex((x) => x.debts.some((y) => y.id === focus.debt.id && y.balanceAfter <= 0.005)) : -1;
-  // After "I did it": the plan is already the new one, so row 0 is the next payday
-  const untilGone = focusIdx < 0 ? null : focusIdx;
-  const rollTo = (() => {
-    if (!focus) return null;
-    const order = r.order.filter((id) => d.debts.find((x) => x.id === id)?.status === 'active');
-    const next = order[order.indexOf(focus.debt.id) + 1];
-    const bill = focus.debt.minMonthly; // its bill rolls into the extra on the paydays before it would have been due
-    return next && bill > 0 ? { amount: formatMoneyAuto(bill, cur), to: nameOf(next) } : null;
-  })();
-
-  const daily = dailyInterestCost(active);
-  const lastMonth = dailyCostLastMonth(d, today.value);
   const bufferFull = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
-
-  // One short line for this payday: for what just happened if there is something, else the line of the payday
-  const note = pickNote(d, { freshPaidDebt: paidIds.length > 0 || freshPaidDebts.value.length > 0 });
-  const noteCard = (
-    <section class="card note-card" aria-label="A note for this payday" data-testid="pay-note-card">
-      <span class="note-icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 4h14v12H9l-4 4z" />
-        </svg>
-      </span>
-      <div class="stack" style={{ gap: 4 }}>
-        <p class="label">A note for this payday</p>
-        <p class="note-text" data-testid="pay-note">
-          {note.text}
-        </p>
-      </div>
-    </section>
-  );
 
   const moments = d.milestones
     .filter((m) => freshMilestones.value.includes(m.id) && !closedMoments.has(m.id))
@@ -402,8 +376,6 @@ export function Today() {
           tab.value = 'path';
         }}
       />
-
-      {active.length > 0 && noteCard}
 
       {updateReady.value && !updateDismissed.value && (
         <section class="card row" role="status" data-testid="update-bar">
@@ -485,6 +457,7 @@ export function Today() {
                 </li>
               ))}
             </ul>
+            {noteLine}
             <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
               {undo && (
                 <button type="button" class="link" data-undo onClick={doUndo}>
@@ -499,24 +472,8 @@ export function Today() {
             </div>
           </section>
 
-          <MiniChart />
-
-          <section class="card stack" style={{ gap: 10 }} data-testid="after-sentence">
-            <p>
-              {afterPaySentence(focus ? { name: focus.debt.name, left: formatMoney(focus.left, cur, { whole: true }), goneBy: focus.goneBy } : null, untilGone, rollTo)}
-            </p>
-            {focus && (
-              <>
-                <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
-                {!focus.grown && <p class="muted small num">{Math.floor(focus.pctGone)}% gone</p>}
-              </>
-            )}
-          </section>
-
           {countdownMode && <CountdownCard nextDate={nextDate} onEarly={markEarly} />}
 
-          <SafeCard />
-          {active.length > 0 && <ReadCard missed={missed} focusPct={focus ? focus.pctGone : null} />}
         </>
       )}
 
@@ -634,6 +591,7 @@ export function Today() {
                 </div>
               )}
 
+              {noteLine}
               <button type="button" class="pc-btn" onClick={() => void apply()} disabled={busy}>
                 <CheckIcon /> {COPY.didIt} · <span class="num">{money(total)}</span>
               </button>
@@ -648,68 +606,18 @@ export function Today() {
             </section>
           )}
 
-          {/* a short read: only when nothing is due (or after I did it, above), and never above the payday card */}
-          {!paidView && active.length > 0 && (emptyNow || countdownMode) && <ReadCard missed={missed} focusPct={focus ? focus.pctGone : null} />}
-
-          {!paidView && <MiniChart />}
-
           <NeedsHelp reasons={reasons} />
 
-          {focus && (
-            <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">
-              {/* The name, the balance and the bar are one door to this debt on the Debts tab */}
-              <button
-                type="button"
-                class="door-btn"
-                aria-label={`${focus.debt.name}, open in Debts`}
-                onClick={() => {
-                  openDebtId.value = focus.debt.id;
-                  tab.value = 'debts';
-                }}
-              >
-                <span class="row">
-                  <span class="label">Focus debt</span>
-                  {goneLabel(focus.goneBy) && <span class="muted small">gone by {goneLabel(focus.goneBy)}</span>}
-                </span>
-                <span class="row">
-                  <span class="focus-name">{focus.debt.name}</span>
-                  <span class="num">
-                    <b><Count value={focus.left} id={`focus-${focus.debt.id}`} format={(n) => formatMoney(n, cur, { whole: true })} /></b> left
-                  </span>
-                </span>
-                <Bar pct={focus.pctGone} label={`${focus.debt.name} paid off`} />
-              </button>
-              <div class="row" style={{ justifyContent: 'flex-start', gap: 0 }}>
-                <p class="muted" data-testid="focus-sentence">
-                  {focusSentence(focus.grown ? null : focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
-                </p>
-                <HelpTip title="Why this one?">
-                  <p data-testid="focus-why">{whyFirst(s.method, growingNow.has(focus.debt.id))}</p>
-                </HelpTip>
-              </div>
-              <button type="button" class="link small" style={{ alignSelf: 'flex-start' }} data-testid="got-extra" onClick={() => openSheet('windfall')}>
-                I got extra money
-              </button>
-            </section>
-          )}
+          <LaterCard />
+        </>
+      )}
 
-          <div class="tile-row">
-            <div class="card tile-card" data-testid="daily-cost">
-              <p class="muted small">
-                Daily cost
-                <HelpTip title="Daily cost">
-                  <p>It is the interest your debts add each day. It drops as balances go down.</p>
-                </HelpTip>
-              </p>
-              <p class="tile-val num">{formatMoney(daily, cur)} a day</p>
-              {lastMonth !== null && <p class="muted small">Last month {formatMoney(lastMonth, cur)}</p>}
-            </div>
-            <button type="button" class="card tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
-              <p class="muted small">Safety net</p>
-              <p class="tile-val num">{bufferFull ? `${money(d.buffer.amount)} ready` : `${money(d.buffer.amount)} of ${money(s.bufferGoal)}`}</p>
-            </button>
-          </div>
+      {/* ------------------------------------------------ the same tail every time: one read, then what is coming up */}
+      {active.length > 0 && <ReadCard missed={missed} focusPct={focus ? focus.pctGone : null} />}
+      {paidView && (countdownMode || justPaid) && <SafeCard />}
 
+      {active.length > 0 && (
+        <>
           {due.length === 0 && (
             <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up-empty">
               <p class="label">Coming up</p>
@@ -739,7 +647,17 @@ export function Today() {
             </section>
           )}
 
-          <LaterCard />
+          <div class="tile-row">
+            <button type="button" class="card tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
+              <p class="muted small">Safety net</p>
+              <p class="tile-val num">{bufferFull ? `${money(d.buffer.amount)} ready` : `${money(d.buffer.amount)} of ${money(s.bufferGoal)}`}</p>
+            </button>
+            {focus && (
+              <button type="button" class="link small" data-testid="got-extra" onClick={() => openSheet('windfall')}>
+                I got extra money
+              </button>
+            )}
+          </div>
         </>
       )}
 

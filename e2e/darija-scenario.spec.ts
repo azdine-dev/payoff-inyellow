@@ -137,14 +137,17 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('checkbox', { name: /extra/i })).toHaveCount(0);
     await expect(page.getByTestId('buffer-first')).toContainText('Your buffer fills first, until');
     await expect(page.getByRole('button', { name: 'I did it · $235' })).toBeVisible(); // 85 + 42.31 + 107.69
+    await expect(page.getByTestId('coming-up')).toContainText(/Tue 20 Oct.*Car loan.*from your current pay.*\$285/s); // before the first payday: paid from the pay you have now
+    await shot(page, '21-sara-today');
+    // the focus debt and the daily cost live on Path
+    await goTab(page, 'Path');
     const focus = page.getByRole('region', { name: 'Focus debt' });
     await expect(focus).toContainText('Store card');
     await expect(focus).toContainText('0% gone');
     await expect(focus).toContainText('$640 left');
     await expect(focus).toContainText('gone by Jan 2027');
     await expect(page.getByTestId('daily-cost')).toContainText('$4.49 a day');
-    await expect(page.getByTestId('coming-up')).toContainText(/Tue 20 Oct.*Car loan.*from your current pay.*\$285/s); // before the first payday: paid from the pay you have now
-    await shot(page, '21-sara-today');
+    await goTab(page, 'Today');
   });
 
   // ---------------------------------------------------------------- part 5: paydays 1, 2, 3
@@ -362,8 +365,8 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('radio', { name: /^PaidInYellow order/ })).toHaveAttribute('aria-checked', 'true');
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(page.getByTestId('status-line')).toContainText('Nov 2028');
-    await goTab(page, 'Today');
     await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Medical bill'); // the focus did not jump
+    await goTab(page, 'Today');
   });
 
   // ---------------------------------------------------------------- part 13: Progress

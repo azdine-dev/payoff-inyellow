@@ -28,21 +28,21 @@ test('"I did it" pays the bill that was shown, and a debt with no bill this payd
 
 test('Today says how many paydays are left on a day that is not a payday, and "After today" on a payday', async ({ page }) => {
   await quickSetup(page);
+  await goTab(page, 'Path');
   const sentence = page.getByTestId('focus-sentence');
   await expect(sentence).toHaveText(/^\d+% gone\. \d+ paydays left\.$/); // 15 Oct is not a payday
   await expect(sentence).not.toContainText('After today');
   await setDay(page, '2026-10-23');
+  await goTab(page, 'Path');
   await expect(page.getByTestId('focus-sentence')).toContainText('After today'); // the payday itself
 });
 
-test('whole dollars on Today and Path balances', async ({ page }) => {
+test('whole dollars on Path balances', async ({ page }) => {
   await quickSetup(page);
+  await tapDidIt(page);
+  await goTab(page, 'Path');
   await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText(/\$\d[\d,]* left/);
   await expect(page.getByRole('region', { name: 'Focus debt' })).not.toContainText(/\$\d[\d,]*\.\d\d left/);
-  await tapDidIt(page);
-  await expect(page.getByTestId('after-sentence')).toContainText(/has \$\d[\d,]* left\./);
-  await expect(page.getByTestId('after-sentence')).not.toContainText(/has \$\d[\d,]*\.\d\d left/);
-  await goTab(page, 'Path');
   for (const id of ['paid-so-far', 'to-go']) await expect(page.getByTestId(id)).toHaveText(/^\$\d[\d,]*$/);
 });
 

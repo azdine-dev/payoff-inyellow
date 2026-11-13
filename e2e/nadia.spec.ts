@@ -9,6 +9,7 @@ import { nadiaSetup } from './nadia';
 test.describe('Part A · Today, the Nadia scenario', () => {
   test('1 · the buffer set aside in setup is saved: Safety net and the focus card agree', async ({ page }) => {
     await nadiaSetup(page);
+    await goTab(page, 'Path');
     await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Store Card');
     await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('gone by Fri 1 Jan 2027');
     await goTab(page, 'Safety net');
@@ -34,10 +35,9 @@ test.describe('Part A · Today, the Nadia scenario', () => {
 
   test('4 · the focus card keeps one door for extra money, with the new date and interest saved', async ({ page }) => {
     await nadiaSetup(page);
-    const focus = page.getByRole('region', { name: 'Focus debt' });
-    await expect(focus.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
-    await expect(focus.getByRole('button', { name: 'I got extra money' })).toHaveCount(1);
-    await focus.getByRole('button', { name: 'I got extra money' }).click();
+    await expect(page.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'I got extra money' })).toHaveCount(1);
+    await page.getByRole('button', { name: 'I got extra money' }).click();
     await page.getByRole('textbox', { name: 'Extra money' }).fill('100');
     await expect(page.getByTestId('windfall-preview')).toContainText('Debt-free');
     await expect(page.getByTestId('windfall-preview')).toContainText('less interest');
