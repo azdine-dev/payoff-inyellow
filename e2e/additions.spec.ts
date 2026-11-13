@@ -236,6 +236,7 @@ test.describe('7 · calendar', () => {
   test('the calendar file has one monthly reminder per debt and Settings links the payday check to Google Calendar', async ({ page }) => {
     await quickSetup(page);
     await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('button', { name: 'Add Calendar' }).click();
     const link = page.getByTestId('google-cal');
     await expect(link).toHaveText('Add to Google Calendar');
     const href = (await link.getAttribute('href'))!;

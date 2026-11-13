@@ -8,7 +8,7 @@ import { shortDate } from '../lib/today';
 import { data, getDB, licenseState } from '../state/store';
 import { getSync, joinSync, lastSyncAt, pendingJoin, refreshSyncState, shareLink, syncNow, syncOn, syncStatus, unreadable } from '../sync/controller';
 import { JoinError } from '../sync/engine';
-import { Note, Sheet } from '../ui/controls';
+import { HelpTip, Note, Sheet } from '../ui/controls';
 
 const STATUS_TEXT: Record<string, string> = {
   idle: 'Up to date.',
@@ -71,12 +71,17 @@ export function SyncSection() {
   const last = lastSyncAt.value;
   return (
     <section class="card stack" aria-labelledby="set-sync" data-testid="sync-section">
-      <h2 id="set-sync">Sync between devices</h2>
+      <h2 id="set-sync">
+        Sync between devices
+        <HelpTip title="How sync keeps your numbers private">
+          <p data-testid="sync-how">
+            Your numbers are locked on this device before they are sent, and the key stays with you, so the server can’t read them. Without sync, nothing leaves this device.
+          </p>
+        </HelpTip>
+      </h2>
       {!syncOn.value ? (
         <>
-          <p class="muted">
-            Optional. Use your plan on a second device. Your numbers are locked on this device before they are sent, and the key stays with you, so the server can’t read them. Without sync, nothing leaves this device.
-          </p>
+          <p class="muted">Optional. Use your plan on a second device.</p>
           <button type="button" class="btn ghost" disabled={busy} onClick={turnOn}>
             Turn on sync
           </button>

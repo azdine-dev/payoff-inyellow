@@ -52,6 +52,7 @@ test('a file that is not a backup is refused and nothing changes', async ({ page
 test('the calendar file has paydays and due dates', async ({ page }) => {
   await quickSetup(page);
   await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Add Calendar' }).click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Add to my calendar' }).click()]);
   expect(download.suggestedFilename()).toBe('paidinyellow-calendar.ics');
   const ics = readFileSync((await download.path())!, 'utf8');
@@ -74,7 +75,7 @@ test('an unlock code is checked on the phone', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Code' }).fill(await testCode());
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();
   await expect(page.getByTestId('unlocked')).toHaveText('Unlocked. Thank you.');
-  await expect(page.getByRole('button', { name: 'Add to my calendar' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add Calendar' })).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('debt-free-pill')).toBeVisible(); // straight into the full planner
 });
@@ -137,7 +138,7 @@ test('help answers and the support email are there', async ({ page }) => {
   await page.getByRole('button', { name: 'Open Questions and answers' }).click();
   await page.getByText('What if I lose my device or clear my browser?').click();
   await expect(page.getByText('Save a backup from Settings once a month')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'support@paidinyellow.com' })).toHaveAttribute('href', 'mailto:support@paidinyellow.com');
+  await expect(page.getByRole('link', { name: 'support@paidinyellow.com', exact: true })).toHaveAttribute('href', 'mailto:support@paidinyellow.com');
   await shot(page, '16-settings');
 });
 

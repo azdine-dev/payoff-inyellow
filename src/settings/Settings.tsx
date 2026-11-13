@@ -30,7 +30,7 @@ import { SyncSection } from './SyncSection';
 import { syncOn } from '../sync/controller';
 import { openReads } from '../reads/ReadsScreen';
 
-type Edit = 'name' | 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | 'order' | 'theme' | 'text' | 'faq' | 'install' | 'code' | 'about' | null;
+type Edit = 'calendar' | 'name' | 'currency' | 'schedule' | 'extra' | 'goal' | 'paycheck' | 'ifthen' | 'order' | 'theme' | 'text' | 'faq' | 'install' | 'code' | 'about' | null;
 
 const THEMES: { value: Theme; label: string }[] = [
   { value: 'auto', label: 'Match my device' },
@@ -163,7 +163,7 @@ export function Settings() {
   const freqLabel = FREQUENCIES.find((f) => f.value === s.frequency)?.label ?? '';
 
   const row = (label: string, value: string, which: Exclude<Edit, null>, action = 'Change') => (
-    <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+    <button type="button" class="set-row" aria-label={`${action} ${label}`} onClick={() => open(which)}>
       <span>
         <span class="muted small" style={{ display: 'block' }}>
           {label}
@@ -172,10 +172,8 @@ export function Settings() {
           {value}
         </span>
       </span>
-      <button type="button" class="link small" aria-label={`${action} ${label}`} onClick={() => open(which)}>
-        {action}
-      </button>
-    </div>
+      <span class="link small">{action}</span>
+    </button>
   );
 
   return (
@@ -211,27 +209,7 @@ export function Settings() {
             The calendar file with your paydays and due dates comes with the full planner.
           </p>
         )}
-        {licenseState.value === 'unlocked' && (
-          <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
-            <span>
-              <span class="muted small" style={{ display: 'block' }}>
-                Calendar file
-              </span>
-              <span style={{ fontWeight: 600 }}>Paydays, reminder and due dates</span>
-            </span>
-            <button type="button" class="link small" onClick={exportCalendar}>
-              Add to my calendar
-            </button>
-          </div>
-        )}
-        {licenseState.value === 'unlocked' && googleCalendarUrl(d, today.value) && (
-          <div class="row" style={{ minHeight: 44 }}>
-            <span class="muted small">Only the payday check, no amounts</span>
-            <a class="link small" data-testid="google-cal" href={googleCalendarUrl(d, today.value)!} target="_blank" rel="noopener noreferrer">
-              Add to Google Calendar
-            </a>
-          </div>
-        )}
+        {licenseState.value === 'unlocked' && row('Calendar', 'Paydays, reminder and due dates', 'calendar', 'Add')}
       </section>
 
       <section class="card stack" aria-labelledby="set-backup">
@@ -245,12 +223,10 @@ export function Settings() {
         </button>
         {backupMsg && <Note>{backupMsg}</Note>}
         <RestoreButton />
-        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+        <button type="button" class="set-row" onClick={() => open('install')}>
           <span style={{ fontWeight: 600 }}>Put it on your phone</span>
-          <button type="button" class="link small" onClick={() => open('install')}>
-            {isInstalled() ? 'It’s installed' : 'How'}
-          </button>
-        </div>
+          <span class="link small">{isInstalled() ? 'It’s installed' : 'How'}</span>
+        </button>
       </section>
 
       <SyncSection />
@@ -264,36 +240,30 @@ export function Settings() {
       <section class="card" aria-labelledby="set-help">
         <h2 id="set-help">Help</h2>
         {row('Questions and answers', 'FAQ', 'faq', 'Open')}
-        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+        <button type="button" class="set-row" aria-label="Open Short reads" onClick={() => openReads('settings')}>
           <span>
             <span class="muted small" style={{ display: 'block' }}>
               Short reads
             </span>
             <span style={{ fontWeight: 600 }}>Ten calm reads</span>
           </span>
-          <button type="button" class="link small" aria-label="Open Short reads" onClick={() => openReads('settings')}>
-            Open
-          </button>
-        </div>
-        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+          <span class="link small">Open</span>
+        </button>
+        <a class="set-row" href={`mailto:${SUPPORT_EMAIL}`} aria-label={`Write to ${SUPPORT_EMAIL}`}>
           <span>
             <span class="muted small" style={{ display: 'block' }}>
               Email support
             </span>
             <span style={{ fontWeight: 600 }}>{SUPPORT_EMAIL}</span>
           </span>
-          <a class="link small" href={`mailto:${SUPPORT_EMAIL}`}>
-            Write
-          </a>
-        </div>
+          <span class="link small">Write</span>
+        </a>
         {row('Unlock code', s.license ? 'Unlocked. Thank you.' : 'Not unlocked', 'code', 'Open')}
         {row('About and disclaimer', 'Privacy, and what this is', 'about', 'Open')}
-        <div class="row" style={{ borderTop: '1px dashed var(--line)', minHeight: 52 }}>
+        <button type="button" class="set-row" aria-label="Erase everything and start over" onClick={() => { setAlsoCode(false); setErasing(true); }}>
           <span style={{ fontWeight: 600 }}>Erase everything</span>
-          <button type="button" class="link small" onClick={() => { setAlsoCode(false); setErasing(true); }}>
-            Erase everything and start over
-          </button>
-        </div>
+          <span class="link small">Start over</span>
+        </button>
       </section>
 
       <p class="muted small" style={{ textAlign: 'center' }}>
@@ -365,6 +335,24 @@ export function Settings() {
         </button>
         <button type="button" class="link" onClick={close}>
           Cancel
+        </button>
+      </Sheet>
+
+      <Sheet open={edit === 'calendar'} onClose={close} title="Add to my calendar">
+        <p class="muted">The calendar file has your paydays, your reminder and your due dates.</p>
+        <button type="button" class="btn" onClick={() => { exportCalendar(); close(); }}>
+          Add to my calendar
+        </button>
+        {googleCalendarUrl(d, today.value) && (
+          <>
+            <a class="btn ghost" data-testid="google-cal" href={googleCalendarUrl(d, today.value)!} target="_blank" rel="noopener noreferrer">
+              Add to Google Calendar
+            </a>
+            <p class="muted small">Google Calendar gets only the payday check, no amounts.</p>
+          </>
+        )}
+        <button type="button" class="link" onClick={close}>
+          Close
         </button>
       </Sheet>
 

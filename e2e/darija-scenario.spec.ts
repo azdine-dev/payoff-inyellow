@@ -427,6 +427,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
 
   await test.step('Calendar file: paydays and due dates with a reminder 3 days before', async () => {
     // still on Settings from the backup step
+    await page.getByRole('button', { name: 'Add Calendar' }).click();
     const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Add to my calendar' }).click()]);
     const ics = readFileSync((await download.path())!, 'utf8');
     expect(ics).toContain('DTSTART;VALUE=DATE:20270423'); // the next payday
