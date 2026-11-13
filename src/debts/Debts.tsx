@@ -270,8 +270,9 @@ export function Debts() {
                 </div>
                 <Ring pct={pct} size={60} label={`${debt.name} paid off`} />
               </div>
-              <p class="muted small num">
-                {grown ? '' : `${Math.floor(pct)}% gone · `}{debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}%`}
+              {/* the ring already says how much is gone: this line is the rate and the bill */}
+              <p class="muted small num" data-testid="debt-line">
+                {debt.rateMissing ? `rate missing, using ${debt.apr}%` : `${debt.apr}% rate`}
                 {bill ? ` · ${bill} bill${debt.dueDay ? ` on the ${ordinal(debt.dueDay)}` : ''}` : ''}
                 {debt.autopay ? ' · autopay' : ''}
               </p>
