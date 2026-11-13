@@ -13,8 +13,7 @@ test.describe('Part B · Path, the Nadia scenario', () => {
     await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Jul 2027');
     await expect(page.getByTestId('status-line').locator('.hl')).toBeVisible();
     for (const label of ['Paid off', 'Still owed', 'Interest you avoid']) await expect(page.getByRole('group', { name: 'Your numbers' })).toContainText(label);
-    // the date is said once: not on the chart, not written on the road
-    await expect(page.getByRole('img', { name: /Balance over time/ })).not.toContainText('Debt-free');
+    // the date is said once: not written on the road
     await expect(road(page)).not.toContainText('Jul 2027');
     await page.getByTestId('countdown-toggle').click();
     await expect(page.getByTestId('countdown-toggle')).toHaveText(/years? to go$/);
@@ -41,8 +40,10 @@ test.describe('Part B · Path, the Nadia scenario', () => {
     await expect(page.locator('[data-testid="road-sq"][data-kind="next"]')).toHaveCount(1);
     await expect(page.getByTestId('road-pin')).toHaveAttribute('aria-label', 'You are here, Fri 6 Nov, next payday');
     await expect(page.getByTestId('day-one')).toHaveText('Day one. Your first yellow square is Fri 6 Nov.');
-    await expect(page.getByTestId('next-stop')).toContainText('Store Card');
-    await expect(page.getByTestId('next-stop')).toContainText('Fri 1 Jan 2027');
+    // the focus debt card is the one place for the next stop
+    await expect(page.getByTestId('next-stop')).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Store Card');
+    await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Fri 1 Jan 2027');
     await expectBrandRules(page);
   });
 
@@ -95,19 +96,38 @@ test.describe('Part B · Path, the Nadia scenario', () => {
     await expect(page.getByTestId('road-flag-sheet')).toContainText('Medical is the last debt.');
   });
 
-  test('the chart keeps its place at the bottom with the minimums-only end labelled', async ({ page }) => {
+  test('one chart on Path, with the minimums-only end as one line under it', async ({ page }) => {
     await nadiaSetup(page);
     await goTab(page, 'Path');
-    const chart = page.getByRole('img', { name: /Balance over time/ });
-    await expect(chart).toContainText(/Minimums only: [A-Z][a-z]{2} 20\d\d/);
-    await expect(page.getByRole('heading', { name: 'Your plan vs minimums only' })).toBeVisible();
+    await expect(page.getByTestId('mini-chart')).toHaveCount(1);
+    await expect(page.getByRole('img', { name: /Balance over time/ })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Your plan vs minimums only' })).toHaveCount(0);
+    await expect(page.getByTestId('minimums-line')).toHaveText('With minimums only: May 2031.');
   });
 
-  test('footer links Order, Print and Export; Share my progress only after a debt is paid', async ({ page }) => {
+  test('one date line: the date and the paydays left sit side by side', async ({ page }) => {
+    await nadiaSetup(page);
+    await goTab(page, 'Path');
+    const a = (await page.getByTestId('status-line').boundingBox())!;
+    const b = (await page.getByTestId('paydays-left').boundingBox())!;
+    expect(Math.abs(a.y + a.height - (b.y + b.height))).toBeLessThan(12); // the same line
+    expect(b.x).toBeGreaterThan(a.x + a.width - 1);
+    await expect(page.getByTestId('look-ahead')).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Pay a bit more' }).or(page.getByRole('button', { name: 'More options' })).first()).toBeVisible();
+  });
+
+  test('footer links Order and More (print and export); Share my progress only after a debt is paid', async ({ page }) => {
     await nadiaSetup(page);
     await goTab(page, 'Path');
     await expect(page.getByRole('button', { name: 'Share my progress' })).toHaveCount(0);
-    for (const name of ['Order', 'Print', 'Export']) await expect(page.getByRole('navigation', { name: 'Order, print and export' }).getByRole('button', { name })).toBeVisible();
+    const foot = page.getByRole('navigation', { name: 'Order and more' });
+    await expect(foot.getByRole('button')).toHaveCount(2);
+    await expect(foot.getByRole('button', { name: 'Order' })).toBeVisible();
+    await foot.getByTestId('path-more').click();
+    const more = page.getByRole('dialog', { name: 'Print and export' });
+    for (const name of ['Print this payday', 'Print my debts', 'Print the plan (one page)', 'Export the plan (CSV)', 'Export my payments (CSV)']) await expect(more.getByRole('button', { name })).toBeVisible();
+    await page.goBack(); // the back button closes it
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     // pay Store Card off with extra money: the share card appears, and its road flag is a PAID stamp
     await goTab(page, 'Today');
     await page.getByRole('button', { name: 'I got extra money' }).click();

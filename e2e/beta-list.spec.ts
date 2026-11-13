@@ -50,11 +50,11 @@ test.describe('Part 3 · Path', () => {
     await expect(page.getByLabel('Add money each payday')).toBeVisible();
   });
 
-  test('a Next stop card names the debt, and "This month: X of Y planned" shows after a payday', async ({ page }) => {
+  test('the focus debt card names the next stop, and "This month: X of Y planned" shows after a payday', async ({ page }) => {
     await quickSetup(page);
     await goTab(page, 'Path');
-    await expect(page.getByTestId('next-stop')).toContainText(/Next stop\s*Store card/);
-    await expect(page.getByTestId('next-stop')).toContainText(/\d+ paydays? to go/);
+    await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Store card');
+    await expect(page.getByTestId('focus-sentence')).toContainText(/\d+ paydays? left|After today/);
     await expect(page.getByTestId('planned-vs-actual')).toHaveCount(0);
     await goTab(page, 'Today');
     await tapDidIt(page);

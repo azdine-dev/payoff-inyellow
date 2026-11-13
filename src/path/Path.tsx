@@ -14,13 +14,10 @@ import { activeDebts, countedDebts, nextPaydayISO, toPlanInput } from '../state/
 import { act, data, freshPaidDebts, freshPayday, plan, previewDate, today, wholePlanOpen } from '../state/store';
 import { comparisonLine } from '../state/whatIf';
 import { worthKnowing } from '../state/worthKnowing';
-import { focusDebt } from '../today/model';
 import { comingLaterLine } from '../state/comingLater';
-import { Chart } from '../progress/Chart';
 import { useBackLayer } from '../lib/useBackLayer';
 import { Count } from '../ui/useCountUp';
 import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
-import { Ring } from '../ui/Ring';
 import { PaydayCalendar } from './PaydayCalendar';
 import { LookAhead, PathPreview } from './Preview';
 import { Chapters } from './Chapters';
@@ -63,13 +60,6 @@ function IconPrint() {
     </svg>
   );
 }
-function IconExport() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 4v11M8 8l4-4 4 4M5 15v4h14v-4" />
-    </svg>
-  );
-}
 
 export function Path() {
   const d = data.value!;
@@ -84,7 +74,7 @@ export function Path() {
   const money = (n: number) => formatMoney(n, cur, { whole: true });
 
   const [view, setView] = useState<View>('road');
-  const [sheet, setSheet] = useState<'more' | 'order' | 'print' | 'export' | null>(null);
+  const [sheet, setSheet] = useState<'more' | 'order' | 'print' | null>(null);
   const [cmode, setCmode] = useState<CountdownMode>(readCountdownMode);
   // The "Pay a bit more?" amount being tried: how many paydays the plan would take
   const [previewRows, setPreviewRows] = useState<number | null>(null);
@@ -121,8 +111,6 @@ export function Path() {
 
   const know = worthKnowing(d, r, today.value, { money: (n) => formatMoney(n, cur, { whole: true }), day: (iso) => shortDate(iso, today.value) });
   const reachedList = d.milestones.filter((m) => m.id !== 'plan-made').sort((x, y) => x.reachedOn.localeCompare(y.reachedOn));
-  const focus = !debtFree ? focusDebt(d, r) : null;
-  const focusIdx = focus ? r.rows.findIndex((x) => x.debts.some((y) => y.id === focus.debt.id && y.balanceAfter <= 0.005)) : -1;
 
   // The square of the payday just done fills yellow once; a paid-off flag turns into its stamp once
   useEffect(() => {
@@ -185,17 +173,19 @@ export function Path() {
             <button type="button" class="countdown-toggle path-count" data-testid="countdown-toggle" aria-label="Time to go. Tap to switch between months and years." onClick={toggleCountdown}>
               {countdownText(monthsBetween(today.value, r.debtFreeDate), cmode)}
             </button>
-            <p class="num" data-testid="status-line">
-              <span class="hl">Debt-free · {shortMonthYear(r.debtFreeDate)}</span>
-            </p>
+            <div class="path-dateline">
+              <p class="num" data-testid="status-line">
+                <span class="hl">Debt-free · {shortMonthYear(r.debtFreeDate)}</span>
+              </p>
+              {paydaysLeft !== null && (
+                <p class="muted small num" data-testid="paydays-left">
+                  {paydaysLeft} payday{paydaysLeft === 1 ? '' : 's'} left
+                </p>
+              )}
+            </div>
             {laterLine && (
               <p class="muted small" data-testid="coming-later-line">
                 {laterLine.text}
-              </p>
-            )}
-            {paydaysLeft !== null && (
-              <p class="muted small num" data-testid="paydays-left">
-                {paydaysLeft} payday{paydaysLeft === 1 ? '' : 's'} left
               </p>
             )}
             <LookAhead r={r} />
@@ -209,7 +199,7 @@ export function Path() {
 
       {!debtFree && <WholePlanCard d={d} r={r} today={today.value} />}
       {!debtFree && <ComingLaterList />}
-      {!debtFree && <FocusSection />}
+      {!debtFree && <FocusSection minimumsEnd={chart.minimumsMonths === null ? null : shortMonthYear(addDaysISO(today.value, Math.round(chart.minimumsMonths * 30.44)))} />}
 
       <div class="path-stats" role="group" aria-label="Your numbers">
         <div>
@@ -264,21 +254,6 @@ export function Path() {
         </section>
       )}
 
-      {focus && (
-        <section class="card row" aria-label="Next stop" data-testid="next-stop">
-          <div class="stack" style={{ gap: 2 }}>
-            <p class="label">Next stop</p>
-            <p>
-              <b>{focus.debt.name}</b>
-            </p>
-            <p class="muted small num">
-              {focusIdx >= 0 ? `${focusIdx + 1} payday${focusIdx === 0 ? '' : 's'} to go · ${shortDate(r.rows[focusIdx]!.date, today.value)}` : 'More than 20 years at this pace'}
-            </p>
-          </div>
-          <Ring pct={focus.pctGone} size={52} label={`${focus.debt.name} paid off`} />
-        </section>
-      )}
-
       {!debtFree && <PayMore d={d} r={r} onPreview={setPreviewRows} onMore={() => setSheet('more')} />}
 
       {know.length > 0 && (
@@ -320,20 +295,6 @@ export function Path() {
         </section>
       )}
 
-      {stats.owed > 0 && (
-        <section class="card stack" aria-label="Balance over time">
-          <h2>Your plan vs minimums only</h2>
-          <Chart
-            data={chart}
-            startLabel="Now"
-            endLabel=""
-            planEndLabel={null}
-            minimumsEnd={chart.minimumsMonths === null ? null : shortMonthYear(addDaysISO(today.value, Math.round(chart.minimumsMonths * 30.44)))}
-            label="Balance over time, your plan against minimums only"
-          />
-        </section>
-      )}
-
       {thisMonth.length > 0 && (
         <p class="card num" data-testid="planned-vs-actual">
           This month: <b>{formatMoney(actual, cur, { whole: true })}</b> of <b>{formatMoney(planned, cur, { whole: true })}</b> planned
@@ -369,15 +330,12 @@ export function Path() {
         </span>
       </button>
 
-      <nav class="path-foot" aria-label="Order, print and export">
+      <nav class="path-foot" aria-label="Order and more">
         <button type="button" class="foot-link" onClick={() => setSheet('order')}>
           <IconOrder /> <span>Order</span>
         </button>
-        <button type="button" class="foot-link" onClick={() => setSheet('print')}>
-          <IconPrint /> <span>Print</span>
-        </button>
-        <button type="button" class="foot-link" onClick={() => setSheet('export')}>
-          <IconExport /> <span>Export</span>
+        <button type="button" class="foot-link" aria-label="More: print and export" data-testid="path-more" onClick={() => setSheet('print')}>
+          <IconPrint /> <span>More</span>
         </button>
       </nav>
       <p class="muted small" style={{ textAlign: 'center' }} data-testid="order-line">
@@ -400,7 +358,7 @@ export function Path() {
         </button>
       </Sheet>
 
-      <Sheet open={sheet === 'print'} onClose={close} title="Print">
+      <Sheet open={sheet === 'print'} onClose={close} title="Print and export">
         {!debtFree && (
           <button type="button" class="btn ghost" onClick={() => printNow('payday')}>
             Print this payday
@@ -412,12 +370,6 @@ export function Path() {
         <button type="button" class="btn ghost" onClick={() => printNow('plan')}>
           Print the plan (one page)
         </button>
-        <button type="button" class="link" onClick={close}>
-          Close
-        </button>
-      </Sheet>
-
-      <Sheet open={sheet === 'export'} onClose={close} title="Export">
         <button type="button" class="btn ghost" onClick={csv}>
           Export the plan (CSV)
         </button>

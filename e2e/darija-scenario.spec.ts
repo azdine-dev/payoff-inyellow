@@ -379,7 +379,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     for (const m of ['First extra payment', 'First debt gone']) {
       await expect(page.getByRole('listitem', { name: `${m}, reached` })).toBeVisible();
     }
-    await expect(page.getByRole('img', { name: /Balance over time/ })).toBeVisible();
+    await expect(page.getByTestId('mini-chart')).toBeVisible();
     await expect(page.getByTestId('planned-vs-actual')).toContainText('This month:'); // Fri 9 Apr is in April
     await shot(page, '25-sara-progress');
 

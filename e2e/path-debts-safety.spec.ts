@@ -30,7 +30,7 @@ test('Path: the header, three stats, the road, and the footer links', async ({ p
   await expect(page.getByRole('button', { name: 'More options' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Chapters', exact: true })).toBeVisible();
   await expect(page.getByText('Order: smallest first')).toBeVisible();
-  for (const name of ['Order', 'Print', 'Export']) await expect(page.getByRole('navigation', { name: 'Order, print and export' }).getByRole('button', { name })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Order and more' }).getByRole('button')).toHaveCount(2);
   await expectBrandRules(page);
 });
 
@@ -63,7 +63,7 @@ test('Path: the order, print and export are footer links that open sheets', asyn
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByText('Order: biggest interest first')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  await page.getByTestId('path-more').click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export the plan (CSV)' }).click()]);
   expect(download.suggestedFilename()).toBe('paidinyellow-plan.csv');
 });

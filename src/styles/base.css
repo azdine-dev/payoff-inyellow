@@ -3536,3 +3536,11 @@ textarea {
   z-index: 2;
   box-shadow: 0 0 0 8px var(--paper);
 }
+
+/* Path: the debt-free date and the paydays left are one line */
+.path-dateline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}

@@ -12,7 +12,7 @@ import { dailyCostLastMonth, focusDebt, focusSentence, whyFirst } from '../today
 import { Bar, HelpTip } from '../ui/controls';
 import { Count } from '../ui/useCountUp';
 
-export function FocusSection() {
+export function FocusSection(props: { minimumsEnd?: string | null }) {
   const d = data.value!;
   const r = plan.value!;
   const s = d.settings;
@@ -30,6 +30,11 @@ export function FocusSection() {
   return (
     <>
       <MiniChart />
+      {props.minimumsEnd && (
+        <p class="muted small" data-testid="minimums-line" style={{ marginTop: -6, paddingLeft: 4 }}>
+          With minimums only: {props.minimumsEnd}.
+        </p>
+      )}
 
       {focus && (
         <section class="card stack" style={{ gap: 8 }} aria-label="Focus debt">

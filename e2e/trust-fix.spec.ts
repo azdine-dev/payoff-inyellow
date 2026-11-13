@@ -46,14 +46,11 @@ test('whole dollars on Path balances', async ({ page }) => {
   for (const id of ['paid-so-far', 'to-go']) await expect(page.getByTestId(id)).toHaveText(/^\$\d[\d,]*$/);
 });
 
-test('the date shows once on Path, in the header; the chart labels the minimums-only end', async ({ page }) => {
+test('the date shows once on Path, in the header; the minimums-only end is one line under the chart', async ({ page }) => {
   await quickSetup(page);
   await goTab(page, 'Path');
-  const status = await page.getByTestId('status-line').innerText();
-  const month = /· ([A-Z][a-z]{2} \d{4})/.exec(status)![1]!;
-  const chart = page.getByRole('img', { name: /Balance over time/ });
-  await expect(chart).toContainText(/Minimums only: [A-Z][a-z]{2} \d{4}/);
-  await expect(chart).not.toContainText(`Debt-free ${month}`);
+  await expect(page.getByTestId('status-line')).toHaveText(/^Debt-free · [A-Z][a-z]{2} \d{4}$/);
+  await expect(page.getByTestId('minimums-line')).toHaveText(/^With minimums only: [A-Z][a-z]{2} \d{4}\.$/);
 });
 
 test('the card shows until the first "I did it" and from 2 days before each payday; in between, a countdown with "Mark it done early"', async ({ page }) => {
