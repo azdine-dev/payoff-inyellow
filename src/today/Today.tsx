@@ -610,8 +610,6 @@ export function Today() {
           )}
 
           <NeedsHelp reasons={reasons} />
-
-          <LaterCard />
         </>
       )}
 
@@ -649,6 +647,9 @@ export function Today() {
               ))}
             </section>
           )}
+
+          {/* small setup leftovers come after what is due, never between the payday card and the read */}
+          {!justPaid && row && <LaterCard />}
 
           <div class="tile-row">
             <button type="button" class="card tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
