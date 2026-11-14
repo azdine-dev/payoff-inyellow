@@ -184,7 +184,11 @@ test.describe('4 · short reads', () => {
     await open(page);
     await expect(page.getByTestId('read-check')).toHaveCount(0);
     await page.getByTestId('read-item').nth(3).click();
+    // the app's own Back takes its history entry away with history.back(), which finishes a moment later:
+    // a reload sent before that is cut off, so wait for it
+    const wentBack = page.evaluate(() => new Promise<void>((done) => window.addEventListener('popstate', () => done(), { once: true })));
     await page.getByRole('button', { name: '‹ Short reads' }).click();
+    await wentBack;
     const check = page.getByTestId('read-item').nth(3).getByTestId('read-check');
     await expect(check).toBeVisible();
     await expect(check).toHaveCSS('background-color', 'rgb(255, 225, 77)');
