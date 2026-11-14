@@ -71,14 +71,15 @@ export function SyncSection() {
   const last = lastSyncAt.value;
   return (
     <section class="card stack" aria-labelledby="set-sync" data-testid="sync-section">
-      <h2 id="set-sync">
-        Sync between devices
+      {/* the (?) sits beside the heading, not inside it, so the heading keeps its plain name */}
+      <div class="row" style={{ justifyContent: 'flex-start', gap: 0 }}>
+        <h2 id="set-sync">Sync between devices</h2>
         <HelpTip title="How sync keeps your numbers private">
           <p data-testid="sync-how">
             Your numbers are locked on this device before they are sent, and the key stays with you, so the server can’t read them. Without sync, nothing leaves this device.
           </p>
         </HelpTip>
-      </h2>
+      </div>
       {!syncOn.value ? (
         <>
           <p class="muted">Optional. Use your plan on a second device.</p>
