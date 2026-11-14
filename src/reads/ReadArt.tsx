@@ -104,6 +104,9 @@ export function ReadArt({ kind }: { kind: ReadArtKind }) {
       <SkyDecor />
       <path d="M0 106 Q90 80 180 100 T320 84 V150 H0Z" class="sc-hill1" />
       <path d="M0 118 Q100 96 200 112 T320 100 V150 H0Z" class="sc-hill2" />
+      {/* the picture stands on the hill: a soft shadow under it and two tufts of grass, so nothing floats */}
+      <ellipse class="rd-shadow" cx="160" cy="117" rx="62" ry="5" fill="#000" fill-opacity="0.1" aria-hidden="true" />
+      <path class="rd-grass" d="M38 118 l-2 -8 M43 118 l1 -9 M48 118 l3 -7 M272 112 l-2 -8 M277 112 l1 -9 M282 112 l3 -7" fill="none" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" />
       {kind === 'umbrella' ? (
         <>
           <g class="rd-rain" stroke-width="2" stroke-linecap="round">
