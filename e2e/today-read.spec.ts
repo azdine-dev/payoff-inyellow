@@ -38,6 +38,8 @@ test('after I did it: one small card under the PAID card, with the title and 1 m
 test('tap it to read, Back comes home, and the card has a tick', async ({ page }) => {
   await nadiaSetup(page);
   await tapDidIt(page);
+  // the read card is on Today before "I did it" too: wait for the paid card, so the tap lands on this payday's read
+  await expect(page.getByTestId('paid-card')).toBeVisible();
   await page.getByTestId('today-read').click();
   await expect(page.getByTestId('read')).toBeVisible();
   await expect(page.getByRole('heading', { name: title('smallest-first') })).toBeVisible();
@@ -55,6 +57,8 @@ test('tap it to read, Back comes home, and the card has a tick', async ({ page }
 test('the next payday suggests the next read, and it shows when nothing is due too', async ({ page }) => {
   await nadiaSetup(page);
   await tapDidIt(page);
+  // the read card is on Today before "I did it" too: wait for the paid card, so the tap lands on this payday's read
+  await expect(page.getByTestId('paid-card')).toBeVisible();
   await page.getByTestId('today-read').click();
   await page.getByRole('button', { name: '‹ Today' }).click();
   await expect(page.getByTestId('today-read')).toHaveAttribute('data-read', '1');
