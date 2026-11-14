@@ -261,8 +261,7 @@ export function Settings() {
         {row('Unlock code', s.license ? 'Unlocked. Thank you.' : 'Not unlocked', 'code', 'Open')}
         {row('About and disclaimer', 'Privacy, and what this is', 'about', 'Open')}
         <button type="button" class="set-row" aria-label="Erase everything and start over" onClick={() => { setAlsoCode(false); setErasing(true); }}>
-          <span style={{ fontWeight: 600 }}>Erase everything</span>
-          <span class="link small">Start over</span>
+          <span class="link small">Erase everything and start over</span>
         </button>
       </section>
 

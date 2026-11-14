@@ -51,3 +51,15 @@ test('sync: one short line, the rest behind the (?)', async ({ page }) => {
   await expect(page.getByTestId('sync-how')).toContainText('the server can’t read them');
   await expect(page.getByTestId('sync-how')).toContainText('Without sync, nothing leaves this device.');
 });
+
+test('the erase row says what it does in full, and still asks first', async ({ page }) => {
+  await quickSetup(page);
+  await page.getByRole('button', { name: 'Settings' }).click();
+  const row = page.getByRole('button', { name: 'Erase everything and start over' });
+  await expect(row).toHaveText('Erase everything and start over');
+  await row.click();
+  await expect(page.getByRole('dialog')).toBeVisible(); // the one place that asks "are you sure"
+  await page.goBack();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Your plan' })).toBeVisible(); // nothing was erased
+});
