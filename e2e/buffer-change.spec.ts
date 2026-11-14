@@ -32,7 +32,7 @@ test('the sheet changes the goal and the amount set aside, and holds the history
   await expect(page.getByRole('region', { name: 'Surprise buffer' })).toContainText('of $800');
 
   await page.getByTestId('buffer-change').click();
-  await expect(page.getByTestId('buffer-history')).toContainText('+$50 · Updated');
+  await expect(page.getByTestId('buffer-history')).toContainText('Fri 30 Oct · +$50 · Updated');
   await page.goBack(); // the Android back button closes it
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();

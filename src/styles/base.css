@@ -3567,3 +3567,8 @@ textarea {
   flex: none;
   min-height: 0;
 }
+
+/* a row that closes a card does not leave a blank band under it */
+.card > .set-row:last-child {
+  margin-bottom: -10px;
+}

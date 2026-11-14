@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
+import { shortDate } from '../lib/today';
 import { MONTH_CHOICES } from '../setup/draft';
 import {
   addFund,
@@ -252,7 +253,7 @@ export function Money() {
             <ul class="stack small" style={{ margin: 0, paddingLeft: '1.1rem', gap: 4 }}>
               {[...d.buffer.history].reverse().map((h, i) => (
                 <li key={i} class="num">
-                  {h.date} · {h.amount < 0 ? '-' : '+'}
+                  {shortDate(h.date)} · {h.amount < 0 ? '-' : '+'}
                   {money(Math.abs(h.amount), cur)} · {h.note}
                 </li>
               ))}
