@@ -66,7 +66,7 @@ test.describe('preview of a future payday', () => {
     await nadiaSetup(page);
     await goTab(page, 'Path');
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
-    await page.getByRole('button', { name: 'Next month' }).click();
+    await expect(page.getByTestId('payday-calendar')).toContainText('November 2026'); // today is 30 Oct, the next payday is 6 Nov
     await page.getByRole('gridcell', { name: /Friday 20 November, payday/ }).click();
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 20 Nov 2026');
   });

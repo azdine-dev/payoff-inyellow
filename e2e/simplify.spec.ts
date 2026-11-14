@@ -119,6 +119,9 @@ test.describe('4 · Path: List / Calendar', () => {
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await goTab(page, 'Path');
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+    // the calendar opens on the month of the next payday (6 Nov): the paid one is a month back
+    await expect(page.getByTestId('payday-calendar')).toContainText('November 2026');
+    await page.getByRole('button', { name: 'Previous month' }).click();
     const paid = page.getByTestId('payday-calendar').getByRole('gridcell', { name: 'Friday 23 October, payday, paid' });
     await expect(paid).toHaveClass(/paid/);
     await expect(paid.locator('.cal-num')).toHaveCSS('background-color', 'rgb(255, 225, 77)');

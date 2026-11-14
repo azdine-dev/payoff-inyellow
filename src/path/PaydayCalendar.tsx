@@ -10,6 +10,7 @@ import type { AppData } from '../data/types';
 import { formatMoneyAuto } from '../lib/money';
 import { shortDate, weekdayIndex } from '../lib/today';
 import { changeablePayday } from '../state/actions';
+import { nextPaydayISO } from '../state/planInput';
 import { previewDate } from '../state/store';
 import { UndoPayday } from './UndoPayday';
 import { billState, paidFromLog } from '../today/model';
@@ -24,7 +25,9 @@ type PaydayMark = { status: 'paid' | 'skipped' | 'ahead'; index: number };
 export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string }) {
   const { d, r, today } = props;
   const cur = d.settings.currency;
-  const t = parseISO(today);
+  // It opens on the month of the next payday, so the first thing seen is never an empty month
+  const nextPay = nextPaydayISO(d.settings);
+  const t = parseISO(nextPay >= today ? nextPay : today);
   const [cursor, setCursor] = useState({ y: t.y, m: t.m });
   const [picked, setPicked] = useState<string | null>(null);
   const [undoOpen, setUndoOpen] = useState(false);

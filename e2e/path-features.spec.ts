@@ -64,7 +64,6 @@ test.describe('Chapters', () => {
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await goTab(page, 'Path');
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
-    await page.getByRole('button', { name: 'Next month' }).click();
     await page.getByRole('gridcell', { name: /Friday 6 November, payday, paid/ }).click();
     await page.getByRole('dialog', { name: 'Fri 6 Nov' }).getByRole('button', { name: 'Mark as not paid' }).click();
     await expect(page.getByRole('dialog', { name: 'Mark Fri 6 Nov as not paid?' })).toBeVisible();
