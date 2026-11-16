@@ -17,3 +17,7 @@ worker/.dev.vars
 worker/.wrangler/
 .wrangler/
 *.sqlite
+sheet/reference/*
+
+__pycache__/
+.pytest_cache/
