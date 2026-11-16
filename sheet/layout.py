@@ -100,3 +100,12 @@ P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "G7", "J7"
 P_DEBTSPAID, P_BAR, P_PCT, P_NEXT = "B10", "B11", "B12", "B14"
 P_NOFIT = "B16"
 YELLOW_OK |= {("Path", "D7:E7"), ("Path", P_BAR), ("Path", f"B{P_R1}:H{P_RN}")}
+
+# ---- Debts and Safety net
+E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday
+DB_R0 = 8             # first debt row on Debts (in payoff order)
+DB_PCT_COL = 18       # column R: the share paid, a quiet helper
+SN_BUF, SN_BAR, SN_READY = "B7", "B8", "B9"
+SN_Y0 = 15            # first yearly bill row on Safety net
+SN_EMPTY = "B24"
+YELLOW_OK |= {("Debts", f"B{DB_R0}:T{DB_R0 + ND - 1}"), ("Safety net", SN_READY)}

@@ -345,3 +345,62 @@ def test_a_plan_that_does_not_fit_says_so_calmly(books):
     assert not wb["Start"][S_R_DATE].value and not wb["Path"][P_TILE_FREE].value
     assert wb["Start"][S_MONEYNOTE].value.startswith("With this amount the plan does not end")
     assert not wb["Start"][S_R_MIN].value and wb["Today"][T_MAIN].value == "Fill in Start"
+
+
+# ------------------------------------------------------------------------------------------------ Debts and Safety net
+def debt_rows(ws):
+    out = []
+    for p in range(ND):
+        r = DB_R0 + p
+        if ws.cell(r, 3).value:
+            out.append([ws.cell(r, c).value for c in (2, 3, 4, 5, 6, DB_PCT_COL, 19, 20)])
+    return out
+
+
+def test_debts_in_payoff_order(books):
+    rows = debt_rows(books["nadia"][1]["Debts"])
+    assert [(r[0], r[1], r[2], r[3], r[4], r[6]) for r in rows] == [
+        (1, "Store Card", 26.99, 450, 0, "Fri 1 Jan 2027"), (2, "Medical", 0, 600, 0, "Fri 12 Feb 2027"), (3, "Visa", 22.99, 2200, 0, "Fri 16 Jul 2027")]
+    assert all(r[5] == 0 and not r[7] for r in rows)
+
+
+def test_debts_gone_dates_match_the_engine(books):
+    ref = simulate(scenarios.for_engine(scenarios.NADIA))
+    rows = debt_rows(books["nadia"][1]["Debts"])
+    for p, row in enumerate(rows):
+        gone = next(r["date"] for r in ref["rows"] if r["bal"][p] <= 0.005)
+        assert row[6] == this_year(gone), (p, row[6], gone)
+
+
+def test_a_paid_debt_says_paid_and_the_bar_is_full(books):
+    rows = debt_rows(books["nadia-done"][1]["Debts"])
+    assert [r[6] for r in rows] == ["PAID", "PAID", "PAID"] and [r[5] for r in rows] == [1, 1, 1]
+    wb = books["blank"][0]["Debts"]
+    rules = {str(r.sqref): r.rules for r in wb.conditional_formatting}
+    bars = rules[f"H{DB_R0}:Q{DB_R0 + ND - 1}"]
+    assert [_rgb(x.dxf.fill.bgColor) for x in bars] == ["2F4A6D", "E2DCCD"]  # action blue for progress, line for the rest
+    assert _rgb(rules[f"B{DB_R0}:T{DB_R0 + ND - 1}"][0].dxf.fill.bgColor) == "FFE14D"  # yellow only when paid
+    assert len([c for c in "HIJKLMNOPQ"]) == 10
+
+
+def test_a_debt_that_grows_gets_a_calm_note(books):
+    rows = debt_rows(books["growing_piy"][1]["Debts"])
+    assert rows[0][1] == "Dept card" and rows[0][7] == "This one grows even when you pay the minimum, so it goes first."
+    assert not rows[1][7] and not rows[2][7]
+    cell = books["blank"][0]["Debts"].cell(DB_R0, 20)
+    assert _rgb(cell.font.color) == "1F2A44"  # ink, never red
+
+
+def test_safety_net(books):
+    sn = books["nadia"][1]["Safety net"]
+    assert digits(sn[SN_BUF].value) == "$200$500" and not sn[SN_READY].value
+    row = [sn.cell(SN_Y0, c).value for c in range(2, 7)]
+    assert row == ["Gifts and holidays", 260, "December", 0, 10]
+    ticked = books["nadia-ticked"][1]["Safety net"]
+    assert digits(ticked[SN_BUF].value) == "$480$500"
+    assert ticked.cell(SN_Y0, 5).value == 20                 # two paydays of 10
+    done = books["nadia-done"][1]["Safety net"]
+    assert digits(done[SN_BUF].value) == "$500$500" and done[SN_READY].value == "ready"
+    assert done.cell(SN_Y0, 5).value == 190                  # 19 paydays of 10
+    blank = books["blank"][1]["Safety net"]
+    assert blank[SN_EMPTY].value.startswith("No yearly bills yet.")

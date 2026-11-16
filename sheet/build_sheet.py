@@ -345,6 +345,9 @@ def build_engine(wb: Workbook):
     stand[E_NEXTGONE] = ("Next debt gone on", f"=SUMPRODUCT(MIN(({left_row}>0.005)*({gone_row}>0)*{gone_row}+(1-({left_row}>0.005)*({gone_row}>0))*1E+9))")
     stand[E_NEXTGONEPOS] = ("Next debt gone (place)", f"=IF($U$12>=1E+9,0,IFERROR(MATCH($U$12,{gone_row},0),0))")
     stand[E_PCT] = ("Share gone", "=IF($S$13>0.005,MIN($U$8/$S$13,1),0)")
+    upto = f"MIN($S$15,$S$1+1,{NR + 1})"
+    stand[E_BUFNOW] = ("Buffer now", f"=INDEX(${L(C_BUFAFTER)}${ER_START}:${L(C_BUFAFTER)}${ERN},{upto})")
+    stand[E_YSAVED] = ("Yearly bills money so far", f"=SUMPRODUCT(({ks}<{upto})*{col(C_YEARLY)})")
     for ref, (text, f) in stand.items():
         lab = ("R" if ref[0] == "S" else "T") + ref[1:]
         ws[lab] = text
@@ -600,6 +603,89 @@ def add_chart(wb: Workbook):
     ws.add_chart(ch, "J11")
 
 
+# ------------------------------------------------------------------------------------------------ Debts
+def build_debts(wb: Workbook):
+    """One row per debt, in payoff order, with a bar of ten small cells. A paid debt turns yellow with PAID."""
+    ws = wb.create_sheet("Debts")
+    widths = {"A": 1.5, "B": 5, "C": 28, "D": 12, "E": 15, "F": 15, "G": 1.5}
+    for j in range(10):
+        widths[L(8 + j)] = 2.6
+    widths.update({"R": 1.5, "S": 22, "T": 56, "U": 1.5})
+    st.page(ws, 21, 30, widths, "Debts")
+    st.section(ws, 6, 2, "In payoff order")
+    for col, text, align in ((2, "#", st.LEFT), (3, "Debt", st.LEFT), (4, "Interest %", st.RIGHT), (5, "Left now", st.RIGHT),
+                             (6, "Paid so far", st.RIGHT), (8, "Progress", st.LEFT), (19, "Gone by", st.LEFT), (20, "", st.LEFT)):
+        st.head(ws, DB_R0 - 1, col, text, align)
+    for j in range(1, 10):
+        ws.cell(DB_R0 - 1, 8 + j).border = st.UNDER
+    left_row, gone_row = f"Engine!{rng(C_BAL, ROW_LEFT, absrow=True)}", f"Engine!{rng(C_BAL, ROW_GONE, absrow=True)}"
+    for p in range(ND):
+        r, er = DB_R0 + p, EO0 + p
+        name, rate, mn, start = f"Engine!$K${er}", f"Engine!$L${er}", f"Engine!$M${er}", f"Engine!$O${er}"
+        left, gone = f"INDEX({left_row},{p + 1})", f"INDEX({gone_row},{p + 1})"
+        on = f'{name}<>""'
+        ws.cell(r, 2, f'=IF({on},{p + 1},"")').font = st.font(9, color=st.GRAY)
+        ws.cell(r, 3, f'=IF({on},{name},"")').font = st.font(11, bold=True)
+        a = ws.cell(r, 4, f'=IF({on},ROUND({rate}*100,2),"")'); a.number_format, a.alignment = "0.00", st.RIGHT
+        b = ws.cell(r, 5, f'=IF({on},ROUND({left},2),"")'); b.number_format, b.alignment = "#,##0.00", st.RIGHT
+        c = ws.cell(r, 6, f'=IF({on},ROUND(MAX({start}-{left},0),2),"")'); c.number_format, c.alignment = "#,##0.00", st.RIGHT
+        # the share paid, 0 to 1 (a quiet helper for the bar and the yellow row)
+        h = ws.cell(r, DB_PCT_COL, f'=IF({on},IF({left}<0.005,1,MIN(MAX(({start}-{left})/{start},0),0.99)),"")')
+        h.font = st.font(6, color=st.PAPER)
+        ws.cell(r, 19, f'=IFERROR(IF({on},IF({left}<0.005,"PAID",IF({gone}>0,{dtext(gone)},"")),""),"")').font = st.font(10, bold=True)
+        ws.cell(r, 20, (f'=IF(AND({on},{left}>0.005,{rate}>0,{mn}<={left}*{rate}/12),'
+                        f'"This one grows even when you pay the minimum, so it goes first.","")')).font = st.font(9)
+        ws.row_dimensions[r].height = 22
+    rows = f"B{DB_R0}:T{DB_R0 + ND - 1}"
+    bars = f"H{DB_R0}:Q{DB_R0 + ND - 1}"
+    pct = f"${L(DB_PCT_COL)}{DB_R0}"
+    st.when(ws, rows, f"{pct}=1", st.YELLOW)                                                      # paid: the whole row
+    st.when(ws, bars, f'AND({pct}<>"",{pct}*10>=COLUMN()-COLUMN($H{DB_R0})+0.5)', st.ACTION)      # progress
+    st.when(ws, bars, f'{pct}<>""', st.LINE)                                                      # the empty part
+    st.footer(ws, DB_R0 + ND + 2)
+    return ws
+
+
+# ------------------------------------------------------------------------------------------------ Safety net
+def build_safety(wb: Workbook):
+    """The buffer with its bar, and the yearly bills with what is set aside so far."""
+    ws = wb.create_sheet("Safety net")
+    st.page(ws, 8, 34, {"A": 1.5, "B": 34, "C": 16, "D": 16, "E": 18, "F": 16, "G": 30, "H": 1.5}, "Safety net")
+    has = EN(E_HASPLAN)
+    buf, goal = EN(E_BUFNOW), EN(E_GOAL)
+    st.block(ws, 6, 10, 2, 5)
+    st.label(ws, 6, 2, "Surprise buffer", small=True)
+    ws[SN_BUF] = f'=IFERROR({money0(buf)}&" of "&{money0(goal)},"")'
+    ws[SN_BUF].font = st.font(28, bold=True, title=True)
+    ws.row_dimensions[7].height = 44
+    share = f"IF({goal}>0,MIN({buf}/{goal},1),1)"
+    ws[SN_BAR] = f'=IFERROR(REPT("█",ROUND({share}*20,0))&REPT("░",20-ROUND({share}*20,0)),"")'
+    ws[SN_BAR].font = st.font(11, color=st.ACTION)
+    ws[SN_READY] = f'=IF(AND({goal}>0,{buf}>={goal}-0.005),"ready","")'
+    ws[SN_READY].font = st.font(11, bold=True)
+    st.when(ws, SN_READY, f'${SN_READY[0]}${SN_READY[1:]}="ready"', st.YELLOW)  # done
+    ws["B10"] = "Kept in a plain separate account or an envelope. It comes first, so a surprise stays off your cards."
+    ws["B10"].font = st.font(9, color=st.GRAY)
+
+    st.section(ws, 13, 2, "Yearly bills")
+    for j, (text, align) in enumerate((("Bill", st.LEFT), ("A year", st.RIGHT), ("Month needed", st.LEFT), ("Set aside so far", st.RIGHT), ("Each payday", st.RIGHT))):
+        st.head(ws, SN_Y0 - 1, 2 + j, text, align)
+    total = f"SUM(Start!$D${Y0}:$D${YN})"
+    for i in range(NY):
+        r, sr = SN_Y0 + i, Y0 + i
+        amount = f"N(Start!$D${sr})"
+        on = f"{amount}>0"
+        ws.cell(r, 2, f'=IF({on},IF(Start!$C${sr}="","Yearly bill",Start!$C${sr}&""),"")').font = st.font(11, bold=True)
+        a = ws.cell(r, 3, f'=IF({on},{amount},"")'); a.number_format, a.alignment = "#,##0.00", st.RIGHT
+        ws.cell(r, 4, f'=IF({on},IF(Start!$E${sr}="","Any time",Start!$E${sr}&""),"")')
+        s = ws.cell(r, 5, f'=IFERROR(IF({on},ROUND(MIN({EN(E_YSAVED)}*{amount}/{total},{amount}),2),""),"")'); s.number_format, s.alignment = "#,##0.00", st.RIGHT
+        e = ws.cell(r, 6, f'=IFERROR(IF({on},ROUND({amount}/{EN(E_PPY)},2),""),"")'); e.number_format, e.alignment = "#,##0.00", st.RIGHT
+    ws[SN_EMPTY] = f'=IF({total}>0,"","No yearly bills yet. Add one on Start and a little goes aside each payday.")'
+    ws[SN_EMPTY].font = st.font(9, color=st.GRAY)
+    st.footer(ws, SN_Y0 + NY + 4)
+    return ws
+
+
 # ------------------------------------------------------------------------------------------------ the workbook
 def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.date | None = None) -> str:
     wb = Workbook()
@@ -607,6 +693,8 @@ def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.dat
     build_start(wb)
     build_today(wb)
     build_path(wb)
+    build_debts(wb)
+    build_safety(wb)
     build_engine(wb)
     build_lists(wb).sheet_state = "hidden"
     add_chart(wb)
