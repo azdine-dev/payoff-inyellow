@@ -16,6 +16,15 @@ NADIA = dict(
 )
 
 
+# Inputs that need a calm note: no due day, a minimum above the balance, a name with no balance, no money for the plan
+CHECKS = dict(
+    freq="monthly", first_payday=dt.date(2026, 12, 1), money=0, buffer=0, goal=500, yearly=[],
+    debts=[dict(name="No due day", balance=900, apr=20, min=30, due=None),
+           dict(name="Big minimum", balance=40, apr=10, min=60, due=5),
+           dict(name="No balance yet", balance=None, apr=None, min=None, due=None),
+           dict(name="Fine", balance=500, apr=12, min=25, due=15)],
+)
+
 SEVEN = ("karim", "sara", "growing_avalanche", "growing_piy", "twice_month", "monthly_custom", "eight_k")
 
 

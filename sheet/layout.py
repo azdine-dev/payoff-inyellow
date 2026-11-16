@@ -39,3 +39,28 @@ C_DUE = 18               # 15 columns: minimum due this payday, by debt in payof
 C_AFT = C_DUE + ND       # balance after interest and the bill
 C_BAL = C_AFT + ND       # balance after the extra
 C_LAST = C_BAL + ND - 1
+
+# ---- Engine: one answer per cell, read by the tabs (column S, labels in R)
+E_NPAY = "S1"        # the payday the plan ends on (count)
+E_FITS = "S2"        # 1 when the plan ends inside the sheet
+E_HASPLAN = "S3"     # 1 when there is a debt and a next payday
+E_FREE = "S4"        # debt-free date
+E_FIRSTMOVE = "S5"
+E_MINMONTHS = "S6"   # minimums only: months, or "never"
+E_MINDATE = "S7"
+E_SOONER = "S8"      # months sooner than minimums only
+E_INTEREST = "S9"    # interest on the plan
+E_MININTEREST = "S10"
+E_AVOIDED = "S11"
+E_STARTOWED = "S13"
+E_CUR = "S14"        # currency symbol
+C_NPER, C_NPERINT = 16, 17   # per debt in payoff order (rows EO0..): months and interest on minimums only
+
+# ---- Start: the result box and the notes
+S_DATECHECK = "C11"
+S_R_LINE1, S_R_DATE, S_R_STEP, S_R_MIN, S_R_SOONER = "C50", "C51", "C52", "C53", "C54"
+S_MONEYNOTE = "E32"
+S_NOTE_COL = 9       # column I: a calm note next to a debt row
+
+# ---- the only places yellow may show (by conditional formatting): paid, done, or the one key word
+YELLOW_OK = {("Start", S_R_DATE)}

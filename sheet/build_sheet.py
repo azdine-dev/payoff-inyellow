@@ -18,12 +18,14 @@ from openpyxl.utils import get_column_letter as L
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from layout import *  # noqa: E402,F401,F403
-import layout as lay  # noqa: E402
+import style as st  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(HERE, "dist")
 
 CURRENCIES = ["$", "€", "£", "C$", "A$", "R", "₹", "DH", "₦", "AED", "SAR", "CHF", "kr", "zł"]
+WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 MONTHS = ["Any time", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December"]
 
@@ -34,11 +36,35 @@ def rng(col0: int, row: int, n: int = ND, absrow: bool = False) -> str:
     return f"${L(col0)}{d}{row}:${L(col0 + n - 1)}{d}{row}"
 
 
+def EN(ref: str) -> str:
+    """An absolute reference to a cell of the Engine tab"""
+    col = ref.rstrip("0123456789")
+    return f"Engine!${col}${ref[len(col):]}"
+
+
+def dtext(x: str) -> str:
+    """A date in words, like Fri 16 Jul 2027. The year shows only when it is not this year. No TEXT(): its
+    patterns change with the language of the spreadsheet."""
+    return (f'INDEX(Lists!$F$2:$F$8,WEEKDAY({x}))&" "&DAY({x})&" "&INDEX(Lists!$G$2:$G$13,MONTH({x}))'
+            f'&IF(YEAR({x})=YEAR(TODAY()),""," "&YEAR({x}))')
+
+
+def mtext(x: str) -> str:
+    """A month in words, like April 2031"""
+    return f'INDEX(Lists!$D$3:$D$14,MONTH({x}))&" "&YEAR({x})'
+
+
+def money(x: str) -> str:
+    """An amount in words with the buyer's currency symbol: $180, or $1,234.50 when there are cents"""
+    return f'{EN(E_CUR)}&IF(ROUND({x},2)=ROUND({x},0),FIXED({x},0),FIXED({x},2))'
+
+
 # ------------------------------------------------------------------------------------------------ Lists (hidden)
 def build_lists(wb: Workbook):
     ws = wb.create_sheet("Lists")
-    cols = {"A": CURRENCIES, "B": list(FREQ.values()), "C": list(METHOD.values()), "D": MONTHS, "E": [TICK]}
-    heads = {"A": "Currency", "B": "Pay schedule", "C": "Payoff order", "D": "Month", "E": "Done"}
+    cols = {"A": CURRENCIES, "B": list(FREQ.values()), "C": list(METHOD.values()), "D": MONTHS, "E": [TICK],
+            "F": WEEKDAYS, "G": MONTHS_SHORT}
+    heads = {"A": "Currency", "B": "Pay schedule", "C": "Payoff order", "D": "Month", "E": "Done", "F": "Weekday", "G": "Month, short"}
     for col, values in cols.items():
         ws[f"{col}1"] = heads[col]
         for i, v in enumerate(values):
@@ -46,19 +72,113 @@ def build_lists(wb: Workbook):
     return ws
 
 
-# ------------------------------------------------------------------------------------------------ Start (inputs)
-def build_start_inputs(wb: Workbook):
-    """Part 1: only the cells the engine reads, at their final places. The layout comes in Part 2."""
+# ------------------------------------------------------------------------------------------------ Start
+def build_start(wb: Workbook):
+    """All typing happens here: pay, debts, money, the payoff order. The result sits in a calm block at the bottom."""
     ws = wb.create_sheet("Start")
-    ws["C7"], ws["C8"], ws["C9"], ws["C10"] = "Currency", "How often you are paid", "Your next payday", "Twice a month only: your other pay day"
-    ws[S_CUR], ws[S_FREQ], ws[S_ORDER], ws[S_GOAL] = "$", FREQ["biweekly"], METHOD["piy"], 500
+    st.page(ws, 10, 62, {"A": 1.5, "B": 5, "C": 40, "D": 22, "E": 14, "F": 14, "G": 11, "H": 11, "I": 52, "J": 1.5}, "Start")
+    show = f"${S_SHOW[0]}${S_SHOW[1:]}"
+    inputs: list[str] = []
+
+    def typed(ref: str, fmt: str | None = None, align=st.LEFT):
+        st.input_cell(ws[ref], fmt, align)
+        inputs.append(ref)
+
+    def hint(row: int, text: str, col: int = 5):
+        c = ws.cell(row, col, text)
+        c.font = st.font(9, color=st.GRAY)
+
+    # ---- Step 1
+    st.section(ws, 6, 2, "Step 1 · Your pay")
+    for row, text in ((7, "Currency"), (8, "How often you are paid"), (9, "Your next payday"), (10, "Twice a month only: your other pay day")):
+        st.label(ws, row, 3, text, bold=True)
+    typed(S_CUR); typed(S_FREQ); typed(S_NEXT, "ddd d mmm yyyy"); typed(S_OTHER, "0")
+    ws[S_CUR], ws[S_FREQ] = "$", FREQ["biweekly"]
+    st.dropdown(ws, S_CUR, f"Lists!$A$2:$A${1 + len(CURRENCIES)}")
+    st.dropdown(ws, S_FREQ, "Lists!$B$2:$B$5", allow_blank=False)
+    hint(7, "Pick your symbol.")
+    hint(8, "Every week, every 2 weeks, twice a month or every month.")
+    hint(9, "Your whole plan follows your paydays.")
+    hint(10, "For example 15, or 31 for the last day. Leave it empty for the usual pair.")
+    ws[S_DATECHECK] = ('=IF(ISNUMBER(IFERROR(DATEVALUE("5/30/2026"),"")),"This sheet reads dates as MM/DD/YYYY.",'
+                       '"This sheet reads dates as DD/MM/YYYY.")')
+    ws[S_DATECHECK].font = st.font(9, color=st.GRAY)
+
+    # ---- Step 2
+    st.section(ws, 13, 2, "Step 2 · Your debts")
     for j, h in enumerate(["#", "Name", "Balance", "Interest %", "Minimum", "Due day", "My order"]):
-        ws.cell(D0 - 1, 2 + j, h)
+        st.head(ws, D0 - 1, 2 + j, h, st.LEFT if j < 2 else st.RIGHT)
+    hint(13, "Balance, interest and minimum are on your statement. Due day is the day of the month, 1 to 31.", 4)
+    order = f"${S_ORDER[0]}${S_ORDER[1:]}"
     for i in range(ND):
-        ws.cell(D0 + i, 2, i + 1)
-    ws["C32"], ws["C33"], ws["C34"], ws["C35"] = "Money per payday", "Buffer now", "Buffer goal", "Payoff order"
-    for j, h in enumerate(["Yearly bill", "Amount", "Month"]):
-        ws.cell(Y0 - 1, 3 + j, h)
+        r = D0 + i
+        n = ws.cell(r, 2, i + 1)
+        n.font = st.font(9, color=st.GRAY)
+        typed(f"C{r}")
+        typed(f"D{r}", "#,##0.00", st.RIGHT); typed(f"E{r}", "0.00", st.RIGHT); typed(f"F{r}", "#,##0.00", st.RIGHT)
+        typed(f"G{r}", "0", st.RIGHT); typed(f"H{r}", "0", st.RIGHT)
+        bal, mn, due = f"N($D{r})", f"N($F{r})", f"N($G{r})"
+        note = ws.cell(r, S_NOTE_COL, (
+            f'=IF({bal}<=0,IF(OR($C{r}<>"",{mn}>0),"Add the balance and this debt joins your plan.",""),'
+            f'IF(AND({mn}>0,{due}=0),"Add the due day. It is on your statement.",'
+            f'IF(OR({due}<0,{due}>31,{due}<>INT({due})),"The due day is a day of the month, 1 to 31.",'
+            f'IF({mn}>{bal},"The minimum is more than the balance. Have a look at both.",""))))'))
+        note.font = st.font(9, color=st.GRAY)
+    # "My order" only shows when the order is "My own order": it fades into the paper otherwise
+    hide = st.font(9, color=st.PAPER)
+    st.when(ws, f"H{D0 - 1}", f'{order}<>"{METHOD["custom"]}"', fnt=hide)
+    st.when(ws, f"H{D0}:H{DN}", f'{order}<>"{METHOD["custom"]}"', st.PAPER, fnt=hide, border=st.NO_BORDER)
+
+    # ---- Step 3
+    st.section(ws, 31, 2, "Step 3 · Your money")
+    for row, text in ((32, "Money for the plan each payday"), (33, "Buffer: set aside now"), (34, "Buffer goal"), (35, "Payoff order")):
+        st.label(ws, row, 3, text, bold=True)
+    typed(S_MONEY, "#,##0.00"); typed(S_BUF, "#,##0.00"); typed(S_GOAL, "#,##0.00"); typed(S_ORDER)
+    ws[S_GOAL], ws[S_ORDER] = 500, METHOD["piy"]
+    st.dropdown(ws, S_ORDER, "Lists!$C$2:$C$4", allow_blank=False)
+    ws[S_MONEYNOTE] = (f'=IF(AND({EN(E_STARTOWED)}>0.005,N({S_MONEY})<=0),"Add what you can put on top of your minimums. Even 20 matters.",'
+                       f'IF(AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=0),"With this amount the plan does not end in the time this sheet can show. A little more helps.",'
+                       f'"On top of your minimums. Even 20 matters."))')
+    ws[S_MONEYNOTE].font = st.font(9, color=st.GRAY)
+    hint(33, "Money for surprises. Empty is fine.")
+    hint(34, "Kept in a plain separate account or an envelope.")
+    hint(35, "PaidInYellow order pays the smallest debt first, and a debt that grows before that.")
+    st.label(ws, 37, 3, "Yearly bills (optional)", bold=True)
+    st.head(ws, 37, 4, "Amount a year", st.RIGHT); st.head(ws, 37, 5, "Month needed")
+    hint(37, "Car repairs, gifts, insurance. A little goes aside each payday.", 6)
+    for i in range(NY):
+        r = Y0 + i
+        typed(f"C{r}"); typed(f"D{r}", "#,##0.00", st.RIGHT); typed(f"E{r}")
+    st.dropdown(ws, f"E{Y0}:E{YN}", "Lists!$D$2:$D$14")
+
+    # ---- Show where to type
+    st.label(ws, 47, 3, "Show where to type", bold=True)
+    typed(S_SHOW, align=st.CENTER)
+    st.dropdown(ws, S_SHOW, f'"{TICK}"')
+    hint(47, "Pick the tick and every cell you can type in turns sage.")
+    for ref in inputs:
+        if ref != S_SHOW:
+            st.when(ws, ref, f'{show}="{TICK}"', st.CALM)
+
+    # ---- the result
+    st.block(ws, 49, 55, 3, 9)
+    ok = f"AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=1)"
+    ws[S_R_LINE1] = (f'=IF({EN(E_HASPLAN)}=0,"Fill in the three steps and your date shows here.",'
+                     f'IF({EN(E_FITS)}=0,"This plan does not end in the time this sheet can show. A little more each payday helps.",'
+                     f'"You can be debt-free by"))')
+    ws[S_R_LINE1].font = st.font(11, color=st.GRAY)
+    ws[S_R_DATE] = f'=IFERROR(IF({ok},{dtext(EN(E_FREE))},""),"")'
+    ws[S_R_DATE].font = st.font(24, bold=True, title=True)
+    ws.row_dimensions[51].height = 40
+    st.when(ws, S_R_DATE, f'${S_R_DATE[0]}${S_R_DATE[1:]}<>""', st.YELLOW)  # the one key word
+    ws[S_R_STEP] = f'=IFERROR(IF({ok},"First step: move "&{money(EN(E_FIRSTMOVE))}&" on "&{dtext(EN(E_P0))}&".",""),"")'
+    ws[S_R_STEP].font = st.font(12, bold=True)
+    ws[S_R_MIN] = (f'=IFERROR(IF({ok},IF(ISNUMBER({EN(E_MINDATE)}),"With minimums only: about "&{mtext(EN(E_MINDATE))}&".",'
+                   f'"With minimums only it never ends. Your plan ends it."),""),"")')
+    ws[S_R_SOONER] = (f'=IFERROR(IF(AND({ok},ISNUMBER({EN(E_SOONER)})),IF({EN(E_SOONER)}>0,"That is about "&{EN(E_SOONER)}&" month"&IF({EN(E_SOONER)}=1,"","s")&" sooner.",""),""),"")')
+    for ref in (S_R_MIN, S_R_SOONER):
+        ws[ref].font = st.font(10, color=st.GRAY)
+    st.footer(ws, 58)
     return ws
 
 
@@ -153,6 +273,38 @@ def build_engine(wb: Workbook):
         ws.cell(r, 14, f'=IF({ok},IF(N({src("G")})>0,N({src("G")}),""),"")')
         ws.cell(r, 15, f'=IF({ok},N({src("D")}),0)')
 
+    # ---- minimums only, per debt (NPER), the baseline the plan is compared with
+    ws.cell(EO0 - 1, C_NPER, "Minimums only: months"); ws.cell(EO0 - 1, C_NPERINT, "Minimums only: interest")
+    for i in range(ND):
+        r = EO0 + i
+        ws.cell(r, C_NPER, f"=IF(O{r}<=0,0,IF(M{r}<=0,1E+9,IF(AND(L{r}>0,M{r}<=O{r}*L{r}/12),1E+9,IF(L{r}=0,O{r}/M{r},NPER(L{r}/12,-M{r},O{r})))))")
+        ws.cell(r, C_NPERINT, f"=IF(OR(P{r}>=1E+9,P{r}=0),0,M{r}*P{r}-O{r})")
+
+    # ---- one answer per cell
+    owed = f"${L(C_OWED)}${ER1}:${L(C_OWED)}${ERN}"
+    dates = f"${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN}"
+    np_, nint = f"${L(C_NPER)}${EO0}:${L(C_NPER)}${EO0 + ND - 1}", f"${L(C_NPERINT)}${EO0}:${L(C_NPERINT)}${EO0 + ND - 1}"
+    answers = {
+        E_NPAY: ("Paydays to the end", f'=SUMPRODUCT(--({owed}>0.005))+1'),
+        E_FITS: ("Ends inside the sheet", f"=IF(INDEX({owed},{NR})<0.005,1,0)"),
+        E_HASPLAN: ("Has a plan", "=IF(AND($S$13>0.005,$B$10>0),1,0)"),
+        E_FREE: ("Debt-free date", f'=IF(AND($S$3=1,$S$2=1),INDEX({dates},$S$1),"")'),
+        E_FIRSTMOVE: ("First move", f"=IF($S$3=1,{L(C_MOVE)}{ER1},0)"),
+        E_MINMONTHS: ("Minimums only: months", f'=IF(MAX({np_})>=1E+9,"never",MAX({np_}))'),
+        E_MINDATE: ("Minimums only: date", '=IF(AND($S$3=1,ISNUMBER($S$6)),$B$10+ROUND($S$6*30.4375,0),"")'),
+        E_SOONER: ("Months sooner", '=IF(AND(ISNUMBER($S$4),ISNUMBER($S$7)),MAX(ROUND(($S$7-$S$4)/30.4375,0),0),"")'),
+        E_INTEREST: ("Interest on the plan", f"=SUM(${L(C_INT)}${ER1}:${L(C_INT)}${ERN})"),
+        E_MININTEREST: ("Interest on minimums only", f"=SUM({nint})"),
+        E_AVOIDED: ("Interest avoided", '=IF(AND($S$2=1,ISNUMBER($S$6)),MAX($S$10-$S$9,0),"")'),
+        E_STARTOWED: ("Owed at the start", f"=${L(C_OWED)}${ER_START}"),
+        E_CUR: ("Currency", f'=IF({A(S_CUR)}="","$",{A(S_CUR)}&"")'),
+    }
+    for ref, (text, f) in answers.items():
+        ws[f"R{ref[1:]}"] = text
+        ws[ref] = f
+    for ref in (E_FREE, E_MINDATE):
+        ws[ref].number_format = "yyyy-mm-dd"
+
     # ---- rows above the simulation: what each debt column needs
     for p in range(ND):
         r = EO0 + p
@@ -220,9 +372,11 @@ def build_engine(wb: Workbook):
 def build(path: str, scenario: dict | None = None, ticks: int = 0) -> str:
     wb = Workbook()
     wb.remove(wb.active)
-    build_start_inputs(wb)
+    build_start(wb)
     build_engine(wb)
     build_lists(wb).sheet_state = "hidden"
+    for name in ("Engine", "Lists"):
+        wb[name].protection.sheet = True
     if scenario:
         fill(wb, scenario, ticks)
     wb.calculation.fullCalcOnLoad = True

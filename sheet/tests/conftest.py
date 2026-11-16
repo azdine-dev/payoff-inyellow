@@ -33,6 +33,7 @@ def books():
     for name, s in all_scenarios().items():
         build_sheet.build(os.path.join(src, f"{name}.xlsx"), s)
     build_sheet.build(os.path.join(src, "nadia-ticked.xlsx"), scenarios.NADIA, ticks=2)
+    build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS)
     recalc.recalc_folder(src, out)
     res = {}
     for f in os.listdir(src):
