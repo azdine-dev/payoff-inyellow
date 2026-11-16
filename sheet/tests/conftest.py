@@ -1,6 +1,7 @@
 """Builds every test workbook once, recalculates them all in one LibreOffice run, and hands the values to the tests."""
 from __future__ import annotations
 
+import datetime as dt
 import os
 import shutil
 import sys
@@ -19,6 +20,9 @@ import recalc  # noqa: E402
 import scenarios  # noqa: E402
 
 
+DAY = dt.date(2026, 11, 1)  # "today" in the test files, so the words about dates never change
+
+
 def all_scenarios() -> dict[str, dict]:
     out = {"nadia": scenarios.NADIA}
     out.update(scenarios.fixtures())
@@ -31,9 +35,14 @@ def books():
     src, out = tempfile.mkdtemp(prefix="piy-src-"), tempfile.mkdtemp(prefix="piy-out-")
     build_sheet.build(os.path.join(src, "blank.xlsx"))
     for name, s in all_scenarios().items():
-        build_sheet.build(os.path.join(src, f"{name}.xlsx"), s)
-    build_sheet.build(os.path.join(src, "nadia-ticked.xlsx"), scenarios.NADIA, ticks=2)
-    build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS)
+        build_sheet.build(os.path.join(src, f"{name}.xlsx"), s, today=DAY)
+    # two paydays ticked, and the third has not come yet
+    build_sheet.build(os.path.join(src, "nadia-ticked.xlsx"), scenarios.NADIA, ticks=2, today=dt.date(2026, 11, 21))
+    # four paydays went by and nothing is ticked
+    build_sheet.build(os.path.join(src, "nadia-late.xlsx"), scenarios.NADIA, today=dt.date(2026, 12, 20))
+    # every payday of the plan is ticked
+    build_sheet.build(os.path.join(src, "nadia-done.xlsx"), scenarios.NADIA, ticks=19, today=dt.date(2027, 7, 20))
+    build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS, today=DAY)
     recalc.recalc_folder(src, out)
     res = {}
     for f in os.listdir(src):

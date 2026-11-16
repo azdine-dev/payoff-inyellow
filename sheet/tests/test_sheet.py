@@ -115,7 +115,7 @@ def test_no_red_anywhere(books):
 def this_year(d: dt.date) -> str:
     """The way the sheet writes a date: the year only when it is not this year"""
     s = f"{d.strftime('%a')} {d.day} {d.strftime('%b')}"
-    return s if d.year == dt.date.today().year else f"{s} {d.year}"
+    return s if d.year == 2026 else f"{s} {d.year}"  # the test files say today is in 2026
 
 
 def test_start_result_for_nadia(books):
@@ -219,3 +219,58 @@ def test_no_text_criteria_with_a_decimal_point(books):
     for sheet, at, f in formulas(books["blank"][0]):
         assert not re.search(r'"[<>=]+\d*\.\d', f), (sheet, at, f[:80])
         assert "TEXT(" not in f.upper().replace("FIXED(", ""), (sheet, at)  # TEXT patterns change with the language
+
+
+# ------------------------------------------------------------------------------------------------ Today
+def today_lines(ws):
+    out = []
+    for i in range(NI):
+        label, amount, note = (ws.cell(T_L0 + i, c).value or "" for c in (3, 4, 5))
+        if label:
+            out.append((label, amount, note))
+    return out
+
+
+def test_today_shows_the_next_payday_and_its_lines(books):
+    td = books["nadia"][1]["Today"]
+    assert td[T_LABEL].value == "This payday · Fri 6 Nov"
+    assert td[T_MAIN].value == "Move $180"
+    assert today_lines(td) == [("Store Card bill", "$30", "due Thu 12 Nov"), ("Yearly bills", "$10", ""), ("Buffer", "$140", "")]
+    assert td[T_FLAG].value == 0  # not yellow yet
+    assert td[T_FOCUS_NAME].value == "Store Card"
+    assert td[T_FOCUS_LEFT].value == "$450 left"
+    assert td[T_FOCUS_GONE].value == "Gone by Fri 1 Jan 2027"
+    assert not td[T_LATE].value
+
+
+def test_today_turns_paid_when_the_payday_is_ticked(books):
+    td = books["nadia-ticked"][1]["Today"]
+    assert td[T_LABEL].value == "Fri 20 Nov is paid"
+    assert td[T_MAIN].value == "PAID"
+    assert td[T_SUB].value == "Next payday is Fri 4 Dec."
+    assert td[T_FLAG].value == 1  # the card is yellow
+    assert today_lines(td) == [("Medical bill", "$50", "due Thu 3 Dec"), ("Visa bill", "$66", "due Fri 20 Nov"),
+                               ("Yearly bills", "$10", ""), ("Buffer", "$140", "")]
+    # the lines add up to the move of that payday in the engine
+    assert books["nadia-ticked"][1]["Engine"][E_VIEWMOVE].value == pytest.approx(266)
+
+
+def test_today_says_calmly_when_paydays_are_not_ticked(books):
+    td = books["nadia-late"][1]["Today"]
+    assert td[T_MAIN].value == "Move $180"  # still the first payday that is not ticked
+    assert td[T_LATE].value == "A few paydays are not ticked yet. Tick them on Path."
+
+
+def test_today_when_everything_is_done_or_nothing_is_typed(books):
+    done = books["nadia-done"][1]["Today"]
+    assert done[T_MAIN].value == "Debt-free" and done[T_FLAG].value == 1
+    blank = books["blank"][1]["Today"]
+    assert blank[T_MAIN].value == "Fill in Start" and blank[T_FLAG].value == 0
+    assert today_lines(blank) == []
+
+
+def test_ticks_are_a_list_with_one_choice(books):
+    pa = books["blank"][0]["Path"]
+    dv = {str(d.sqref): d.formula1 for d in pa.data_validations.dataValidation}
+    assert dv[f"H{P_R1}:H{P_RN}"] == f'"{TICK}"'
+    assert all(pa.cell(P_R1 + k, P_DONE_COL).value is None for k in range(NR))  # never ticked for the buyer

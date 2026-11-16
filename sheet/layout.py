@@ -64,3 +64,29 @@ S_NOTE_COL = 9       # column I: a calm note next to a debt row
 
 # ---- the only places yellow may show (by conditional formatting): paid, done, or the one key word
 YELLOW_OK = {("Start", S_R_DATE)}
+
+# ---- Engine: where the plan stands (ticks on Path), and what Today shows
+E_TODAY_TEST = "B12"  # tests type a date here; empty means the real today
+E_CURK = "S15"        # the first payday not ticked (1 = the next payday on Start)
+E_TODAY = "S16"
+E_PAIDMODE = "S17"    # 1 when the payday before is ticked and the next one has not come yet
+E_VIEW = "S18"        # the payday Today shows
+E_ALLDONE = "S19"     # 1 when every payday of the plan is ticked
+E_LATE, E_VIEWDATE, E_NEXTDATE, E_VIEWMOVE, E_NITEMS, E_FOCUSPOS = "U1", "U2", "U3", "U4", "U5", "U6"
+E_OWEDNOW, E_PAIDSOFAR, E_DEBTSPAID, E_NDEBTS, E_NEXTGONEPOS = "U7", "U8", "U9", "U10", "U11"
+NI = ND + 3           # what a payday can list: a bill per debt, yearly bills, the buffer, the extra
+ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE, ROW_LEFT, ROW_GONE, ROW_XTRA = 13, 14, 15, 16, 17, 18, 19  # over the C_BAL columns
+
+# ---- Path
+P_R0 = 19             # header of the payday list
+P_R1 = 20             # payday 1
+P_RN = P_R1 + NR - 1
+P_DONE_COL = 8        # column H: the tick
+
+# ---- Today
+T_FLAG = "F3"         # 1 when the card is yellow (paid, or all done)
+T_LABEL, T_MAIN, T_SUB = "C6", "C7", "C8"
+T_L0 = 11             # first line of the payday (label C, amount D, note E)
+T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = "C32", "C33", "C34"
+T_LATE = "C36"
+YELLOW_OK |= {("Today", "B6:E9")}

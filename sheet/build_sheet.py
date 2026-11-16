@@ -46,7 +46,7 @@ def dtext(x: str) -> str:
     """A date in words, like Fri 16 Jul 2027. The year shows only when it is not this year. No TEXT(): its
     patterns change with the language of the spreadsheet."""
     return (f'INDEX(Lists!$F$2:$F$8,WEEKDAY({x}))&" "&DAY({x})&" "&INDEX(Lists!$G$2:$G$13,MONTH({x}))'
-            f'&IF(YEAR({x})=YEAR(TODAY()),""," "&YEAR({x}))')
+            f'&IF(YEAR({x})=YEAR({EN(E_TODAY)}),""," "&YEAR({x}))')
 
 
 def mtext(x: str) -> str:
@@ -182,9 +182,11 @@ def build_start(wb: Workbook):
     return ws
 
 
-def fill(wb: Workbook, s: dict, ticks: int = 0):
+def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     """Types an engine scenario (the dict engine_v2.simulate takes) into the workbook."""
     st, en = wb["Start"], wb["Engine"]
+    if today:
+        en[E_TODAY_TEST] = today
     st[S_FREQ] = FREQ[s["freq"]]
     st[S_NEXT] = s["first_payday"]
     st[S_NEXT].number_format = "ddd d mmm yyyy"
@@ -202,8 +204,7 @@ def fill(wb: Workbook, s: dict, ticks: int = 0):
     for key, col in (("adjust", C_ADJ), ("charges", C_CHG), ("buffer_used", C_BUFUSED)):
         for k, v in s.get(key, {}).items():
             en.cell(ER1 + int(k), col).value = v
-    if ticks and "Path" in wb.sheetnames:
-        from layout import P_DONE_COL, P_R1  # type: ignore
+    if ticks:
         for k in range(ticks):
             wb["Path"].cell(P_R1 + k, P_DONE_COL).value = TICK
 
@@ -305,6 +306,72 @@ def build_engine(wb: Workbook):
     for ref in (E_FREE, E_MINDATE):
         ws[ref].number_format = "yyyy-mm-dd"
 
+    # ---- where the plan stands: the ticks on Path, and the payday Today shows
+    done = f"Path!${L(P_DONE_COL)}${P_R1}:${L(P_DONE_COL)}${P_RN}"
+    ks = f"${L(C_K)}${ER1}:${L(C_K)}${ERN}"
+    col = lambda cc, first=ER1: f"${L(cc)}${first}:${L(cc)}${first + NR - 1}"  # noqa: E731
+    ws["A12"] = "Today (tests)"
+    ws[E_TODAY_TEST].number_format = "yyyy-mm-dd"
+    view = "$S$18"
+    stand = {
+        E_CURK: ("First payday not ticked", f'=SUMPRODUCT(MIN(({done}="{TICK}")*100000+{ks}))'),
+        E_TODAY: ("Today", "=IF(N($B$12)>0,$B$12,TODAY())"),
+        E_PAIDMODE: ("Paid, waiting for the next payday", f"=IF(AND($S$3=1,$S$2=1,$S$15>1,$S$15<=$S$1,$S$16<INDEX({dates},MIN($S$15,{NR}))),1,0)"),
+        E_VIEW: ("Payday Today shows", "=IF(OR($S$3=0,$S$2=0),0,IF($S$17=1,$S$15-1,MIN($S$15,$S$1)))"),
+        E_ALLDONE: ("Every payday ticked", "=IF(AND($S$3=1,$S$2=1,$S$15>$S$1),1,0)"),
+        E_LATE: ("Paydays gone by and not ticked", f'=IF($S$3=0,0,SUMPRODUCT(({dates}<$S$16)*({done}<>"{TICK}")*({ks}<=$S$1)))'),
+        E_VIEWDATE: ("Its date", f'=IF({view}=0,"",INDEX({dates},{view}))'),
+        E_NEXTDATE: ("The payday after", f'=IF({view}=0,"",INDEX({col(C_DATE, ER1 + 1)},{view}))'),
+        E_VIEWMOVE: ("Its move", f"=IF({view}=0,0,INDEX({col(C_MOVE)},{view}))"),
+        E_NITEMS: ("Lines it has", f"=MAX({rng(C_BAL, ROW_ICOUNT, NI, absrow=True)})"),
+        E_FOCUSPOS: ("Focus debt (place)", (f"=IF({ND + 1}-SUMPRODUCT(MAX(({rng(C_BAL, ROW_XTRA, absrow=True)}>0.005)*({ND + 1}-{rng(C_BAL, 23, absrow=True)})))<={ND},"
+                                            f"{ND + 1}-SUMPRODUCT(MAX(({rng(C_BAL, ROW_XTRA, absrow=True)}>0.005)*({ND + 1}-{rng(C_BAL, 23, absrow=True)}))),"
+                                            f"IF({ND + 1}-SUMPRODUCT(MAX(({rng(C_BAL, ROW_LEFT, absrow=True)}>0.005)*({ND + 1}-{rng(C_BAL, 23, absrow=True)})))<={ND},"
+                                            f"{ND + 1}-SUMPRODUCT(MAX(({rng(C_BAL, ROW_LEFT, absrow=True)}>0.005)*({ND + 1}-{rng(C_BAL, 23, absrow=True)}))),0))")),
+        E_OWEDNOW: ("Owed now", f"=SUM({rng(C_BAL, ROW_LEFT, absrow=True)})"),
+        E_PAIDSOFAR: ("Paid off so far", "=MAX($S$13-$U$7,0)"),
+        E_DEBTSPAID: ("Debts paid", f"=SUMPRODUCT(--($O${EO0}:$O${EO0 + ND - 1}>0))-SUMPRODUCT(--({rng(C_BAL, ROW_LEFT, absrow=True)}>0.005))"),
+        E_NDEBTS: ("Debts", f"=SUMPRODUCT(--($O${EO0}:$O${EO0 + ND - 1}>0))"),
+    }
+    for ref, (text, f) in stand.items():
+        lab = ("R" if ref[0] == "S" else "T") + ref[1:]
+        ws[lab] = text
+        ws[ref] = f
+    for ref in (E_TODAY, E_VIEWDATE, E_NEXTDATE):
+        ws[ref].number_format = "yyyy-mm-dd"
+
+    # ---- per debt (in payoff order), and the lines of the payday Today shows
+    for text, row in (("line", ROW_ILABEL), ("amount", ROW_IAMOUNT), ("lines so far", ROW_ICOUNT), ("note", ROW_INOTE),
+                      ("left now", ROW_LEFT), ("gone by", ROW_GONE), ("extra", ROW_XTRA)):
+        ws.cell(row, C_BAL - 1, text)
+    d0, d1 = "$U$2", "$U$3"
+    for p in range(ND):
+        cc = C_BAL + p
+        bal, aft = L(cc), L(C_AFT + p)
+        name, dd = f"$K${EO0 + p}", f"$N${EO0 + p}"
+        prev = f"INDEX(${bal}${ER_START}:${bal}${ERN - 1},{view})"
+        ws.cell(ROW_IAMOUNT, cc, f"=IF({view}=0,0,IF({prev}*{bal}$22-INDEX({col(C_AFT + p)},{view})<0.005,0,{prev}*{bal}$22-INDEX({col(C_AFT + p)},{view})))")
+        ws.cell(ROW_ILABEL, cc, f'={name}&" bill"')
+        m0 = f"DATE(YEAR({d0}),MONTH({d0}),MIN({dd},DAY(EOMONTH({d0},0))))"
+        m1 = f"DATE(YEAR({d0}),MONTH({d0})+1,MIN({dd},DAY(EOMONTH({d0},1))))"
+        due = f'IF(AND({m0}>={d0},{m0}<{d1}),{m0},{m1})'
+        ws.cell(ROW_INOTE, cc, f'=IFERROR(IF(OR({view}=0,{dd}=""),"","due "&{dtext(due)}),"")')
+        ws.cell(ROW_LEFT, cc, f"=INDEX(${bal}${ER_START}:${bal}${ERN},MIN($S$15,$S$1+1,{NR + 1}))")
+        ws.cell(ROW_GONE, cc, f'=IF(AND($O${EO0 + p}>0,$S$2=1),INDEX({dates},SUMPRODUCT(--({col(cc)}>0.005))+1),"")')
+        ws.cell(ROW_GONE, cc).number_format = "yyyy-mm-dd"
+        ws.cell(ROW_XTRA, cc, f"=IF({view}=0,0,INDEX({col(C_AFT + p)},{view})-INDEX({col(cc)},{view}))")
+    focus_name = f'IF($U$6=0,"",INDEX($K${EO0}:$K${EO0 + ND - 1},$U$6))'
+    others = [("Yearly bills", C_YEARLY, '""'), ("Buffer", C_TOBUF, '""'), (None, C_EXTRA, '""')]
+    for j, (text, src, note) in enumerate(others):
+        cc = C_BAL + ND + j
+        ws.cell(ROW_ILABEL, cc, f'="{text}"' if text else f'="Extra to "&{focus_name}')
+        ws.cell(ROW_IAMOUNT, cc, f"=IF({view}=0,0,IF(INDEX({col(src)},{view})<0.005,0,INDEX({col(src)},{view})))")
+        ws.cell(ROW_INOTE, cc, f"={note}")
+    for j in range(NI):
+        cc = C_BAL + j
+        before = "0" if j == 0 else f"{L(cc - 1)}{ROW_ICOUNT}"
+        ws.cell(ROW_ICOUNT, cc, f"={before}+IF({L(cc)}{ROW_IAMOUNT}>0.005,1,0)")
+
     # ---- rows above the simulation: what each debt column needs
     for p in range(ND):
         r = EO0 + p
@@ -368,17 +435,81 @@ def build_engine(wb: Workbook):
     return ws
 
 
+# ------------------------------------------------------------------------------------------------ Today
+def build_today(wb: Workbook):
+    """One main number: what to move this payday. It turns yellow with PAID once that payday is ticked on Path."""
+    ws = wb.create_sheet("Today")
+    st.page(ws, 6, 44, {"A": 1.5, "B": 3, "C": 44, "D": 18, "E": 30, "F": 1.5}, "Today")
+    view, paid, done = EN(E_VIEW), EN(E_PAIDMODE), EN(E_ALLDONE)
+    ws[T_FLAG] = f"=IF(OR({paid}=1,{done}=1),1,0)"
+    ws[T_FLAG].font = st.font(8, color=st.BAND)  # a quiet helper for the colour of the card
+
+    st.block(ws, 6, 9, 2, 5)
+    st.when(ws, "B6:E9", "$F$3=1", st.YELLOW)
+    ws[T_LABEL] = (f'=IFERROR(IF({done}=1,"Every payday is ticked",IF({view}=0,"Your next payday",'
+                   f'IF({paid}=1,{dtext(EN(E_VIEWDATE))}&" is paid","This payday · "&{dtext(EN(E_VIEWDATE))}))),"")')
+    ws[T_LABEL].font = st.font(11, color=st.GRAY)
+    ws[T_MAIN] = (f'=IFERROR(IF({done}=1,"Debt-free",IF({view}=0,"Fill in Start",'
+                  f'IF({paid}=1,"PAID","Move "&{money(EN(E_VIEWMOVE))}))),"")')
+    ws[T_MAIN].font = st.font(48, bold=True, title=True)
+    ws.row_dimensions[7].height = 66
+    ws[T_SUB] = (f'=IFERROR(IF({done}=1,"You did it, one paycheck at a time.",IF({view}=0,"Your payday and what to move show here.",'
+                 f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".","Then tick it on Path and it turns yellow."))),"")')
+    ws[T_SUB].font = st.font(10, color=st.GRAY)
+
+    st.head(ws, T_L0 - 1, 3, "What it is made of"); st.head(ws, T_L0 - 1, 4, "Amount", st.RIGHT); st.head(ws, T_L0 - 1, 5, "")
+    labels, amounts, counts, notes = (rng(C_BAL, r, NI, absrow=True) for r in (ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE))
+    for i in range(NI):
+        r = T_L0 + i
+        m = f"MATCH({i + 1},Engine!{counts},0)"
+        ws.cell(r, 3, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",INDEX(Engine!{labels},{m})),"")').font = st.font(11)
+        a = ws.cell(r, 4, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",{money(f"INDEX(Engine!{amounts},{m})")}),"")')
+        a.font, a.alignment = st.font(11, bold=True), st.RIGHT
+        ws.cell(r, 5, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",INDEX(Engine!{notes},{m})),"")').font = st.font(9, color=st.GRAY)
+
+    fr = int(T_FOCUS_NAME[1:])
+    st.head(ws, fr - 1, 3, "Focus debt")
+    pos = EN(E_FOCUSPOS)
+    names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
+    ws[T_FOCUS_NAME] = f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")'
+    ws[T_FOCUS_NAME].font = st.font(14, bold=True, title=True)
+    ws[T_FOCUS_LEFT] = f'=IFERROR(IF({pos}=0,"",{money(f"INDEX(Engine!{rng(C_BAL, ROW_LEFT, absrow=True)},{pos})")}&" left"),"")'
+    gone = f"INDEX(Engine!{rng(C_BAL, ROW_GONE, absrow=True)},{pos})"
+    ws[T_FOCUS_GONE] = f'=IFERROR(IF({pos}=0,"",IF(ISNUMBER({gone}),"Gone by "&{dtext(gone)},"")),"")'
+    ws[T_FOCUS_GONE].font = st.font(10, color=st.GRAY)
+    ws[T_LATE] = f'=IF({EN(E_LATE)}>=2,"A few paydays are not ticked yet. Tick them on Path.","")'
+    ws[T_LATE].font = st.font(10, color=st.GRAY)
+    st.footer(ws, 39)
+    return ws
+
+
+# ------------------------------------------------------------------------------------------------ Path
+def build_path(wb: Workbook):
+    """Part 3 lays down the tick column the plan reads. Part 4 adds the tiles, the list and the chart."""
+    ws = wb.create_sheet("Path")
+    st.page(ws, 16, P_RN + 6, {"A": 1.5, "B": 20, "C": 13, "D": 13, "E": 13, "F": 13, "G": 14, "H": 9, "I": 1.5,
+                                "J": 13, "K": 13, "L": 13, "M": 13, "N": 13, "O": 13, "P": 1.5}, "Path")
+    st.head(ws, P_R0, P_DONE_COL, "Done", st.CENTER)
+    for k in range(NR):
+        st.input_cell(ws.cell(P_R1 + k, P_DONE_COL), align=st.CENTER)
+    done = f"{L(P_DONE_COL)}{P_R1}:{L(P_DONE_COL)}{P_RN}"
+    st.dropdown(ws, done, f'"{TICK}"')
+    return ws
+
+
 # ------------------------------------------------------------------------------------------------ the workbook
-def build(path: str, scenario: dict | None = None, ticks: int = 0) -> str:
+def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.date | None = None) -> str:
     wb = Workbook()
     wb.remove(wb.active)
     build_start(wb)
+    build_today(wb)
+    build_path(wb)
     build_engine(wb)
     build_lists(wb).sheet_state = "hidden"
     for name in ("Engine", "Lists"):
         wb[name].protection.sheet = True
     if scenario:
-        fill(wb, scenario, ticks)
+        fill(wb, scenario, ticks, today)
     wb.calculation.fullCalcOnLoad = True
     os.makedirs(os.path.dirname(path), exist_ok=True)
     wb.save(path)
@@ -394,5 +525,5 @@ def count_formulas(path: str) -> int:
 if __name__ == "__main__":
     from scenarios import NADIA
     blank = build(os.path.join(DIST, "1-Paycheck-Payoff-Planner.xlsx"))
-    build(os.path.join(DIST, "test-nadia.xlsx"), NADIA)
+    build(os.path.join(DIST, "test-nadia.xlsx"), NADIA, ticks=1)
     print("built", blank, "formulas:", count_formulas(blank))
