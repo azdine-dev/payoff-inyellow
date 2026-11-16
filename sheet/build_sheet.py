@@ -513,6 +513,7 @@ def build_path(wb: Workbook):
     ws = wb.create_sheet("Path")
     st.page(ws, 16, P_RN + 6, {"A": 1.5, "B": 20, "C": 13, "D": 13, "E": 13, "F": 13, "G": 14, "H": 9, "I": 1.5,
                                 "J": 13, "K": 13, "L": 13, "M": 13, "N": 13, "O": 13, "P": 1.5}, "Path")
+    ws.column_dimensions["G"].width, ws.column_dimensions["H"].width = 12, 16
     has, fits = EN(E_HASPLAN), EN(E_FITS)
     for ref, f in ((P_CURK, f"=IF({EN(E_ALLDONE)}=1,0,MIN({EN(E_CURK)},{EN(E_NPAY)}))"), (P_SHOW, f'=Start!${S_SHOW[0]}${S_SHOW[1:]}&""')):
         ws[ref] = f
@@ -520,8 +521,8 @@ def build_path(wb: Workbook):
 
     # ---- four tiles
     tiles = [(P_TILE_OWED, 2, 2, "Owed now", f'=IFERROR(IF({has}=0,"",{money0(EN(E_OWEDNOW))}),"")'),
-             (P_TILE_FREE, 4, 5, "Debt-free date", f'=IFERROR(IF(AND({has}=1,{fits}=1),{dtext(EN(E_FREE))},""),"")'),
-             (P_TILE_PAID, 7, 8, "Paid off so far", f'=IFERROR(IF({has}=0,"",{money0(EN(E_PAIDSOFAR))}),"")'),
+             (P_TILE_FREE, 4, 6, "Debt-free date", f'=IFERROR(IF(AND({has}=1,{fits}=1),{dtext(EN(E_FREE))},""),"")'),
+             (P_TILE_PAID, 8, 8, "Paid off so far", f'=IFERROR(IF({has}=0,"",{money0(EN(E_PAIDSOFAR))}),"")'),
              (P_TILE_AVOID, 10, 12, "Interest you avoid", f'=IFERROR(IF(AND({has}=1,ISNUMBER({EN(E_AVOIDED)})),{money0(EN(E_AVOIDED))},""),"")')]
     for ref, c0, c1, text, f in tiles:
         st.block(ws, 6, 8, c0, c1)
@@ -529,8 +530,8 @@ def build_path(wb: Workbook):
         ws[ref] = f
         ws[ref].font = st.font(20, bold=True, title=True)
     ws.row_dimensions[7].height = 34
-    ws.merge_cells("D7:E7")  # the date is wider than one column: the yellow covers all of it
-    st.when(ws, "D7:E7", f'${P_TILE_FREE[0]}${P_TILE_FREE[1:]}<>""', st.YELLOW)  # the one key word
+    ws.merge_cells("D7:F7")  # the date is wider than one column: the yellow covers all of it
+    st.when(ws, "D7:F7", f'${P_TILE_FREE[0]}${P_TILE_FREE[1:]}<>""', st.YELLOW)  # the one key word
 
     # ---- how far along
     pct = EN(E_PCT)
@@ -636,6 +637,9 @@ def build_debts(wb: Workbook):
         ws.cell(r, 20, (f'=IF(AND({on},{left}>0.005,{rate}>0,{mn}<={left}*{rate}/12),'
                         f'"This one grows even when you pay the minimum, so it goes first.","")')).font = st.font(9)
         ws.row_dimensions[r].height = 22
+        gap = st.Side(style="thin", color=st.PAPER)
+        for j in range(10):
+            ws.cell(r, 8 + j).border = st.Border(left=gap, right=gap, top=st.Side(style="medium", color=st.PAPER), bottom=st.Side(style="medium", color=st.PAPER))
     rows = f"B{DB_R0}:T{DB_R0 + ND - 1}"
     bars = f"H{DB_R0}:Q{DB_R0 + ND - 1}"
     pct = f"${L(DB_PCT_COL)}{DB_R0}"
@@ -668,7 +672,7 @@ def build_safety(wb: Workbook):
     ws["B10"].font = st.font(9, color=st.GRAY)
 
     st.section(ws, 13, 2, "Yearly bills")
-    for j, (text, align) in enumerate((("Bill", st.LEFT), ("A year", st.RIGHT), ("Month needed", st.LEFT), ("Set aside so far", st.RIGHT), ("Each payday", st.RIGHT))):
+    for j, (text, align) in enumerate((("Bill", st.LEFT), ("A year", st.RIGHT), ("  Month needed", st.LEFT), ("Set aside so far", st.RIGHT), ("Each payday", st.RIGHT))):
         st.head(ws, SN_Y0 - 1, 2 + j, text, align)
     total = f"SUM(Start!$D${Y0}:$D${YN})"
     for i in range(NY):
@@ -677,7 +681,7 @@ def build_safety(wb: Workbook):
         on = f"{amount}>0"
         ws.cell(r, 2, f'=IF({on},IF(Start!$C${sr}="","Yearly bill",Start!$C${sr}&""),"")').font = st.font(11, bold=True)
         a = ws.cell(r, 3, f'=IF({on},{amount},"")'); a.number_format, a.alignment = "#,##0.00", st.RIGHT
-        ws.cell(r, 4, f'=IF({on},IF(Start!$E${sr}="","Any time",Start!$E${sr}&""),"")')
+        ws.cell(r, 4, f'=IF({on},IF(Start!$E${sr}="","Any time",Start!$E${sr}&""),"")').alignment = st.Alignment(horizontal="left", vertical="center", indent=1)
         s = ws.cell(r, 5, f'=IFERROR(IF({on},ROUND(MIN({EN(E_YSAVED)}*{amount}/{total},{amount}),2),""),"")'); s.number_format, s.alignment = "#,##0.00", st.RIGHT
         e = ws.cell(r, 6, f'=IFERROR(IF({on},ROUND({amount}/{EN(E_PPY)},2),""),"")'); e.number_format, e.alignment = "#,##0.00", st.RIGHT
     ws[SN_EMPTY] = f'=IF({total}>0,"","No yearly bills yet. Add one on Start and a little goes aside each payday.")'
@@ -686,10 +690,80 @@ def build_safety(wb: Workbook):
     return ws
 
 
+# ------------------------------------------------------------------------------------------------ Open me
+def build_open_me(wb: Workbook):
+    """How to make your copy, the three steps, and what to try when the file opens as view only."""
+    ws = wb.create_sheet("Open me")
+    st.page(ws, 4, 46, {"A": 1.5, "B": 4, "C": 118, "D": 1.5}, "Open me")
+    blocks = [
+        ("Make it yours", [
+            "In Google Sheets: open the File menu, then Make a copy. Your copy is yours to type in.",
+            "From the copy link: press Make a copy when Google asks.",
+            "In Excel: open the file. If a bar at the top asks, press Enable Editing.",
+        ]),
+        ("Then three steps", [
+            "Go to Start and fill in the three steps. The white cells are yours to type in.",
+            "Open Today. It tells you what to move this payday.",
+            "When it is paid, pick the tick on Path. The payday turns yellow and Today moves on.",
+        ]),
+        ("If it opens as view only", [
+            "Make your own copy first: File, then Make a copy. The shared file itself can not be typed in.",
+            "Look at your Google Drive space. A full Drive can not save a copy.",
+            "Use a personal Google account. A work or school account can block copies.",
+            "Try your own computer or phone. A shared or work device can block files.",
+            "Turn your VPN off for a moment, then try again.",
+        ]),
+        ("Good to know", [
+            "Start tells you how this sheet reads dates, so a payday is never read the wrong way round.",
+            "The tabs are locked so a formula is not typed over by accident.",
+            "There is no password. You can unlock a tab from the menu when you want to change something.",
+            "Your numbers stay in your own file. Nothing is sent anywhere.",
+            "The amounts are estimates from what you type. Type your real balances again every few months.",
+        ]),
+    ]
+    r = 6
+    for title, lines in blocks:
+        st.section(ws, r, 2, title)
+        r += 1
+        for i, text in enumerate(lines):
+            n = ws.cell(r, 2, i + 1)
+            n.font, n.alignment = st.font(9, color=st.GRAY), st.RIGHT
+            ws.cell(r, 3, text).font = st.font(11)
+            ws.row_dimensions[r].height = 20
+            r += 1
+        r += 1
+    st.block(ws, r, r + 2, 2, 3)
+    ws.cell(r, 3, f"Questions? Write to {SUPPORT_EMAIL}").font = st.font(11, bold=True)
+    ws.cell(r + 1, 3, "We read every message and answer as soon as we can.").font = st.font(9, color=st.GRAY)
+    ws.cell(r + 2, 3, f"Version {VERSION} · {VERSION_DATE}").font = st.font(9, color=st.GRAY)
+    st.footer(ws, r + 4)
+    return ws
+
+
+def finish(wb: Workbook):
+    """The style pass every tab shares: the order of the tabs, what prints, where a list is frozen."""
+    wb._sheets = [wb[n] for n in TABS + ["Engine", "Lists"]]
+    wb.active = 0
+    for ws in wb:
+        ws.sheet_view.tabSelected = ws.title == TABS[0]
+    path = wb["Path"]
+    st.footer(path, P_RN + 3)
+    for ws, area, landscape in ((wb["Today"], f"A1:H{T_L0 + NI + 12}", False), (path, f"A1:P{P_R1 + P_PRINT_ROWS - 1}", True)):
+        ws.print_area = area
+        ws.page_setup.orientation = "landscape" if landscape else "portrait"
+        ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
+        ws.sheet_properties.pageSetUpPr.fitToPage = True
+        ws.print_options.horizontalCentered = True
+    path.print_title_rows = f"{P_R0}:{P_R0}"
+    wb.properties.title = "PaidInYellow Paycheck Payoff Planner"
+    wb.properties.creator = "PaidInYellow"
+
+
 # ------------------------------------------------------------------------------------------------ the workbook
-def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.date | None = None) -> str:
+def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.date | None = None, fit_all: bool = False) -> str:
     wb = Workbook()
     wb.remove(wb.active)
+    build_open_me(wb)
     build_start(wb)
     build_today(wb)
     build_path(wb)
@@ -698,10 +772,19 @@ def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.dat
     build_engine(wb)
     build_lists(wb).sheet_state = "hidden"
     add_chart(wb)
+    finish(wb)
     for name in ("Engine", "Lists"):
         wb[name].protection.sheet = True
     if scenario:
         fill(wb, scenario, ticks, today)
+    if fit_all:  # for pictures only: every tab prints one page wide
+        for name in TABS:
+            ws = wb[name]
+            if not ws.print_area:
+                ws.print_area = f"A1:{L(ws.max_column)}{min(ws.max_row, 70)}"
+            ws.page_setup.orientation = "landscape" if ws.max_column > 8 else "portrait"
+            ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
+            ws.sheet_properties.pageSetUpPr.fitToPage = True
     wb.calculation.fullCalcOnLoad = True
     os.makedirs(os.path.dirname(path), exist_ok=True)
     wb.save(path)

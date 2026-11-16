@@ -86,7 +86,7 @@ P_DONE_COL = 8        # column H: the tick
 # ---- Today
 T_FLAG = "H3"         # 1 when the card is yellow (paid, or all done)
 T_LABEL, T_MAIN, T_SUB = "C6", "C7", "C8"
-T_L0 = 11             # first line of the payday (label C, amount D, note E)
+T_L0 = 12             # first line of the payday (label C, amount D, note E)
 T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = "G7", "G8", "G9"   # a second card, beside the main one
 T_LATE = "C31"
 YELLOW_OK |= {("Today", "B6:E9")}
@@ -96,10 +96,10 @@ E_NEXTGONE = "U12"    # the date the next debt is gone
 E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
 NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)
 P_CURK, P_SHOW = "P3", "P2"   # quiet helpers on Path: the current payday, and the Show where to type tick
-P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "G7", "J7"
+P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "H7", "J7"
 P_DEBTSPAID, P_BAR, P_PCT, P_NEXT = "B10", "B11", "B12", "B14"
 P_NOFIT = "B16"
-YELLOW_OK |= {("Path", "D7:E7"), ("Path", P_BAR), ("Path", f"B{P_R1}:H{P_RN}")}
+YELLOW_OK |= {("Path", "D7:F7"), ("Path", P_BAR), ("Path", f"B{P_R1}:H{P_RN}")}
 
 # ---- Debts and Safety net
 E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday
@@ -109,3 +109,10 @@ SN_BUF, SN_BAR, SN_READY = "B7", "B8", "B9"
 SN_Y0 = 15            # first yearly bill row on Safety net
 SN_EMPTY = "B24"
 YELLOW_OK |= {("Debts", f"B{DB_R0}:T{DB_R0 + ND - 1}"), ("Safety net", SN_READY)}
+
+# ---- the workbook
+TABS = ["Open me", "Start", "Today", "Path", "Debts", "Safety net"]   # in this order; Engine and Lists are hidden
+VERSION = "1.0"
+VERSION_DATE = "November 2026"
+SUPPORT_EMAIL = "support@paidinyellow.com"
+P_PRINT_ROWS = 60     # Path prints its tiles and the first 60 paydays, one page wide

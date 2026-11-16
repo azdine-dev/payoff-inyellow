@@ -404,3 +404,45 @@ def test_safety_net(books):
     assert done.cell(SN_Y0, 5).value == 190                  # 19 paydays of 10
     blank = books["blank"][1]["Safety net"]
     assert blank[SN_EMPTY].value.startswith("No yearly bills yet.")
+
+
+# ------------------------------------------------------------------------------------------------ Open me and the style every tab shares
+def all_text(ws) -> str:
+    return " | ".join(c.value for row in ws.iter_rows() for c in row if isinstance(c.value, str) and not c.value.startswith("="))
+
+
+def test_tabs_in_order_with_calm_colours(books):
+    wb = books["blank"][0]
+    assert wb.sheetnames == TABS + ["Engine", "Lists"]
+    assert wb.active.title == "Open me"
+    for name in TABS:
+        ws = wb[name]
+        assert ws.sheet_state == "visible" and ws.sheet_properties.tabColor.rgb[-6:] == "D8E7DC"  # calm band, never yellow
+        assert ws.sheet_view.showGridLines is False
+        title = ws["B2"]
+        assert title.value == name and title.font.name == "Bricolage Grotesque" and title.font.sz == 60 and title.font.b
+        assert all(_rgb(ws.cell(r, 2).fill.fgColor) == "D8E7DC" for r in (1, 2, 3, 4))  # the same band on every tab
+        assert _rgb(ws.cell(5, 2).fill.fgColor) == "F8F6F0"
+        assert "one paycheck at a time" in all_text(ws)  # the same footer
+
+
+def test_two_font_families_only(books):
+    wb = books["blank"][0]
+    names = {c.font.name for n in TABS for row in wb[n].iter_rows() for c in row if c.value is not None}
+    assert names == {"Bricolage Grotesque", "Inter"}
+
+
+def test_open_me_says_how_to_copy_and_what_to_try(books):
+    text = all_text(books["blank"][0]["Open me"])
+    for piece in ("Make a copy", "Enable Editing", "Drive space", "personal Google account", "VPN", "own computer or phone",
+                  SUPPORT_EMAIL, f"Version {VERSION}", "A planning tool, not financial advice."):
+        assert piece in text, piece
+    assert "A planning tool, not financial advice." in all_text(books["blank"][0]["Start"])
+
+
+def test_freeze_and_print(books):
+    wb = books["blank"][0]
+    assert {n: wb[n].freeze_panes for n in TABS} == {"Open me": None, "Start": None, "Today": None, "Path": f"A{P_R1}", "Debts": None, "Safety net": None}
+    for name in ("Today", "Path"):
+        ws = wb[name]
+        assert ws.print_area and ws.page_setup.fitToWidth == 1 and ws.sheet_properties.pageSetUpPr.fitToPage
