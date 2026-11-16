@@ -78,7 +78,7 @@ def test_only_functions_that_work_in_both(books):
         assert not bad, (sheet, at, bad)
 
 
-@pytest.mark.parametrize("name", ["blank", "nadia"])
+@pytest.mark.parametrize("name", ["blank", "nadia", "nadia-ticked", "nadia-done", "checks", "nofit", "twice_month"])
 def test_no_error_values(books, name):
     for ws in books[name][1]:
         for row in ws.iter_rows():
@@ -167,6 +167,10 @@ def test_inputs_are_unlocked_and_everything_else_is_locked(books):
     want |= {f"{col}{D0 + i}" for i in range(ND) for col in "CDEFGH"}
     want |= {f"{col}{Y0 + i}" for i in range(NY) for col in "CDE"}
     assert open_cells == want
+    pa = wb["Path"]
+    assert pa.protection.sheet
+    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked} == {f"H{P_R1 + k}" for k in range(NR)}
+    assert all(c.protection.locked for row in wb["Today"].iter_rows() for c in row)
     for name in ("Engine", "Lists"):
         assert wb[name].sheet_state == "hidden" and wb[name].protection.sheet
 
@@ -274,3 +278,70 @@ def test_ticks_are_a_list_with_one_choice(books):
     dv = {str(d.sqref): d.formula1 for d in pa.data_validations.dataValidation}
     assert dv[f"H{P_R1}:H{P_RN}"] == f'"{TICK}"'
     assert all(pa.cell(P_R1 + k, P_DONE_COL).value is None for k in range(NR))  # never ticked for the buyer
+
+
+# ------------------------------------------------------------------------------------------------ Path
+def digits(s) -> str:
+    """An amount in words without the separators, which change with the language of the spreadsheet"""
+    return re.sub(r"[^0-9$]", "", s or "")
+
+
+def test_path_tiles_and_progress(books):
+    pa = books["nadia"][1]["Path"]
+    assert digits(pa[P_TILE_OWED].value) == "$3250"
+    assert pa[P_TILE_FREE].value == "Fri 16 Jul 2027"
+    assert digits(pa[P_TILE_PAID].value) == "$0"
+    assert digits(pa[P_TILE_AVOID].value) == "$1167"  # 1,444.86 on minimums only, 277.93 on the plan
+    assert pa[P_DEBTSPAID].value == "Debts paid 0 of 3"
+    assert pa[P_PCT].value == "0% gone"
+    assert pa[P_NEXT].value == "Next: Store Card gone Fri 1 Jan 2027"
+    assert not pa[P_NOFIT].value
+    assert pa[P_CURK].value == 1
+
+
+def test_ticking_paydays_moves_everything(books):
+    pa = books["nadia-ticked"][1]["Path"]
+    assert digits(pa[P_TILE_OWED].value) == "$3152"   # owed after the second payday
+    assert digits(pa[P_TILE_PAID].value) == "$98"
+    assert pa[P_PCT].value == "3% gone"
+    assert pa[P_CURK].value == 3                       # the third payday is the current one
+    assert pa.cell(P_R1, P_DONE_COL).value == TICK and pa.cell(P_R1 + 2, P_DONE_COL).value is None
+    done = books["nadia-done"][1]["Path"]
+    assert done[P_DEBTSPAID].value == "Debts paid 3 of 3"
+    assert done[P_PCT].value == "100% gone"
+    assert done[P_NEXT].value == "Every debt is gone."
+    assert digits(done[P_TILE_OWED].value) == "$0"
+    assert done["P4"].value == 1                       # the bar is yellow
+
+
+def test_path_list_matches_the_engine(books):
+    ref = simulate(scenarios.for_engine(scenarios.NADIA))
+    pa = books["nadia"][1]["Path"]
+    for r in ref["rows"]:
+        row = P_R1 + r["k"]
+        assert pa.cell(row, 2).value == this_year(r["date"])
+        got = [pa.cell(row, c).value or 0 for c in (3, 4, 5, 6, 7)]
+        want = [r["bills"], r["yearly"], r["buffer"], r["extra"], r["total_move"]]
+        assert all(abs(g - w) < 0.005 for g, w in zip(got, want)), (r["k"], got, want)
+    after = P_R1 + len(ref["rows"])
+    assert all(not pa.cell(after, c).value for c in range(2, 8))  # nothing after the last payday
+
+
+def test_path_rules_and_chart(books):
+    pa = books["blank"][0]["Path"]
+    rules = {str(r.sqref): [x for x in r.rules] for r in pa.conditional_formatting}
+    paid = rules[f"B{P_R1}:H{P_RN}"]
+    assert _rgb(paid[0].dxf.fill.bgColor) == "FFE14D" and paid[0].dxf.font.strike  # paid rows: yellow, struck through
+    assert _rgb(paid[1].dxf.border.top.color) == "2F4A6D"                           # the current row: action blue
+    assert len(pa._charts) == 1
+    assert pa.freeze_panes == f"A{P_R1}"
+
+
+def test_a_plan_that_does_not_fit_says_so_calmly(books):
+    wb = books["nofit"][1]
+    assert wb["Engine"][E_FITS].value == 0
+    assert wb["Start"][S_R_LINE1].value.startswith("This plan does not end in the time this sheet can show")
+    assert wb["Path"][P_NOFIT].value.startswith("This plan is longer than the list below can show")
+    assert not wb["Start"][S_R_DATE].value and not wb["Path"][P_TILE_FREE].value
+    assert wb["Start"][S_MONEYNOTE].value.startswith("With this amount the plan does not end")
+    assert not wb["Start"][S_R_MIN].value and wb["Today"][T_MAIN].value == "Fill in Start"

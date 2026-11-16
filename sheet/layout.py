@@ -84,9 +84,19 @@ P_RN = P_R1 + NR - 1
 P_DONE_COL = 8        # column H: the tick
 
 # ---- Today
-T_FLAG = "F3"         # 1 when the card is yellow (paid, or all done)
+T_FLAG = "H3"         # 1 when the card is yellow (paid, or all done)
 T_LABEL, T_MAIN, T_SUB = "C6", "C7", "C8"
 T_L0 = 11             # first line of the payday (label C, amount D, note E)
-T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = "C32", "C33", "C34"
-T_LATE = "C36"
+T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = "G7", "G8", "G9"   # a second card, beside the main one
+T_LATE = "C31"
 YELLOW_OK |= {("Today", "B6:E9")}
+
+# ---- Path: tiles, the bar, the next milestone, the list, the chart
+E_NEXTGONE = "U12"    # the date the next debt is gone
+E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
+NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)
+P_CURK, P_SHOW = "P3", "P2"   # quiet helpers on Path: the current payday, and the Show where to type tick
+P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "G7", "J7"
+P_DEBTSPAID, P_BAR, P_PCT, P_NEXT = "B10", "B11", "B12", "B14"
+P_NOFIT = "B16"
+YELLOW_OK |= {("Path", "D7:E7"), ("Path", P_BAR), ("Path", f"B{P_R1}:H{P_RN}")}

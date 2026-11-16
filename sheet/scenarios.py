@@ -25,6 +25,12 @@ CHECKS = dict(
            dict(name="Fine", balance=500, apr=12, min=25, due=15)],
 )
 
+# A debt that grows faster than it is paid: the plan does not end in the 360 paydays the sheet holds
+NOFIT = dict(
+    freq="monthly", first_payday=dt.date(2026, 12, 1), money=1, buffer=500, goal=500, yearly=[],
+    debts=[dict(name="Big card", balance=50000, apr=30, min=100, due=5)],
+)
+
 SEVEN = ("karim", "sara", "growing_avalanche", "growing_piy", "twice_month", "monthly_custom", "eight_k")
 
 

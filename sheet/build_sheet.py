@@ -14,6 +14,9 @@ import os
 import sys
 
 from openpyxl import Workbook
+from openpyxl.chart import AreaChart, Reference
+from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.drawing.line import LineProperties
 from openpyxl.utils import get_column_letter as L
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -52,6 +55,11 @@ def dtext(x: str) -> str:
 def mtext(x: str) -> str:
     """A month in words, like April 2031"""
     return f'INDEX(Lists!$D$3:$D$14,MONTH({x}))&" "&YEAR({x})'
+
+
+def money0(x: str) -> str:
+    """A big summary amount in whole units, like $3,250"""
+    return f'{EN(E_CUR)}&FIXED({x},0)'
 
 
 def money(x: str) -> str:
@@ -333,12 +341,24 @@ def build_engine(wb: Workbook):
         E_DEBTSPAID: ("Debts paid", f"=SUMPRODUCT(--($O${EO0}:$O${EO0 + ND - 1}>0))-SUMPRODUCT(--({rng(C_BAL, ROW_LEFT, absrow=True)}>0.005))"),
         E_NDEBTS: ("Debts", f"=SUMPRODUCT(--($O${EO0}:$O${EO0 + ND - 1}>0))"),
     }
+    left_row, gone_row = rng(C_BAL, ROW_LEFT, absrow=True), rng(C_BAL, ROW_GONE, absrow=True)
+    stand[E_NEXTGONE] = ("Next debt gone on", f"=SUMPRODUCT(MIN(({left_row}>0.005)*({gone_row}>0)*{gone_row}+(1-({left_row}>0.005)*({gone_row}>0))*1E+9))")
+    stand[E_NEXTGONEPOS] = ("Next debt gone (place)", f"=IF($U$12>=1E+9,0,IFERROR(MATCH($U$12,{gone_row},0),0))")
+    stand[E_PCT] = ("Share gone", "=IF($S$13>0.005,MIN($U$8/$S$13,1),0)")
     for ref, (text, f) in stand.items():
         lab = ("R" if ref[0] == "S" else "T") + ref[1:]
         ws[lab] = text
         ws[ref] = f
     for ref in (E_TODAY, E_VIEWDATE, E_NEXTDATE):
         ws[ref].number_format = "yyyy-mm-dd"
+
+    # ---- the chart: what is owed at NC moments from now to the end, so the line always fills the picture
+    ws["V1"] = "Chart"
+    for j in range(NC):
+        kj = f"MIN(ROUND({j}*MIN($S$1,{NR})/{NC - 1},0),{NR})"
+        dj = f"INDEX(${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN + 1},MAX({kj},1))"
+        ws.cell(1 + j, 23, f'=IF($S$3=0,"",INDEX(Lists!$G$2:$G$13,MONTH({dj}))&" "&YEAR({dj}))')
+        ws.cell(1 + j, 24, f"=IF($S$3=0,0,INDEX(${L(C_OWED)}${ER_START}:${L(C_OWED)}${ERN},{kj}+1))")
 
     # ---- per debt (in payoff order), and the lines of the payday Today shows
     for text, row in (("line", ROW_ILABEL), ("amount", ROW_IAMOUNT), ("lines so far", ROW_ICOUNT), ("note", ROW_INOTE),
@@ -357,7 +377,7 @@ def build_engine(wb: Workbook):
         due = f'IF(AND({m0}>={d0},{m0}<{d1}),{m0},{m1})'
         ws.cell(ROW_INOTE, cc, f'=IFERROR(IF(OR({view}=0,{dd}=""),"","due "&{dtext(due)}),"")')
         ws.cell(ROW_LEFT, cc, f"=INDEX(${bal}${ER_START}:${bal}${ERN},MIN($S$15,$S$1+1,{NR + 1}))")
-        ws.cell(ROW_GONE, cc, f'=IF(AND($O${EO0 + p}>0,$S$2=1),INDEX({dates},SUMPRODUCT(--({col(cc)}>0.005))+1),"")')
+        ws.cell(ROW_GONE, cc, f'=IF(AND($O${EO0 + p}>0,$S$2=1),INDEX({dates},SUMPRODUCT(--({col(cc)}>0.005))+1),0)')
         ws.cell(ROW_GONE, cc).number_format = "yyyy-mm-dd"
         ws.cell(ROW_XTRA, cc, f"=IF({view}=0,0,INDEX({col(C_AFT + p)},{view})-INDEX({col(cc)},{view}))")
     focus_name = f'IF($U$6=0,"",INDEX($K${EO0}:$K${EO0 + ND - 1},$U$6))'
@@ -439,13 +459,13 @@ def build_engine(wb: Workbook):
 def build_today(wb: Workbook):
     """One main number: what to move this payday. It turns yellow with PAID once that payday is ticked on Path."""
     ws = wb.create_sheet("Today")
-    st.page(ws, 6, 44, {"A": 1.5, "B": 3, "C": 44, "D": 18, "E": 30, "F": 1.5}, "Today")
+    st.page(ws, 8, 44, {"A": 1.5, "B": 3, "C": 44, "D": 18, "E": 30, "F": 1.5, "G": 36, "H": 1.5}, "Today")
     view, paid, done = EN(E_VIEW), EN(E_PAIDMODE), EN(E_ALLDONE)
     ws[T_FLAG] = f"=IF(OR({paid}=1,{done}=1),1,0)"
     ws[T_FLAG].font = st.font(8, color=st.BAND)  # a quiet helper for the colour of the card
 
     st.block(ws, 6, 9, 2, 5)
-    st.when(ws, "B6:E9", "$F$3=1", st.YELLOW)
+    st.when(ws, "B6:E9", "$H$3=1", st.YELLOW)
     ws[T_LABEL] = (f'=IFERROR(IF({done}=1,"Every payday is ticked",IF({view}=0,"Your next payday",'
                    f'IF({paid}=1,{dtext(EN(E_VIEWDATE))}&" is paid","This payday · "&{dtext(EN(E_VIEWDATE))}))),"")')
     ws[T_LABEL].font = st.font(11, color=st.GRAY)
@@ -467,15 +487,16 @@ def build_today(wb: Workbook):
         a.font, a.alignment = st.font(11, bold=True), st.RIGHT
         ws.cell(r, 5, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",INDEX(Engine!{notes},{m})),"")').font = st.font(9, color=st.GRAY)
 
-    fr = int(T_FOCUS_NAME[1:])
-    st.head(ws, fr - 1, 3, "Focus debt")
+    st.block(ws, 6, 9, 7, 7)
+    st.label(ws, 6, 7, "Focus debt", small=True)
     pos = EN(E_FOCUSPOS)
     names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
     ws[T_FOCUS_NAME] = f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")'
-    ws[T_FOCUS_NAME].font = st.font(14, bold=True, title=True)
+    ws[T_FOCUS_NAME].font = st.font(20, bold=True, title=True)
+    ws[T_FOCUS_NAME].alignment = st.Alignment(horizontal="left", vertical="top")
     ws[T_FOCUS_LEFT] = f'=IFERROR(IF({pos}=0,"",{money(f"INDEX(Engine!{rng(C_BAL, ROW_LEFT, absrow=True)},{pos})")}&" left"),"")'
     gone = f"INDEX(Engine!{rng(C_BAL, ROW_GONE, absrow=True)},{pos})"
-    ws[T_FOCUS_GONE] = f'=IFERROR(IF({pos}=0,"",IF(ISNUMBER({gone}),"Gone by "&{dtext(gone)},"")),"")'
+    ws[T_FOCUS_GONE] = f'=IFERROR(IF({pos}=0,"",IF({gone}>0,"Gone by "&{dtext(gone)},"")),"")'
     ws[T_FOCUS_GONE].font = st.font(10, color=st.GRAY)
     ws[T_LATE] = f'=IF({EN(E_LATE)}>=2,"A few paydays are not ticked yet. Tick them on Path.","")'
     ws[T_LATE].font = st.font(10, color=st.GRAY)
@@ -485,16 +506,98 @@ def build_today(wb: Workbook):
 
 # ------------------------------------------------------------------------------------------------ Path
 def build_path(wb: Workbook):
-    """Part 3 lays down the tick column the plan reads. Part 4 adds the tiles, the list and the chart."""
+    """Four big numbers, how far along, the next milestone, then every payday with its tick, and one chart."""
     ws = wb.create_sheet("Path")
     st.page(ws, 16, P_RN + 6, {"A": 1.5, "B": 20, "C": 13, "D": 13, "E": 13, "F": 13, "G": 14, "H": 9, "I": 1.5,
                                 "J": 13, "K": 13, "L": 13, "M": 13, "N": 13, "O": 13, "P": 1.5}, "Path")
-    st.head(ws, P_R0, P_DONE_COL, "Done", st.CENTER)
+    has, fits = EN(E_HASPLAN), EN(E_FITS)
+    for ref, f in ((P_CURK, f"=IF({EN(E_ALLDONE)}=1,0,MIN({EN(E_CURK)},{EN(E_NPAY)}))"), (P_SHOW, f'=Start!${S_SHOW[0]}${S_SHOW[1:]}&""')):
+        ws[ref] = f
+        ws[ref].font = st.font(6, color=st.BAND)  # quiet helpers for the colours below
+
+    # ---- four tiles
+    tiles = [(P_TILE_OWED, 2, 2, "Owed now", f'=IFERROR(IF({has}=0,"",{money0(EN(E_OWEDNOW))}),"")'),
+             (P_TILE_FREE, 4, 5, "Debt-free date", f'=IFERROR(IF(AND({has}=1,{fits}=1),{dtext(EN(E_FREE))},""),"")'),
+             (P_TILE_PAID, 7, 8, "Paid off so far", f'=IFERROR(IF({has}=0,"",{money0(EN(E_PAIDSOFAR))}),"")'),
+             (P_TILE_AVOID, 10, 12, "Interest you avoid", f'=IFERROR(IF(AND({has}=1,ISNUMBER({EN(E_AVOIDED)})),{money0(EN(E_AVOIDED))},""),"")')]
+    for ref, c0, c1, text, f in tiles:
+        st.block(ws, 6, 8, c0, c1)
+        st.label(ws, 6, c0, text, small=True)
+        ws[ref] = f
+        ws[ref].font = st.font(20, bold=True, title=True)
+    ws.row_dimensions[7].height = 34
+    ws.merge_cells("D7:E7")  # the date is wider than one column: the yellow covers all of it
+    st.when(ws, "D7:E7", f'${P_TILE_FREE[0]}${P_TILE_FREE[1:]}<>""', st.YELLOW)  # the one key word
+
+    # ---- how far along
+    pct = EN(E_PCT)
+    ws[P_DEBTSPAID] = f'=IFERROR(IF({has}=0,"","Debts paid "&{EN(E_DEBTSPAID)}&" of "&{EN(E_NDEBTS)}),"")'
+    ws[P_DEBTSPAID].font = st.font(11, bold=True)
+    ws[P_BAR] = f'=IFERROR(IF({has}=0,"",REPT("█",ROUND({pct}*20,0))&REPT("░",20-ROUND({pct}*20,0))),"")'
+    ws[P_BAR].font = st.font(11, color=st.ACTION)
+    ws["P4"] = f"=IF({EN(E_ALLDONE)}=1,1,0)"
+    ws["P4"].font = st.font(6, color=st.BAND)
+    st.when(ws, P_BAR, "$P$4=1", st.YELLOW)  # full: done
+    ws[P_PCT] = f'=IFERROR(IF({has}=0,"",ROUND({pct}*100,0)&"% gone"),"")'
+    ws[P_PCT].font = st.font(9, color=st.GRAY)
+    names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
+    ws[P_NEXT] = (f'=IFERROR(IF({has}=0,"",IF({EN(E_NEXTGONEPOS)}=0,IF({EN(E_OWEDNOW)}<0.005,"Every debt is gone.",""),'
+                  f'"Next: "&INDEX({names},{EN(E_NEXTGONEPOS)})&" gone "&{dtext(EN(E_NEXTGONE))})),"")')
+    ws[P_NEXT].font = st.font(11)
+    ws[P_NOFIT] = f'=IF(AND({has}=1,{fits}=0),"This plan is longer than the list below can show. A little more each payday on Start brings the end into view.","")'
+    ws[P_NOFIT].font = st.font(9, color=st.GRAY)
+
+    # ---- every payday
+    st.section(ws, P_R0 - 2, 2, "Your paydays")
+    c = ws.cell(P_R0 - 2, 4, "When a payday is paid, pick the tick in Done. The row turns yellow.")
+    c.font = st.font(9, color=st.GRAY)
+    for j, h in enumerate(["Payday", "Bills", "Yearly bills", "Buffer", "Extra to debt", "Move", "Done"]):
+        st.head(ws, P_R0, 2 + j, h, st.LEFT if j == 0 else (st.CENTER if j == 6 else st.RIGHT))
+    src = [C_BILLS, C_YEARLY, C_TOBUF, C_EXTRA, C_MOVE]
     for k in range(NR):
-        st.input_cell(ws.cell(P_R1 + k, P_DONE_COL), align=st.CENTER)
-    done = f"{L(P_DONE_COL)}{P_R1}:{L(P_DONE_COL)}{P_RN}"
+        r, er = P_R1 + k, ER1 + k
+        on = f"AND({has}=1,{k + 1}<={EN(E_NPAY)})"
+        d = ws.cell(r, 2, f'=IFERROR(IF({on},{dtext(f"Engine!$B${er}")},""),"")')
+        d.fill, d.border = st.fill(st.CARD), st.UNDER
+        for j, cc in enumerate(src):
+            x = ws.cell(r, 3 + j, f'=IFERROR(IF({on},ROUND(Engine!${L(cc)}${er},2),""),"")')
+            x.number_format, x.alignment, x.fill, x.border = '#,##0.00;-#,##0.00;"·"', st.RIGHT, st.fill(st.CARD), st.UNDER
+            if cc == C_MOVE:
+                x.font = st.font(10, bold=True)
+        st.input_cell(ws.cell(r, P_DONE_COL), align=st.CENTER)
+    done = f"H{P_R1}:H{P_RN}"
     st.dropdown(ws, done, f'"{TICK}"')
+    rows = f"B{P_R1}:H{P_RN}"
+    st.when(ws, rows, f'$H{P_R1}="{TICK}"', st.YELLOW, fnt=st.font(10, strike=True))  # paid: yellow, struck through
+    edge = st.Side(style="medium", color=st.ACTION)
+    st.when(ws, rows, f"ROW()-{P_R1 - 1}=$P$3", None, border=st.Border(top=edge, bottom=edge))  # the current payday
+    st.when(ws, done, f'$P$2="{TICK}"', st.CALM)  # Show where to type
+    ws.freeze_panes = f"A{P_R1}"
+
+    # ---- one chart: what is owed, from now to the end
+    ch = AreaChart()
+    ch.height, ch.width = 7.5, 15
+    ch.legend = None
+    ch.title = None
+    ws._piy_chart = ch  # the series are added once the Engine tab exists (see build)
+    st.label(ws, 10, 10, "What you owe, from now to the end", small=True)
     return ws
+
+
+def add_chart(wb: Workbook):
+    ws, en = wb["Path"], wb["Engine"]
+    ch = ws._piy_chart
+    ch.add_data(Reference(en, min_col=24, min_row=1, max_row=NC), titles_from_data=False)
+    ch.set_categories(Reference(en, min_col=23, min_row=1, max_row=NC))
+    s = ch.series[0]
+    s.graphicalProperties = GraphicalProperties(solidFill=st.BAND)
+    s.graphicalProperties.line = LineProperties(solidFill=st.INK, w=19050)
+    ch.y_axis.number_format = "#,##0"
+    ch.y_axis.majorGridlines = None
+    ch.y_axis.delete = False
+    ch.x_axis.delete = False
+    ch.x_axis.tickLblSkip = 3
+    ws.add_chart(ch, "J11")
 
 
 # ------------------------------------------------------------------------------------------------ the workbook
@@ -506,6 +609,7 @@ def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.dat
     build_path(wb)
     build_engine(wb)
     build_lists(wb).sheet_state = "hidden"
+    add_chart(wb)
     for name in ("Engine", "Lists"):
         wb[name].protection.sheet = True
     if scenario:
