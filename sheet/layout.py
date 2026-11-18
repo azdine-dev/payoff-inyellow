@@ -122,5 +122,5 @@ YELLOW_OK |= {("Debts", f"B{DB_R0}:T{DB_R0 + ND - 1}"), ("Safety net", SN_READY)
 TABS = ["Open me", "Start", "Today", "Path", "Debts", "Safety net"]   # in this order; Engine and Lists are hidden
 VERSION = "1.0"
 VERSION_DATE = "November 2026"
-SUPPORT_EMAIL = "support@paidinyellow.com"
+SUPPORT_EMAIL = "[SUPPORT EMAIL]"   # to fill in before the file is sold
 P_PRINT_ROWS = 60     # Path prints its tiles and the first 60 paydays, one page wide

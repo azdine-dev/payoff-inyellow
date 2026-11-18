@@ -134,7 +134,7 @@ def build_start(wb: Workbook):
             f'IF({mn}>{bal},"The minimum is more than the balance. Have a look at both.",""))))'))
         note.font = st.font(9, color=st.GRAY)
     # "My order" only shows when the order is "My own order": it fades into the paper otherwise
-    hide = st.font(9, color=st.PAPER)
+    hide = st.Font(color=st.PAPER)
     st.when(ws, f"H{D0 - 1}", f'{order}<>"{METHOD["custom"]}"', fnt=hide)
     st.when(ws, f"H{D0}:H{DN}", f'{order}<>"{METHOD["custom"]}"', st.PAPER, fnt=hide, border=st.NO_BORDER)
 
@@ -776,7 +776,7 @@ def build_open_me(wb: Workbook):
             "In Excel: open the file. If a bar at the top asks, press Enable Editing.",
         ]),
         ("Then three steps", [
-            "Go to Start and fill in the three steps. The white cells are yours to type in.",
+            "Go to Start and fill in the three steps. Show where to type tints every cell that is yours.",
             "Open Today. It tells you what to move this payday.",
             "When it is paid, pick the tick on Path. The payday turns yellow and Today moves on.",
         ]),
@@ -788,6 +788,7 @@ def build_open_me(wb: Workbook):
             "Turn your VPN off for a moment, then try again.",
         ]),
         ("Good to know", [
+            "Paid a different amount? Type it in Actual on Path. Every later payday follows.",
             "Start tells you how this sheet reads dates, so a payday is never read the wrong way round.",
             "The tabs are locked so a formula is not typed over by accident.",
             "There is no password. You can unlock a tab from the menu when you want to change something.",
@@ -817,6 +818,12 @@ def build_open_me(wb: Workbook):
 def finish(wb: Workbook):
     """The style pass every tab shares: the order of the tabs, what prints, where a list is frozen."""
     wb._sheets = [wb[n] for n in TABS + ["Engine", "Lists"]]
+    for name in TABS:  # a formula on a tab the buyer sees never shows an error: it shows nothing
+        for row in wb[name].iter_rows():
+            for cell in row:
+                v = cell.value
+                if isinstance(v, str) and v.startswith("=") and not v.startswith("=IFERROR("):
+                    cell.value = f'=IFERROR({v[1:]},"")'
     wb.active = 0
     for ws in wb:
         ws.sheet_view.tabSelected = ws.title == TABS[0]

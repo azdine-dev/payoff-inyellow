@@ -102,12 +102,29 @@ def test_only_functions_that_work_in_both(books):
         assert not bad, (sheet, at, bad)
 
 
-@pytest.mark.parametrize("name", ["blank", "nadia", "nadia-ticked", "nadia-done", "checks", "nofit", "twice_month"])
+@pytest.mark.parametrize("name", ["blank", "nadia", "nadia-ticked", "nadia-done", "checks", "nofit", "thin", "twice_month", "nadia-actual-200", "nadia-actual-100", "nadia-actual-ticked"])
 def test_no_error_values(books, name):
     for ws in books[name][1]:
         for row in ws.iter_rows():
             for cell in row:
                 assert not (isinstance(cell.value, str) and cell.value.startswith("#") and cell.value.endswith(("!", "?", "A"))), (ws.title, cell.coordinate, cell.value)
+
+
+def test_visible_formulas_are_wrapped_and_short_enough(books):
+    wb = books["blank"][0]
+    for sheet, at, f in formulas(wb):
+        assert len(f) <= 8192, (sheet, at, len(f))
+        if sheet in TABS:
+            assert f.startswith("=IFERROR("), (sheet, at, f[:60])
+
+
+def test_rules_only_change_what_every_program_can_change(books):
+    """A colour rule may set a colour, bold or a strike. A font name or size in a rule is not portable."""
+    for ws in books["blank"][0]:
+        for rules in ws.conditional_formatting:
+            for rule in rules.rules:
+                if rule.dxf and rule.dxf.font:
+                    assert rule.dxf.font.name is None and rule.dxf.font.sz is None, (ws.title, str(rules.sqref))
 
 
 def _rgb(color):
