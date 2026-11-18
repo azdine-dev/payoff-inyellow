@@ -80,8 +80,8 @@ NI = ND + 3           # what a payday can list: a bill per debt, yearly bills, t
 ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE, ROW_LEFT, ROW_GONE, ROW_XTRA = 13, 14, 15, 16, 17, 18, 19  # over the C_BAL columns
 
 # ---- Path
-P_R0 = 19             # header of the payday list
-P_R1 = 20             # payday 1
+P_R0 = 16             # header of the payday list
+P_R1 = 17             # payday 1
 P_RN = P_R1 + NR - 1
 P_ACTUAL_COL = 8      # column H: what was really paid (empty means as planned)
 P_DONE_COL = 9        # column I: the tick
@@ -98,11 +98,14 @@ YELLOW_OK |= {("Today", "B6:E9")}
 E_NEXTGONE = "U12"    # the date the next debt is gone
 E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
 NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)
-P_CURK, P_SHOW = "P3", "P2"   # quiet helpers on Path: the current payday, and the Show where to type tick
-P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "H7", "K7"
-P_DEBTSPAID, P_BAR, P_PCT, P_NEXT = "B10", "B11", "B12", "B14"
-P_NOFIT = "B16"
-YELLOW_OK |= {("Path", "D7:F7"), ("Path", P_BAR), ("Path", f"B{P_R1}:I{P_RN}")}
+P_CURK, P_SHOW = "Q3", "Q2"   # quiet helpers on Path: the current payday, and the Show where to type tick
+P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "F7", "H7"
+P_FREE_CELLS = "D7:E7"   # the debt-free date, merged over two columns
+P_PCT, P_DEBTSPAID = "N11", "N12"   # beside the doughnut
+P_NEXT, P_NOFIT, P_SHORT = "B11", "B12", "B13"
+E_RING_COL = 25       # Engine column Y, rows 1 to 3: gone, left, all gone
+E_TICKED = "U18"      # paydays of the plan that are ticked
+YELLOW_OK |= {("Path", P_FREE_CELLS), ("Path", f"B{P_R1}:I{P_RN}")}
 
 # ---- Debts and Safety net
 E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday

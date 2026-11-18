@@ -354,7 +354,7 @@ def test_ticking_paydays_moves_everything(books):
     assert done[P_PCT].value == "100% gone"
     assert done[P_NEXT].value == "Every debt is gone."
     assert digits(done[P_TILE_OWED].value) == "$0"
-    assert done["P4"].value == 1                       # the bar is yellow
+    assert [books["nadia-done"][1]["Engine"].cell(r, E_RING_COL).value for r in (1, 2, 3)] == [0, 0, 1]  # the ring turns yellow
 
 
 def test_path_list_matches_the_engine(books):
@@ -376,8 +376,37 @@ def test_path_rules_and_chart(books):
     paid = rules[f"B{P_R1}:I{P_RN}"]
     assert _rgb(paid[0].dxf.fill.bgColor) == "FFE14D" and paid[0].dxf.font.strike  # paid rows: yellow, struck through
     assert _rgb(paid[1].dxf.border.top.color) == "2F4A6D"                           # the current row: action blue
-    assert len(pa._charts) == 1
-    assert pa.freeze_panes == f"A{P_R1}"
+    assert _rgb(paid[1].dxf.font.color) == "2F4A6D"                                 # and its words, for Google Sheets
+    assert pa.freeze_panes is None                                                  # the tiles and charts stay reachable
+
+
+def test_path_has_the_doughnut_and_the_area_chart(books):
+    charts = {type(c).__name__: c for c in books["blank"][0]["Path"]._charts}
+    assert set(charts) == {"DoughnutChart", "AreaChart"}
+    ring = charts["DoughnutChart"].series[0]
+    assert [p.graphicalProperties.solidFill.srgbClr for p in ring.dPt] == ["2F4A6D", "E6EFE8", "FFE14D"]
+    fill = charts["AreaChart"].series[0].graphicalProperties
+    assert fill.solidFill.srgbClr == "D8E7DC" and fill.line.solidFill.srgbClr == "1F2A44"
+    en = books["nadia-ticked"][1]["Engine"]
+    gone = en.cell(1, E_RING_COL).value
+    assert gone == pytest.approx(en[E_PCT].value) and en.cell(2, E_RING_COL).value == pytest.approx(1 - gone) and en.cell(3, E_RING_COL).value == 0
+
+
+def test_path_list_shows_the_plan_and_what_was_really_paid(books):
+    pa = books["nadia-actual-200"][1]["Path"]
+    row = [pa.cell(P_R1 + 1, c).value or 0 for c in range(3, 9)]
+    assert row == [116, 10, 74, 0, 266, 200]  # bills, yearly, buffer, extra, Move as planned, Actual
+    assert not pa[P_SHORT].value
+    short = books["nadia-actual-100"][1]["Path"]
+    assert short[P_SHORT].value == "The amount typed for Fri 20 Nov is less than its bills. This sheet still counts the bills as paid."
+
+
+def test_path_tiles_say_what_their_bars_measure(books):
+    pa = books["nadia-ticked"][1]["Path"]
+    assert [pa.cell(9, c).value for c in (4, 6, 8)] == ["2 of 19 paydays done", "3% of what you owed", "compared with minimums only"]
+    assert digits(pa.cell(9, 2).value) == "$3250"
+    assert all(len(pa.cell(8, c).value) == 16 for c in (2, 4, 6, 8))
+    assert all(not books["blank"][1]["Path"].cell(8, c).value for c in (2, 4, 6, 8))
 
 
 def test_a_plan_that_does_not_fit_says_so_calmly(books):
@@ -485,7 +514,7 @@ def test_open_me_says_how_to_copy_and_what_to_try(books):
 
 def test_freeze_and_print(books):
     wb = books["blank"][0]
-    assert {n: wb[n].freeze_panes for n in TABS} == {"Open me": None, "Start": None, "Today": None, "Path": f"A{P_R1}", "Debts": None, "Safety net": None}
+    assert {n: wb[n].freeze_panes for n in TABS} == {"Open me": None, "Start": None, "Today": None, "Path": None, "Debts": None, "Safety net": None}
     for name in ("Today", "Path"):
         ws = wb[name]
         assert ws.print_area and ws.page_setup.fitToWidth == 1 and ws.sheet_properties.pageSetUpPr.fitToPage
