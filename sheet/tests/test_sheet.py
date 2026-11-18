@@ -455,6 +455,24 @@ def test_a_paid_debt_says_paid_and_the_bar_is_full(books):
     assert len([c for c in "HIJKLMNOPQ"]) == 10
 
 
+def test_a_paid_bar_is_only_yellow(books):
+    """Blue and the empty colour stop at 100%, so the row rule alone colours a paid bar."""
+    rules = {str(r.sqref): r.rules for r in books["blank"][0]["Debts"].conditional_formatting}
+    assert all("<1" in x.formula[0] for x in rules[f"H{DB_R0}:Q{DB_R0 + ND - 1}"])
+
+
+def test_actual_reaches_debts_and_safety_net(books):
+    """After two ticks, with 200 paid instead of 266, both tabs show what engine_v2.py shows."""
+    ref = simulate(dict(scenarios.for_engine(scenarios.NADIA), adjust={1: -66}))
+    wb = books["nadia-actual-ticked"][1]
+    rows = debt_rows(wb["Debts"])
+    for p, row in enumerate(rows):
+        assert row[3] == pytest.approx(ref["rows"][1]["bal"][p], abs=0.005)
+        gone = next(r["date"] for r in ref["rows"] if r["bal"][p] <= 0.005)
+        assert row[6] == this_year(gone)
+    assert digits(wb["Safety net"][SN_BUF].value) == "$414$500"  # 200 + 140 + 74
+
+
 def test_a_debt_that_grows_gets_a_calm_note(books):
     rows = debt_rows(books["growing_piy"][1]["Debts"])
     assert rows[0][1] == "Dept card" and rows[0][7] == "This one grows even when you pay the minimum, so it goes first."

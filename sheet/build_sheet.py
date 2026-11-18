@@ -718,8 +718,8 @@ def build_debts(wb: Workbook):
     bars = f"H{DB_R0}:Q{DB_R0 + ND - 1}"
     pct = f"${L(DB_PCT_COL)}{DB_R0}"
     st.when(ws, rows, f"{pct}=1", st.YELLOW)                                                      # paid: the whole row
-    st.when(ws, bars, f'AND({pct}<>"",{pct}*10>=COLUMN()-COLUMN($H{DB_R0})+0.5)', st.ACTION)      # progress
-    st.when(ws, bars, f'{pct}<>""', st.LINE)                                                      # the empty part
+    st.when(ws, bars, f'AND(ISNUMBER({pct}),{pct}<1,{pct}*10>=COLUMN()-COLUMN($H{DB_R0})+0.5)', st.ACTION)  # progress
+    st.when(ws, bars, f'AND(ISNUMBER({pct}),{pct}<1)', st.LINE)                                   # the empty part
     st.footer(ws, DB_R0 + ND + 2)
     return ws
 
