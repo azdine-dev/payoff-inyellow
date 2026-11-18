@@ -402,6 +402,7 @@ def test_path_has_the_doughnut_and_the_area_chart(books):
     assert set(charts) == {"DoughnutChart", "AreaChart"}
     ring = charts["DoughnutChart"].series[0]
     assert [p.graphicalProperties.solidFill.srgbClr for p in ring.dPt] == ["2F4A6D", "E6EFE8", "FFE14D"]
+    assert charts["AreaChart"].series[0].cat.strRef.f.endswith(f"$W$1:$W${NC}")
     fill = charts["AreaChart"].series[0].graphicalProperties
     assert fill.solidFill.srgbClr == "D8E7DC" and fill.line.solidFill.srgbClr == "1F2A44"
     en = books["nadia-ticked"][1]["Engine"]
@@ -420,7 +421,7 @@ def test_path_list_shows_the_plan_and_what_was_really_paid(books):
 
 def test_path_tiles_say_what_their_bars_measure(books):
     pa = books["nadia-ticked"][1]["Path"]
-    assert [pa.cell(9, c).value for c in (4, 6, 8)] == ["2 of 19 paydays done", "3% of what you owed", "compared with minimums only"]
+    assert [pa.cell(9, c).value for c in (4, 6, 8)] == ["2 of 19 paydays done", "3% of what you owed", "next to minimums only"]
     assert digits(pa.cell(9, 2).value) == "$3250"
     assert all(len(pa.cell(8, c).value) == 16 for c in (2, 4, 6, 8))
     assert all(not books["blank"][1]["Path"].cell(8, c).value for c in (2, 4, 6, 8))

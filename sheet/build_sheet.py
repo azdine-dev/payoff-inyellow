@@ -15,6 +15,7 @@ import sys
 
 from openpyxl import Workbook
 from openpyxl.chart import AreaChart, DoughnutChart, Reference
+from openpyxl.chart.data_source import AxDataSource, StrRef
 from openpyxl.chart.series import DataPoint
 from openpyxl.chart.shapes import GraphicalProperties
 from openpyxl.drawing.line import LineProperties
@@ -562,7 +563,7 @@ def build_path(wb: Workbook):
         (P_TILE_PAID, 6, "Paid off so far", f'IF({has}=0,"",{money0(EN(E_PAIDSOFAR))})', has + "=1", pct,
          f'IF({has}=0,"",ROUND({pct}*100,0)&"% of what you owed")'),
         (P_TILE_AVOID, 8, "Interest you avoid", f'IF({can_avoid},{money0(avoided)},"")', can_avoid, f"{avoided}/{min_int}",
-         f'IF({can_avoid},"compared with minimums only","")'),
+         f'IF({can_avoid},"next to minimums only","")'),
     ]
     gap = st.Border(right=st.Side(style="thick", color=st.PAPER))
     for ref, c0, text, value, on, share, small in tiles:
@@ -658,8 +659,8 @@ def add_charts(wb: Workbook):
     area.height, area.width = 7.5, 14.6
     area.legend, area.title = None, None
     area.add_data(Reference(en, min_col=24, min_row=1, max_row=NC), titles_from_data=False)
-    area.set_categories(Reference(en, min_col=23, min_row=1, max_row=NC))
     s = area.series[0]
+    s.cat = AxDataSource(strRef=StrRef(f=f"'Engine'!$W$1:$W${NC}"))  # the months are words
     s.graphicalProperties = GraphicalProperties(solidFill=st.BAND)
     s.graphicalProperties.line = LineProperties(solidFill=st.INK, w=19050)
     area.y_axis.number_format = "#,##0"
@@ -667,6 +668,7 @@ def add_charts(wb: Workbook):
     area.y_axis.delete = False
     area.x_axis.delete = False
     area.x_axis.tickLblSkip = 1
+    area.x_axis.axPos = "b"
     ws.add_chart(area, "K22")
 
     for ch in (ring, area):
