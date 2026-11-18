@@ -139,18 +139,19 @@ def build_start(wb: Workbook):
 
     # ---- Step 3
     st.section(ws, 31, 2, "Step 3 · Your money")
-    for row, text in ((32, "Money for the plan each payday"), (33, "Buffer: set aside now"), (34, "Buffer goal"), (35, "Payoff order")):
+    for row, text in ((32, "Money for the plan each payday"), (33, "Buffer: set aside now"), (34, "Buffer goal"), (47, "Payoff order")):
         st.label(ws, row, 3, text, bold=True)
     typed(S_MONEY, "#,##0.00"); typed(S_BUF, "#,##0.00"); typed(S_GOAL, "#,##0.00"); typed(S_ORDER)
     ws[S_GOAL], ws[S_ORDER] = 500, METHOD["piy"]
     st.dropdown(ws, S_ORDER, "Lists!$C$2:$C$4", allow_blank=False)
     ws[S_MONEYNOTE] = (f'=IF(AND({EN(E_STARTOWED)}>0.005,N({S_MONEY})<=0),"Add what you can put on top of your minimums. Even 20 matters.",'
+                       f'IF(AND(N({S_MONEY})>0,N({S_MONEY})<={EN(E_YPP)}),"Your yearly bills use all of this money, so the buffer and the extra wait. A little more helps.",'
                        f'IF(AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=0),"With this amount the plan does not end in the time this sheet can show. A little more helps.",'
-                       f'"On top of your minimums. Even 20 matters."))')
+                       f'"On top of your minimums. Even 20 matters.")))')
     ws[S_MONEYNOTE].font = st.font(9, color=st.GRAY)
     hint(33, "Money for surprises. Empty is fine.")
     hint(34, "Kept in a plain separate account or an envelope.")
-    hint(35, "PaidInYellow order pays the smallest debt first, and a debt that grows before that.")
+    hint(47, "PaidInYellow order pays the smallest debt first, and a debt that grows before that.")
     st.label(ws, 37, 3, "Yearly bills (optional)", bold=True)
     st.head(ws, 37, 4, "Amount a year", st.RIGHT); st.head(ws, 37, 5, "Month needed")
     hint(37, "Car repairs, gifts, insurance. A little goes aside each payday.", 6)
@@ -160,16 +161,16 @@ def build_start(wb: Workbook):
     st.dropdown(ws, f"E{Y0}:E{YN}", "Lists!$D$2:$D$14")
 
     # ---- Show where to type
-    st.label(ws, 47, 3, "Show where to type", bold=True)
+    st.label(ws, 48, 3, "Show where to type", bold=True)
     typed(S_SHOW, align=st.CENTER)
     st.dropdown(ws, S_SHOW, f'"{TICK}"')
-    hint(47, "Pick the tick and every cell you can type in turns sage.")
+    hint(48, "Pick the tick and every cell you can type in turns sage.")
     for ref in inputs:
         if ref != S_SHOW:
             st.when(ws, ref, f'{show}="{TICK}"', st.CALM)
 
     # ---- the result
-    st.block(ws, 49, 55, 3, 9)
+    st.block(ws, 50, 56, 3, 9)
     ok = f"AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=1)"
     ws[S_R_LINE1] = (f'=IF({EN(E_HASPLAN)}=0,"Fill in the three steps and your date shows here.",'
                      f'IF({EN(E_FITS)}=0,"This plan does not end in the time this sheet can show. A little more each payday helps.",'
@@ -177,7 +178,7 @@ def build_start(wb: Workbook):
     ws[S_R_LINE1].font = st.font(11, color=st.GRAY)
     ws[S_R_DATE] = f'=IFERROR(IF({ok},{dtext(EN(E_FREE))},""),"")'
     ws[S_R_DATE].font = st.font(24, bold=True, title=True)
-    ws.row_dimensions[51].height = 40
+    ws.row_dimensions[52].height = 40
     st.when(ws, S_R_DATE, f'${S_R_DATE[0]}${S_R_DATE[1:]}<>""', st.YELLOW)  # the one key word
     ws[S_R_STEP] = f'=IFERROR(IF({ok},"First step: move "&{money(EN(E_FIRSTMOVE))}&" on "&{dtext(EN(E_P0))}&".",""),"")'
     ws[S_R_STEP].font = st.font(12, bold=True)
@@ -186,7 +187,7 @@ def build_start(wb: Workbook):
     ws[S_R_SOONER] = (f'=IFERROR(IF(AND({ok},ISNUMBER({EN(E_SOONER)})),IF({EN(E_SOONER)}>0,"That is about "&{EN(E_SOONER)}&" month"&IF({EN(E_SOONER)}=1,"","s")&" sooner.",""),""),"")')
     for ref in (S_R_MIN, S_R_SOONER):
         ws[ref].font = st.font(10, color=st.GRAY)
-    st.footer(ws, 58)
+    st.footer(ws, 59)
     return ws
 
 

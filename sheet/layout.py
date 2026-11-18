@@ -14,10 +14,10 @@ DN = D0 + ND - 1
 S_MONEY = "D32"
 S_BUF = "D33"
 S_GOAL = "D34"
-S_ORDER = "D35"
+S_ORDER = "D47"   # after the yearly bills
 Y0 = 38          # first yearly bill row; columns: C name, D amount, E month
 YN = Y0 + NY - 1
-S_SHOW = "D47"   # Show where to type
+S_SHOW = "D48"   # Show where to type
 
 FREQ = {"weekly": "Every week", "biweekly": "Every 2 weeks", "twice": "Twice a month", "monthly": "Every month"}
 METHOD = {"piy": "PaidInYellow order", "avalanche": "Biggest interest first", "custom": "My own order"}
@@ -60,7 +60,7 @@ C_NPER, C_NPERINT = 16, 17   # per debt in payoff order (rows EO0..): months and
 
 # ---- Start: the result box and the notes
 S_DATECHECK = "C11"
-S_R_LINE1, S_R_DATE, S_R_STEP, S_R_MIN, S_R_SOONER = "C50", "C51", "C52", "C53", "C54"
+S_R_LINE1, S_R_DATE, S_R_STEP, S_R_MIN, S_R_SOONER = "C51", "C52", "C53", "C54", "C55"
 S_MONEYNOTE = "E32"
 S_NOTE_COL = 9       # column I: a calm note next to a debt row
 

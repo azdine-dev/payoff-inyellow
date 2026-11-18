@@ -39,6 +39,9 @@ NOFIT = dict(
     debts=[dict(name="Big card", balance=50000, apr=30, min=100, due=5)],
 )
 
+# The money for the plan is smaller than what the yearly bills need each payday (10)
+THIN = dict(NADIA, money=5)
+
 SEVEN = ("karim", "sara", "growing_avalanche", "growing_piy", "twice_month", "monthly_custom", "eight_k")
 
 

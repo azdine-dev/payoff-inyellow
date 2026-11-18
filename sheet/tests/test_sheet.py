@@ -171,6 +171,17 @@ def test_start_notes_next_to_inputs_that_need_a_look(books):
     assert st[S_MONEYNOTE].value == "Add what you can put on top of your minimums. Even 20 matters."
 
 
+def test_start_says_when_yearly_bills_use_all_the_money(books):
+    assert books["thin"][1]["Start"][S_MONEYNOTE].value.startswith("Your yearly bills use all of this money")
+    assert books["nadia"][1]["Start"][S_MONEYNOTE].value == "On top of your minimums. Even 20 matters."
+
+
+def test_start_keeps_the_order_of_the_steps(books):
+    """Pay, debts, money, yearly bills, then the payoff order, the switch and the result box."""
+    rows = [int(r[1:]) for r in (S_NEXT, f"C{D0}", S_MONEY, f"C{Y0}", S_ORDER, S_SHOW, S_R_LINE1)]
+    assert rows == sorted(rows)
+
+
 def test_start_dropdowns_and_the_three_orders(books):
     wb = books["blank"][0]
     st, li = wb["Start"], wb["Lists"]

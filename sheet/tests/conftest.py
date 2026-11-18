@@ -45,6 +45,7 @@ def books():
     for name in scenarios.ACTUALS:
         build_sheet.build(os.path.join(src, f"nadia-{name}.xlsx"), scenarios.with_actual(name), today=DAY)
     build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS, today=DAY)
+    build_sheet.build(os.path.join(src, "thin.xlsx"), scenarios.THIN, today=DAY)
     build_sheet.build(os.path.join(src, "nofit.xlsx"), scenarios.NOFIT, today=DAY)
     recalc.recalc_folder(src, out)
     res = {}
