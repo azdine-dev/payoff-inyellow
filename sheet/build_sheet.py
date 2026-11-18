@@ -349,6 +349,8 @@ def build_engine(wb: Workbook):
     stand[E_NEXTGONEPOS] = ("Next debt gone (place)", f"=IF($U$12>=1E+9,0,IFERROR(MATCH($U$12,{gone_row},0),0))")
     stand[E_PCT] = ("Share gone", "=IF($S$13>0.005,MIN($U$8/$S$13,1),0)")
     stand[E_SHORTK] = ("First Actual below its bills", f"=IFERROR(MATCH(1,{col(C_SHORT)},0),0)")
+    typed = f"Path!${L(P_ACTUAL_COL)}${P_R1}:${L(P_ACTUAL_COL)}${P_RN}"
+    stand[E_VIEWACTUAL] = ("Today shows a typed Actual", f"=IF({view}=0,0,IF(ISNUMBER(INDEX({typed},{view})),1,0))")
     upto = f"MIN($S$15,$S$1+1,{NR + 1})"
     stand[E_BUFNOW] = ("Buffer now", f"=INDEX(${L(C_BUFAFTER)}${ER_START}:${L(C_BUFAFTER)}${ERN},{upto})")
     stand[E_YSAVED] = ("Yearly bills money so far", f"=SUMPRODUCT(({ks}<{upto})*{col(C_YEARLY)})")
@@ -492,7 +494,8 @@ def build_today(wb: Workbook):
     ws[T_MAIN].font = st.font(48, bold=True, title=True)
     ws.row_dimensions[7].height = 66
     ws[T_SUB] = (f'=IFERROR(IF({done}=1,"You did it, one paycheck at a time.",IF({view}=0,"Your payday and what to move show here.",'
-                 f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".","Then tick it on Path and it turns yellow."))),"")')
+                 f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".",IF({EN(E_VIEWACTUAL)}=1,"This is the amount you typed on Path. Tick it there and it turns yellow.",'
+                 f'"Then tick it on Path and it turns yellow.")))),"")')
     ws[T_SUB].font = st.font(10, color=st.GRAY)
 
     st.head(ws, T_L0 - 1, 3, "What it is made of"); st.head(ws, T_L0 - 1, 4, "Amount", st.RIGHT); st.head(ws, T_L0 - 1, 5, "")

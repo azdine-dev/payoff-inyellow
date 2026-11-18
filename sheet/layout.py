@@ -107,6 +107,7 @@ YELLOW_OK |= {("Path", "D7:F7"), ("Path", P_BAR), ("Path", f"B{P_R1}:I{P_RN}")}
 # ---- Debts and Safety net
 E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday
 E_SHORTK = "U16"      # the first payday whose Actual is below its bills (0 = none)
+E_VIEWACTUAL = "U17"  # 1 when the payday Today shows has an Actual typed
 DB_R0 = 8             # first debt row on Debts (in payoff order)
 DB_PCT_COL = 18       # column R: the share paid, a quiet helper
 SN_BUF, SN_BAR, SN_READY = "B7", "B8", "B9"

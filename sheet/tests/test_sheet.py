@@ -294,6 +294,14 @@ def test_today_turns_paid_when_the_payday_is_ticked(books):
     assert books["nadia-ticked"][1]["Engine"][E_VIEWMOVE].value == pytest.approx(266)
 
 
+def test_today_shows_the_amount_typed_in_actual(books):
+    td = books["nadia-actual-today"][1]["Today"]
+    assert td[T_MAIN].value == "Move $200"
+    assert td[T_SUB].value == "This is the amount you typed on Path. Tick it there and it turns yellow."
+    assert today_lines(td) == [("Medical bill", "$50", "due Thu 3 Dec"), ("Visa bill", "$66", "due Fri 20 Nov"),
+                               ("Yearly bills", "$10", ""), ("Buffer", "$74", "")]
+
+
 def test_today_says_calmly_when_paydays_are_not_ticked(books):
     td = books["nadia-late"][1]["Today"]
     assert td[T_MAIN].value == "Move $180"  # still the first payday that is not ticked
