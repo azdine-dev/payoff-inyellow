@@ -42,6 +42,8 @@ def books():
     build_sheet.build(os.path.join(src, "nadia-late.xlsx"), scenarios.NADIA, today=dt.date(2026, 12, 20))
     # every payday of the plan is ticked
     build_sheet.build(os.path.join(src, "nadia-done.xlsx"), scenarios.NADIA, ticks=19, today=dt.date(2027, 7, 20))
+    for name in scenarios.ACTUALS:
+        build_sheet.build(os.path.join(src, f"nadia-{name}.xlsx"), scenarios.with_actual(name), today=DAY)
     build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS, today=DAY)
     build_sheet.build(os.path.join(src, "nofit.xlsx"), scenarios.NOFIT, today=DAY)
     recalc.recalc_folder(src, out)

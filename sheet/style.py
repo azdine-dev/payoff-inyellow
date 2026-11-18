@@ -108,6 +108,16 @@ def dropdown(ws, ref: str, source: str, allow_blank: bool = True):
     return dv
 
 
+def amount_only(ws, ref: str):
+    """A typed amount of 0 or more. Anything else gets a calm message."""
+    dv = DataValidation(type="decimal", operator="greaterThanOrEqual", formula1="0", allow_blank=True)
+    dv.showErrorMessage = True
+    dv.errorTitle, dv.error = "Type an amount", "Type the amount you really paid, or leave it empty."
+    ws.add_data_validation(dv)
+    dv.add(ref)
+    return dv
+
+
 def when(ws, ref: str, formula: str, rgb: str | None = None, fnt: Font | None = None, border: Border | None = None):
     ws.conditional_formatting.add(ref, FormulaRule(formula=[formula], fill=fill(rgb) if rgb else None, font=fnt, border=border, stopIfTrue=False))
 

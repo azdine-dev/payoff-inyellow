@@ -29,12 +29,9 @@ def formulas(wb):
                     yield ws.title, cell.coordinate, cell.value
 
 
-@pytest.mark.parametrize("name", SCEN)
-def test_engine_matches_the_reference(books, name):
+def same_as_engine(en, s, name):
     """Every payday row: the date exact; bills, extra, the move, the buffer and what is owed to the cent."""
-    s = scenarios.for_engine(all_scenarios()[name])
     ref = simulate(s)
-    en = books[name][1]["Engine"]
     assert len(ref["rows"]) <= NR, "the scenario must fit in the sheet"
     for r in ref["rows"]:
         row = ER1 + r["k"]
@@ -54,6 +51,33 @@ def test_engine_matches_the_reference(books, name):
     # the payoff order
     names = [en.cell(EO0 + p, 11).value for p in range(len(s["debts"]))]
     assert names == ref["order"]
+
+
+@pytest.mark.parametrize("name", SCEN)
+def test_engine_matches_the_reference(books, name):
+    same_as_engine(books[name][1]["Engine"], scenarios.for_engine(all_scenarios()[name]), name)
+
+
+@pytest.mark.parametrize("name", list(scenarios.ACTUALS))
+def test_actual_matches_the_engine_run_with_the_same_change(books, name):
+    """Actual on payday 2 equals engine_v2.py with adjust on that payday, on that payday and every later one."""
+    s = dict(scenarios.for_engine(scenarios.NADIA), adjust={1: scenarios.ACTUALS[name][1]})
+    same_as_engine(books[f"nadia-{name}"][1]["Engine"], s, name)
+
+
+def test_actual_of_200_on_payday_2(books):
+    en = books["nadia-actual-200"][1]["Engine"]
+    row = ER1 + 1
+    assert round(en.cell(row, C_MOVE).value, 2) == 200 and round(en.cell(row, C_MOVE0).value, 2) == 266
+    assert round(en.cell(row, C_BILLS).value, 2) == 116 and round(en.cell(row, C_TOBUF).value, 2) == 74
+    assert en[E_SHORTK].value == 0
+
+
+def test_actual_below_the_bills_keeps_the_bills_paid(books):
+    """The engine always pays the bills, so 100 typed against 116 of bills still moves 116."""
+    en = books["nadia-actual-100"][1]["Engine"]
+    assert round(en.cell(ER1 + 1, C_MOVE).value, 2) == 116
+    assert en[E_SHORTK].value == 2
 
 
 def test_nadia_numbers(books):
@@ -169,7 +193,7 @@ def test_inputs_are_unlocked_and_everything_else_is_locked(books):
     assert open_cells == want
     pa = wb["Path"]
     assert pa.protection.sheet
-    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked} == {f"H{P_R1 + k}" for k in range(NR)}
+    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked} == {f"{col}{P_R1 + k}" for k in range(NR) for col in "HI"}
     assert all(c.protection.locked for row in wb["Today"].iter_rows() for c in row)
     for name in ("Engine", "Lists"):
         assert wb[name].sheet_state == "hidden" and wb[name].protection.sheet
@@ -276,7 +300,7 @@ def test_today_when_everything_is_done_or_nothing_is_typed(books):
 def test_ticks_are_a_list_with_one_choice(books):
     pa = books["blank"][0]["Path"]
     dv = {str(d.sqref): d.formula1 for d in pa.data_validations.dataValidation}
-    assert dv[f"H{P_R1}:H{P_RN}"] == f'"{TICK}"'
+    assert dv[f"I{P_R1}:I{P_RN}"] == f'"{TICK}"'
     assert all(pa.cell(P_R1 + k, P_DONE_COL).value is None for k in range(NR))  # never ticked for the buyer
 
 
@@ -330,7 +354,7 @@ def test_path_list_matches_the_engine(books):
 def test_path_rules_and_chart(books):
     pa = books["blank"][0]["Path"]
     rules = {str(r.sqref): [x for x in r.rules] for r in pa.conditional_formatting}
-    paid = rules[f"B{P_R1}:H{P_RN}"]
+    paid = rules[f"B{P_R1}:I{P_RN}"]
     assert _rgb(paid[0].dxf.fill.bgColor) == "FFE14D" and paid[0].dxf.font.strike  # paid rows: yellow, struck through
     assert _rgb(paid[1].dxf.border.top.color) == "2F4A6D"                           # the current row: action blue
     assert len(pa._charts) == 1

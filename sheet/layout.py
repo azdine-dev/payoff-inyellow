@@ -39,6 +39,8 @@ C_DUE = 18               # 15 columns: minimum due this payday, by debt in payof
 C_AFT = C_DUE + ND       # balance after interest and the bill
 C_BAL = C_AFT + ND       # balance after the extra
 C_LAST = C_BAL + ND - 1
+# what the plan asks for on a payday before any Actual is typed, and whether the Actual is below the bills
+C_AVAIL0, C_Y0, C_B0, C_MOVE0, C_SHORT = C_LAST + 1, C_LAST + 2, C_LAST + 3, C_LAST + 4, C_LAST + 5
 
 # ---- Engine: one answer per cell, read by the tabs (column S, labels in R)
 E_NPAY = "S1"        # the payday the plan ends on (count)
@@ -81,7 +83,8 @@ ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE, ROW_LEFT, ROW_GONE, ROW_XTRA = 1
 P_R0 = 19             # header of the payday list
 P_R1 = 20             # payday 1
 P_RN = P_R1 + NR - 1
-P_DONE_COL = 8        # column H: the tick
+P_ACTUAL_COL = 8      # column H: what was really paid (empty means as planned)
+P_DONE_COL = 9        # column I: the tick
 
 # ---- Today
 T_FLAG = "H3"         # 1 when the card is yellow (paid, or all done)
@@ -96,13 +99,14 @@ E_NEXTGONE = "U12"    # the date the next debt is gone
 E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
 NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)
 P_CURK, P_SHOW = "P3", "P2"   # quiet helpers on Path: the current payday, and the Show where to type tick
-P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "H7", "J7"
+P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "H7", "K7"
 P_DEBTSPAID, P_BAR, P_PCT, P_NEXT = "B10", "B11", "B12", "B14"
 P_NOFIT = "B16"
-YELLOW_OK |= {("Path", "D7:F7"), ("Path", P_BAR), ("Path", f"B{P_R1}:H{P_RN}")}
+YELLOW_OK |= {("Path", "D7:F7"), ("Path", P_BAR), ("Path", f"B{P_R1}:I{P_RN}")}
 
 # ---- Debts and Safety net
 E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday
+E_SHORTK = "U16"      # the first payday whose Actual is below its bills (0 = none)
 DB_R0 = 8             # first debt row on Debts (in payoff order)
 DB_PCT_COL = 18       # column R: the share paid, a quiet helper
 SN_BUF, SN_BAR, SN_READY = "B7", "B8", "B9"

@@ -212,6 +212,8 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     for key, col in (("adjust", C_ADJ), ("charges", C_CHG), ("buffer_used", C_BUFUSED)):
         for k, v in s.get(key, {}).items():
             en.cell(ER1 + int(k), col).value = v
+    for k, v in s.get("actual", {}).items():
+        wb["Path"].cell(P_R1 + int(k), P_ACTUAL_COL).value = v
     if ticks:
         for k in range(ticks):
             wb["Path"].cell(P_R1 + k, P_DONE_COL).value = TICK
@@ -345,6 +347,7 @@ def build_engine(wb: Workbook):
     stand[E_NEXTGONE] = ("Next debt gone on", f"=SUMPRODUCT(MIN(({left_row}>0.005)*({gone_row}>0)*{gone_row}+(1-({left_row}>0.005)*({gone_row}>0))*1E+9))")
     stand[E_NEXTGONEPOS] = ("Next debt gone (place)", f"=IF($U$12>=1E+9,0,IFERROR(MATCH($U$12,{gone_row},0),0))")
     stand[E_PCT] = ("Share gone", "=IF($S$13>0.005,MIN($U$8/$S$13,1),0)")
+    stand[E_SHORTK] = ("First Actual below its bills", f"=IFERROR(MATCH(1,{col(C_SHORT)},0),0)")
     upto = f"MIN($S$15,$S$1+1,{NR + 1})"
     stand[E_BUFNOW] = ("Buffer now", f"=INDEX(${L(C_BUFAFTER)}${ER_START}:${L(C_BUFAFTER)}${ERN},{upto})")
     stand[E_YSAVED] = ("Yearly bills money so far", f"=SUMPRODUCT(({ks}<{upto})*{col(C_YEARLY)})")
@@ -411,6 +414,9 @@ def build_engine(wb: Workbook):
         ws.cell(ER_HEAD, 1 + j, h)
     for p in range(ND):
         ws.cell(ER_HEAD, C_DUE + p, f"Due {p + 1}"); ws.cell(ER_HEAD, C_AFT + p, f"After bill {p + 1}"); ws.cell(ER_HEAD, C_BAL + p, f"Left {p + 1}")
+    for cc, h in ((C_AVAIL0, "Money as planned"), (C_Y0, "Yearly as planned"), (C_B0, "Buffer as planned"),
+                  (C_MOVE0, "Move as planned"), (C_SHORT, "Actual below bills")):
+        ws.cell(ER_HEAD, cc, h)
 
     # ---- the state before the first payday
     r = ER_START
@@ -429,7 +435,15 @@ def build_engine(wb: Workbook):
             break  # one more date only: the end of the last payday's window
         d0, d1 = c(C_DATE, r), c(C_DATE, r + 1)
         prev = rng(C_BAL, pr)
-        ws.cell(r, C_AVAIL, f"=$B$7+N({c(C_ADJ, r)})")
+        # Actual follows the engine's "+/- this payday": the difference from the planned move joins this payday's money
+        actual = f"Path!${L(P_ACTUAL_COL)}${P_R1 + t}"
+        ws.cell(r, C_AVAIL0, f"=$B$7+N({c(C_ADJ, r)})")
+        ws.cell(r, C_Y0, f"=MIN($B$2,MAX({c(C_AVAIL0, r)},0))")
+        ws.cell(r, C_B0, f"=MIN(MAX($B$9-{c(C_BUFAFTER, pr)},0),MAX({c(C_AVAIL0, r)}-{c(C_Y0, r)},0))")
+        ws.cell(r, C_MOVE0, (f"={c(C_BILLS, r)}+{c(C_Y0, r)}+{c(C_B0, r)}+MIN(MAX({c(C_AVAIL0, r)}-{c(C_Y0, r)}-{c(C_B0, r)},0)"
+                             f"+{c(C_ROLL, r)},SUM({rng(C_AFT, r)}))"))
+        ws.cell(r, C_AVAIL, f"={c(C_AVAIL0, r)}+IF(ISNUMBER({actual}),{actual}-{c(C_MOVE0, r)},0)")
+        ws.cell(r, C_SHORT, f"=IF(ISNUMBER({actual}),IF({actual}<{c(C_BILLS, r)}-0.005,1,0),0)")
         ws.cell(r, C_YEARLY, f"=MIN($B$2,MAX({c(C_AVAIL, r)},0))")
         ws.cell(r, C_TOBUF, f"=MIN(MAX($B$9-{c(C_BUFAFTER, pr)},0),MAX({c(C_AVAIL, r)}-{c(C_YEARLY, r)},0))")
         ws.cell(r, C_BUFAFTER, f"={c(C_BUFAFTER, pr)}+{c(C_TOBUF, r)}-N({c(C_BUFUSED, r)})")
@@ -511,9 +525,8 @@ def build_today(wb: Workbook):
 def build_path(wb: Workbook):
     """Four big numbers, how far along, the next milestone, then every payday with its tick, and one chart."""
     ws = wb.create_sheet("Path")
-    st.page(ws, 16, P_RN + 6, {"A": 1.5, "B": 20, "C": 13, "D": 13, "E": 13, "F": 13, "G": 14, "H": 9, "I": 1.5,
-                                "J": 13, "K": 13, "L": 13, "M": 13, "N": 13, "O": 13, "P": 1.5}, "Path")
-    ws.column_dimensions["G"].width, ws.column_dimensions["H"].width = 12, 16
+    st.page(ws, 17, P_RN + 6, {"A": 1.5, "B": 20, "C": 13, "D": 13, "E": 13, "F": 13, "G": 13, "H": 13, "I": 8, "J": 1.5,
+                                "K": 13, "L": 13, "M": 13, "N": 13, "O": 13, "P": 13, "Q": 1.5}, "Path")
     has, fits = EN(E_HASPLAN), EN(E_FITS)
     for ref, f in ((P_CURK, f"=IF({EN(E_ALLDONE)}=1,0,MIN({EN(E_CURK)},{EN(E_NPAY)}))"), (P_SHOW, f'=Start!${S_SHOW[0]}${S_SHOW[1:]}&""')):
         ws[ref] = f
@@ -523,7 +536,7 @@ def build_path(wb: Workbook):
     tiles = [(P_TILE_OWED, 2, 2, "Owed now", f'=IFERROR(IF({has}=0,"",{money0(EN(E_OWEDNOW))}),"")'),
              (P_TILE_FREE, 4, 6, "Debt-free date", f'=IFERROR(IF(AND({has}=1,{fits}=1),{dtext(EN(E_FREE))},""),"")'),
              (P_TILE_PAID, 8, 8, "Paid off so far", f'=IFERROR(IF({has}=0,"",{money0(EN(E_PAIDSOFAR))}),"")'),
-             (P_TILE_AVOID, 10, 12, "Interest you avoid", f'=IFERROR(IF(AND({has}=1,ISNUMBER({EN(E_AVOIDED)})),{money0(EN(E_AVOIDED))},""),"")')]
+             (P_TILE_AVOID, 11, 13, "Interest you avoid", f'=IFERROR(IF(AND({has}=1,ISNUMBER({EN(E_AVOIDED)})),{money0(EN(E_AVOIDED))},""),"")')]
     for ref, c0, c1, text, f in tiles:
         st.block(ws, 6, 8, c0, c1)
         st.label(ws, 6, c0, text, small=True)
@@ -555,9 +568,9 @@ def build_path(wb: Workbook):
     st.section(ws, P_R0 - 2, 2, "Your paydays")
     c = ws.cell(P_R0 - 2, 4, "When a payday is paid, pick the tick in Done. The row turns yellow.")
     c.font = st.font(9, color=st.GRAY)
-    for j, h in enumerate(["Payday", "Bills", "Yearly bills", "Buffer", "Extra to debt", "Move", "Done"]):
-        st.head(ws, P_R0, 2 + j, h, st.LEFT if j == 0 else (st.CENTER if j == 6 else st.RIGHT))
-    src = [C_BILLS, C_YEARLY, C_TOBUF, C_EXTRA, C_MOVE]
+    for j, h in enumerate(["Payday", "Bills", "Yearly bills", "Buffer", "Extra to debt", "Move", "Actual", "Done"]):
+        st.head(ws, P_R0, 2 + j, h, st.LEFT if j == 0 else (st.CENTER if j == 7 else st.RIGHT))
+    src = [C_BILLS, C_YEARLY, C_TOBUF, C_EXTRA, C_MOVE0]  # Move stays what the plan asked for, Actual is what was paid
     for k in range(NR):
         r, er = P_R1 + k, ER1 + k
         on = f"AND({has}=1,{k + 1}<={EN(E_NPAY)})"
@@ -566,16 +579,18 @@ def build_path(wb: Workbook):
         for j, cc in enumerate(src):
             x = ws.cell(r, 3 + j, f'=IFERROR(IF({on},ROUND(Engine!${L(cc)}${er},2),""),"")')
             x.number_format, x.alignment, x.fill, x.border = '#,##0.00;-#,##0.00;"·"', st.RIGHT, st.fill(st.CARD), st.UNDER
-            if cc == C_MOVE:
+            if cc == C_MOVE0:
                 x.font = st.font(10, bold=True)
+        st.input_cell(ws.cell(r, P_ACTUAL_COL), "#,##0.00", st.RIGHT)
         st.input_cell(ws.cell(r, P_DONE_COL), align=st.CENTER)
-    done = f"H{P_R1}:H{P_RN}"
+    done = f"I{P_R1}:I{P_RN}"
     st.dropdown(ws, done, f'"{TICK}"')
-    rows = f"B{P_R1}:H{P_RN}"
-    st.when(ws, rows, f'$H{P_R1}="{TICK}"', st.YELLOW, fnt=st.font(10, strike=True))  # paid: yellow, struck through
-    edge = st.Side(style="medium", color=st.ACTION)
+    st.amount_only(ws, f"H{P_R1}:H{P_RN}")
+    rows = f"B{P_R1}:I{P_RN}"
+    st.when(ws, rows, f'$I{P_R1}="{TICK}"', st.YELLOW, fnt=st.Font(strike=True))  # paid: yellow, struck through
+    edge = st.Side(style="thin", color=st.ACTION)  # Excel only draws thin borders from a rule
     st.when(ws, rows, f"ROW()-{P_R1 - 1}=$P$3", None, border=st.Border(top=edge, bottom=edge))  # the current payday
-    st.when(ws, done, f'$P$2="{TICK}"', st.CALM)  # Show where to type
+    st.when(ws, f"H{P_R1}:I{P_RN}", f'$P$2="{TICK}"', st.CALM)  # Show where to type
     ws.freeze_panes = f"A{P_R1}"
 
     # ---- one chart: what is owed, from now to the end
@@ -584,7 +599,7 @@ def build_path(wb: Workbook):
     ch.legend = None
     ch.title = None
     ws._piy_chart = ch  # the series are added once the Engine tab exists (see build)
-    st.label(ws, 10, 10, "What you owe, from now to the end", small=True)
+    st.label(ws, 10, 11, "What you owe, from now to the end", small=True)
     return ws
 
 
@@ -601,7 +616,7 @@ def add_chart(wb: Workbook):
     ch.y_axis.delete = False
     ch.x_axis.delete = False
     ch.x_axis.tickLblSkip = 3
-    ws.add_chart(ch, "J11")
+    ws.add_chart(ch, "K11")
 
 
 # ------------------------------------------------------------------------------------------------ Debts

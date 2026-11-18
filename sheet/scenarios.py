@@ -16,6 +16,14 @@ NADIA = dict(
 )
 
 
+# What was really paid on the second payday (the plan asks for 266), and the same change as the engine writes it
+ACTUALS = {"actual-200": (200, -66), "actual-300": (300, 34), "actual-100": (100, -166)}
+
+
+def with_actual(name: str) -> dict:
+    return dict(NADIA, actual={1: ACTUALS[name][0]})
+
+
 # Inputs that need a calm note: no due day, a minimum above the balance, a name with no balance, no money for the plan
 CHECKS = dict(
     freq="monthly", first_payday=dt.date(2026, 12, 1), money=0, buffer=0, goal=500, yearly=[],
