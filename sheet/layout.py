@@ -113,10 +113,14 @@ E_SHORTK = "U16"      # the first payday whose Actual is below its bills (0 = no
 E_VIEWACTUAL = "U17"  # 1 when the payday Today shows has an Actual typed
 DB_R0 = 8             # first debt row on Debts (in payoff order)
 DB_PCT_COL = 18       # column R: the share paid, a quiet helper
+DB_PAIDTOTAL = "F6"   # paid off so far, the same number as the Path tile
 SN_BUF, SN_BAR, SN_READY = "B7", "B8", "B9"
 SN_Y0 = 15            # first yearly bill row on Safety net
 SN_EMPTY = "B24"
 YELLOW_OK |= {("Debts", f"B{DB_R0}:T{DB_R0 + ND - 1}"), ("Safety net", SN_READY)}
+
+# quiet helpers on the visible tabs, read by the colour rules only
+HELPERS = {("Today", T_FLAG), ("Path", P_CURK), ("Path", P_SHOW)}
 
 # ---- the workbook
 TABS = ["Open me", "Start", "Today", "Path", "Debts", "Safety net"]   # in this order; Engine and Lists are hidden

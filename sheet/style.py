@@ -118,7 +118,19 @@ def amount_only(ws, ref: str):
     return dv
 
 
-def when(ws, ref: str, formula: str, rgb: str | None = None, fnt: Font | None = None, border: Border | None = None):
+def limit(ws, ref: str, kind: str, lo: str, hi: str | None, title: str, message: str):
+    """A typed number or date inside calm bounds. kind is decimal, whole or date. Empty is always fine."""
+    dv = DataValidation(type=kind, operator="between" if hi is not None else "greaterThanOrEqual", formula1=lo, formula2=hi,
+                        allow_blank=True)
+    dv.showErrorMessage = True
+    dv.errorTitle, dv.error = title, message
+    ws.add_data_validation(dv)
+    for part in ref.split():
+        dv.add(part)
+    return dv
+
+
+def when(ws,ref: str, formula: str, rgb: str | None = None, fnt: Font | None = None, border: Border | None = None):
     ws.conditional_formatting.add(ref, FormulaRule(formula=[formula], fill=fill(rgb) if rgb else None, font=fnt, border=border, stopIfTrue=False))
 
 

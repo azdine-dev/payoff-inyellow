@@ -341,6 +341,15 @@ def test_ticks_are_a_list_with_one_choice(books):
 
 
 # ------------------------------------------------------------------------------------------------ Path
+def amt(s):
+    """A table amount in words back to a number: $1,234.50 or 1 234,50 $ or $30. Blank is 0."""
+    s = str(s or "")
+    if not re.search(r"\d", s):
+        return 0
+    n = int(re.sub(r"\D", "", s))
+    return n / 100 if re.search(r"[.,]\d{2}\D*$", s.strip()) else n
+
+
 def digits(s) -> str:
     """An amount in words without the separators, which change with the language of the spreadsheet"""
     return re.sub(r"[^0-9$]", "", s or "")
@@ -380,7 +389,7 @@ def test_path_list_matches_the_engine(books):
     for r in ref["rows"]:
         row = P_R1 + r["k"]
         assert pa.cell(row, 2).value == this_year(r["date"])
-        got = [pa.cell(row, c).value or 0 for c in (3, 4, 5, 6, 7)]
+        got = [amt(pa.cell(row, c).value) for c in (3, 4, 5, 6, 7)]
         want = [r["bills"], r["yearly"], r["buffer"], r["extra"], r["total_move"]]
         assert all(abs(g - w) < 0.005 for g, w in zip(got, want)), (r["k"], got, want)
     after = P_R1 + len(ref["rows"])
@@ -412,8 +421,8 @@ def test_path_has_the_doughnut_and_the_area_chart(books):
 
 def test_path_list_shows_the_plan_and_what_was_really_paid(books):
     pa = books["nadia-actual-200"][1]["Path"]
-    row = [pa.cell(P_R1 + 1, c).value or 0 for c in range(3, 9)]
-    assert row == [116, 10, 74, 0, 266, 200]  # bills, yearly, buffer, extra, Move as planned, Actual
+    row = [pa.cell(P_R1 + 1, c).value or "" for c in range(3, 9)]
+    assert row == ["$116", "$10", "$74", "", "$266", 200]  # bills, yearly, buffer, extra (none: blank), Move as planned, Actual
     assert not pa[P_SHORT].value
     short = books["nadia-actual-100"][1]["Path"]
     assert short[P_SHORT].value == "The amount typed for Fri 20 Nov is less than its bills. This sheet still counts the bills as paid."
@@ -449,8 +458,9 @@ def debt_rows(ws):
 
 def test_debts_in_payoff_order(books):
     rows = debt_rows(books["nadia"][1]["Debts"])
-    assert [(r[0], r[1], r[2], r[3], r[4], r[6]) for r in rows] == [
-        (1, "Store Card", 26.99, 450, 0, "Fri 1 Jan 2027"), (2, "Medical", 0, 600, 0, "Fri 12 Feb 2027"), (3, "Visa", 22.99, 2200, 0, "Fri 16 Jul 2027")]
+    assert [(r[0], r[1], amt(r[2]), digits(r[3])[:-2], r[4] or "", r[6]) for r in rows] == [
+        (1, "Store Card", 26.99, "$450", "", "Fri 1 Jan 2027"), (2, "Medical", 0, "$600", "", "Fri 12 Feb 2027"),
+        (3, "Visa", 22.99, "$2200", "", "Fri 16 Jul 2027")]
     assert all(r[5] == 0 and not r[7] for r in rows)
 
 
@@ -485,7 +495,7 @@ def test_actual_reaches_debts_and_safety_net(books):
     wb = books["nadia-actual-ticked"][1]
     rows = debt_rows(wb["Debts"])
     for p, row in enumerate(rows):
-        assert row[3] == pytest.approx(ref["rows"][1]["bal"][p], abs=0.005)
+        assert amt(row[3]) == pytest.approx(ref["rows"][1]["bal"][p], abs=0.005)
         gone = next(r["date"] for r in ref["rows"] if r["bal"][p] <= 0.005)
         assert row[6] == this_year(gone)
     assert digits(wb["Safety net"][SN_BUF].value) == "$414$500"  # 200 + 140 + 74
@@ -503,13 +513,14 @@ def test_safety_net(books):
     sn = books["nadia"][1]["Safety net"]
     assert digits(sn[SN_BUF].value) == "$200$500" and not sn[SN_READY].value
     row = [sn.cell(SN_Y0, c).value for c in range(2, 7)]
-    assert row == ["Gifts and holidays", 260, "December", 0, 10]
+    assert [row[0], amt(row[1]), row[2], row[3] or "", amt(row[4])] == ["Gifts and holidays", 260, "December", "", 10]  # nothing set aside yet: blank
+    assert all(re.search(r"[.,]00$", row[i]) for i in (1, 4))  # cents in tables
     ticked = books["nadia-ticked"][1]["Safety net"]
     assert digits(ticked[SN_BUF].value) == "$480$500"
-    assert ticked.cell(SN_Y0, 5).value == 20                 # two paydays of 10
+    assert amt(ticked.cell(SN_Y0, 5).value) == 20            # two paydays of 10
     done = books["nadia-done"][1]["Safety net"]
     assert digits(done[SN_BUF].value) == "$500$500" and done[SN_READY].value == "ready"
-    assert done.cell(SN_Y0, 5).value == 190                  # 19 paydays of 10
+    assert amt(done.cell(SN_Y0, 5).value) == 190             # 19 paydays of 10
     blank = books["blank"][1]["Safety net"]
     assert blank[SN_EMPTY].value.startswith("No yearly bills yet.")
 
@@ -554,3 +565,74 @@ def test_freeze_and_print(books):
     for name in ("Today", "Path"):
         ws = wb[name]
         assert ws.print_area and ws.page_setup.fitToWidth == 1 and ws.sheet_properties.pageSetUpPr.fitToPage
+
+
+# ------------------------------------------------------------------------------------------------ numbers you can trust
+@pytest.mark.parametrize("name", ["nadia", "nadia-ticked", "nadia-actual-ticked", "nadia-done"])
+def test_paid_off_so_far_is_the_same_on_path_and_debts(books, name):
+    """The app's definition (progressStats): what you owed at the start minus what you owe now, never below 0."""
+    wb = books[name][1]
+    en = wb["Engine"]
+    want = max(en[E_STARTOWED].value - en[E_OWEDNOW].value, 0)
+    assert wb["Debts"][DB_PAIDTOTAL].value == wb["Path"][P_TILE_PAID].value
+    assert amt(wb["Path"][P_TILE_PAID].value) == round(want)
+
+
+def test_the_currency_symbol_shows_everywhere(books):
+    wb = books["nadia-euro"][1]
+    seen = []
+    for name in ("Today", "Path", "Debts", "Safety net", "Start"):
+        for row in wb[name].iter_rows():
+            for cell in row:
+                v = cell.value
+                if isinstance(v, str) and re.search(r"\d", v) and ("$" in v or "€" in v):
+                    assert "$" not in v, (name, cell.coordinate, v)
+                    seen.append(name)
+    assert set(seen) == {"Today", "Path", "Debts", "Safety net", "Start"}
+
+
+@pytest.mark.parametrize("name", ["nadia", "nadia-ticked", "nadia-done"])
+def test_tables_are_blank_never_a_dash_or_zero(books, name):
+    for tab in ("Today", "Path", "Debts", "Safety net"):
+        for row in books[name][1][tab].iter_rows():
+            for cell in row:
+                v = cell.value
+                if (tab, cell.coordinate) in HELPERS or (tab == "Debts" and cell.column == DB_PCT_COL):
+                    continue
+                if (tab == "Path" and cell.row < P_R1) or (tab, cell.coordinate) == ("Debts", DB_PAIDTOTAL):
+                    continue  # the tiles: "$0 owed" and "$0 paid off" are real numbers, the tables leave a zero blank
+                if cell.data_type == "n" and v == 0 and books[name][0][tab][cell.coordinate].value is not None:
+                    raise AssertionError((name, tab, cell.coordinate, v))
+                if (tab, cell.coordinate) in HELPERS or (tab == "Debts" and cell.column == DB_PCT_COL):
+                    continue  # quiet helpers for the colour rules, not shown
+                if isinstance(v, str) and not v.endswith("%"):  # a 0% rate is a rate, not an empty amount
+                    assert v.strip() not in ("-", "·", "0") and not re.fullmatch(r"\D*0([.,]00)?\D*", v.strip() or "x"), (name, tab, cell.coordinate, v)
+
+
+def test_tiles_and_big_numbers_are_whole(books):
+    for name in ("nadia", "nadia-ticked", "nadia-actual-ticked"):
+        wb = books[name][1]
+        for ref in (P_TILE_OWED, P_TILE_PAID, P_TILE_AVOID):
+            assert not re.search(r"[.,]\d{2}$", wb["Path"][ref].value), (name, ref)
+        assert not re.search(r"[.,]\d{2}", wb["Safety net"][SN_BUF].value)
+        assert not re.search(r"[.,]\d{2}", wb["Today"][T_FOCUS_LEFT].value)
+
+
+def test_typed_cells_take_only_what_makes_sense(books):
+    st = books["blank"][0]["Start"]
+    dv = {}
+    for d in st.data_validations.dataValidation:
+        for ref in str(d.sqref).split():
+            dv[ref] = d
+    def rule(ref):
+        return dv[ref].type, dv[ref].formula1, dv[ref].formula2
+    assert rule(S_NEXT)[0] == "date"
+    assert rule(f"E{D0}:E{DN}") == ("decimal", "0", "100")
+    assert rule(f"G{D0}:G{DN}") == ("whole", "1", "31")
+    assert rule(S_OTHER) == ("whole", "1", "31")
+    for ref in (f"D{D0}:D{DN}", f"F{D0}:F{DN}", f"D{Y0}:D{YN}", f"{S_MONEY}:{S_GOAL}"):
+        assert rule(ref)[:2] == ("decimal", "0") and dv[ref].operator == "greaterThanOrEqual"
+    pa = {str(d.sqref): d for d in books["blank"][0]["Path"].data_validations.dataValidation}
+    assert pa[f"H{P_R1}:H{P_RN}"].type == "decimal" and pa[f"H{P_R1}:H{P_RN}"].formula1 == "0"
+    for d in list(dv.values()) + list(pa.values()):
+        assert d.showErrorMessage and d.error and "!" not in d.error

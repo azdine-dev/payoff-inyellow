@@ -69,6 +69,21 @@ def money(x: str) -> str:
     return f'{EN(E_CUR)}&IF(ROUND({x},2)=ROUND({x},0),FIXED({x},0),FIXED({x},2))'
 
 
+def money2(x: str) -> str:
+    """An amount in a table, always with cents, like $424.67"""
+    return f'{EN(E_CUR)}&FIXED({x},2)'
+
+
+def cell_amount(x: str, cents: bool = False) -> str:
+    """An amount in a table cell: blank when it is zero, never a dash or a 0"""
+    return f'IF(ABS({x})<0.005,"",{money2(x) if cents else money(x)})'
+
+
+def pct_text(x: str) -> str:
+    """A rate in words, like 26.99% or 0%"""
+    return f'IF(ROUND({x},2)=ROUND({x},0),FIXED({x},0),FIXED({x},2))&"%"'
+
+
 # ------------------------------------------------------------------------------------------------ Lists (hidden)
 def build_lists(wb: Workbook):
     ws = wb.create_sheet("Lists")
@@ -162,6 +177,15 @@ def build_start(wb: Workbook):
         typed(f"C{r}"); typed(f"D{r}", "#,##0.00", st.RIGHT); typed(f"E{r}")
     st.dropdown(ws, f"E{Y0}:E{YN}", "Lists!$D$2:$D$14")
 
+    # ---- what each typed cell takes. The messages are calm; the gray notes beside the cells say the rest
+    amounts = "Type an amount of 0 or more, or leave it empty."
+    st.limit(ws, S_NEXT, "date", "DATE(2000,1,1)", "DATE(2100,12,31)", "Type a date", "Type the date of your next payday, like 11/6/2026.")
+    st.limit(ws, S_OTHER, "whole", "1", "31", "A day of the month", "Type a day from 1 to 31. 31 means the last day.")
+    st.limit(ws, f"D{D0}:D{DN} F{D0}:F{DN} D{Y0}:D{YN} {S_MONEY}:{S_GOAL}", "decimal", "0", None, "Type an amount", amounts)
+    st.limit(ws, f"E{D0}:E{DN}", "decimal", "0", "100", "Interest %", "Type the yearly interest from 0 to 100, like 22.99.")
+    st.limit(ws, f"G{D0}:G{DN}", "whole", "1", "31", "Due day", "Type the day of the month it is due, 1 to 31. It is on your statement.")
+    st.limit(ws, f"H{D0}:H{DN}", "whole", "1", "99", "My order", "Type 1 for the debt to pay first, 2 for the next one, and so on.")
+
     # ---- Show where to type
     st.label(ws, 48, 3, "Show where to type", bold=True)
     typed(S_SHOW, align=st.CENTER)
@@ -199,6 +223,7 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     if today:
         en[E_TODAY_TEST] = today
     st[S_FREQ] = FREQ[s["freq"]]
+    st[S_CUR] = s.get("currency", "$")
     st[S_NEXT] = s["first_payday"]
     st[S_NEXT].number_format = "ddd d mmm yyyy"
     st[S_OTHER] = s.get("second_day")
@@ -524,7 +549,8 @@ def build_today(wb: Workbook):
     ws[T_FOCUS_NAME] = f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")'
     ws[T_FOCUS_NAME].font = st.font(20, bold=True, title=True)
     ws[T_FOCUS_NAME].alignment = st.Alignment(horizontal="left", vertical="top")
-    ws[T_FOCUS_LEFT] = f'=IFERROR(IF({pos}=0,"",{money(f"INDEX(Engine!{rng(C_BAL, ROW_LEFT, absrow=True)},{pos})")}&" left"),"")'
+    left = f"INDEX(Engine!{rng(C_BAL, ROW_LEFT, absrow=True)},{pos})"
+    ws[T_FOCUS_LEFT] = f'=IFERROR(IF({pos}=0,"",IF({left}<0.005,"",{money0(left)}&" left")),"")'
     gone = f"INDEX(Engine!{rng(C_BAL, ROW_GONE, absrow=True)},{pos})"
     ws[T_FOCUS_GONE] = f'=IFERROR(IF({pos}=0,"",IF({gone}>0,"Gone by "&{dtext(gone)},"")),"")'
     ws[T_FOCUS_GONE].font = st.font(10, color=st.GRAY)
@@ -614,8 +640,8 @@ def build_path(wb: Workbook):
         on = f"AND({has}=1,{k + 1}<={EN(E_NPAY)})"
         ws.cell(r, 2, f'=IFERROR(IF({on},{dtext(f"Engine!$B${er}")},""),"")')
         for j, cc in enumerate(src):
-            x = ws.cell(r, 3 + j, f'=IFERROR(IF({on},ROUND(Engine!${L(cc)}${er},2),""),"")')
-            x.number_format, x.alignment = '#,##0.00;-#,##0.00;"·"', st.RIGHT
+            x = ws.cell(r, 3 + j, f'=IFERROR(IF({on},{cell_amount(f"Engine!${L(cc)}${er}")},""),"")')
+            x.alignment = st.RIGHT
             if cc == C_MOVE0:
                 x.font = st.font(10, bold=True)
         for cc, fmt, align in ((P_ACTUAL_COL, "#,##0.00", st.RIGHT), (P_DONE_COL, None, st.CENTER)):
@@ -690,6 +716,10 @@ def build_debts(wb: Workbook):
     widths.update({"R": 1.5, "S": 22, "T": 56, "U": 1.5})
     st.page(ws, 21, 30, widths, "Debts")
     st.section(ws, 6, 2, "In payoff order")
+    # the same number as the Path tile: what you owed at the start minus what you owe now (the app's definition)
+    st.label(ws, 6, 5, "Paid off so far", bold=True).alignment = st.RIGHT
+    ws[DB_PAIDTOTAL] = f'=IF({EN(E_HASPLAN)}=0,"",{money0(EN(E_PAIDSOFAR))})'
+    ws[DB_PAIDTOTAL].font, ws[DB_PAIDTOTAL].alignment = st.font(11, bold=True), st.RIGHT
     for col, text, align in ((2, "#", st.LEFT), (3, "Debt", st.LEFT), (4, "Interest %", st.RIGHT), (5, "Left now", st.RIGHT),
                              (6, "Paid so far", st.RIGHT), (8, "Progress", st.LEFT), (19, "Gone by", st.LEFT), (20, "", st.LEFT)):
         st.head(ws, DB_R0 - 1, col, text, align)
@@ -703,9 +733,9 @@ def build_debts(wb: Workbook):
         on = f'{name}<>""'
         ws.cell(r, 2, f'=IF({on},{p + 1},"")').font = st.font(9, color=st.GRAY)
         ws.cell(r, 3, f'=IF({on},{name},"")').font = st.font(11, bold=True)
-        a = ws.cell(r, 4, f'=IF({on},ROUND({rate}*100,2),"")'); a.number_format, a.alignment = "0.00", st.RIGHT
-        b = ws.cell(r, 5, f'=IF({on},ROUND({left},2),"")'); b.number_format, b.alignment = "#,##0.00", st.RIGHT
-        c = ws.cell(r, 6, f'=IF({on},ROUND(MAX({start}-{left},0),2),"")'); c.number_format, c.alignment = "#,##0.00", st.RIGHT
+        ws.cell(r, 4, f'=IF({on},{pct_text(f"{rate}*100")},"")').alignment = st.RIGHT
+        ws.cell(r, 5, f'=IF({on},{cell_amount(left, cents=True)},"")').alignment = st.RIGHT
+        ws.cell(r, 6, f'=IF({on},{cell_amount(f"MAX({start}-{left},0)", cents=True)},"")').alignment = st.RIGHT
         # the share paid, 0 to 1 (a quiet helper for the bar and the yellow row)
         h = ws.cell(r, DB_PCT_COL, f'=IF({on},IF({left}<0.005,1,MIN(MAX(({start}-{left})/{start},0),0.99)),"")')
         h.font = st.font(6, color=st.PAPER)
@@ -756,10 +786,10 @@ def build_safety(wb: Workbook):
         amount = f"N(Start!$D${sr})"
         on = f"{amount}>0"
         ws.cell(r, 2, f'=IF({on},IF(Start!$C${sr}="","Yearly bill",Start!$C${sr}&""),"")').font = st.font(11, bold=True)
-        a = ws.cell(r, 3, f'=IF({on},{amount},"")'); a.number_format, a.alignment = "#,##0.00", st.RIGHT
+        ws.cell(r, 3, f'=IF({on},{cell_amount(amount, cents=True)},"")').alignment = st.RIGHT
         ws.cell(r, 4, f'=IF({on},IF(Start!$E${sr}="","Any time",Start!$E${sr}&""),"")').alignment = st.Alignment(horizontal="left", vertical="center", indent=1)
-        s = ws.cell(r, 5, f'=IFERROR(IF({on},ROUND(MIN({EN(E_YSAVED)}*{amount}/{total},{amount}),2),""),"")'); s.number_format, s.alignment = "#,##0.00", st.RIGHT
-        e = ws.cell(r, 6, f'=IFERROR(IF({on},ROUND({amount}/{EN(E_PPY)},2),""),"")'); e.number_format, e.alignment = "#,##0.00", st.RIGHT
+        ws.cell(r, 5, f'=IFERROR(IF({on},{cell_amount(f"MIN({EN(E_YSAVED)}*{amount}/{total},{amount})", cents=True)},""),"")').alignment = st.RIGHT
+        ws.cell(r, 6, f'=IFERROR(IF({on},{cell_amount(f"{amount}/{EN(E_PPY)}", cents=True)},""),"")').alignment = st.RIGHT
     ws[SN_EMPTY] = f'=IF({total}>0,"","No yearly bills yet. Add one on Start and a little goes aside each payday.")'
     ws[SN_EMPTY].font = st.font(9, color=st.GRAY)
     st.footer(ws, SN_Y0 + NY + 4)

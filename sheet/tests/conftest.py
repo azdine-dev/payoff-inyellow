@@ -48,6 +48,8 @@ def books():
     build_sheet.build(os.path.join(src, "nadia-actual-today.xlsx"), scenarios.with_actual("actual-200"), ticks=1, today=dt.date(2026, 11, 21))
     # two paydays ticked, and the second one was paid with a different amount
     build_sheet.build(os.path.join(src, "nadia-actual-ticked.xlsx"), scenarios.with_actual("actual-200"), ticks=2, today=dt.date(2026, 11, 21))
+    # the same plan in euros, two paydays ticked
+    build_sheet.build(os.path.join(src, "nadia-euro.xlsx"), dict(scenarios.NADIA, currency="€"), ticks=2, today=dt.date(2026, 11, 21))
     build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS, today=DAY)
     build_sheet.build(os.path.join(src, "thin.xlsx"), scenarios.THIN, today=DAY)
     build_sheet.build(os.path.join(src, "nofit.xlsx"), scenarios.NOFIT, today=DAY)
