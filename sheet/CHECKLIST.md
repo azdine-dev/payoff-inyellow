@@ -5,6 +5,8 @@ They can not open Google Sheets, so the Google steps below are yours. Use `sheet
 and `sheet/dist/1-Paycheck-Payoff-Planner.xlsx` for the file you sell.
 
 Rebuild first: `python sheet/build_sheet.py`, then `python -m pytest sheet/tests -q`.
+Pictures of every tab beside `design/`: `python sheet/render.py --fonts <folder with Inter and Bricolage Grotesque .ttf>`
+(they land in `sheet/dist/preview/`; without the fonts LibreOffice draws a wider font).
 
 ## Before you sell
 - Replace `[SUPPORT EMAIL]` in `sheet/layout.py` (`SUPPORT_EMAIL`) with the real address, then rebuild.
@@ -12,7 +14,7 @@ Rebuild first: `python sheet/build_sheet.py`, then `python -m pytest sheet/tests
 ## Nadia: what every program must show
 - Start, result box: **Fri 16 Jul 2027** on yellow, "First step: move $180 on Fri 6 Nov.", "With minimums only: about
   April 2031.", "That is about 45 months sooner."
-- Path, first five moves: 180, 266, 180, 216, 230. Owed after payday 8: 2,067.41. Last payday Fri 16 Jul 2027.
+- Path, first five moves: 180, 266, 180, 216, 230. Owed after payday 8: 2,067.41. Last payday Fri 16 Jul 2027. The debt-free tile reads 16 Jul 2027 (no weekday, so it fits).
 - Debts: Store Card gone Fri 1 Jan 2027, Medical Fri 12 Feb 2027, Visa Fri 16 Jul 2027.
 - Type **200** in Actual on the second payday (Fri 20 Nov). Buffer on that row becomes 74, Move stays 266, the debt-free
   date stays Fri 16 Jul 2027, and owed after payday 8 becomes 2,135.26. Clear the cell and the numbers come back.

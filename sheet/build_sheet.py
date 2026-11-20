@@ -47,11 +47,22 @@ def EN(ref: str) -> str:
     return f"Engine!${col}${ref[len(col):]}"
 
 
+def absr(at: str) -> str:
+    """An absolute reference on the same tab, like $Y$8"""
+    col = at.rstrip("0123456789")
+    return f"${col}${at[len(col):]}"
+
+
 def dtext(x: str) -> str:
     """A date in words, like Fri 16 Jul 2027. The year shows only when it is not this year. No TEXT(): its
     patterns change with the language of the spreadsheet."""
     return (f'INDEX(Lists!$F$2:$F$8,WEEKDAY({x}))&" "&DAY({x})&" "&INDEX(Lists!$G$2:$G$13,MONTH({x}))'
             f'&IF(YEAR({x})=YEAR({EN(E_TODAY)}),""," "&YEAR({x}))')
+
+
+def dtext_short(x: str) -> str:
+    """A date without the weekday, like 16 Jul 2027: it fits a tile"""
+    return f'DAY({x})&" "&INDEX(Lists!$G$2:$G$13,MONTH({x}))&IF(YEAR({x})=YEAR({EN(E_TODAY)}),""," "&YEAR({x}))'
 
 
 def mtext(x: str) -> str:
@@ -99,121 +110,140 @@ def build_lists(wb: Workbook):
 
 # ------------------------------------------------------------------------------------------------ Start
 def build_start(wb: Workbook):
-    """All typing happens here: pay, debts, money, the payoff order. The result sits in a calm block at the bottom."""
+    """All typing happens here. The three steps on the left, the result and the options on the right."""
     ws = wb.create_sheet("Start")
-    st.page(ws, 10, 62, {"A": 1.5, "B": 5, "C": 40, "D": 22, "E": 14, "F": 14, "G": 11, "H": 11, "I": 52, "J": 1.5}, "Start")
-    show = f"${S_SHOW[0]}${S_SHOW[1:]}"
+    st.page(ws, S_FOOT + 1, "Start")
+    show, order = absr(S_SHOW), absr(S_ORDER)
+    IN0, IN1 = gcol(1) + 1, gend(8) - 1      # inside the cards on the left
     inputs: list[str] = []
 
-    def typed(ref: str, fmt: str | None = None, align=st.LEFT):
-        st.input_cell(ws[ref], fmt, align)
-        inputs.append(ref)
+    def typed(row: int, c0: int, c1: int, fmt: str | None = None, align=st.LEFT):
+        st.input_cell(ws, row, c0, c1, fmt, align)
+        inputs.append(ref(row, c0))
 
-    def hint(row: int, text: str, col: int = 5):
-        c = ws.cell(row, col, text)
-        c.font = st.font(9, color=st.GRAY)
+    def field(row: int, text: str, fmt: str | None, help_text: str | None):
+        st.label(ws, row, S_LABEL, S_INPUT - 2, text).alignment = st.WRAP
+        typed(row, S_INPUT, S_INPUT_END, fmt)
+        if help_text is not None:
+            st.hint(ws, row, S_HELP, IN1, help_text)
+        ws.row_dimensions[row].height = 26
 
     # ---- Step 1
-    st.section(ws, 6, 2, "Step 1 · Your pay")
-    for row, text in ((7, "Currency"), (8, "How often you are paid"), (9, "Your next payday"), (10, "Twice a month only: your other pay day")):
-        st.label(ws, row, 3, text, bold=True)
-    typed(S_CUR); typed(S_FREQ); typed(S_NEXT, "ddd d mmm yyyy"); typed(S_OTHER, "0")
+    st.grid_card(ws, 6, 13, 1, 8)
+    st.section(ws, 7, IN0, IN1, "Step 1 · Your pay")
+    field(8, "Currency", None, "Pick your symbol.")
+    field(9, "How often you are paid", None, "Week, 2 weeks, twice a month or month.")
+    field(10, "Your next payday", "ddd d mmm yyyy", "Your whole plan follows your paydays.")
+    field(11, "Your other pay day", "0", "Twice a month only. 31 is the last day.")
+    ws.row_dimensions[8].height = 32   # the debt-free date sits in this row on the right
     ws[S_CUR], ws[S_FREQ] = "$", FREQ["biweekly"]
     st.dropdown(ws, S_CUR, f"Lists!$A$2:$A${1 + len(CURRENCIES)}")
     st.dropdown(ws, S_FREQ, "Lists!$B$2:$B$5", allow_blank=False)
-    hint(7, "Pick your symbol.")
-    hint(8, "Every week, every 2 weeks, twice a month or every month.")
-    hint(9, "Your whole plan follows your paydays.")
-    hint(10, "For example 15, or 31 for the last day. Leave it empty for the usual pair.")
-    ws[S_DATECHECK] = ('=IF(ISNUMBER(IFERROR(DATEVALUE("5/30/2026"),"")),"This sheet reads dates as MM/DD/YYYY.",'
-                       '"This sheet reads dates as DD/MM/YYYY.")')
-    ws[S_DATECHECK].font = st.font(9, color=st.GRAY)
+    st.hint(ws, 12, S_LABEL, IN1, ('=IF(ISNUMBER(IFERROR(DATEVALUE("5/30/2026"),"")),"This sheet reads dates as MM/DD/YYYY.",'
+                                   '"This sheet reads dates as DD/MM/YYYY.")'), wrap=False)
+    ws.row_dimensions[12].height = 20
 
     # ---- Step 2
-    st.section(ws, 13, 2, "Step 2 · Your debts")
-    for j, h in enumerate(["#", "Name", "Balance", "Interest %", "Minimum", "Due day", "My order"]):
-        st.head(ws, D0 - 1, 2 + j, h, st.LEFT if j < 2 else st.RIGHT)
-    hint(13, "Balance, interest and minimum are on your statement. Due day is the day of the month, 1 to 31.", 4)
-    order = f"${S_ORDER[0]}${S_ORDER[1:]}"
+    st.grid_card(ws, 15, DN + 1, 1, 8)
+    st.section(ws, 16, IN0, 24, "Step 2 · Your debts")
+    st.hint(ws, 16, 25, IN1, "Up to 15. All on your statement.", wrap=False).alignment = st.RIGHT
+    heads = [(SC_NUM, "#", st.LEFT), (SC_NAME, "Name", st.LEFT), (SC_BAL, "Balance", st.RIGHT), (SC_APR, "Interest %", st.RIGHT),
+             (SC_MIN, "Minimum", st.RIGHT), (SC_DUE, "Due day", st.RIGHT), (SC_ORDER, "Order", st.RIGHT), (SC_NOTE, "", st.LEFT)]
+    for c, text, align in heads:
+        # a right aligned header may start in the empty cell before it, so "Interest %" fits
+        st.head(ws, D0 - 1, c - (align is st.RIGHT), SC_ENDS[c] - (c != SC_NOTE), text, align)
+    for c in range(IN0, IN1 + 1):
+        ws.cell(D0 - 1, c).border = st.UNDER
+    col = {c: L(c) for c in SC_ENDS}
     for i in range(ND):
         r = D0 + i
-        n = ws.cell(r, 2, i + 1)
-        n.font = st.font(9, color=st.GRAY)
-        typed(f"C{r}")
-        typed(f"D{r}", "#,##0.00", st.RIGHT); typed(f"E{r}", "0.00", st.RIGHT); typed(f"F{r}", "#,##0.00", st.RIGHT)
-        typed(f"G{r}", "0", st.RIGHT); typed(f"H{r}", "0", st.RIGHT)
-        bal, mn, due = f"N($D{r})", f"N($F{r})", f"N($G{r})"
-        note = ws.cell(r, S_NOTE_COL, (
-            f'=IF({bal}<=0,IF(OR($C{r}<>"",{mn}>0),"Add the balance and this debt joins your plan.",""),'
-            f'IF(AND({mn}>0,{due}=0),"Add the due day. It is on your statement.",'
-            f'IF(OR({due}<0,{due}>31,{due}<>INT({due})),"The due day is a day of the month, 1 to 31.",'
-            f'IF({mn}>{bal},"The minimum is more than the balance. Have a look at both.",""))))'))
-        note.font = st.font(9, color=st.GRAY)
-    # "My order" only shows when the order is "My own order": it fades into the paper otherwise
-    hide = st.Font(color=st.PAPER)
-    st.when(ws, f"H{D0 - 1}", f'{order}<>"{METHOD["custom"]}"', fnt=hide)
-    st.when(ws, f"H{D0}:H{DN}", f'{order}<>"{METHOD["custom"]}"', st.PAPER, fnt=hide, border=st.NO_BORDER)
+        st.text(ws, r, SC_NUM, SC_ENDS[SC_NUM], i + 1, st.font(st.HELP, color=st.GRAY))
+        for c, fmt, align in ((SC_NAME, None, st.LEFT), (SC_BAL, "#,##0.00", st.RIGHT), (SC_APR, "0.00", st.RIGHT),
+                              (SC_MIN, "#,##0.00", st.RIGHT), (SC_DUE, "0", st.RIGHT), (SC_ORDER, "0", st.RIGHT)):
+            typed(r, c, SC_ENDS[c] - 1, fmt, align)
+        bal, mn, due, name = f"N(${col[SC_BAL]}{r})", f"N(${col[SC_MIN]}{r})", f"N(${col[SC_DUE]}{r})", f"${col[SC_NAME]}{r}"
+        st.hint(ws, r, SC_NOTE, SC_ENDS[SC_NOTE], (
+            f'=IF({bal}<=0,IF(OR({name}<>"",{mn}>0),"Add the balance to join the plan.",""),'
+            f'IF(AND({mn}>0,{due}=0),"Add the due day from your statement.",'
+            f'IF(OR({due}<0,{due}>31,{due}<>INT({due})),"The due day is 1 to 31.",'
+            f'IF({mn}>{bal},"The minimum is above the balance.",""))))'))
+        ws.row_dimensions[r].height = 26
+    # "Order" only shows when the payoff order is "My own order": it fades into the card otherwise
+    hide = st.Font(color=st.CARD)
+    custom = f'{order}<>"{METHOD["custom"]}"'
+    st.when(ws, ref(D0 - 1, SC_ORDER), custom, fnt=hide)
+    st.when(ws, f"{col[SC_ORDER]}{D0}:{col[SC_ORDER]}{DN}", custom, st.CARD, fnt=hide, border=st.NO_BORDER)
 
     # ---- Step 3
-    st.section(ws, 31, 2, "Step 3 · Your money")
-    for row, text in ((32, "Money for the plan each payday"), (33, "Buffer: set aside now"), (34, "Buffer goal"), (47, "Payoff order")):
-        st.label(ws, row, 3, text, bold=True)
-    typed(S_MONEY, "#,##0.00"); typed(S_BUF, "#,##0.00"); typed(S_GOAL, "#,##0.00"); typed(S_ORDER)
-    ws[S_GOAL], ws[S_ORDER] = 500, METHOD["piy"]
-    st.dropdown(ws, S_ORDER, "Lists!$C$2:$C$4", allow_blank=False)
-    ws[S_MONEYNOTE] = (f'=IF(AND({EN(E_STARTOWED)}>0.005,N({S_MONEY})<=0),"Add what you can put on top of your minimums. Even 20 matters.",'
-                       f'IF(AND(N({S_MONEY})>0,N({S_MONEY})<={EN(E_YPP)}),"Your yearly bills use all of this money, so the buffer and the extra wait. A little more helps.",'
-                       f'IF(AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=0),"With this amount the plan does not end in the time this sheet can show. A little more helps.",'
-                       f'"On top of your minimums. Even 20 matters.")))')
-    ws[S_MONEYNOTE].font = st.font(9, color=st.GRAY)
-    hint(33, "Money for surprises. Empty is fine.")
-    hint(34, "Kept in a plain separate account or an envelope.")
-    hint(47, "PaidInYellow order pays the smallest debt first, and a debt that grows before that.")
-    st.label(ws, 37, 3, "Yearly bills (optional)", bold=True)
-    st.head(ws, 37, 4, "Amount a year", st.RIGHT); st.head(ws, 37, 5, "Month needed")
-    hint(37, "Car repairs, gifts, insurance. A little goes aside each payday.", 6)
+    st.grid_card(ws, 35, YN + 1, 1, 8)
+    st.section(ws, 36, IN0, IN1, "Step 3 · Your money")
+    field(37, "Money for the plan each payday", "#,##0.00", None)
+    ws.row_dimensions[37].height = 32   # the label takes two lines
+    st.hint(ws, 38, S_LABEL, IN1, (f'=IF(AND({EN(E_STARTOWED)}>0.005,N({S_MONEY})<=0),"Add what you can put on top of your minimums. Even 20 matters.",'
+                                   f'IF(AND(N({S_MONEY})>0,N({S_MONEY})<={EN(E_YPP)}),"Your yearly bills use all of this money, so the buffer and the extra wait. A little more helps.",'
+                                   f'IF(AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=0),"With this amount the plan does not end in the time this sheet can show. A little more helps.",'
+                                   f'"On top of your minimums. Even 20 matters.")))'))
+    field(39, "Buffer: set aside now", "#,##0.00", "Money for surprises. Empty is fine.")
+    field(40, "Buffer goal", "#,##0.00", "Kept in a plain separate account or an envelope.")
+    ws[S_GOAL] = 500
+    st.label(ws, 41, S_LABEL, 20, "Yearly bills (optional)")
+    st.hint(ws, 41, 21, IN1, "Car repairs, gifts, insurance. A little goes aside each payday.", wrap=False)
+    ws.row_dimensions[41].height = 26
+    for c, text, align in ((SY_NAME, "Bill", st.LEFT), (SY_AMT, "A year", st.RIGHT), (SY_MONTH, "Month needed", st.LEFT)):
+        st.head(ws, Y0 - 1, c, SY_ENDS[c] - 1, text, align)
     for i in range(NY):
         r = Y0 + i
-        typed(f"C{r}"); typed(f"D{r}", "#,##0.00", st.RIGHT); typed(f"E{r}")
-    st.dropdown(ws, f"E{Y0}:E{YN}", "Lists!$D$2:$D$14")
+        typed(r, SY_NAME, SY_ENDS[SY_NAME] - 1)
+        typed(r, SY_AMT, SY_ENDS[SY_AMT] - 1, "#,##0.00", st.RIGHT)
+        typed(r, SY_MONTH, SY_ENDS[SY_MONTH] - 1)
+        ws.row_dimensions[r].height = 22
+    st.dropdown(ws, f"{L(SY_MONTH)}{Y0}:{L(SY_MONTH)}{YN}", "Lists!$D$2:$D$14")
 
     # ---- what each typed cell takes. The messages are calm; the gray notes beside the cells say the rest
     amounts = "Type an amount of 0 or more, or leave it empty."
     st.limit(ws, S_NEXT, "date", "DATE(2000,1,1)", "DATE(2100,12,31)", "Type a date", "Type the date of your next payday, like 11/6/2026.")
     st.limit(ws, S_OTHER, "whole", "1", "31", "A day of the month", "Type a day from 1 to 31. 31 means the last day.")
-    st.limit(ws, f"D{D0}:D{DN} F{D0}:F{DN} D{Y0}:D{YN} {S_MONEY}:{S_GOAL}", "decimal", "0", None, "Type an amount", amounts)
-    st.limit(ws, f"E{D0}:E{DN}", "decimal", "0", "100", "Interest %", "Type the yearly interest from 0 to 100, like 22.99.")
-    st.limit(ws, f"G{D0}:G{DN}", "whole", "1", "31", "Due day", "Type the day of the month it is due, 1 to 31. It is on your statement.")
-    st.limit(ws, f"H{D0}:H{DN}", "whole", "1", "99", "My order", "Type 1 for the debt to pay first, 2 for the next one, and so on.")
+    money_cols = f"{col[SC_BAL]}{D0}:{col[SC_BAL]}{DN} {col[SC_MIN]}{D0}:{col[SC_MIN]}{DN} {L(SY_AMT)}{Y0}:{L(SY_AMT)}{YN} {S_MONEY} {S_BUF} {S_GOAL}"
+    st.limit(ws, money_cols, "decimal", "0", None, "Type an amount", amounts)
+    st.limit(ws, f"{col[SC_APR]}{D0}:{col[SC_APR]}{DN}", "decimal", "0", "100", "Interest %", "Type the yearly interest from 0 to 100, like 22.99.")
+    st.limit(ws, f"{col[SC_DUE]}{D0}:{col[SC_DUE]}{DN}", "whole", "1", "31", "Due day", "Type the day of the month it is due, 1 to 31. It is on your statement.")
+    st.limit(ws, f"{col[SC_ORDER]}{D0}:{col[SC_ORDER]}{DN}", "whole", "1", "99", "My order", "Type 1 for the debt to pay first, 2 for the next one, and so on.")
 
-    # ---- Show where to type
-    st.label(ws, 48, 3, "Show where to type", bold=True)
-    typed(S_SHOW, align=st.CENTER)
-    st.dropdown(ws, S_SHOW, f'"{TICK}"')
-    hint(48, "Pick the tick and every cell you can type in turns sage.")
-    for ref in inputs:
-        if ref != S_SHOW:
-            st.when(ws, ref, f'{show}="{TICK}"', st.CALM)
-
-    # ---- the result
-    st.block(ws, 50, 56, 3, 9)
+    # ---- the result, top right
+    st.grid_card(ws, 6, 13, 9, 12, st.CALM)
     ok = f"AND({EN(E_HASPLAN)}=1,{EN(E_FITS)}=1)"
-    ws[S_R_LINE1] = (f'=IF({EN(E_HASPLAN)}=0,"Fill in the three steps and your date shows here.",'
-                     f'IF({EN(E_FITS)}=0,"This plan does not end in the time this sheet can show. A little more each payday helps.",'
-                     f'"You can be debt-free by"))')
-    ws[S_R_LINE1].font = st.font(11, color=st.GRAY)
-    ws[S_R_DATE] = f'=IFERROR(IF({ok},{dtext(EN(E_FREE))},""),"")'
-    ws[S_R_DATE].font = st.font(24, bold=True, title=True)
-    ws.row_dimensions[52].height = 40
-    st.when(ws, S_R_DATE, f'${S_R_DATE[0]}${S_R_DATE[1:]}<>""', st.YELLOW)  # the one key word
-    ws[S_R_STEP] = f'=IFERROR(IF({ok},"First step: move "&{money(EN(E_FIRSTMOVE))}&" on "&{dtext(EN(E_P0))}&".",""),"")'
-    ws[S_R_STEP].font = st.font(12, bold=True)
-    ws[S_R_MIN] = (f'=IFERROR(IF({ok},IF(ISNUMBER({EN(E_MINDATE)}),"With minimums only: about "&{mtext(EN(E_MINDATE))}&".",'
-                   f'"With minimums only it never ends. Your plan ends it."),""),"")')
-    ws[S_R_SOONER] = (f'=IFERROR(IF(AND({ok},ISNUMBER({EN(E_SOONER)})),IF({EN(E_SOONER)}>0,"That is about "&{EN(E_SOONER)}&" month"&IF({EN(E_SOONER)}=1,"","s")&" sooner.",""),""),"")')
-    for ref in (S_R_MIN, S_R_SOONER):
-        ws[ref].font = st.font(10, color=st.GRAY)
-    st.footer(ws, 59)
+    st.text(ws, 7, R_C0, R_C1, (f'=IF({EN(E_HASPLAN)}=0,"Fill in the three steps and your date shows here.",'
+                                f'IF({EN(E_FITS)}=0,"This plan does not end in the time this sheet can show. A little more each payday helps.",'
+                                f'"You can be debt-free by"))'), st.font(st.HELP, bold=True, color=st.GRAY), st.WRAP)
+    ws.row_dimensions[7].height = 26
+    st.text(ws, 8, R_C0, R_C1, f'=IFERROR(IF({ok},{dtext(EN(E_FREE))},""),"")', st.font(st.TILE, bold=True, title=True))
+    st.when(ws, S_R_DATE, f'{absr(S_R_DATE)}<>""', st.YELLOW)  # the one key word
+    st.text(ws, 9, R_C0, R_C1, f'=IFERROR(IF({ok},"First step: move "&{money(EN(E_FIRSTMOVE))}&" on "&{dtext(EN(E_P0))}&".",""),"")',
+            st.font(st.BODY, bold=True), st.WRAP)
+    st.hint(ws, 10, R_C0, R_C1, (f'=IFERROR(IF({ok},IF(ISNUMBER({EN(E_MINDATE)}),"With minimums only: about "&{mtext(EN(E_MINDATE))}&".",'
+                                 f'"With minimums only it never ends. Your plan ends it."),""),"")'))
+    st.hint(ws, 11, R_C0, R_C1, (f'=IFERROR(IF(AND({ok},ISNUMBER({EN(E_SOONER)})),IF({EN(E_SOONER)}>0,"That is about "&{EN(E_SOONER)}&" month"'
+                                 f'&IF({EN(E_SOONER)}=1,"","s")&" sooner.",""),""),"")'))
+    st.hint(ws, 12, R_C0, R_C1, f'=IF({ok},"Next: open Today.","")')
+
+    # ---- options
+    st.grid_card(ws, 15, 23, 9, 12)
+    st.section(ws, 16, R_C0, R_C1, "Options")
+    st.label(ws, 17, O_LABEL, R_C1, "Payoff order")
+    typed(18, R_C0, R_C1)
+    ws[S_ORDER] = METHOD["piy"]
+    st.dropdown(ws, S_ORDER, "Lists!$C$2:$C$4", allow_blank=False)
+    st.hint(ws, 19, R_C0, R_C1, "PaidInYellow order: the smallest debt first, and a debt that grows before that.")
+    st.label(ws, 21, O_LABEL, O_INPUT - 2, "Show where to type")
+    typed(21, O_INPUT, O_INPUT + 2, align=st.CENTER)
+    st.dropdown(ws, S_SHOW, f'"{TICK}"')
+    st.hint(ws, 22, R_C0, R_C1, "Pick the tick: every cell you can type in turns sage.")
+    for r, h in ((6, 10), (13, 10), (14, 14), (15, 10), (DN + 1, 10), (34, 14), (35, 10), (YN + 1, 10)):
+        ws.row_dimensions[r].height = h
+    for at in inputs:
+        if at != S_SHOW:
+            st.when(ws, at, f'{show}="{TICK}"', st.CALM)
+    st.footer(ws, S_FOOT)
     return ws
 
 
@@ -231,11 +261,11 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     st[S_ORDER] = METHOD[s.get("method", "piy")]
     for i, d in enumerate(s["debts"]):
         r = D0 + i
-        for c, k in ((3, "name"), (4, "balance"), (5, "apr"), (6, "min"), (7, "due"), (8, "my_order")):
+        for c, k in ((SC_NAME, "name"), (SC_BAL, "balance"), (SC_APR, "apr"), (SC_MIN, "min"), (SC_DUE, "due"), (SC_ORDER, "my_order")):
             st.cell(r, c).value = d.get(k)
     for i, y in enumerate(s.get("yearly", [])):
         name, amount, month = y if isinstance(y, (tuple, list)) else (f"Yearly bill {i + 1}", y, "Any time")
-        st.cell(Y0 + i, 3).value, st.cell(Y0 + i, 4).value, st.cell(Y0 + i, 5).value = name, amount, month
+        st.cell(Y0 + i, SY_NAME).value, st.cell(Y0 + i, SY_AMT).value, st.cell(Y0 + i, SY_MONTH).value = name, amount, month
     # what the sheet has no typing place for yet (kept for a later version): the tests type them on the Engine tab
     for key, col in (("adjust", C_ADJ), ("charges", C_CHG), ("buffer_used", C_BUFUSED)):
         for k, v in s.get(key, {}).items():
@@ -250,7 +280,7 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
 # ------------------------------------------------------------------------------------------------ Engine (hidden)
 def date_formula(k: str) -> str:
     """The date of payday number k (0 = the next payday typed on Start), from the schedule, never 'last + step'."""
-    p0, f = f"${E_P0[0]}${E_P0[1:]}", f"Start!${S_FREQ[0]}${S_FREQ[1:]}"
+    p0, f = f"${E_P0[0]}${E_P0[1:]}", f"Start!{absr(S_FREQ)}"
     half, a, b = "$B$6", "$B$4", "$B$5"
     m = f"INT(({k}+{half})/2)"
     twice = (f"DATE(YEAR({p0}),MONTH({p0})+{m},MIN(IF(MOD({k}+{half},2)=0,{a},{b}),"
@@ -262,7 +292,7 @@ def date_formula(k: str) -> str:
 def build_engine(wb: Workbook):
     ws = wb.create_sheet("Engine")
     S = "Start!"
-    A = lambda ref: f"{S}${ref[0]}${ref[1:]}"  # noqa: E731
+    A = lambda at: f"{S}{absr(at)}"  # noqa: E731
     freq, p0 = A(S_FREQ), A(S_NEXT)
 
     # ---- settings
@@ -271,7 +301,7 @@ def build_engine(wb: Workbook):
     for i, t in enumerate(labels):
         ws.cell(1 + i, 1, t)
     ws[E_PPY] = f'=IF({freq}="{FREQ["weekly"]}",52,IF({freq}="{FREQ["twice"]}",24,IF({freq}="{FREQ["monthly"]}",12,26)))'
-    ws[E_YPP] = f"=SUM({S}$D${Y0}:$D${YN})/$B$1"
+    ws[E_YPP] = f"=SUM({S}${L(SY_AMT)}${Y0}:${L(SY_AMT)}${YN})/$B$1"
     ws[E_OTHER] = (f"=IF(N({A(S_OTHER)})>0,{A(S_OTHER)},IF(DAY({p0})<=15,DAY({p0})+15,"
                    f"IF(DAY({p0})=DAY(EOMONTH({p0},0)),15,DAY({p0})-15)))")
     ws[E_DAY_A] = f"=MIN(DAY({p0}),$B$3)"
@@ -292,7 +322,7 @@ def build_engine(wb: Workbook):
     k0, kn = EB0, EB0 + ND - 1
     for i in range(ND):
         r, sr = EB0 + i, D0 + i
-        bal, apr, mn, my = f"N({S}$D{sr})", f"N({S}$E{sr})", f"N({S}$F{sr})", f"N({S}$H{sr})"
+        bal, apr, mn, my = (f"N({S}${L(c)}{sr})" for c in (SC_BAL, SC_APR, SC_MIN, SC_ORDER))
         ws.cell(r, 4, i + 1)
         ws.cell(r, 5, f"=IF({bal}>0,1,0)")
         ws.cell(r, 6, f"=IF(AND({apr}>0,{mn}<={bal}*{apr}/1200),1,0)")
@@ -306,11 +336,11 @@ def build_engine(wb: Workbook):
         ws.cell(r, 10, f"=IFERROR(MATCH({p},$H${k0}:$H${kn},0),0)")
         ok = f"IF(J{r}=0,0,INDEX($E${k0}:$E${kn},J{r}))=1"
         src = lambda col: f"INDEX({S}${col}${D0}:${col}${DN},J{r})"  # noqa: E731
-        ws.cell(r, 11, f'=IF({ok},{src("C")}&"","")')
-        ws.cell(r, 12, f'=IF({ok},N({src("E")})/100,0)')
-        ws.cell(r, 13, f'=IF({ok},N({src("F")}),0)')
-        ws.cell(r, 14, f'=IF({ok},IF(N({src("G")})>0,N({src("G")}),""),"")')
-        ws.cell(r, 15, f'=IF({ok},N({src("D")}),0)')
+        ws.cell(r, 11, f'=IF({ok},{src(L(SC_NAME))}&"","")')
+        ws.cell(r, 12, f'=IF({ok},N({src(L(SC_APR))})/100,0)')
+        ws.cell(r, 13, f'=IF({ok},N({src(L(SC_MIN))}),0)')
+        ws.cell(r, 14, f'=IF({ok},IF(N({src(L(SC_DUE))})>0,N({src(L(SC_DUE))}),""),"")')
+        ws.cell(r, 15, f'=IF({ok},N({src(L(SC_BAL))}),0)')
 
     # ---- minimums only, per debt (NPER), the baseline the plan is compared with
     ws.cell(EO0 - 1, C_NPER, "Minimums only: months"); ws.cell(EO0 - 1, C_NPERINT, "Minimums only: interest")
@@ -513,50 +543,60 @@ def build_engine(wb: Workbook):
 def build_today(wb: Workbook):
     """One main number: what to move this payday. It turns yellow with PAID once that payday is ticked on Path."""
     ws = wb.create_sheet("Today")
-    st.page(ws, 8, 44, {"A": 1.5, "B": 3, "C": 44, "D": 18, "E": 30, "F": 1.5, "G": 36, "H": 1.5}, "Today")
+    st.page(ws, T_FOOT + 1, "Today")
     view, paid, done = EN(E_VIEW), EN(E_PAIDMODE), EN(E_ALLDONE)
-    ws[T_FLAG] = f"=IF(OR({paid}=1,{done}=1),1,0)"
-    ws[T_FLAG].font = st.font(8, color=st.BAND)  # a quiet helper for the colour of the card
+    st.quiet(ws, T_FLAG, f"=IF(OR({paid}=1,{done}=1),1,0)")
+    st.quiet(ws, T_COUNT, f"={EN(E_NITEMS)}")
+    c0, c1 = gcol(1), gend(8)
+    i0, i1 = c0 + 1, c1 - 1
+    st.grid_card(ws, 6, T_HEAD, 1, 8, st.CALM)   # the lines below follow how many there are (see the rules)
+    for r, h in ((6, 10), (7, 20), (8, 62), (9, 20), (10, 10), (T_HEAD, 22), (T_L0 + NI, 10)):
+        ws.row_dimensions[r].height = h
+    st.text(ws, 7, i0, i1, (f'=IFERROR(IF({done}=1,"Every payday is ticked",IF({view}=0,"Your next payday",'
+                            f'IF({paid}=1,{dtext(EN(E_VIEWDATE))}&" is paid","This payday · "&{dtext(EN(E_VIEWDATE))}))),"")'),
+            st.font(st.HELP, bold=True, color=st.GRAY))
+    st.text(ws, 8, i0, i1, (f'=IFERROR(IF({done}=1,"Debt-free",IF({view}=0,"Fill in Start",'
+                            f'IF({paid}=1,"PAID","Move "&{money(EN(E_VIEWMOVE))}))),"")'),
+            st.font(st.BIG, bold=True, title=True), st.Alignment(horizontal="left", vertical="bottom"))
+    st.hint(ws, 9, i0, i1, (f'=IFERROR(IF({done}=1,"You did it, one paycheck at a time.",IF({view}=0,"Your payday and what to move show here.",'
+                            f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".",IF({EN(E_VIEWACTUAL)}=1,"This is the amount you typed on Path. Tick it there and it turns yellow.",'
+                            f'"When it is done, tick it on Path and this card turns yellow.")))),"")'), wrap=False)
 
-    st.block(ws, 6, 9, 2, 5)
-    st.when(ws, "B6:E9", "$H$3=1", st.YELLOW)
-    ws[T_LABEL] = (f'=IFERROR(IF({done}=1,"Every payday is ticked",IF({view}=0,"Your next payday",'
-                   f'IF({paid}=1,{dtext(EN(E_VIEWDATE))}&" is paid","This payday · "&{dtext(EN(E_VIEWDATE))}))),"")')
-    ws[T_LABEL].font = st.font(11, color=st.GRAY)
-    ws[T_MAIN] = (f'=IFERROR(IF({done}=1,"Debt-free",IF({view}=0,"Fill in Start",'
-                  f'IF({paid}=1,"PAID","Move "&{money(EN(E_VIEWMOVE))}))),"")')
-    ws[T_MAIN].font = st.font(48, bold=True, title=True)
-    ws.row_dimensions[7].height = 66
-    ws[T_SUB] = (f'=IFERROR(IF({done}=1,"You did it, one paycheck at a time.",IF({view}=0,"Your payday and what to move show here.",'
-                 f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".",IF({EN(E_VIEWACTUAL)}=1,"This is the amount you typed on Path. Tick it there and it turns yellow.",'
-                 f'"Then tick it on Path and it turns yellow.")))),"")')
-    ws[T_SUB].font = st.font(10, color=st.GRAY)
-
-    st.head(ws, T_L0 - 1, 3, "What it is made of"); st.head(ws, T_L0 - 1, 4, "Amount", st.RIGHT); st.head(ws, T_L0 - 1, 5, "")
+    # what it is made of: a white table inside the calm card
+    st.block(ws, T_HEAD, T_HEAD, i0, i1, st.CARD)
+    for c, e, text, align in zip(T_COLS, T_ENDS, ("What it is made of", "Amount", ""), (st.LEFT, st.RIGHT, st.LEFT)):
+        st.head(ws, T_HEAD, c, e, text, align)
     labels, amounts, counts, notes = (rng(C_BAL, r, NI, absrow=True) for r in (ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE))
     for i in range(NI):
         r = T_L0 + i
         m = f"MATCH({i + 1},Engine!{counts},0)"
-        ws.cell(r, 3, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",INDEX(Engine!{labels},{m})),"")').font = st.font(11)
-        a = ws.cell(r, 4, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",{money(f"INDEX(Engine!{amounts},{m})")}),"")')
-        a.font, a.alignment = st.font(11, bold=True), st.RIGHT
-        ws.cell(r, 5, f'=IFERROR(IF({i + 1}>{EN(E_NITEMS)},"",INDEX(Engine!{notes},{m})),"")').font = st.font(9, color=st.GRAY)
+        none = f"{i + 1}>{EN(E_NITEMS)}"
+        st.text(ws, r, T_COLS[0], T_ENDS[0], f'=IFERROR(IF({none},"",INDEX(Engine!{labels},{m})),"")', st.font(st.BODY))
+        st.text(ws, r, T_COLS[1], T_ENDS[1], f'=IFERROR(IF({none},"",{money(f"INDEX(Engine!{amounts},{m})")}),"")',
+                st.font(st.BODY, bold=True), st.RIGHT)
+        st.text(ws, r, T_COLS[2], T_ENDS[2], f'=IFERROR(IF({none},"",INDEX(Engine!{notes},{m})),"")', st.font(st.HELP, color=st.GRAY))
+        ws.row_dimensions[r].height = 20
+    lines = f"{L(i0)}{T_L0}:{L(i1)}{T_L0 + NI - 1}"
+    flag, inside = f"{absr(T_FLAG)}=1", f"ROW()-{T_L0}<={absr(T_COUNT)}"
+    st.when(ws, lines, f'${L(T_COLS[0])}{T_L0}<>""', st.CARD, border=st.UNDER)   # a line with something on it is white
+    st.when(ws, T_CARD, flag, st.YELLOW)                                              # paid: the card turns yellow
+    st.when(ws, T_CARD_LINES, f"AND({inside},{flag})", st.YELLOW)
+    st.when(ws, T_CARD_LINES, inside, st.CALM)                                        # the card ends after the last line
 
-    st.block(ws, 6, 9, 7, 7)
-    st.label(ws, 6, 7, "Focus debt", small=True)
+    # the focus debt, on the right
+    st.grid_card(ws, 6, 12, 9, 12)
+    st.label(ws, 7, R_C0, R_C1, "Focus debt", gray=True)
     pos = EN(E_FOCUSPOS)
     names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
-    ws[T_FOCUS_NAME] = f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")'
-    ws[T_FOCUS_NAME].font = st.font(20, bold=True, title=True)
-    ws[T_FOCUS_NAME].alignment = st.Alignment(horizontal="left", vertical="top")
+    st.text(ws, 8, R_C0, R_C1, f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")', st.font(st.TILE, bold=True, title=True),
+            st.Alignment(horizontal="left", vertical="bottom"))
     left = f"INDEX(Engine!{rng(C_BAL, ROW_LEFT, absrow=True)},{pos})"
-    ws[T_FOCUS_LEFT] = f'=IFERROR(IF({pos}=0,"",IF({left}<0.005,"",{money0(left)}&" left")),"")'
+    st.text(ws, 9, R_C0, R_C1, f'=IFERROR(IF({pos}=0,"",IF({left}<0.005,"",{money0(left)}&" left")),"")', st.font(st.BODY))
     gone = f"INDEX(Engine!{rng(C_BAL, ROW_GONE, absrow=True)},{pos})"
-    ws[T_FOCUS_GONE] = f'=IFERROR(IF({pos}=0,"",IF({gone}>0,"Gone by "&{dtext(gone)},"")),"")'
-    ws[T_FOCUS_GONE].font = st.font(10, color=st.GRAY)
-    ws[T_LATE] = f'=IF({EN(E_LATE)}>=2,"A few paydays are not ticked yet. Tick them on Path.","")'
-    ws[T_LATE].font = st.font(10, color=st.GRAY)
-    st.footer(ws, 39)
+    st.hint(ws, 10, R_C0, R_C1, f'=IFERROR(IF({pos}=0,"",IF({gone}>0,"Gone by "&{dtext(gone)},"")),"")', wrap=False)
+    st.hint(ws, T_L0 + NI + 2, i0, i1,
+            f'=IF({EN(E_LATE)}>=2,"A few paydays are not ticked yet. Tick them on Path.","")', wrap=False)
+    st.footer(ws, T_FOOT)
     return ws
 
 
@@ -564,125 +604,132 @@ def build_today(wb: Workbook):
 def build_path(wb: Workbook):
     """Four big numbers with a bar, how far along, the next milestone, every payday with Actual and Done, two charts."""
     ws = wb.create_sheet("Path")
-    st.page(ws, 17, P_RN + 6, {"A": 1.5, "B": 20, "C": 14, "D": 14, "E": 14, "F": 14, "G": 14, "H": 14, "I": 8, "J": 1.5,
-                                "K": 13, "L": 13, "M": 13, "N": 13, "O": 13, "P": 13, "Q": 1.5}, "Path")
+    st.page(ws, P_RN + 2, "Path")
     has, fits, pct = EN(E_HASPLAN), EN(E_FITS), EN(E_PCT)
-    for ref, f in ((P_CURK, f"=IF({EN(E_ALLDONE)}=1,0,MIN({EN(E_CURK)},{EN(E_NPAY)}))"), (P_SHOW, f'=Start!${S_SHOW[0]}${S_SHOW[1:]}&""')):
-        ws[ref] = f
-        ws[ref].font = st.font(6, color=st.BAND)  # quiet helpers for the colours below
-    cur, show = f"${P_CURK[0]}${P_CURK[1:]}", f"${P_SHOW[0]}${P_SHOW[1:]}"
+    st.quiet(ws, P_CURK, f"=IF({EN(E_ALLDONE)}=1,0,MIN({EN(E_CURK)},{EN(E_NPAY)}))")
+    st.quiet(ws, P_SHOW, f'=Start!{absr(S_SHOW)}&""')
+    cur, show = absr(P_CURK), absr(P_SHOW)
 
     # ---- four tiles: a label, the big number, a bar, a small line
-    def bar(share: str) -> str:
-        n = f"ROUND(MIN(MAX({share},0),1)*16,0)"
-        return f'REPT("█",{n})&REPT("░",16-{n})'
-
     owed, start = EN(E_OWEDNOW), EN(E_STARTOWED)
     avoided, min_int = EN(E_AVOIDED), EN(E_MININTEREST)
     can_avoid = f"AND({has}=1,ISNUMBER({avoided}))"
     ends = f"AND({has}=1,{fits}=1)"
     tiles = [
-        (P_TILE_OWED, 2, "Owed now", f'IF({has}=0,"",{money0(owed)})', has + "=1", f"{owed}/{start}",
+        ("Owed now", f'IF({has}=0,"",{money0(owed)})', f'IF({has}=1,{pct},"")',
          f'IF({has}=0,"","of "&{money0(start)}&" at the start")'),
-        (P_TILE_FREE, 4, "Debt-free date", f'IF({ends},{dtext(EN(E_FREE))},"")', ends, f"{EN(E_TICKED)}/{EN(E_NPAY)}",
+        ("Debt-free date", f'IF({ends},{dtext_short(EN(E_FREE))},"")', f'IF({ends},MIN({EN(E_TICKED)}/{EN(E_NPAY)},1),"")',
          f'IF({ends},{EN(E_TICKED)}&" of "&{EN(E_NPAY)}&" paydays done","")'),
-        (P_TILE_PAID, 6, "Paid off so far", f'IF({has}=0,"",{money0(EN(E_PAIDSOFAR))})', has + "=1", pct,
+        ("Paid off so far", f'IF({has}=0,"",{money0(EN(E_PAIDSOFAR))})', f'IF({has}=1,{pct},"")',
          f'IF({has}=0,"",ROUND({pct}*100,0)&"% of what you owed")'),
-        (P_TILE_AVOID, 8, "Interest you avoid", f'IF({can_avoid},{money0(avoided)},"")', can_avoid, f"{avoided}/{min_int}",
+        ("Interest you avoid", f'IF({can_avoid},{money0(avoided)},"")', f'IF(AND({can_avoid},{min_int}>0),MIN({avoided}/{min_int},0.99),"")',
          f'IF({can_avoid},"next to minimums only","")'),
     ]
-    gap = st.Border(right=st.Side(style="thick", color=st.PAPER))
-    for ref, c0, text, value, on, share, small in tiles:
-        c1 = c0 + 1
-        st.block(ws, 6, 9, c0, c1)
-        for r in range(6, 10):
-            ws.cell(r, c1).border = gap
-        st.label(ws, 6, c0, text, small=True)
-        ws[ref] = f'=IFERROR({value},"")'
-        ws[ref].font = st.font(17, bold=True, title=True)
-        b = ws.cell(8, c0, f'=IFERROR(IF({on},{bar(share)},""),"")')
-        b.font = st.font(8, color=st.ACTION)
-        ws.cell(9, c0, f'=IFERROR({small},"")').font = st.font(8, color=st.GRAY)
-        ws.merge_cells(start_row=7, end_row=7, start_column=c0, end_column=c1)
-        ws.merge_cells(start_row=8, end_row=8, start_column=c0, end_column=c1)
-    ws.row_dimensions[7].height = 34
-    st.when(ws, P_FREE_CELLS, f'${P_TILE_FREE[0]}${P_TILE_FREE[1:]}<>""', st.YELLOW)  # the one key word
+    for k, (text, value, share, small) in enumerate(tiles):
+        g = 1 + 3 * k
+        c0, c1 = gcol(g), gend(g + 2)
+        st.grid_card(ws, 6, 11, g, g + 2)
+        st.label(ws, 7, c0 + 1, c1 - 1, text, gray=True)
+        st.text(ws, P_TILE_ROW, c0 + 1, c1 - 1, f"={value}", st.font(st.TILE, bold=True, title=True))
+        st.quiet(ws, P_SHARES[k], f"={share}")
+        st.bar(ws, P_BAR_ROW, c0, absr(P_SHARES[k]))
+        st.hint(ws, P_CAPTION_ROW, c0 + 1, c1 - 1, f"={small}", wrap=False)
+    for r, h in ((6, 10), (7, 18), (P_TILE_ROW, 34), (P_BAR_ROW, 9), (P_CAPTION_ROW, 18), (11, 10), (12, 14)):
+        ws.row_dimensions[r].height = h
+    st.when(ws, P_FREE_CELLS, f'{absr(P_TILE_FREE)}<>""', st.YELLOW)  # the one key word
 
-    # ---- how far along: the doughnut sits on a white card, the big number beside it
-    st.block(ws, 6, 19, 11, 16, st.CARD)
-    st.label(ws, 6, 11, "How far along", small=True)
-    ws[P_PCT] = f'=IFERROR(IF({has}=0,"",ROUND({pct}*100,0)&"% gone"),"")'
-    ws[P_PCT].font = st.font(28, bold=True, title=True)
-    ws.row_dimensions[11].height = 40
-    ws[P_DEBTSPAID] = f'=IFERROR(IF({has}=0,"","Debts paid "&{EN(E_DEBTSPAID)}&" of "&{EN(E_NDEBTS)}),"")'
-    ws[P_DEBTSPAID].font = st.font(11, bold=True)
-
-    # ---- the next milestone, and what needs a calm word
+    # ---- how far along: the doughnut on a white card, the big number beside it; the chart beside that
+    st.grid_card(ws, 13, 19, 1, 5)
+    st.grid_card(ws, 13, 19, 6, 12)
+    for r, h in ((13, 10), (14, 46), (15, 30), (16, 30), (17, 30), (18, 30), (19, 10), (20, 14)):
+        ws.row_dimensions[r].height = h
+    t1 = gend(5) - 1
+    st.text(ws, 14, P_RING_TEXT, t1, f'=IFERROR(IF({has}=0,"",ROUND({pct}*100,0)&"% gone"),"")',
+            st.font(28, bold=True, title=True), st.Alignment(horizontal="left", vertical="bottom"))
+    st.text(ws, 15, P_RING_TEXT, t1, f'=IFERROR(IF({has}=0,"","Debts paid "&{EN(E_DEBTSPAID)}&" of "&{EN(E_NDEBTS)}),"")', st.font(st.BODY, bold=True))
     names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
-    ws[P_NEXT] = (f'=IFERROR(IF({has}=0,"",IF({EN(E_NEXTGONEPOS)}=0,IF({EN(E_OWEDNOW)}<0.005,"Every debt is gone.",""),'
-                  f'"Next: "&INDEX({names},{EN(E_NEXTGONEPOS)})&" gone "&{dtext(EN(E_NEXTGONE))})),"")')
-    ws[P_NEXT].font = st.font(12, bold=True)
-    ws[P_NOFIT] = f'=IF(AND({has}=1,{fits}=0),"This plan is longer than the list below can show. A little more each payday on Start brings the end into view.","")'
-    ws[P_NOFIT].font = st.font(9, color=st.GRAY)
-    short_day = f"INDEX(Engine!${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN},{EN(E_SHORTK)})"
-    ws[P_SHORT] = f'=IFERROR(IF({EN(E_SHORTK)}=0,"","The amount typed for "&{dtext(short_day)}&" is less than its bills. This sheet still counts the bills as paid."),"")'
-    ws[P_SHORT].font = st.font(9, color=st.GRAY)
+    st.hint(ws, 16, P_RING_TEXT, t1, (f'=IFERROR(IF({has}=0,"",IF({EN(E_NEXTGONEPOS)}=0,IF({EN(E_OWEDNOW)}<0.005,"Every debt is gone.",""),'
+                                      f'"Next: "&INDEX({names},{EN(E_NEXTGONEPOS)})&" gone "&{dtext(EN(E_NEXTGONE))})),"")'))
+    st.label(ws, 14, gcol(6) + 1, gend(12) - 1, "What you owe, payday by payday", gray=True,
+             align=st.Alignment(horizontal="left", vertical="top"))
 
-    # ---- every payday
-    st.section(ws, P_R0 - 1, 2, "Your paydays")
-    c = ws.cell(P_R0 - 1, 4, "Paid a different amount? Type it in Actual. Paid? Pick the tick in Done.")
-    c.font = st.font(9, color=st.GRAY)
-    for j, h in enumerate(["Payday", "Bills", "Yearly bills", "Buffer", "Extra to debt", "Move", "Actual", "Done"]):
-        st.head(ws, P_R0, 2 + j, h, st.LEFT if j == 0 else (st.CENTER if j == 7 else st.RIGHT))
+    # ---- every payday, in a white card that grows with the plan
+    c0, c1 = gcol(1), gend(8)
+    st.grid_card(ws, 21, P_R0, 1, 8)
+    st.section(ws, 22, P_COLS[0], 14, "Your paydays")
+    st.hint(ws, 22, 15, P_ENDS[-1], "Paid a different amount? Type it in Actual. Paid? Pick the tick.", wrap=False).alignment = st.RIGHT
+    st.hint(ws, 23, P_COLS[0], P_ENDS[-1], f'=IF(AND({has}=1,{fits}=0),"This plan is longer than the list below can show. A little more each payday on Start brings the end into view.","")', wrap=False)
+    short_day = f"INDEX(Engine!${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN},{EN(E_SHORTK)})"
+    st.hint(ws, 24, P_COLS[0], P_ENDS[-1], f'=IFERROR(IF({EN(E_SHORTK)}=0,"","The amount typed for "&{dtext(short_day)}&" is less than its bills. This sheet still counts the bills as paid."),"")', wrap=False)
+    for r, h in ((21, 10), (23, 14), (24, 14), (P_R0, 22)):
+        ws.row_dimensions[r].height = h
+    for c, e, text in zip(P_COLS, P_ENDS, ["Payday", "Bills", "Yearly", "Buffer", "Extra", "Move", "Actual", "Done"]):
+        st.head(ws, P_R0, c, e, text, st.LEFT if text == "Payday" else (st.CENTER if text == "Done" else st.RIGHT))
+    for c in range(c0, c1 + 1):   # the card has no bottom line here: the rows below carry on
+        b = ws.cell(P_R0, c).border
+        ws.cell(P_R0, c).border = st.Border(bottom=st.THIN, left=b.left, right=b.right)
     src = [C_BILLS, C_YEARLY, C_TOBUF, C_EXTRA, C_MOVE0]  # Move stays what the plan asked for, Actual is what was paid
     for k in range(NR):
         r, er = P_R1 + k, ER1 + k
         on = f"AND({has}=1,{k + 1}<={EN(E_NPAY)})"
-        ws.cell(r, 2, f'=IFERROR(IF({on},{dtext(f"Engine!$B${er}")},""),"")')
+        st.text(ws, r, P_COLS[0], P_ENDS[0], f'=IFERROR(IF({on},{dtext(f"Engine!$B${er}")},""),"")')
         for j, cc in enumerate(src):
-            x = ws.cell(r, 3 + j, f'=IFERROR(IF({on},{cell_amount(f"Engine!${L(cc)}${er}")},""),"")')
-            x.alignment = st.RIGHT
-            if cc == C_MOVE0:
-                x.font = st.font(10, bold=True)
-        for cc, fmt, align in ((P_ACTUAL_COL, "#,##0.00", st.RIGHT), (P_DONE_COL, None, st.CENTER)):
-            cell = st.input_cell(ws.cell(r, cc), fmt, align)
-            cell.fill, cell.border = st.fill(st.PAPER), st.NO_BORDER  # a row turns white only while it is part of the plan
-    st.dropdown(ws, f"I{P_R1}:I{P_RN}", f'"{TICK}"')
-    st.amount_only(ws, f"H{P_R1}:H{P_RN}")
-    rows, typing = f"B{P_R1}:I{P_RN}", f"H{P_R1}:I{P_RN}"
-    live = f'$B{P_R1}<>""'
-    st.when(ws, rows, f'$I{P_R1}="{TICK}"', st.YELLOW, fnt=st.Font(strike=True))  # paid: yellow, struck through
-    # the current payday: the outline shows in Excel; Google Sheets rules have no borders, so the words turn action blue too
+            st.text(ws, r, P_COLS[1 + j], P_ENDS[1 + j], f'=IFERROR(IF({on},{cell_amount(f"Engine!${L(cc)}${er}")},""),"")',
+                    st.font(st.BODY, bold=cc == C_MOVE0), st.RIGHT)
+        st.input_cell(ws, r, P_COLS[6], P_ENDS[6], "#,##0.00", st.RIGHT, base=st.PAPER)
+        st.input_cell(ws, r, P_COLS[7], P_ENDS[7], None, st.CENTER, base=st.PAPER)
+        for c in range(P_COLS[6], P_ENDS[7] + 1):
+            ws.cell(r, c).border = st.NO_BORDER   # the line under a typed cell shows only while the row is part of the plan
+        ws.row_dimensions[r].height = 20
+    done_col, act_col, first = L(P_DONE_COL), L(P_ACTUAL_COL), L(P_COLS[0])
+    st.dropdown(ws, f"{done_col}{P_R1}:{done_col}{P_RN}", f'"{TICK}"')
+    st.amount_only(ws, f"{act_col}{P_R1}:{act_col}{P_RN}")
+    live = f'${first}{P_R1}<>""'
+    typing = f"{act_col}{P_R1}:{L(P_ENDS[7])}{P_RN}"
     edge = st.Side(style="thin", color=st.ACTION)
-    st.when(ws, rows, f"ROW()-{P_R1 - 1}={cur}", None, fnt=st.Font(bold=True, color=st.ACTION), border=st.Border(top=edge, bottom=edge))
-    st.when(ws, typing, f'AND({live},{show}="{TICK}")', st.CALM)  # Show where to type
-    st.when(ws, rows, live, st.CARD, border=st.UNDER)
-
-    # ---- the charts are added once the Engine tab exists (see add_charts)
-    st.label(ws, 21, 11, "What you owe, payday by payday", small=True)
-    st.footer(ws, 38, 11)
+    st.when(ws, P_LIST, f'${done_col}{P_R1}="{TICK}"', st.YELLOW, fnt=st.Font(strike=True))   # paid: yellow, struck through
+    # the current payday: an outline in Excel; Google Sheets rules have no borders, so its words turn action blue too
+    st.when(ws, P_LIST, f"ROW()-{P_R1 - 1}={cur}", st.CARD, fnt=st.Font(bold=True, color=st.ACTION), border=st.Border(top=edge, bottom=edge))
+    # the rest in ranges that never overlap (LibreOffice and Google Sheets use the first range with a rule)
+    st.when(ws, typing, f'AND({live},{show}="{TICK}")', st.CALM)                                  # Show where to type
+    st.when(ws, typing, live, st.CARD, border=st.Border(bottom=edge))                              # a typed cell: the action line
+    last = f'AND({live},${first}{P_R1 + 1}="")'                                                     # the card's last line
+    for at, side in ((f"B{P_R1}:B{P_RN}", "left"), (f"C{P_R1}:{L(P_ACTUAL_COL - 1)}{P_RN}", None), (f"{L(c1)}{P_R1}:{L(c1)}{P_RN}", "right")):
+        sides = {side: st.THIN} if side else {}
+        st.when(ws, at, last, st.CARD, border=st.Border(bottom=st.THIN, **sides))
+        st.when(ws, at, live, st.CARD, border=st.Border(bottom=None if side else st.THIN, **sides))
+    st.footer(ws, P_FOOT, 9, 12, two_rows=True)
     return ws
+
+
+def px(width: float) -> int:
+    """The width of a column in pixels, the way Excel counts it"""
+    return int(((256 * width + int(128 / 7)) / 256) * 7)
 
 
 def add_charts(wb: Workbook):
     ws, en = wb["Path"], wb["Engine"]
+    cm = lambda n: n / 37.8  # noqa: E731  pixels to centimetres
 
     # how far along: action blue for gone, calm for left, yellow only when everything is gone
     ring = DoughnutChart()
-    ring.holeSize = 68
-    ring.height, ring.width = 6.4, 6.4
+    ring.holeSize = 62
+    ring.height, ring.width = cm(130), cm(130)
     ring.legend, ring.title = None, None
     ring.add_data(Reference(en, min_col=E_RING_COL, min_row=1, max_row=3), titles_from_data=False)
     for i, rgb in enumerate((st.ACTION, st.CALM, st.YELLOW)):
         point = DataPoint(idx=i)
         point.graphicalProperties = GraphicalProperties(solidFill=rgb)
-        point.graphicalProperties.line = LineProperties(solidFill=st.LINE, w=6350)
+        point.graphicalProperties.line = LineProperties(solidFill=st.CARD, w=6350)
         ring.series[0].dPt.append(point)
-    ws.add_chart(ring, "K7")
+    ws.add_chart(ring, ref(14, gcol(1) + 1))
 
     # what is owed, from the first payday to the last
+    c0, c1 = gcol(6) + 1, gend(12) - 1
+    width = sum(px(ws.column_dimensions[L(c)].width) for c in range(c0, c1 + 1))
+    height = sum(ws.row_dimensions[r].height for r in range(15, 19)) * 4 / 3
     area = AreaChart()
-    area.height, area.width = 7.5, 14.6
+    area.width, area.height = cm(width), cm(height + 10)
     area.legend, area.title = None, None
     area.add_data(Reference(en, min_col=24, min_row=1, max_row=NC), titles_from_data=False)
     s = area.series[0]
@@ -695,7 +742,7 @@ def add_charts(wb: Workbook):
     area.x_axis.delete = False
     area.x_axis.tickLblSkip = 1
     area.x_axis.axPos = "b"
-    ws.add_chart(area, "K22")
+    ws.add_chart(area, ref(15, c0))
 
     for ch in (ring, area):
         ch.visible_cells_only = False  # the numbers live on a hidden tab
@@ -708,91 +755,111 @@ def add_charts(wb: Workbook):
 
 # ------------------------------------------------------------------------------------------------ Debts
 def build_debts(wb: Workbook):
-    """One row per debt, in payoff order, with a bar of ten small cells. A paid debt turns yellow with PAID."""
+    """One block per debt, in payoff order, with a bar of 20 cells. A paid debt turns yellow with PAID."""
     ws = wb.create_sheet("Debts")
-    widths = {"A": 1.5, "B": 5, "C": 28, "D": 12, "E": 15, "F": 15, "G": 1.5}
-    for j in range(10):
-        widths[L(8 + j)] = 2.6
-    widths.update({"R": 1.5, "S": 22, "T": 56, "U": 1.5})
-    st.page(ws, 21, 30, widths, "Debts")
-    st.section(ws, 6, 2, "In payoff order")
+    st.page(ws, DB_FOOT + 1, "Debts")
+    c0, c1 = gcol(1), gend(9)
+    st.grid_card(ws, 6, DB_R0 - 1, 1, 9)   # the rows below are white only where a debt is (see the rules)
+    ws.row_dimensions[6].height = 10
+    st.section(ws, 7, c0 + 1, 24, "In payoff order")
     # the same number as the Path tile: what you owed at the start minus what you owe now (the app's definition)
-    st.label(ws, 6, 5, "Paid off so far", bold=True).alignment = st.RIGHT
-    ws[DB_PAIDTOTAL] = f'=IF({EN(E_HASPLAN)}=0,"",{money0(EN(E_PAIDSOFAR))})'
-    ws[DB_PAIDTOTAL].font, ws[DB_PAIDTOTAL].alignment = st.font(11, bold=True), st.RIGHT
-    for col, text, align in ((2, "#", st.LEFT), (3, "Debt", st.LEFT), (4, "Interest %", st.RIGHT), (5, "Left now", st.RIGHT),
-                             (6, "Paid so far", st.RIGHT), (8, "Progress", st.LEFT), (19, "Gone by", st.LEFT), (20, "", st.LEFT)):
-        st.head(ws, DB_R0 - 1, col, text, align)
-    for j in range(1, 10):
-        ws.cell(DB_R0 - 1, 8 + j).border = st.UNDER
+    st.label(ws, 7, DB_COLS["bar"], DB_ENDS["bar"], "Paid off so far", gray=True, align=st.RIGHT)
+    st.text(ws, 7, DB_COLS["gone"], DB_ENDS["gone"], f'=IF({EN(E_HASPLAN)}=0,"",{money0(EN(E_PAIDSOFAR))})', st.font(st.BODY, bold=True))
+    heads = [("num", "#", st.CENTER), ("name", "Debt", st.LEFT), ("rate", "Interest", st.RIGHT), ("left", "Left now", st.RIGHT),
+             ("paid", "Paid so far", st.RIGHT), ("bar", "Progress", st.LEFT), ("gone", "Gone by", st.LEFT)]
+    for key, text, align in heads:
+        st.head(ws, DB_R0 - 1, DB_COLS[key], DB_ENDS[key], text, align)
+    for c in range(c0, c1 + 1):
+        ws.cell(DB_R0 - 1, c).border = st.UNDER
+    ws.row_dimensions[DB_R0 - 1].height = 22
     left_row, gone_row = f"Engine!{rng(C_BAL, ROW_LEFT, absrow=True)}", f"Engine!{rng(C_BAL, ROW_GONE, absrow=True)}"
+    gap = st.Side(style="thin", color=st.PAPER)
+
+    def value(r: int, key: str, formula: str, fnt, align):
+        cell = ws.cell(r, DB_COLS[key], formula)
+        cell.font, cell.alignment = fnt, align
+        ws.merge_cells(start_row=r, end_row=r + 2, start_column=DB_COLS[key], end_column=DB_ENDS[key])
+
     for p in range(ND):
-        r, er = DB_R0 + p, EO0 + p
+        r, er = db_row(p), EO0 + p
         name, rate, mn, start = f"Engine!$K${er}", f"Engine!$L${er}", f"Engine!$M${er}", f"Engine!$O${er}"
         left, gone = f"INDEX({left_row},{p + 1})", f"INDEX({gone_row},{p + 1})"
         on = f'{name}<>""'
-        ws.cell(r, 2, f'=IF({on},{p + 1},"")').font = st.font(9, color=st.GRAY)
-        ws.cell(r, 3, f'=IF({on},{name},"")').font = st.font(11, bold=True)
-        ws.cell(r, 4, f'=IF({on},{pct_text(f"{rate}*100")},"")').alignment = st.RIGHT
-        ws.cell(r, 5, f'=IF({on},{cell_amount(left, cents=True)},"")').alignment = st.RIGHT
-        ws.cell(r, 6, f'=IF({on},{cell_amount(f"MAX({start}-{left},0)", cents=True)},"")').alignment = st.RIGHT
-        # the share paid, 0 to 1 (a quiet helper for the bar and the yellow row)
-        h = ws.cell(r, DB_PCT_COL, f'=IF({on},IF({left}<0.005,1,MIN(MAX(({start}-{left})/{start},0),0.99)),"")')
-        h.font = st.font(6, color=st.PAPER)
-        ws.cell(r, 19, f'=IFERROR(IF({on},IF({left}<0.005,"PAID",IF({gone}>0,{dtext(gone)},"")),""),"")').font = st.font(10, bold=True)
-        ws.cell(r, 20, (f'=IF(AND({on},{left}>0.005,{rate}>0,{mn}<={left}*{rate}/12),'
-                        f'"This one grows even when you pay the minimum, so it goes first.","")')).font = st.font(9)
-        ws.row_dimensions[r].height = 22
-        gap = st.Side(style="thin", color=st.PAPER)
-        for j in range(10):
-            ws.cell(r, 8 + j).border = st.Border(left=gap, right=gap, top=st.Side(style="medium", color=st.PAPER), bottom=st.Side(style="medium", color=st.PAPER))
-    rows = f"B{DB_R0}:T{DB_R0 + ND - 1}"
-    bars = f"H{DB_R0}:Q{DB_R0 + ND - 1}"
-    pct = f"${L(DB_PCT_COL)}{DB_R0}"
-    st.when(ws, rows, f"{pct}=1", st.YELLOW)                                                      # paid: the whole row
-    st.when(ws, bars, f'AND(ISNUMBER({pct}),{pct}<1,{pct}*10>=COLUMN()-COLUMN($H{DB_R0})+0.5)', st.ACTION)  # progress
-    st.when(ws, bars, f'AND(ISNUMBER({pct}),{pct}<1)', st.LINE)                                   # the empty part
-    st.footer(ws, DB_R0 + ND + 2)
+        value(r, "num", f'=IF({on},{p + 1},"")', st.font(st.HELP, color=st.GRAY), st.CENTER)
+        value(r, "name", f'=IF({on},{name},"")', st.font(st.BODY, bold=True), st.LEFT)
+        value(r, "rate", f'=IF({on},{pct_text(f"{rate}*100")},"")', st.font(st.BODY), st.RIGHT)
+        value(r, "left", f'=IF({on},{cell_amount(left, cents=True)},"")', st.font(st.BODY), st.RIGHT)
+        value(r, "paid", f'=IF({on},{cell_amount(f"MAX({start}-{left},0)", cents=True)},"")', st.font(st.BODY), st.RIGHT)
+        value(r, "gone", f'=IFERROR(IF({on},IF({left}<0.005,"PAID",IF({gone}>0,{dtext(gone)},"")),""),"")', st.font(st.BODY, bold=True), st.LEFT)
+        # the share paid, 0 to 1, on the three rows of the block (the bar and the yellow row read it)
+        for dr in range(4):
+            st.quiet(ws, ref(r + dr, DB_ON_COL), f"=IF({on},1,0)")
+        for dr in range(3):
+            st.quiet(ws, ref(r + dr, DB_PCT_COL), f'=IF({on},IF({left}<0.005,1,MIN(MAX(({start}-{left})/{start},0),0.99)),"")')
+        st.text(ws, r + 3, DB_COLS["name"], DB_ENDS["gone"], (f'=IF(AND({on},{left}>0.005,{rate}>0,{mn}<={left}*{rate}/12),'
+                                                             f'"This one grows even when you pay the minimum, so it goes first.","")'),
+                st.font(st.HELP), st.Alignment(horizontal="left", vertical="top"))
+        for dr, h in enumerate((9, 11, 9, 16)):
+            ws.row_dimensions[r + dr].height = h
+        for c in range(DB_COLS["bar"], DB_ENDS["bar"] + 1):
+            ws.cell(r + 1, c).border = st.Border(left=gap, right=gap)
+    pct, here = f"${L(DB_PCT_COL)}{DB_R0}", f"${L(DB_ON_COL)}{DB_R0}"
+    last = f"AND({here}=1,${L(DB_ON_COL)}{DB_R0 + 1}<>1)"   # the bottom of the last debt: the card ends there
+    bar0, bar_row = DB_COLS["bar"], f"MOD(ROW()-{DB_R0},{DB_STEP})=1"
+    for at in DB_RANGES:
+        sides = {"left": st.THIN} if at.startswith("B") else ({"right": st.THIN} if at == DB_RANGES[-1] else {})
+        st.when(ws, at, f"{pct}=1", st.YELLOW, border=st.Border(**sides) if sides else None)             # paid: the whole block
+        if at == DB_BARS:
+            st.when(ws, at, f"AND(ISNUMBER({pct}),{pct}<1,{bar_row},{pct}*{BAR}>=COLUMN()-{bar0}+0.5)", st.ACTION)
+            st.when(ws, at, f"AND(ISNUMBER({pct}),{pct}<1,{bar_row})", st.CALM)
+        st.when(ws, at, last, st.CARD, border=st.Border(bottom=st.THIN, **sides))
+        st.when(ws, at, f"{here}=1", st.CARD, border=st.Border(**sides) if sides else None)
+    st.footer(ws, DB_FOOT)
     return ws
 
 
 # ------------------------------------------------------------------------------------------------ Safety net
 def build_safety(wb: Workbook):
-    """The buffer with its bar, and the yearly bills with what is set aside so far."""
+    """The buffer with its bar, beside the yearly bills with what is set aside so far."""
     ws = wb.create_sheet("Safety net")
-    st.page(ws, 8, 34, {"A": 1.5, "B": 34, "C": 16, "D": 16, "E": 18, "F": 16, "G": 30, "H": 1.5}, "Safety net")
-    has = EN(E_HASPLAN)
+    st.page(ws, SN_FOOT + 1, "Safety net")
     buf, goal = EN(E_BUFNOW), EN(E_GOAL)
-    st.block(ws, 6, 10, 2, 5)
-    st.label(ws, 6, 2, "Surprise buffer", small=True)
-    ws[SN_BUF] = f'=IFERROR({money0(buf)}&" of "&{money0(goal)},"")'
-    ws[SN_BUF].font = st.font(28, bold=True, title=True)
-    ws.row_dimensions[7].height = 44
-    share = f"IF({goal}>0,MIN({buf}/{goal},1),1)"
-    ws[SN_BAR] = f'=IFERROR(REPT("█",ROUND({share}*20,0))&REPT("░",20-ROUND({share}*20,0)),"")'
-    ws[SN_BAR].font = st.font(11, color=st.ACTION)
-    ws[SN_READY] = f'=IF(AND({goal}>0,{buf}>={goal}-0.005),"ready","")'
-    ws[SN_READY].font = st.font(11, bold=True)
-    st.when(ws, SN_READY, f'${SN_READY[0]}${SN_READY[1:]}="ready"', st.YELLOW)  # done
-    ws["B10"] = "Kept in a plain separate account or an envelope. It comes first, so a surprise stays off your cards."
-    ws["B10"].font = st.font(9, color=st.GRAY)
+    i0, i1 = gcol(1) + 1, gend(5) - 1
+    st.grid_card(ws, 6, 13, 1, 5, st.CALM)
+    st.label(ws, 7, i0, i1, "Surprise buffer", gray=True)
+    st.text(ws, 8, i0, i1, f'=IFERROR({money0(buf)}&" of "&{money0(goal)},"")', st.font(36, bold=True, title=True),
+            st.Alignment(horizontal="left", vertical="bottom"))
+    st.quiet(ws, SN_SHARE, f'=IF({goal}>0,MIN({buf}/{goal},1),"")')
+    st.bar(ws, 9, i0, absr(SN_SHARE), rest=st.CARD, gap=st.CALM)
+    note = ws.cell(10, i0, "Kept in a plain separate account or an envelope. It comes first, so a surprise stays off your cards.")
+    note.font, note.alignment = st.font(st.HELP, color=st.GRAY), st.TOP_WRAP
+    ws.merge_cells(start_row=10, end_row=11, start_column=i0, end_column=i1)   # two rows: it wraps
+    st.text(ws, 12, i0, i0 + 9, f'=IF(AND({goal}>0,{buf}>={goal}-0.005),"ready","")', st.font(st.BODY, bold=True))
+    st.when(ws, SN_READY, f'{absr(SN_READY)}="ready"', st.YELLOW)  # done
 
-    st.section(ws, 13, 2, "Yearly bills")
-    for j, (text, align) in enumerate((("Bill", st.LEFT), ("A year", st.RIGHT), ("  Month needed", st.LEFT), ("Set aside so far", st.RIGHT), ("Each payday", st.RIGHT))):
-        st.head(ws, SN_Y0 - 1, 2 + j, text, align)
-    total = f"SUM(Start!$D${Y0}:$D${YN})"
+    y0, y1 = gcol(6), gend(12)
+    st.grid_card(ws, 6, SN_Y0 + NY + 1, 6, 12)
+    st.section(ws, 8, y0 + 1, y1 - 1, "Yearly bills").alignment = st.Alignment(horizontal="left", vertical="bottom")
+    for c, e, text, align in zip(SN_COLS, SN_ENDS, ("Bill", "A year", "Month needed", "Set aside so far", "Each payday"),
+                                 (st.LEFT, st.RIGHT, st.LEFT, st.RIGHT, st.RIGHT)):
+        st.head(ws, SN_HEAD, c, e, text, align)
+    total = f"SUM(Start!${L(SY_AMT)}${Y0}:${L(SY_AMT)}${YN})"
     for i in range(NY):
         r, sr = SN_Y0 + i, Y0 + i
-        amount = f"N(Start!$D${sr})"
+        amount = f"N(Start!${L(SY_AMT)}${sr})"
+        nm, mo = f"Start!${L(SY_NAME)}${sr}", f"Start!${L(SY_MONTH)}${sr}"
         on = f"{amount}>0"
-        ws.cell(r, 2, f'=IF({on},IF(Start!$C${sr}="","Yearly bill",Start!$C${sr}&""),"")').font = st.font(11, bold=True)
-        ws.cell(r, 3, f'=IF({on},{cell_amount(amount, cents=True)},"")').alignment = st.RIGHT
-        ws.cell(r, 4, f'=IF({on},IF(Start!$E${sr}="","Any time",Start!$E${sr}&""),"")').alignment = st.Alignment(horizontal="left", vertical="center", indent=1)
-        ws.cell(r, 5, f'=IFERROR(IF({on},{cell_amount(f"MIN({EN(E_YSAVED)}*{amount}/{total},{amount})", cents=True)},""),"")').alignment = st.RIGHT
-        ws.cell(r, 6, f'=IFERROR(IF({on},{cell_amount(f"{amount}/{EN(E_PPY)}", cents=True)},""),"")').alignment = st.RIGHT
-    ws[SN_EMPTY] = f'=IF({total}>0,"","No yearly bills yet. Add one on Start and a little goes aside each payday.")'
-    ws[SN_EMPTY].font = st.font(9, color=st.GRAY)
-    st.footer(ws, SN_Y0 + NY + 4)
+        st.text(ws, r, SN_COLS[0], SN_ENDS[0], f'=IF({on},IF({nm}="","Yearly bill",{nm}&""),"")', st.font(st.BODY, bold=True))
+        st.text(ws, r, SN_COLS[1], SN_ENDS[1], f'=IF({on},{cell_amount(amount, cents=True)},"")', None, st.RIGHT)
+        st.text(ws, r, SN_COLS[2], SN_ENDS[2], f'=IF({on},IF({mo}="","Any time",{mo}&""),"")')
+        st.text(ws, r, SN_COLS[3], SN_ENDS[3], f'=IFERROR(IF({on},{cell_amount(f"MIN({EN(E_YSAVED)}*{amount}/{total},{amount})", cents=True)},""),"")', None, st.RIGHT)
+        st.text(ws, r, SN_COLS[4], SN_ENDS[4], f'=IFERROR(IF({on},{cell_amount(f"{amount}/{EN(E_PPY)}", cents=True)},""),"")', None, st.RIGHT)
+        ws.row_dimensions[r].height = 20
+    st.hint(ws, SN_Y0 + NY, SN_COLS[0], SN_ENDS[-1], f'=IF({total}>0,"Car repairs, insurance, school. Add them on Start and a little goes aside each payday.",'
+                                                       f'"No yearly bills yet. Add one on Start and a little goes aside each payday.")')
+    for r, h in ((6, 10), (7, 20), (8, 50), (9, 14), (12, 22), (SN_Y0 + NY, 30), (SN_Y0 + NY + 1, 10)):
+        ws.row_dimensions[r].height = h
+    st.footer(ws, SN_FOOT)
     return ws
 
 
@@ -800,7 +867,6 @@ def build_safety(wb: Workbook):
 def build_open_me(wb: Workbook):
     """How to make your copy, the three steps, and what to try when the file opens as view only."""
     ws = wb.create_sheet("Open me")
-    st.page(ws, 4, 46, {"A": 1.5, "B": 4, "C": 118, "D": 1.5}, "Open me")
     blocks = [
         ("Make it yours", [
             "In Google Sheets: open the File menu, then Make a copy. Your copy is yours to type in.",
@@ -828,27 +894,35 @@ def build_open_me(wb: Workbook):
             "The amounts are estimates from what you type. Type your real balances again every few months.",
         ]),
     ]
+    rows = 6 + sum(len(b[1]) + 4 for b in blocks) + 4
+    st.page(ws, rows, "Open me")
+    i0, i1 = gcol(1) + 1, gend(8) - 1
     r = 6
     for title, lines in blocks:
-        st.section(ws, r, 2, title)
-        r += 1
+        top = r
+        st.section(ws, r + 1, i0, i1, title)
+        r += 2
         for i, text in enumerate(lines):
-            n = ws.cell(r, 2, i + 1)
-            n.font, n.alignment = st.font(9, color=st.GRAY), st.RIGHT
-            ws.cell(r, 3, text).font = st.font(11)
-            ws.row_dimensions[r].height = 20
+            st.text(ws, r, i0, i0 + 1, i + 1, st.font(st.HELP, color=st.GRAY))
+            st.text(ws, r, i0 + 3, i1, text, st.font(st.BODY), st.WRAP)
+            ws.row_dimensions[r].height = 20 if len(text) <= 70 else 32
             r += 1
-        r += 1
-    st.block(ws, r, r + 2, 2, 3)
-    ws.cell(r, 3, f"Questions? Write to {SUPPORT_EMAIL}").font = st.font(11, bold=True)
-    ws.cell(r + 1, 3, "We read every message and answer as soon as we can.").font = st.font(9, color=st.GRAY)
-    ws.cell(r + 2, 3, f"Version {VERSION} · {VERSION_DATE}").font = st.font(9, color=st.GRAY)
-    st.footer(ws, r + 4)
+        st.grid_card(ws, top, r, 1, 8)
+        ws.row_dimensions[top].height, ws.row_dimensions[r].height = 10, 10
+        r += 2
+    # questions, on the right
+    st.grid_card(ws, 6, 12, 9, 12)
+    st.section(ws, 7, R_C0, R_C1, "Questions?")
+    st.text(ws, 8, R_C0, R_C1, f"Write to {SUPPORT_EMAIL}.", st.font(st.BODY))
+    st.hint(ws, 9, R_C0, R_C1, "We read every message and answer as soon as we can.")
+    st.hint(ws, 10, R_C0, R_C1, f"Version {VERSION} · {VERSION_DATE}", wrap=False)
+    ws.row_dimensions[9].height = 28
+    st.footer(ws, r)
     return ws
 
 
 def finish(wb: Workbook):
-    """The style pass every tab shares: the order of the tabs, what prints, where a list is frozen."""
+    """The style pass every tab shares: the order of the tabs, the card lines, what prints."""
     wb._sheets = [wb[n] for n in TABS + ["Engine", "Lists"]]
     for name in TABS:  # a formula on a tab the buyer sees never shows an error: it shows nothing
         for row in wb[name].iter_rows():
@@ -856,11 +930,12 @@ def finish(wb: Workbook):
                 v = cell.value
                 if isinstance(v, str) and v.startswith("=") and not v.startswith("=IFERROR("):
                     cell.value = f'=IFERROR({v[1:]},"")'
+        st.draw_cards(wb[name])
     wb.active = 0
     for ws in wb:
         ws.sheet_view.tabSelected = ws.title == TABS[0]
     path = wb["Path"]
-    for ws, area, landscape in ((wb["Today"], f"A1:H{T_L0 + NI + 12}", False), (path, f"A1:Q{P_R1 + P_PRINT_ROWS - 1}", True)):
+    for ws, area, landscape in ((wb["Today"], f"A1:{L(NCOL)}{T_FOOT}", True), (path, f"A1:{L(NCOL)}{P_R1 + P_PRINT_ROWS - 1}", True)):
         ws.print_area = area
         ws.page_setup.orientation = "landscape" if landscape else "portrait"
         ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
@@ -872,7 +947,8 @@ def finish(wb: Workbook):
 
 
 # ------------------------------------------------------------------------------------------------ the workbook
-def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.date | None = None, fit_all: bool = False) -> str:
+def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.date | None = None, fit_all: bool = False,
+          prepare=None) -> str:
     wb = Workbook()
     wb.remove(wb.active)
     build_open_me(wb)
@@ -897,6 +973,8 @@ def build(path: str, scenario: dict | None = None, ticks: int = 0, today: dt.dat
             ws.page_setup.orientation = "landscape" if ws.max_column > 8 else "portrait"
             ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
             ws.sheet_properties.pageSetUpPr.fitToPage = True
+    if prepare:  # a last change before saving (the pictures use it)
+        prepare(wb)
     wb.calculation.fullCalcOnLoad = True
     os.makedirs(os.path.dirname(path), exist_ok=True)
     wb.save(path)

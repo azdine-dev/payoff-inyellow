@@ -1,27 +1,70 @@
 """Where things live in the workbook. The builder and the tests both read these, so a moved cell moves in one place."""
+from openpyxl.utils import get_column_letter as _L
 
 ND = 15          # debts
 NY = 8           # yearly bills
 NR = 360         # paydays the sheet can hold (the engine allows 520; a longer plan shows a calm note)
 
-# ---- Start (all typing happens here)
-S_CUR = "D7"     # currency symbol
-S_FREQ = "D8"    # pay schedule
-S_NEXT = "D9"    # next payday
-S_OTHER = "D10"  # twice a month only: the other pay day
-D0 = 15          # first debt row; columns: B #, C name, D balance, E interest %, F minimum, G due day, H my order, I note
-DN = D0 + ND - 1
-S_MONEY = "D32"
-S_BUF = "D33"
-S_GOAL = "D34"
-S_ORDER = "D47"   # after the yearly bills
-Y0 = 38          # first yearly bill row; columns: C name, D amount, E month
-YN = Y0 + NY - 1
-S_SHOW = "D48"   # Show where to type
+# ---- the grid every visible tab shares
+# 12 columns of about 9 wide with gutters of about 2. Each grid column is 6 narrow cells, so a bar of 20 cells
+# fills exactly a card of 3 columns, and a card of n columns is 6n + (n - 1) cells wide.
+SUB, SUB_W, GUT_W, MARGIN_W = 6, 1.5, 2, 3
+NCOL = 1 + 12 * SUB + 11 + 1          # margin, the grid, margin: 85 columns
+HELP_COL = NCOL + 1                   # column CH, hidden: quiet helpers that the colour rules read
+BAR = 20                              # cells in a bar
+
+
+def gcol(g: int) -> int:
+    """The first cell of grid column g (1 to 12)"""
+    return 2 + (g - 1) * (SUB + 1)
+
+
+def gend(g: int) -> int:
+    """The last cell of grid column g"""
+    return gcol(g) + SUB - 1
+
+
+def ref(row: int, col: int) -> str:
+    return f"{_L(col)}{row}"
+
+
+def helper(row: int) -> str:
+    return ref(row, HELP_COL)
+
+
+# the rows every tab shares
+BAND_ROWS = 4         # the calm band: title in row 2, the purpose line in row 3
+TOP = 6               # the first row of cards
 
 FREQ = {"weekly": "Every week", "biweekly": "Every 2 weeks", "twice": "Twice a month", "monthly": "Every month"}
 METHOD = {"piy": "PaidInYellow order", "avalanche": "Biggest interest first", "custom": "My own order"}
 TICK = "✓"
+
+# ---- Start (all typing happens here). Steps on the left (grid 1 to 8), the result and the options on the right.
+S_LABEL, S_INPUT, S_HELP = 3, 20, 35          # a field row: label, the typed cell, a gray hint
+S_INPUT_END = 33
+S_CUR, S_FREQ, S_NEXT, S_OTHER = ref(8, S_INPUT), ref(9, S_INPUT), ref(10, S_INPUT), ref(11, S_INPUT)
+S_DATECHECK = ref(12, S_LABEL)
+D0 = 18               # first debt row
+DN = D0 + ND - 1
+# the debt table: # name balance interest minimum due day, my order, then a calm note. Each column ends with one
+# empty cell, so the lines under the typed cells never touch.
+SC_NUM, SC_NAME, SC_BAL, SC_APR, SC_MIN, SC_DUE, SC_ORDER, SC_NOTE = 3, 5, 15, 22, 28, 35, 41, 46
+SC_ENDS = {SC_NUM: 4, SC_NAME: 14, SC_BAL: 21, SC_APR: 27, SC_MIN: 34, SC_DUE: 40, SC_ORDER: 44, SC_NOTE: 55}
+S_NOTE_COL = SC_NOTE
+S_MONEY, S_BUF, S_GOAL = ref(37, S_INPUT), ref(39, S_INPUT), ref(40, S_INPUT)
+S_MONEYNOTE = ref(38, S_LABEL)
+Y0 = 43               # first yearly bill row
+YN = Y0 + NY - 1
+SY_NAME, SY_AMT, SY_MONTH = 3, 21, 31
+SY_ENDS = {SY_NAME: 20, SY_AMT: 30, SY_MONTH: 45}
+# the right column: the result box, then the options
+R_C0, R_C1 = gcol(9) + 1, gend(12) - 1        # inside a card of grid 9 to 12
+S_R_LINE1, S_R_DATE, S_R_STEP, S_R_MIN, S_R_SOONER, S_R_NEXT = (ref(r, R_C0) for r in (7, 8, 9, 10, 11, 12))
+O_LABEL, O_INPUT = R_C0, R_C1 - 2   # the tick sits at the right edge of the card
+S_ORDER = ref(18, R_C0)        # under its label: the longest choice needs the card's width
+S_SHOW = ref(21, O_INPUT)
+S_FOOT = 53
 
 # ---- Engine (hidden)
 E_PPY, E_YPP, E_OTHER, E_DAY_A, E_DAY_B, E_HALF = "B1", "B2", "B3", "B4", "B5", "B6"
@@ -58,12 +101,6 @@ E_STARTOWED = "S13"
 E_CUR = "S14"        # currency symbol
 C_NPER, C_NPERINT = 16, 17   # per debt in payoff order (rows EO0..): months and interest on minimums only
 
-# ---- Start: the result box and the notes
-S_DATECHECK = "C11"
-S_R_LINE1, S_R_DATE, S_R_STEP, S_R_MIN, S_R_SOONER = "C51", "C52", "C53", "C54", "C55"
-S_MONEYNOTE = "E32"
-S_NOTE_COL = 9       # column I: a calm note next to a debt row
-
 # ---- the only places yellow may show (by conditional formatting): paid, done, or the one key word
 YELLOW_OK = {("Start", S_R_DATE)}
 
@@ -79,51 +116,102 @@ E_OWEDNOW, E_PAIDSOFAR, E_DEBTSPAID, E_NDEBTS, E_NEXTGONEPOS = "U7", "U8", "U9",
 NI = ND + 3           # what a payday can list: a bill per debt, yearly bills, the buffer, the extra
 ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE, ROW_LEFT, ROW_GONE, ROW_XTRA = 13, 14, 15, 16, 17, 18, 19  # over the C_BAL columns
 
-# ---- Path
-P_R0 = 16             # header of the payday list
-P_R1 = 17             # payday 1
+# ---- Today: the payday card on the left (grid 1 to 8), the focus debt on the right (grid 9 to 12)
+T_FLAG = helper(3)    # 1 when the card is yellow (paid, or all done)
+T_COLS = (3, 28, 38)  # a line: what it is, the amount, a note
+T_ENDS = (27, 37, 55)
+T_LABEL, T_MAIN, T_SUB = ref(7, 3), ref(8, 3), ref(9, 3)
+T_HEAD = 11
+T_L0 = 12             # first line of the payday
+T_CARD = f"B6:{_L(gend(8))}{T_HEAD}"                 # the top of the card
+T_CARD_LINES = f"B{T_L0}:{_L(gend(8))}{T_L0 + NI}"    # the lines: the card ends one row after the last line
+T_COUNT = helper(4)   # how many lines this payday has
+T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = ref(8, R_C0), ref(9, R_C0), ref(10, R_C0)
+T_LATE = ref(T_L0 + NI + 2, 3)
+T_FOOT = T_L0 + NI + 4
+YELLOW_OK |= {("Today", T_CARD), ("Today", T_CARD_LINES)}
+
+# ---- Path: four tiles, the doughnut and the chart, then the payday list (grid 1 to 8)
+P_TILE_ROW = 8
+P_TILE_COLS = [gcol(1 + 3 * k) + 1 for k in range(4)]       # inside each tile of 3 grid columns
+P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = (ref(P_TILE_ROW, c) for c in P_TILE_COLS)
+P_FREE_CELLS = f"{P_TILE_FREE}:{_L(gend(6) - 1)}{P_TILE_ROW}"   # the debt-free date, merged over its tile
+P_BAR_ROW, P_CAPTION_ROW = 9, 10
+P_SHARES = [helper(4 + k) for k in range(4)]                  # what each tile's bar measures, 0 to 1
+P_RING_TEXT = gcol(3)                                         # beside the doughnut
+P_PCT, P_DEBTSPAID, P_NEXT = ref(14, P_RING_TEXT), ref(15, P_RING_TEXT), ref(16, P_RING_TEXT)
+P_NOFIT, P_SHORT = ref(23, 3), ref(24, 3)
+P_R0 = 25             # header of the payday list
+P_R1 = 26             # payday 1
 P_RN = P_R1 + NR - 1
-P_ACTUAL_COL = 8      # column H: what was really paid (empty means as planned)
-P_DONE_COL = 9        # column I: the tick
-
-# ---- Today
-T_FLAG = "H3"         # 1 when the card is yellow (paid, or all done)
-T_LABEL, T_MAIN, T_SUB = "C6", "C7", "C8"
-T_L0 = 12             # first line of the payday (label C, amount D, note E)
-T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = "G7", "G8", "G9"   # a second card, beside the main one
-T_LATE = "C31"
-YELLOW_OK |= {("Today", "B6:E9")}
-
-# ---- Path: tiles, the bar, the next milestone, the list, the chart
+P_COLS = [3, 13, 19, 24, 30, 37, 44, 51]   # Payday, Bills, Yearly, Buffer, Extra, Move, Actual, Done
+P_ENDS = [12, 18, 23, 29, 36, 43, 50, 55]
+P_ACTUAL_COL = P_COLS[6]                    # what was really paid (empty means as planned)
+P_DONE_COL = P_COLS[7]                      # the tick
+P_LIST = f"B{P_R1}:{_L(gend(8))}{P_RN}"     # the rows of the list card
+P_CURK, P_SHOW = helper(3), helper(2)       # the current payday, and the Show where to type tick
+P_FOOT = 32                                  # the footer sits in the right column: the list runs long
 E_NEXTGONE = "U12"    # the date the next debt is gone
 E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
 NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)
-P_CURK, P_SHOW = "Q3", "Q2"   # quiet helpers on Path: the current payday, and the Show where to type tick
-P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = "B7", "D7", "F7", "H7"
-P_FREE_CELLS = "D7:E7"   # the debt-free date, merged over two columns
-P_PCT, P_DEBTSPAID = "N11", "N12"   # beside the doughnut
-P_NEXT, P_NOFIT, P_SHORT = "B11", "B12", "B13"
 E_RING_COL = 25       # Engine column Y, rows 1 to 3: gone, left, all gone
 E_TICKED = "U18"      # paydays of the plan that are ticked
-YELLOW_OK |= {("Path", P_FREE_CELLS), ("Path", f"B{P_R1}:I{P_RN}")}
+P_TILE_BARS = [f"{_L(gcol(1 + 3 * k))}{P_BAR_ROW}:{_L(gend(3 + 3 * k))}{P_BAR_ROW}" for k in range(4)]
+YELLOW_OK |= {("Path", P_FREE_CELLS), ("Path", P_LIST)} | {("Path", b) for b in P_TILE_BARS}
 
-# ---- Debts and Safety net
+# ---- Debts: one card with the table (grid 1 to 9), two rows a debt: the numbers, then a small note
 E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday
 E_SHORTK = "U16"      # the first payday whose Actual is below its bills (0 = none)
 E_VIEWACTUAL = "U17"  # 1 when the payday Today shows has an Actual typed
-DB_R0 = 8             # first debt row on Debts (in payoff order)
-DB_PCT_COL = 18       # column R: the share paid, a quiet helper
-DB_PAIDTOTAL = "F6"   # paid off so far, the same number as the Path tile
-SN_BUF, SN_BAR, SN_READY = "B7", "B8", "B9"
-SN_Y0 = 15            # first yearly bill row on Safety net
-SN_EMPTY = "B24"
-YELLOW_OK |= {("Debts", f"B{DB_R0}:T{DB_R0 + ND - 1}"), ("Safety net", SN_READY)}
+DB_R0 = 9             # the first debt (in payoff order). Four rows a debt: three thin rows hold the numbers (the bar
+DB_STEP = 4           # sits in the middle one, so it stays thin), the fourth holds a small note
+DB_COLS = dict(num=2, name=4, rate=13, left=18, paid=25, bar=33, gone=54)
+DB_ENDS = dict(num=3, name=12, rate=17, left=24, paid=31, bar=52, gone=63)
+DB_PCT_COL = HELP_COL # the share paid, a quiet helper
+DB_ON_COL = HELP_COL + 1   # 1 on the four rows of a debt that is there: the card is white only there
+DB_PAIDTOTAL = ref(7, DB_COLS["gone"])  # paid off so far, the same number as the Path tile
+DB_LAST = DB_R0 + DB_STEP * ND - 1
+DB_FOOT = DB_LAST + 3
 
-# quiet helpers on the visible tabs, read by the colour rules only
-HELPERS = {("Today", T_FLAG), ("Path", P_CURK), ("Path", P_SHOW)}
+
+def db_row(p: int) -> int:
+    return DB_R0 + DB_STEP * p
+
+
+DB_BARS = f"{_L(DB_COLS['bar'])}{DB_R0}:{_L(DB_ENDS['bar'])}{DB_LAST}"   # the rule reads the share of each row
+DB_ROWS = f"B{DB_R0}:{_L(DB_ENDS['gone'])}{DB_LAST}"
+# the colour rules over the debt rows, in ranges that never overlap: LibreOffice and Google Sheets use the first
+# range that has a rule for a cell, so overlapping ranges would hide the bar or the card line
+DB_RANGES = [f"B{DB_R0}:B{DB_LAST}", f"C{DB_R0}:{_L(DB_COLS['bar'] - 1)}{DB_LAST}", DB_BARS,
+             f"{_L(DB_ENDS['bar'] + 1)}{DB_R0}:{_L(DB_COLS['gone'] - 1)}{DB_LAST}", f"{_L(DB_COLS['gone'])}{DB_R0}:{_L(DB_ENDS['gone'])}{DB_LAST}"]
+# (each range starts where a merged cell starts: a merged cell takes the rules of its first cell)
+
+# ---- Safety net: the buffer (grid 1 to 5) beside the yearly bills (grid 6 to 12)
+SN_BUF = ref(8, 3)
+SN_BAR = f"C9:{_L(2 + BAR)}9"   # the bar shares its thin row with the header of the yearly bills
+SN_SHARE = helper(2)
+SN_READY = ref(12, 3)
+SN_Y0 = 10            # first yearly bill row
+SN_COLS = [38, 50, 58, 67, 76]   # Bill, A year, Month needed, Set aside so far, Each payday
+SN_ENDS = [48, 56, 66, 74, 83]
+SN_EMPTY = ref(SN_Y0 + NY, 38)
+SN_HEAD = SN_Y0 - 1
+SN_FOOT = SN_Y0 + NY + 4
+YELLOW_OK |= {("Debts", r) for r in DB_RANGES} | {("Safety net", SN_READY), ("Safety net", SN_BAR)}
+
+# quiet helpers on the visible tabs, in the hidden column: the colour rules read them
+HELPERS = {("Today", T_FLAG), ("Today", T_COUNT), ("Path", P_CURK), ("Path", P_SHOW), ("Safety net", SN_SHARE)} | {("Path", s) for s in P_SHARES}
 
 # ---- the workbook
 TABS = ["Open me", "Start", "Today", "Path", "Debts", "Safety net"]   # in this order; Engine and Lists are hidden
+PURPOSE = {
+    "Open me": "Start here. Two minutes.",
+    "Start": "Type here. Everything else follows.",
+    "Today": "What to move this payday.",
+    "Path": "Every payday until you are debt-free.",
+    "Debts": "Each debt, in the order you pay it.",
+    "Safety net": "Money for surprises and yearly bills.",
+}
 VERSION = "1.0"
 VERSION_DATE = "November 2026"
 SUPPORT_EMAIL = "[SUPPORT EMAIL]"   # to fill in before the file is sold

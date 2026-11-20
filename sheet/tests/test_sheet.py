@@ -10,6 +10,9 @@ import scenarios
 from conftest import all_scenarios
 from engine_v2 import simulate
 from layout import *  # noqa: F401,F403
+from openpyxl.cell.cell import MergedCell
+from openpyxl.utils import get_column_letter as L
+from openpyxl.utils.cell import coordinate_from_string, column_index_from_string
 
 BANNED = ["SPARKLINE", "FILTER", "SORT", "UNIQUE", "LET", "LAMBDA", "XLOOKUP", "XMATCH", "SEQUENCE", "ARRAYFORMULA", "QUERY",
           "IFS", "MINIFS", "MAXIFS", "SWITCH", "TEXTJOIN", "CONCAT", "IMPORTRANGE", "GOOGLEFINANCE", "REGEXMATCH", "_XLFN", "__XLUDF"]
@@ -181,9 +184,9 @@ def test_start_blank_is_calm(books):
 def test_start_notes_next_to_inputs_that_need_a_look(books):
     st = books["checks"][1]["Start"]
     notes = [st.cell(D0 + i, S_NOTE_COL).value or "" for i in range(4)]
-    assert notes[0] == "Add the due day. It is on your statement."
-    assert notes[1] == "The minimum is more than the balance. Have a look at both."
-    assert notes[2] == "Add the balance and this debt joins your plan."
+    assert notes[0] == "Add the due day from your statement."
+    assert notes[1] == "The minimum is above the balance."
+    assert notes[2] == "Add the balance to join the plan."
     assert notes[3] == ""
     assert st[S_MONEYNOTE].value == "Add what you can put on top of your minimums. Even 20 matters."
 
@@ -193,10 +196,17 @@ def test_start_says_when_yearly_bills_use_all_the_money(books):
     assert books["nadia"][1]["Start"][S_MONEYNOTE].value == "On top of your minimums. Even 20 matters."
 
 
+def at(ref):
+    col, row = coordinate_from_string(ref)
+    return row, column_index_from_string(col)
+
+
 def test_start_keeps_the_order_of_the_steps(books):
-    """Pay, debts, money, yearly bills, then the payoff order, the switch and the result box."""
-    rows = [int(r[1:]) for r in (S_NEXT, f"C{D0}", S_MONEY, f"C{Y0}", S_ORDER, S_SHOW, S_R_LINE1)]
-    assert rows == sorted(rows)
+    """The steps in order on the left (pay, debts, money, yearly bills); the result, then the options, on the right."""
+    left = [at(r) for r in (S_NEXT, f"C{D0}", S_MONEY, f"C{Y0}")]
+    right = [at(r) for r in (S_R_LINE1, S_ORDER, S_SHOW)]
+    assert [r for r, _ in left] == sorted(r for r, _ in left) and [r for r, _ in right] == sorted(r for r, _ in right)
+    assert max(c for _, c in left) <= gend(8) < min(c for _, c in right)
 
 
 def test_start_dropdowns_and_the_three_orders(books):
@@ -214,14 +224,14 @@ def test_inputs_are_unlocked_and_everything_else_is_locked(books):
     wb = books["blank"][0]
     st = wb["Start"]
     assert st.protection.sheet and not st.protection.password
-    open_cells = {c.coordinate for row in st.iter_rows() for c in row if not c.protection.locked}
+    open_cells = {c.coordinate for row in st.iter_rows() for c in row if not c.protection.locked and not isinstance(c, MergedCell)}
     want = {S_CUR, S_FREQ, S_NEXT, S_OTHER, S_MONEY, S_BUF, S_GOAL, S_ORDER, S_SHOW}
-    want |= {f"{col}{D0 + i}" for i in range(ND) for col in "CDEFGH"}
-    want |= {f"{col}{Y0 + i}" for i in range(NY) for col in "CDE"}
+    want |= {f"{L(c)}{D0 + i}" for i in range(ND) for c in (SC_NAME, SC_BAL, SC_APR, SC_MIN, SC_DUE, SC_ORDER)}
+    want |= {f"{L(c)}{Y0 + i}" for i in range(NY) for c in (SY_NAME, SY_AMT, SY_MONTH)}
     assert open_cells == want
     pa = wb["Path"]
     assert pa.protection.sheet
-    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked} == {f"{col}{P_R1 + k}" for k in range(NR) for col in "HI"}
+    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked and not isinstance(c, MergedCell)} == {f"{L(c)}{P_R1 + k}" for k in range(NR) for c in (P_ACTUAL_COL, P_DONE_COL)}
     assert all(c.protection.locked for row in wb["Today"].iter_rows() for c in row)
     for name in ("Engine", "Lists"):
         assert wb[name].sheet_state == "hidden" and wb[name].protection.sheet
@@ -281,7 +291,7 @@ def test_no_text_criteria_with_a_decimal_point(books):
 def today_lines(ws):
     out = []
     for i in range(NI):
-        label, amount, note = (ws.cell(T_L0 + i, c).value or "" for c in (3, 4, 5))
+        label, amount, note = (ws.cell(T_L0 + i, c).value or "" for c in T_COLS)
         if label:
             out.append((label, amount, note))
     return out
@@ -336,7 +346,7 @@ def test_today_when_everything_is_done_or_nothing_is_typed(books):
 def test_ticks_are_a_list_with_one_choice(books):
     pa = books["blank"][0]["Path"]
     dv = {str(d.sqref): d.formula1 for d in pa.data_validations.dataValidation}
-    assert dv[f"I{P_R1}:I{P_RN}"] == f'"{TICK}"'
+    assert dv[f"{L(P_DONE_COL)}{P_R1}:{L(P_DONE_COL)}{P_RN}"] == f'"{TICK}"'
     assert all(pa.cell(P_R1 + k, P_DONE_COL).value is None for k in range(NR))  # never ticked for the buyer
 
 
@@ -358,7 +368,7 @@ def digits(s) -> str:
 def test_path_tiles_and_progress(books):
     pa = books["nadia"][1]["Path"]
     assert digits(pa[P_TILE_OWED].value) == "$3250"
-    assert pa[P_TILE_FREE].value == "Fri 16 Jul 2027"
+    assert pa[P_TILE_FREE].value == "16 Jul 2027"   # no weekday on the tile: the date fits at 24 pt
     assert digits(pa[P_TILE_PAID].value) == "$0"
     assert digits(pa[P_TILE_AVOID].value) == "$1167"  # 1,444.86 on minimums only, 277.93 on the plan
     assert pa[P_DEBTSPAID].value == "Debts paid 0 of 3"
@@ -388,18 +398,18 @@ def test_path_list_matches_the_engine(books):
     pa = books["nadia"][1]["Path"]
     for r in ref["rows"]:
         row = P_R1 + r["k"]
-        assert pa.cell(row, 2).value == this_year(r["date"])
-        got = [amt(pa.cell(row, c).value) for c in (3, 4, 5, 6, 7)]
+        assert pa.cell(row, P_COLS[0]).value == this_year(r["date"])
+        got = [amt(pa.cell(row, c).value) for c in P_COLS[1:6]]
         want = [r["bills"], r["yearly"], r["buffer"], r["extra"], r["total_move"]]
         assert all(abs(g - w) < 0.005 for g, w in zip(got, want)), (r["k"], got, want)
     after = P_R1 + len(ref["rows"])
-    assert all(not pa.cell(after, c).value for c in range(2, 8))  # nothing after the last payday
+    assert all(not pa.cell(after, c).value for c in P_COLS[:6])  # nothing after the last payday
 
 
 def test_path_rules_and_chart(books):
     pa = books["blank"][0]["Path"]
     rules = {str(r.sqref): [x for x in r.rules] for r in pa.conditional_formatting}
-    paid = rules[f"B{P_R1}:I{P_RN}"]
+    paid = rules[P_LIST]
     assert _rgb(paid[0].dxf.fill.bgColor) == "FFE14D" and paid[0].dxf.font.strike  # paid rows: yellow, struck through
     assert _rgb(paid[1].dxf.border.top.color) == "2F4A6D"                           # the current row: action blue
     assert _rgb(paid[1].dxf.font.color) == "2F4A6D"                                 # and its words, for Google Sheets
@@ -421,7 +431,7 @@ def test_path_has_the_doughnut_and_the_area_chart(books):
 
 def test_path_list_shows_the_plan_and_what_was_really_paid(books):
     pa = books["nadia-actual-200"][1]["Path"]
-    row = [pa.cell(P_R1 + 1, c).value or "" for c in range(3, 9)]
+    row = [pa.cell(P_R1 + 1, c).value or "" for c in P_COLS[1:7]]
     assert row == ["$116", "$10", "$74", "", "$266", 200]  # bills, yearly, buffer, extra (none: blank), Move as planned, Actual
     assert not pa[P_SHORT].value
     short = books["nadia-actual-100"][1]["Path"]
@@ -430,10 +440,13 @@ def test_path_list_shows_the_plan_and_what_was_really_paid(books):
 
 def test_path_tiles_say_what_their_bars_measure(books):
     pa = books["nadia-ticked"][1]["Path"]
-    assert [pa.cell(9, c).value for c in (4, 6, 8)] == ["2 of 19 paydays done", "3% of what you owed", "next to minimums only"]
-    assert digits(pa.cell(9, 2).value) == "$3250"
-    assert all(len(pa.cell(8, c).value) == 16 for c in (2, 4, 6, 8))
-    assert all(not books["blank"][1]["Path"].cell(8, c).value for c in (2, 4, 6, 8))
+    caps = [pa.cell(P_CAPTION_ROW, c).value for c in P_TILE_COLS]
+    assert caps[1:] == ["2 of 19 paydays done", "3% of what you owed", "next to minimums only"]
+    assert digits(caps[0]) == "$3250"
+    shares = [pa[s].value for s in P_SHARES]
+    assert shares[1] == pytest.approx(2 / 19) and shares[0] == shares[2] == pytest.approx(books["nadia-ticked"][1]["Engine"][E_PCT].value)
+    assert 0 < shares[3] < 1
+    assert all(not books["blank"][1]["Path"][s].value for s in P_SHARES)   # no plan, no bar
 
 
 def test_a_plan_that_does_not_fit_says_so_calmly(books):
@@ -450,9 +463,10 @@ def test_a_plan_that_does_not_fit_says_so_calmly(books):
 def debt_rows(ws):
     out = []
     for p in range(ND):
-        r = DB_R0 + p
-        if ws.cell(r, 3).value:
-            out.append([ws.cell(r, c).value for c in (2, 3, 4, 5, 6, DB_PCT_COL, 19, 20)])
+        r = db_row(p)
+        if ws.cell(r, DB_COLS["name"]).value:
+            out.append([ws.cell(r, DB_COLS[k]).value for k in ("num", "name", "rate", "left", "paid")]
+                       + [ws.cell(r, DB_PCT_COL).value, ws.cell(r, DB_COLS["gone"]).value, ws.cell(r + 3, DB_COLS["name"]).value])
     return out
 
 
@@ -477,16 +491,16 @@ def test_a_paid_debt_says_paid_and_the_bar_is_full(books):
     assert [r[6] for r in rows] == ["PAID", "PAID", "PAID"] and [r[5] for r in rows] == [1, 1, 1]
     wb = books["blank"][0]["Debts"]
     rules = {str(r.sqref): r.rules for r in wb.conditional_formatting}
-    bars = rules[f"H{DB_R0}:Q{DB_R0 + ND - 1}"]
-    assert [_rgb(x.dxf.fill.bgColor) for x in bars] == ["2F4A6D", "E2DCCD"]  # action blue for progress, line for the rest
-    assert _rgb(rules[f"B{DB_R0}:T{DB_R0 + ND - 1}"][0].dxf.fill.bgColor) == "FFE14D"  # yellow only when paid
-    assert len([c for c in "HIJKLMNOPQ"]) == 10
+    bars = rules[DB_BARS]
+    assert [_rgb(x.dxf.fill.bgColor) for x in bars][:3] == ["FFE14D", "2F4A6D", "E6EFE8"]  # paid, progress, the rest
+    assert all(_rgb(rules[r][0].dxf.fill.bgColor) == "FFE14D" and "=1" in rules[r][0].formula[0] for r in DB_RANGES)  # yellow only when paid
+    assert column_index_from_string(DB_BARS.split(":")[1].rstrip("0123456789")) - DB_COLS["bar"] + 1 == BAR
 
 
 def test_a_paid_bar_is_only_yellow(books):
     """Blue and the empty colour stop at 100%, so the row rule alone colours a paid bar."""
     rules = {str(r.sqref): r.rules for r in books["blank"][0]["Debts"].conditional_formatting}
-    assert all("<1" in x.formula[0] for x in rules[f"H{DB_R0}:Q{DB_R0 + ND - 1}"])
+    assert all("<1" in x.formula[0] for x in rules[DB_BARS][1:3])
 
 
 def test_actual_reaches_debts_and_safety_net(books):
@@ -505,22 +519,22 @@ def test_a_debt_that_grows_gets_a_calm_note(books):
     rows = debt_rows(books["growing_piy"][1]["Debts"])
     assert rows[0][1] == "Dept card" and rows[0][7] == "This one grows even when you pay the minimum, so it goes first."
     assert not rows[1][7] and not rows[2][7]
-    cell = books["blank"][0]["Debts"].cell(DB_R0, 20)
+    cell = books["blank"][0]["Debts"].cell(DB_R0 + 3, DB_COLS["name"])
     assert _rgb(cell.font.color) == "1F2A44"  # ink, never red
 
 
 def test_safety_net(books):
     sn = books["nadia"][1]["Safety net"]
     assert digits(sn[SN_BUF].value) == "$200$500" and not sn[SN_READY].value
-    row = [sn.cell(SN_Y0, c).value for c in range(2, 7)]
+    row = [sn.cell(SN_Y0, c).value for c in SN_COLS]
     assert [row[0], amt(row[1]), row[2], row[3] or "", amt(row[4])] == ["Gifts and holidays", 260, "December", "", 10]  # nothing set aside yet: blank
     assert all(re.search(r"[.,]00$", row[i]) for i in (1, 4))  # cents in tables
     ticked = books["nadia-ticked"][1]["Safety net"]
     assert digits(ticked[SN_BUF].value) == "$480$500"
-    assert amt(ticked.cell(SN_Y0, 5).value) == 20            # two paydays of 10
+    assert amt(ticked.cell(SN_Y0, SN_COLS[3]).value) == 20   # two paydays of 10
     done = books["nadia-done"][1]["Safety net"]
     assert digits(done[SN_BUF].value) == "$500$500" and done[SN_READY].value == "ready"
-    assert amt(done.cell(SN_Y0, 5).value) == 190             # 19 paydays of 10
+    assert amt(done.cell(SN_Y0, SN_COLS[3]).value) == 190    # 19 paydays of 10
     blank = books["blank"][1]["Safety net"]
     assert blank[SN_EMPTY].value.startswith("No yearly bills yet.")
 
@@ -539,7 +553,7 @@ def test_tabs_in_order_with_calm_colours(books):
         assert ws.sheet_state == "visible" and ws.sheet_properties.tabColor.rgb[-6:] == "D8E7DC"  # calm band, never yellow
         assert ws.sheet_view.showGridLines is False
         title = ws["B2"]
-        assert title.value == name and title.font.name == "Bricolage Grotesque" and title.font.sz == 60 and title.font.b
+        assert title.value == name and title.font.name == "Bricolage Grotesque" and title.font.sz == 48 and title.font.b
         assert all(_rgb(ws.cell(r, 2).fill.fgColor) == "D8E7DC" for r in (1, 2, 3, 4))  # the same band on every tab
         assert _rgb(ws.cell(5, 2).fill.fgColor) == "F8F6F0"
         assert "one paycheck at a time" in all_text(ws)  # the same footer
@@ -597,13 +611,13 @@ def test_tables_are_blank_never_a_dash_or_zero(books, name):
         for row in books[name][1][tab].iter_rows():
             for cell in row:
                 v = cell.value
-                if (tab, cell.coordinate) in HELPERS or (tab == "Debts" and cell.column == DB_PCT_COL):
+                if cell.column >= HELP_COL:
                     continue
                 if (tab == "Path" and cell.row < P_R1) or (tab, cell.coordinate) == ("Debts", DB_PAIDTOTAL):
                     continue  # the tiles: "$0 owed" and "$0 paid off" are real numbers, the tables leave a zero blank
                 if cell.data_type == "n" and v == 0 and books[name][0][tab][cell.coordinate].value is not None:
                     raise AssertionError((name, tab, cell.coordinate, v))
-                if (tab, cell.coordinate) in HELPERS or (tab == "Debts" and cell.column == DB_PCT_COL):
+                if cell.column >= HELP_COL:
                     continue  # quiet helpers for the colour rules, not shown
                 if isinstance(v, str) and not v.endswith("%"):  # a 0% rate is a rate, not an empty amount
                     assert v.strip() not in ("-", "·", "0") and not re.fullmatch(r"\D*0([.,]00)?\D*", v.strip() or "x"), (name, tab, cell.coordinate, v)
@@ -627,12 +641,90 @@ def test_typed_cells_take_only_what_makes_sense(books):
     def rule(ref):
         return dv[ref].type, dv[ref].formula1, dv[ref].formula2
     assert rule(S_NEXT)[0] == "date"
-    assert rule(f"E{D0}:E{DN}") == ("decimal", "0", "100")
-    assert rule(f"G{D0}:G{DN}") == ("whole", "1", "31")
+    col = lambda c, r0, r1: f"{L(c)}{r0}:{L(c)}{r1}"  # noqa: E731
+    assert rule(col(SC_APR, D0, DN)) == ("decimal", "0", "100")
+    assert rule(col(SC_DUE, D0, DN)) == ("whole", "1", "31")
     assert rule(S_OTHER) == ("whole", "1", "31")
-    for ref in (f"D{D0}:D{DN}", f"F{D0}:F{DN}", f"D{Y0}:D{YN}", f"{S_MONEY}:{S_GOAL}"):
+    for ref in (col(SC_BAL, D0, DN), col(SC_MIN, D0, DN), col(SY_AMT, Y0, YN), S_MONEY, S_BUF, S_GOAL):
         assert rule(ref)[:2] == ("decimal", "0") and dv[ref].operator == "greaterThanOrEqual"
     pa = {str(d.sqref): d for d in books["blank"][0]["Path"].data_validations.dataValidation}
-    assert pa[f"H{P_R1}:H{P_RN}"].type == "decimal" and pa[f"H{P_R1}:H{P_RN}"].formula1 == "0"
+    act = col(P_ACTUAL_COL, P_R1, P_RN)
+    assert pa[act].type == "decimal" and pa[act].formula1 == "0"
     for d in list(dv.values()) + list(pa.values()):
         assert d.showErrorMessage and d.error and "!" not in d.error
+
+
+# ------------------------------------------------------------------------------------------------ the design system
+def test_the_same_grid_on_every_tab(books):
+    """12 columns of 6 narrow cells (1.5 wide, so about 9) with gutters of 2, the same left edge everywhere"""
+    wb = books["blank"][0]
+    for name in TABS:
+        ws = wb[name]
+        assert ws.column_dimensions["A"].width == MARGIN_W
+        for g in range(1, 13):
+            assert all(ws.column_dimensions[L(c)].width == SUB_W for c in range(gcol(g), gend(g) + 1)), (name, g)
+            if g < 12:
+                assert ws.column_dimensions[L(gend(g) + 1)].width == GUT_W, (name, g)
+        assert ws.column_dimensions[L(HELP_COL)].hidden   # the quiet helpers
+
+
+def test_the_band_the_brand_and_the_footer(books):
+    wb = books["blank"][0]
+    for name in TABS:
+        ws = wb[name]
+        purpose, brand, slogan = ws.cell(3, gcol(1)), ws.cell(2, gcol(9)), ws.cell(3, gcol(9))
+        assert purpose.value == PURPOSE[name] and _rgb(purpose.font.color) == "5C5A55"
+        assert brand.value == "PaidInYellow" and brand.font.name == "Bricolage Grotesque" and brand.font.sz == 20
+        assert _rgb(brand.font.color) == "1F2A44" and brand.alignment.horizontal == "right"
+        assert slogan.value == "one paycheck at a time"
+        cells = {c.value: c for row in ws.iter_rows() for c in row if c.value in ("A planning tool, not financial advice.", "paidinyellow.com")}
+        assert len(cells) == 2, name
+        assert cells["paidinyellow.com"].alignment.horizontal == "right"
+
+
+def test_nothing_below_10_points(books):
+    wb = books["blank"][0]
+    for name in TABS:
+        for row in wb[name].iter_rows():
+            for cell in row:
+                if cell.value is not None and cell.column < HELP_COL:
+                    assert cell.font.sz >= 10, (name, cell.coordinate, cell.font.sz)
+
+
+def test_no_character_bars(books):
+    for name in TABS:
+        for row in books["blank"][0][name].iter_rows():
+            for cell in row:
+                assert not (isinstance(cell.value, str) and ("\u2588" in cell.value or "\u2591" in cell.value)), (name, cell.coordinate)
+
+
+def test_typed_cells_are_white_with_an_action_line_and_labels_bold(books):
+    st = books["blank"][0]["Start"]
+    for row in st.iter_rows():
+        for cell in row:
+            if not cell.protection.locked and not isinstance(cell, MergedCell):  # a merged cell follows its first cell
+                assert _rgb(cell.fill.fgColor) == "FFFFFF" and not cell.font.b, cell.coordinate
+                assert cell.border.bottom.style == "medium" and _rgb(cell.border.bottom.color) == "2F4A6D", cell.coordinate
+    for ref in (S_CUR, S_MONEY):
+        r, _ = at(ref)
+        assert st.cell(r, S_LABEL).font.b and st.cell(r, S_LABEL).font.sz == 11
+
+
+def test_one_bar_style_everywhere(books):
+    """20 narrow cells: yellow only at 100%, action blue for what is done, calm (or white on a calm card) for the rest"""
+    wb = books["blank"][0]
+    bars = [("Path", b) for b in P_TILE_BARS] + [("Safety net", SN_BAR), ("Debts", DB_BARS)]
+    for name, rng_ in bars:
+        rules = {str(r.sqref): r.rules for r in wb[name].conditional_formatting}[rng_]
+        c0, c1 = (column_index_from_string(x.rstrip("0123456789")) for x in rng_.split(":"))
+        assert c1 - c0 + 1 == BAR, (name, rng_)
+        colours = [_rgb(x.dxf.fill.bgColor) for x in rules][:3]
+        assert colours[:2] == ["FFE14D", "2F4A6D"] and colours[2] in ("E6EFE8", "FFFFFF"), (name, colours)
+        assert ">=0.9995" in rules[0].formula[0] or "=1" in rules[0].formula[0]
+
+
+def test_cards_are_white_on_paper_with_a_thin_line(books):
+    ws = books["blank"][0]["Path"]
+    tile = ws.cell(7, gcol(1))
+    assert _rgb(tile.fill.fgColor) == "FFFFFF" and tile.border.left.style == "thin" and _rgb(tile.border.left.color) == "E2DCCD"
+    assert _rgb(ws.cell(7, gcol(1) - 1).fill.fgColor) == "F8F6F0"
