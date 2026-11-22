@@ -270,4 +270,7 @@ PURPOSE = {
 VERSION = "1.0"
 VERSION_DATE = "November 2026"
 SUPPORT_EMAIL = "[SUPPORT EMAIL]"   # to fill in before the file is sold
+VIDEO_LINK = "[VIDEO LINK]"         # the 3 minute video, to fill in before the file is sold
+APP_SITE = "app.paidinyellow.com"   # named on Open me only
+OM_VIDEO = ref(10, gcol(1) + 1)     # the button that opens the video
 P_PRINT_ROWS = 60     # Path prints its tiles and the first 60 paydays, one page wide

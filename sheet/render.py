@@ -27,7 +27,7 @@ from openpyxl.utils import get_column_letter as L  # noqa: E402
 from scenarios import NADIA  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
-LAST_ROW = {"Open me": 50, "Start": S_FOOT, "Today": T_FOOT, "Path": P_R1 + 22, "Debts": DB_FOOT, "Safety net": SN_FOOT}
+LAST_ROW = {"Open me": 29, "Start": S_FOOT, "Today": T_FOOT, "Path": P_R1 + 22, "Debts": DB_FOOT, "Safety net": SN_FOOT}
 DESIGN = {"Open me": "OpenMe", "Start": "Start", "Today": "Today", "Path": "Path", "Debts": "Debts", "Safety net": "SafetyNet"}
 BROWSERS = [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
             "/usr/bin/google-chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]

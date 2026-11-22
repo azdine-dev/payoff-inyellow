@@ -695,6 +695,17 @@ def test_open_me_says_how_to_copy_and_what_to_try(books):
     assert "A planning tool, not financial advice." in all_text(books["blank"][0]["Start"])
 
 
+def test_open_me_names_the_app_there_only(books):
+    wb = books["blank"][0]
+    om = all_text(wb["Open me"])
+    for piece in ("Thank you for choosing PaidInYellow.", VIDEO_LINK, "Prefer your phone?", APP_SITE, "Google Sheets tips",
+                  "For your personal use. Please don't share or resell.", "Then three steps", "Make it yours"):
+        assert piece in om, piece
+    assert wb["Open me"][OM_VIDEO].value == "Watch the 3 minute video"
+    for name in TABS[1:]:   # the app is named on Open me and nowhere else
+        assert APP_SITE not in all_text(wb[name]) and "PaidInYellow app" not in all_text(wb[name]), name
+
+
 def test_freeze_and_print(books):
     wb = books["blank"][0]
     assert {n: wb[n].freeze_panes for n in TABS} == {"Open me": None, "Start": None, "Today": None, "Path": None, "Debts": None, "Safety net": None}

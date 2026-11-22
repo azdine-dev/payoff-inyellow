@@ -1045,59 +1045,77 @@ def build_safety(wb: Workbook):
 
 # ------------------------------------------------------------------------------------------------ Open me
 def build_open_me(wb: Workbook):
-    """How to make your copy, the three steps, and what to try when the file opens as view only."""
+    """A thank you with the video, how to make your copy, the three steps and what to try when the file opens as view
+    only. On the right: the app, three Google Sheets tips and where to write."""
     ws = wb.create_sheet("Open me")
-    blocks = [
-        ("Make it yours", [
-            "In Google Sheets: open the File menu, then Make a copy. Your copy is yours to type in.",
-            "From the copy link: press Make a copy when Google asks.",
-            "In Excel: open the file. If a bar at the top asks, press Enable Editing.",
-        ]),
-        ("Then three steps", [
-            "Go to Start and fill in the three steps. Show where to type tints every cell that is yours.",
-            "Open Today. It tells you what to move this payday.",
-            "When it is paid, pick the tick on Path. The payday turns yellow and Today moves on.",
-        ]),
-        ("If it opens as view only", [
-            "Make your own copy first: File, then Make a copy. The shared file itself can not be typed in.",
-            "Look at your Google Drive space. A full Drive can not save a copy.",
-            "Use a personal Google account. A work or school account can block copies.",
-            "Try your own computer or phone. A shared or work device can block files.",
-            "Turn your VPN off for a moment, then try again.",
-        ]),
-        ("Good to know", [
-            "Paid a different amount? Type it in Actual on Path. Every later payday follows.",
-            "Start tells you how this sheet reads dates, so a payday is never read the wrong way round.",
-            "The tabs are locked so a formula is not typed over by accident.",
-            "There is no password. You can unlock a tab from the menu when you want to change something.",
-            "Your numbers stay in your own file. Nothing is sent anywhere.",
-            "The amounts are estimates from what you type. Type your real balances again every few months.",
-        ]),
-    ]
-    rows = 6 + sum(len(b[1]) + 4 for b in blocks) + 4
-    st.page(ws, rows, "Open me")
+    st.page(ws, 30, "Open me")
     i0, i1 = gcol(1) + 1, gend(8) - 1
-    r = 6
-    for title, lines in blocks:
-        top = r
-        st.section(ws, r + 1, i0, i1, title)
-        r += 2
-        for i, text in enumerate(lines):
-            st.text(ws, r, i0, i0 + 1, i + 1, st.font(st.HELP, color=st.GRAY))
-            st.text(ws, r, i0 + 3, i1, text, st.font(st.BODY), st.WRAP)
-            ws.row_dimensions[r].height = 20 if len(text) <= 70 else 32
-            r += 1
-        st.grid_card(ws, top, r, 1, 8)
-        ws.row_dimensions[top].height, ws.row_dimensions[r].height = 10, 10
-        r += 2
-    # questions, on the right
-    st.grid_card(ws, 6, 12, 9, 12)
-    st.section(ws, 7, R_C0, R_C1, "Questions?")
-    st.text(ws, 8, R_C0, R_C1, f"Write to {SUPPORT_EMAIL}.", st.font(st.BODY))
-    st.hint(ws, 9, R_C0, R_C1, "We read every message and answer as soon as we can.")
-    st.hint(ws, 10, R_C0, R_C1, f"Version {VERSION} · {VERSION_DATE}", wrap=False)
-    ws.row_dimensions[9].height = 28
-    st.footer(ws, r)
+
+    def steps(r: int, c0: int, c1: int, lines: list[str]) -> int:
+        for i, line in enumerate(lines):
+            st.text(ws, r + i, c0, c0, i + 1, st.font(st.HELP, color=st.GRAY))
+            st.text(ws, r + i, c0 + 2, c1, line, st.font(st.BODY), st.WRAP)
+        return r + len(lines)
+
+    # ---- thank you, with the video
+    st.grid_card(ws, 6, 11, 1, 8, st.CALM)
+    st.text(ws, 7, i0, i1, "Thank you for choosing PaidInYellow.", st.font(st.TILE, bold=True, title=True),
+            st.Alignment(horizontal="left", vertical="bottom"))
+    st.text(ws, 8, i0, i1, "This sheet tells you what to move each payday, keeps a buffer for surprises, and turns every paid payday yellow.",
+            st.font(st.BODY), st.WRAP)
+    button = st.text(ws, 10, i0, i0 + 15, "Watch the 3 minute video", st.font(st.BODY, bold=True, color=st.CARD), st.CENTER)
+    for c in range(i0, i0 + 16):
+        ws.cell(10, c).fill = st.fill(st.ACTION)
+    if VIDEO_LINK.startswith("http"):
+        button.hyperlink = VIDEO_LINK
+    else:   # still a placeholder: it shows beside the button until the real link is in
+        st.hint(ws, 10, i0 + 17, i0 + 32, VIDEO_LINK, wrap=False)
+
+    # ---- make it yours, beside the three steps
+    h0, h1 = gend(4) - 1, gcol(5) + 1
+    st.grid_card(ws, 13, 18, 1, 4)
+    st.section(ws, 14, i0, h0, "Make it yours")
+    steps(15, i0, h0, ["Google Sheets: File, then Make a copy.", "From the copy link: press Make a copy.",
+                       "Excel: open the file. Press Enable Editing if asked."])
+    st.grid_card(ws, 13, 18, 5, 8)
+    st.section(ws, 14, h1, i1, "Then three steps")
+    steps(15, h1, i1, ["Fill in Start.", "Open Today. It tells you what to move.", "When it is paid, pick the tick on Path."])
+
+    # ---- if it opens as view only
+    st.grid_card(ws, 20, 27, 1, 8)
+    st.section(ws, 21, i0, i1, "If it opens as view only")
+    steps(22, i0, i1, ["Make your own copy first: File, then Make a copy.",
+                       "Check your Google Drive space. A full Drive can not save a copy.",
+                       "Use a personal Google account. A work or school account can block copies.",
+                       "Try your own computer or phone. A shared or work device can block files.",
+                       "Turn your VPN off for a moment, then try again."])
+
+    # ---- on the right: the app (named here only), tips, questions
+    st.grid_card(ws, 6, 11, 9, 12)
+    st.label(ws, 7, R_C0, R_C1, "Prefer your phone?", gray=True).alignment = st.Alignment(horizontal="left", vertical="bottom")
+    st.text(ws, 8, R_C0, R_C1, "The PaidInYellow app", st.font(16, bold=True, title=True), st.Alignment(horizontal="left", vertical="center"))
+    st.text(ws, 9, R_C0, R_C1, "Follows the same plan. Works offline. Your numbers stay on your phone.", st.font(st.BODY), st.WRAP)
+    app = st.text(ws, 10, R_C0, R_C1, APP_SITE, st.font(st.BODY, bold=True, color=st.ACTION))
+    app.hyperlink = f"https://{APP_SITE}"
+
+    st.grid_card(ws, 13, 18, 9, 12)
+    st.section(ws, 14, R_C0, R_C1, "Google Sheets tips")
+    steps(15, R_C0, R_C1, ["Zoom to 100% for the best look.", "Only cells you type in are open. No password.",
+                           "Undo with Ctrl Z, or Cmd Z on a Mac."])
+
+    st.grid_card(ws, 20, 27, 9, 12)
+    st.section(ws, 21, R_C0, R_C1, "Questions?")
+    st.text(ws, 22, R_C0, R_C1, f"Write to {SUPPORT_EMAIL}.", st.font(st.BODY))
+    st.text(ws, 23, R_C0, R_C1, "We usually answer within one business day.", st.font(st.BODY), st.WRAP)
+    st.hint(ws, 25, R_C0, R_C1, "For your personal use. Please don't share or resell.")
+    st.hint(ws, 26, R_C0, R_C1, f"Version {VERSION} · {VERSION_DATE}", wrap=False)
+
+    heights = {6: 12, 7: 40, 8: 26, 9: 34, 10: 30, 11: 14, 12: 16, 13: 10, 14: 26, 18: 10, 19: 16, 20: 10, 21: 26, 27: 10}
+    for r in range(15, 27):
+        heights.setdefault(r, 22)
+    for r, h in heights.items():
+        ws.row_dimensions[r].height = h
+    st.footer(ws, 29)
     return ws
 
 
