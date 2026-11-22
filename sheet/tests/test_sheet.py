@@ -6,12 +6,14 @@ import re
 
 import pytest
 
+import night
 import scenarios
 from conftest import all_scenarios
 from engine_v2 import simulate
 from layout import *  # noqa: F401,F403
 from openpyxl.cell.cell import MergedCell
 from openpyxl.utils import get_column_letter as L
+from openpyxl.worksheet.cell_range import MultiCellRange
 from openpyxl.utils.cell import coordinate_from_string, column_index_from_string
 
 BANNED = ["SPARKLINE", "FILTER", "SORT", "UNIQUE", "LET", "LAMBDA", "XLOOKUP", "XMATCH", "SEQUENCE", "ARRAYFORMULA", "QUERY",
@@ -256,12 +258,27 @@ def test_copy_rules(books):
                 assert not any(n in low for n in never), (ws.title, cell.coordinate, words)
 
 
+class LightRules:
+    """range -> the light rules on its top left cell. Night (Part 8) cuts the rule ranges again, so look them up by cell."""
+    def __init__(self, ws):
+        self.ws = ws
+
+    def __getitem__(self, at: str) -> list:
+        return night.light_rules_at(self.ws, at)
+
+
+def cells_of(sqref) -> set:
+    return {(r, c) for cr in MultiCellRange(str(sqref)).ranges for r in range(cr.min_row, cr.max_row + 1)
+            for c in range(cr.min_col, cr.max_col + 1)}
+
+
 def yellow_rules(wb):
+    """(tab, row, column) of every cell a yellow rule can reach, in either look"""
     for ws in wb:
         for rules in ws.conditional_formatting:
-            for rule in rules.rules:
-                if rule.dxf and rule.dxf.fill and (_rgb(rule.dxf.fill.bgColor) or _rgb(rule.dxf.fill.fgColor)) in ALLOWED_YELLOW:
-                    yield ws.title, str(rules.sqref)
+            if any(rule.dxf and rule.dxf.fill and (_rgb(rule.dxf.fill.bgColor) or _rgb(rule.dxf.fill.fgColor)) in ALLOWED_YELLOW
+                   for rule in rules.rules):
+                yield from ((ws.title, r, c) for r, c in cells_of(rules.sqref))
 
 
 def test_yellow_only_where_it_means_paid_done_or_the_key_word(books):
@@ -274,10 +291,11 @@ def test_yellow_only_where_it_means_paid_done_or_the_key_word(books):
                 if cell.font and cell.font.color:
                     assert _rgb(cell.font.color) not in ALLOWED_YELLOW, (ws.title, cell.coordinate)  # never yellow text
     got = set(yellow_rules(wb))
-    assert got <= YELLOW_OK, got - YELLOW_OK
+    ok = {(tab, r, c) for tab, at in YELLOW_OK for r, c in cells_of(at)}
+    assert got <= ok, sorted(got - ok)[:5]
     # "Show where to type" tints with sage, never yellow
     st = wb["Start"]
-    tints = [r for rules in st.conditional_formatting for r in rules.rules if TICK in "".join(r.formula)]
+    tints = [r for rules in st.conditional_formatting for r in rules.rules if TICK in "".join(r.formula) and not night.is_night(r)]
     assert tints and all(_rgb(r.dxf.fill.bgColor) == "E6EFE8" for r in tints)
 
 
@@ -360,7 +378,7 @@ def test_today_right_column(books):
     soon = [tuple(td.cell(r, c).value for c in T_SOON_COLS) for r in T_SOON_ROWS]
     assert soon == [("Fri 4 Dec", "$180", "Store Card $120 extra"), ("Fri 18 Dec", "$216", "Store Card $140 extra")]
     # the date is the one key word: yellow, and nothing else on the right is
-    rules = {str(r.sqref): r.rules for r in books["blank"][0]["Today"].conditional_formatting}
+    rules = LightRules(books["blank"][0]["Today"])
     assert _rgb(rules[T_FREE][0].dxf.fill.bgColor) == "FFE14D"
     blank = books["blank"][1]["Today"]
     assert all(not blank[at].value for at in (T_FOCUS_NAME, T_BUF, T_FREE, T_FREE_NOTE)) and not blank.cell(T_SOON_ROWS[0], T_SOON_COLS[0]).value
@@ -438,7 +456,7 @@ def test_path_list_matches_the_engine(books):
 
 def test_path_rules_and_chart(books):
     pa = books["blank"][0]["Path"]
-    rules = {str(r.sqref): [x for x in r.rules] for r in pa.conditional_formatting}
+    rules = LightRules(pa)
     for at in P_RANGES:
         paid, current = rules[at][0], rules[at][1]
         assert _rgb(paid.dxf.fill.bgColor) == "FFE14D" and paid.dxf.font.strike    # paid rows: yellow, struck through
@@ -583,7 +601,7 @@ def test_a_paid_debt_says_paid_and_the_bar_is_full(books):
     rows = debt_rows(books["nadia-done"][1]["Debts"])
     assert [r[6] for r in rows] == ["PAID", "PAID", "PAID"] and [r[5] for r in rows] == [1, 1, 1]
     wb = books["blank"][0]["Debts"]
-    rules = {str(r.sqref): r.rules for r in wb.conditional_formatting}
+    rules = LightRules(wb)
     bars = rules[DB_BARS]
     assert [_rgb(x.dxf.fill.bgColor) for x in bars][:3] == ["FFE14D", "2F4A6D", "E6EFE8"]  # paid, progress, the rest
     assert all(_rgb(rules[r][0].dxf.fill.bgColor) == "FFE14D" and "=1" in rules[r][0].formula[0] for r in DB_RANGES)  # yellow only when paid
@@ -592,7 +610,7 @@ def test_a_paid_debt_says_paid_and_the_bar_is_full(books):
 
 def test_the_debts_card_has_both_edges(books):
     """The left edge rule only on the first column, the right edge only on the last: columns BA and BB are not B."""
-    rules = {str(r.sqref): r.rules for r in books["blank"][0]["Debts"].conditional_formatting}
+    rules = LightRules(books["blank"][0]["Debts"])
     for i, at in enumerate(DB_RANGES):
         b = rules[at][-1].dxf.border
         sides = {s for s in ("left", "right") if b is not None and getattr(b, s) is not None and getattr(b, s).style}
@@ -601,7 +619,7 @@ def test_the_debts_card_has_both_edges(books):
 
 def test_a_paid_bar_is_only_yellow(books):
     """Blue and the empty colour stop at 100%, so the row rule alone colours a paid bar."""
-    rules = {str(r.sqref): r.rules for r in books["blank"][0]["Debts"].conditional_formatting}
+    rules = LightRules(books["blank"][0]["Debts"])
     assert all("<1" in x.formula[0] for x in rules[DB_BARS][1:3])
 
 
@@ -657,8 +675,8 @@ def test_yearly_bills_have_a_progress_bar(books):
     assert share("nadia") == pytest.approx(0)
     assert share("nadia-ticked") == pytest.approx(20 / 260)
     assert books["nadia"][1]["Safety net"][helper(SN_Y0 + 1)].value in (None, "")   # no second bill, no bar
-    rules = {str(r.sqref) for r in books["blank"][0]["Safety net"].conditional_formatting}
-    assert set(SN_PROG_BARS) <= rules
+    rules = LightRules(books["blank"][0]["Safety net"])
+    assert all(len(rules[b]) == 3 for b in SN_PROG_BARS)
 
 
 # ------------------------------------------------------------------------------------------------ Open me and the style every tab shares
@@ -851,7 +869,7 @@ def test_one_bar_style_everywhere(books):
     wb = books["blank"][0]
     bars = [("Path", b) for b in P_TILE_BARS] + [("Safety net", SN_BAR), ("Debts", DB_BARS)] + [("Today", b) for b in T_BARS]
     for name, rng_ in bars:
-        rules = {str(r.sqref): r.rules for r in wb[name].conditional_formatting}[rng_]
+        rules = LightRules(wb[name])[rng_]
         c0, c1 = (column_index_from_string(x.rstrip("0123456789")) for x in rng_.split(":"))
         assert c1 - c0 + 1 == BAR, (name, rng_)
         colours = [_rgb(x.dxf.fill.bgColor) for x in rules][:3]
@@ -864,3 +882,93 @@ def test_cards_are_white_on_paper_with_a_thin_line(books):
     tile = ws.cell(7, gcol(1))
     assert _rgb(tile.fill.fgColor) == "FFFFFF" and tile.border.left.style == "thin" and _rgb(tile.border.left.color) == "E2DCCD"
     assert _rgb(ws.cell(7, gcol(1) - 1).fill.fgColor) == "F8F6F0"
+
+
+# ------------------------------------------------------------------------------------------------ Night look (Part 8)
+def _lum(hex6: str) -> float:
+    def ch(v):
+        v = v / 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (int(hex6[i:i + 2], 16) for i in (0, 2, 4))
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
+
+
+def contrast(a: str, b: str) -> float:
+    la, lb = sorted((_lum(a), _lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def _cells(cf):
+    for cr in cf.sqref.ranges:
+        for r in range(cr.min_row, cr.max_row + 1):
+            for c in range(cr.min_col, cr.max_col + 1):
+                yield r, c
+
+
+def test_look_is_light_by_default_and_every_tab_reads_it(books):
+    for book, want in (("blank", "Light"), ("nadia-night", "Night")):
+        wb = books[book][1]
+        assert wb["Start"][S_LOOK].value == want
+        for name in TABS:
+            assert wb[name][night.NIGHT_CELL].value == want, (book, name)
+
+
+def test_night_reaches_every_cell(books):
+    """Every cell of every tab has a Night rule, so nothing stays light when Look is Night."""
+    for name in TABS:
+        ws = books["blank"][0][name]
+        covered = {rc for cf in ws.conditional_formatting if any(r.formula[0] == night.NIGHT for r in cf.rules) for rc in _cells(cf)}
+        want = {(r, c) for r in range(1, ws.max_row + 1) for c in range(1, NCOL + 1)}
+        assert not want - covered, (name, sorted(want - covered)[:5])
+
+
+def test_rule_ranges_never_overlap(books):
+    """LibreOffice and Google Sheets read the first range that has rules for a cell, so no cell is in two."""
+    for name in TABS:
+        seen = set()
+        for cf in books["blank"][0][name].conditional_formatting:
+            cells = set(_cells(cf))
+            assert not cells & seen, name
+            seen |= cells
+
+
+def test_contrast_in_both_looks(books):
+    """Text is at least 4.5 to 1 on its fill, in the light look as built and in every Night rule."""
+    for name in TABS:
+        ws = books["blank"][0][name]
+        for row in ws.iter_rows(max_col=NCOL):
+            for c in row:
+                if c.value in (None, "") or isinstance(c, MergedCell):
+                    continue
+                bg, fg = night.fill_of(c.fill) or night.PAPER, night.rgb(c.font.color) or night.INK
+                if fg != bg:
+                    assert contrast(fg, bg) >= 4.5, (name, c.coordinate, fg, bg)
+        for cf in ws.conditional_formatting:
+            for rule in cf.rules:
+                d = rule.dxf
+                if d is None or d.fill is None or d.font is None or d.font.color is None:
+                    continue
+                bg, fg = night.fill_of(d.fill), night.rgb(d.font.color)
+                if bg and fg and fg != bg and night.NIGHT in rule.formula[0]:
+                    assert contrast(fg, bg) >= 4.5, (name, str(cf.sqref)[:30], rule.formula[0][:60], fg, bg)
+
+
+def test_night_keeps_yellow_for_paid_with_ink_on_it(books):
+    ws = books["blank"][0]["Path"]
+    pairs = {(night.fill_of(r.dxf.fill), night.rgb(r.dxf.font.color)) for cf in ws.conditional_formatting for r in cf.rules
+             if night.NIGHT in r.formula[0] and r.dxf is not None and r.dxf.fill is not None and r.dxf.font is not None}
+    assert (night.YELLOW, night.INK) in pairs
+    assert not {p for p in pairs if p[0] == night.YELLOW and p[1] != night.INK}
+
+
+def test_night_lines_are_dark(books):
+    """Card lines, bar gaps and typed lines take the dark colours in Night, so no light line crosses a dark card."""
+    light = set(night.NIGHT_SIDE) - {night.YELLOW}
+    for name in TABS:
+        for cf in books["blank"][0][name].conditional_formatting:
+            for rule in cf.rules:
+                if night.is_night(rule) and rule.dxf is not None and rule.dxf.border is not None:
+                    for side in night.SIDES:
+                        s = getattr(rule.dxf.border, side)
+                        if s is not None and s.style:
+                            assert night.rgb(s.color) not in light, (name, str(cf.sqref)[:30], side, night.rgb(s.color))

@@ -26,6 +26,7 @@ from openpyxl.utils import column_index_from_string, get_column_letter as L
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from layout import *  # noqa: E402,F401,F403
 import style as st  # noqa: E402
+import night  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(HERE, "dist")
@@ -277,6 +278,7 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     st[S_OTHER] = s.get("second_day")
     st[S_MONEY], st[S_BUF], st[S_GOAL] = s["money"], s.get("buffer", 0), s["goal"]
     st[S_ORDER] = METHOD[s.get("method", "piy")]
+    st[S_LOOK] = s.get("look", LOOKS[0])
     for i, d in enumerate(s["debts"]):
         r = D0 + i
         for c, k in ((SC_NAME, "name"), (SC_BAL, "balance"), (SC_APR, "apr"), (SC_MIN, "min"), (SC_DUE, "due"), (SC_ORDER, "my_order")):
@@ -1129,6 +1131,7 @@ def finish(wb: Workbook):
                 if isinstance(v, str) and v.startswith("=") and not v.startswith("=IFERROR("):
                     cell.value = f'=IFERROR({v[1:]},"")'
         st.draw_cards(wb[name])
+        night.apply(wb[name], "Start!" + absr(S_LOOK))   # Look: Night on Start turns every tab dark
     wb.active = 0
     for ws in wb:
         ws.sheet_view.tabSelected = ws.title == TABS[0]

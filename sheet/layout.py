@@ -255,7 +255,7 @@ SN_FOOT = SN_Y0 + NY + 4
 YELLOW_OK |= {("Debts", r) for r in DB_RANGES} | {("Safety net", SN_READY), ("Safety net", SN_BAR)} | {("Safety net", b) for b in SN_PROG_BARS}
 
 # quiet helpers on the visible tabs, in the hidden column: the colour rules read them
-HELPERS = {("Today", T_FLAG), ("Today", T_COUNT), ("Path", P_CURK), ("Path", P_SHOW), ("Safety net", SN_SHARE)} | {("Safety net", helper(SN_Y0 + i)) for i in range(NY)} | {("Path", s) for s in P_SHARES}
+HELPERS = {(name, helper(1)) for name in ("Open me", "Start", "Today", "Path", "Debts", "Safety net")} | {("Today", T_FLAG), ("Today", T_COUNT), ("Path", P_CURK), ("Path", P_SHOW), ("Safety net", SN_SHARE)} | {("Safety net", helper(SN_Y0 + i)) for i in range(NY)} | {("Path", s) for s in P_SHARES}
 
 # ---- the workbook
 TABS = ["Open me", "Start", "Today", "Path", "Debts", "Safety net"]   # in this order; Engine and Lists are hidden

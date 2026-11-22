@@ -31,7 +31,7 @@ def all_scenarios() -> dict[str, dict]:
 
 class Books(dict):
     """name -> (formulas, values), read from disk when a test asks and only a few kept at once, so memory stays low"""
-    KEEP = 6
+    KEEP = 3
 
     def __init__(self, src: str, out: str):
         super().__init__()
@@ -80,6 +80,8 @@ def books():
     build_sheet.build(os.path.join(src, "nadia-actual-ticked.xlsx"), scenarios.with_actual("actual-200"), ticks=2, today=dt.date(2026, 11, 21))
     # the same plan in euros, two paydays ticked
     build_sheet.build(os.path.join(src, "nadia-euro.xlsx"), dict(scenarios.NADIA, currency="€"), ticks=2, today=dt.date(2026, 11, 21))
+    # the Night look picked on Start
+    build_sheet.build(os.path.join(src, "nadia-night.xlsx"), dict(scenarios.NADIA, look="Night"), today=DAY)
     build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS, today=DAY)
     build_sheet.build(os.path.join(src, "thin.xlsx"), scenarios.THIN, today=DAY)
     build_sheet.build(os.path.join(src, "nofit.xlsx"), scenarios.NOFIT, today=DAY)

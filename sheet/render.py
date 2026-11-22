@@ -6,7 +6,7 @@
 session only while LibreOffice draws (AddFontResource), then removed again: nothing is installed.
 
 Builds one Nadia file per tab (only that tab visible), lets LibreOffice turn each into a PDF one page wide, and joins
-the pages into one PNG per tab (needs pymupdf and Pillow). When Chrome or Edge is installed, design/<Tab>.html is
+the pages into one PNG per tab (needs pymupdf and Pillow), in the Light look and in the Night look. When Chrome or Edge is installed, design/<Tab>.html is
 also drawn headless and a side by side picture is saved. The fonts are the ones installed on this computer.
 """
 from __future__ import annotations
@@ -33,9 +33,9 @@ BROWSERS = [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Progr
             "/usr/bin/google-chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
 
 
-def one_tab(path: str, tab: str, ticks: int, today: dt.date):
+def one_tab(path: str, tab: str, ticks: int, today: dt.date, look: str = "Light"):
     """A Nadia file where only `tab` is visible and prints one page wide, with small margins"""
-    build_sheet.build(path, dict(NADIA, whatif=50), ticks=ticks, today=today, prepare=lambda wb: only(wb, tab))  # 50 typed in What if
+    build_sheet.build(path, dict(NADIA, whatif=50, look=look), ticks=ticks, today=today, prepare=lambda wb: only(wb, tab))  # 50 typed in What if
 
 
 def only(wb, tab: str):
@@ -124,6 +124,7 @@ def render(out: str, ticks: int = 1, today: dt.date = dt.date(2026, 11, 20), fon
     names = {tab: tab.replace(" ", "-") for tab in TABS}
     for tab in TABS:
         one_tab(os.path.join(src, names[tab] + ".xlsx"), tab, ticks, today)
+        one_tab(os.path.join(src, names[tab] + "-night.xlsx"), tab, ticks, today, look="Night")
     os.makedirs(out, exist_ok=True)
     with session_fonts(fonts):
         recalc.recalc_folder(src, pdfs, fmt="pdf", locale="en-US")  # numbers and dates as in the US
@@ -132,6 +133,9 @@ def render(out: str, ticks: int = 1, today: dt.date = dt.date(2026, 11, 20), fon
         png = os.path.join(out, f"{i + 1}-{names[tab]}.png")
         stitch(os.path.join(pdfs, names[tab] + ".pdf"), png)
         made.append(png)
+        dark = os.path.join(out, f"{i + 1}-{names[tab]}-night.png")
+        stitch(os.path.join(pdfs, names[tab] + "-night.pdf"), dark)
+        made.append(dark)
         design = os.path.join(out, f"design-{DESIGN[tab]}.png")
         if design_png(tab, design):
             pair = os.path.join(out, f"{i + 1}-{names[tab]}-side-by-side.png")
