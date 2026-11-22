@@ -126,7 +126,7 @@ def render(out: str, ticks: int = 1, today: dt.date = dt.date(2026, 11, 20), fon
         one_tab(os.path.join(src, names[tab] + ".xlsx"), tab, ticks, today)
     os.makedirs(out, exist_ok=True)
     with session_fonts(fonts):
-        recalc.recalc_folder(src, pdfs, fmt="pdf")
+        recalc.recalc_folder(src, pdfs, fmt="pdf", locale="en-US")  # numbers and dates as in the US
     made = []
     for i, tab in enumerate(TABS):
         png = os.path.join(out, f"{i + 1}-{names[tab]}.png")

@@ -6,9 +6,10 @@ NY = 8           # yearly bills
 NR = 360         # paydays the sheet can hold (the engine allows 520; a longer plan shows a calm note)
 
 # ---- the grid every visible tab shares
-# 12 columns of about 9 wide with gutters of about 2. Each grid column is 6 narrow cells, so a bar of 20 cells
-# fills exactly a card of 3 columns, and a card of n columns is 6n + (n - 1) cells wide.
-SUB, SUB_W, GUT_W, MARGIN_W = 6, 1.5, 2, 3
+# 12 columns with gutters, about 1,200 pixels in all. Each grid column is 6 narrow cells and a gutter is one, all
+# of the same width, so a bar of 20 cells fills exactly a card of 3 columns with even cells, and a card of n
+# columns is 6n + (n - 1) cells wide.
+SUB, SUB_W, GUT_W, MARGIN_W = 6, 2, 2, 3
 NCOL = 1 + 12 * SUB + 11 + 1          # margin, the grid, margin: 85 columns
 HELP_COL = NCOL + 1                   # column CH, hidden: quiet helpers that the colour rules read
 BAR = 20                              # cells in a bar
@@ -115,6 +116,10 @@ E_LATE, E_VIEWDATE, E_NEXTDATE, E_VIEWMOVE, E_NITEMS, E_FOCUSPOS = "U1", "U2", "
 E_OWEDNOW, E_PAIDSOFAR, E_DEBTSPAID, E_NDEBTS, E_NEXTGONEPOS = "U7", "U8", "U9", "U10", "U11"
 NI = ND + 3           # what a payday can list: a bill per debt, yearly bills, the buffer, the extra
 ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE, ROW_LEFT, ROW_GONE, ROW_XTRA = 13, 14, 15, 16, 17, 18, 19  # over the C_BAL columns
+ROW_GREW = 20         # over the C_BAL columns: how much a debt grew above its start (0 when it did not)
+E_NGREW, E_GREW = "U19", "U20"   # how many debts grew, and by how much in all
+# more answers live in column AB (labels in AA), rows 1 to 20: row 21 and below of these columns belong to the debts
+E_GREWPOS = "AB1"     # the first debt that grew (place)
 
 # ---- Today: the payday card on the left (grid 1 to 8), the focus debt on the right (grid 9 to 12)
 T_FLAG = helper(3)    # 1 when the card is yellow (paid, or all done)
@@ -133,43 +138,50 @@ YELLOW_OK |= {("Today", T_CARD), ("Today", T_CARD_LINES)}
 
 # ---- Path: four tiles, the doughnut and the chart, then the payday list (grid 1 to 8)
 P_TILE_ROW = 8
+P_GREW_ROW = 11       # a small ink note under "Paid off so far" when a debt grew
 P_TILE_COLS = [gcol(1 + 3 * k) + 1 for k in range(4)]       # inside each tile of 3 grid columns
 P_TILE_OWED, P_TILE_FREE, P_TILE_PAID, P_TILE_AVOID = (ref(P_TILE_ROW, c) for c in P_TILE_COLS)
 P_FREE_CELLS = f"{P_TILE_FREE}:{_L(gend(6) - 1)}{P_TILE_ROW}"   # the debt-free date, merged over its tile
 P_BAR_ROW, P_CAPTION_ROW = 9, 10
 P_SHARES = [helper(4 + k) for k in range(4)]                  # what each tile's bar measures, 0 to 1
 P_RING_TEXT = gcol(3)                                         # beside the doughnut
-P_PCT, P_DEBTSPAID, P_NEXT = ref(14, P_RING_TEXT), ref(15, P_RING_TEXT), ref(16, P_RING_TEXT)
-P_NOFIT, P_SHORT = ref(23, 3), ref(24, 3)
-P_R0 = 25             # header of the payday list
-P_R1 = 26             # payday 1
+P_GREW = ref(P_GREW_ROW, P_TILE_COLS[2])
+P_PCT, P_DEBTSPAID, P_NEXT = ref(15, P_RING_TEXT), ref(16, P_RING_TEXT), ref(17, P_RING_TEXT)
+P_NOFIT, P_SHORT = ref(24, 3), ref(25, 3)
+P_R0 = 26             # header of the payday list
+P_R1 = 27             # payday 1
 P_RN = P_R1 + NR - 1
 P_COLS = [3, 13, 19, 24, 30, 37, 44, 51]   # Payday, Bills, Yearly, Buffer, Extra, Move, Actual, Done
 P_ENDS = [12, 18, 23, 29, 36, 43, 50, 55]
 P_ACTUAL_COL = P_COLS[6]                    # what was really paid (empty means as planned)
 P_DONE_COL = P_COLS[7]                      # the tick
 P_LIST = f"B{P_R1}:{_L(gend(8))}{P_RN}"     # the rows of the list card
+# its colour rules, in ranges that never overlap: the left edge, the plan, Actual and Done, the right edge
+P_RANGES = [f"B{P_R1}:B{P_RN}", f"C{P_R1}:{_L(P_ACTUAL_COL - 1)}{P_RN}", f"{_L(P_ACTUAL_COL)}{P_R1}:{_L(gend(8) - 1)}{P_RN}",
+            f"{_L(gend(8))}{P_R1}:{_L(gend(8))}{P_RN}"]
+P_TYPE_ENDS = (P_ENDS[6] - 1, P_ENDS[7] - 1)  # the typed cells end one cell early, so their lines never touch
 P_CURK, P_SHOW = helper(3), helper(2)       # the current payday, and the Show where to type tick
-P_FOOT = 32                                  # the footer sits in the right column: the list runs long
+P_FOOT = 33                                  # the footer sits in the right column: the list runs long
 E_NEXTGONE = "U12"    # the date the next debt is gone
 E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
 NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)
 E_RING_COL = 25       # Engine column Y, rows 1 to 3: gone, left, all gone
 E_TICKED = "U18"      # paydays of the plan that are ticked
 P_TILE_BARS = [f"{_L(gcol(1 + 3 * k))}{P_BAR_ROW}:{_L(gend(3 + 3 * k))}{P_BAR_ROW}" for k in range(4)]
-YELLOW_OK |= {("Path", P_FREE_CELLS), ("Path", P_LIST)} | {("Path", b) for b in P_TILE_BARS}
+YELLOW_OK |= {("Path", P_FREE_CELLS)} | {("Path", r) for r in P_RANGES} | {("Path", b) for b in P_TILE_BARS}
 
 # ---- Debts: one card with the table (grid 1 to 9), two rows a debt: the numbers, then a small note
 E_BUFNOW, E_YSAVED = "U14", "U15"   # the buffer and the yearly bills money after the last ticked payday
 E_SHORTK = "U16"      # the first payday whose Actual is below its bills (0 = none)
 E_VIEWACTUAL = "U17"  # 1 when the payday Today shows has an Actual typed
-DB_R0 = 9             # the first debt (in payoff order). Four rows a debt: three thin rows hold the numbers (the bar
+DB_R0 = 10            # the first debt (in payoff order). Four rows a debt: three thin rows hold the numbers (the bar
 DB_STEP = 4           # sits in the middle one, so it stays thin), the fourth holds a small note
 DB_COLS = dict(num=2, name=4, rate=13, left=18, paid=25, bar=33, gone=54)
 DB_ENDS = dict(num=3, name=12, rate=17, left=24, paid=31, bar=52, gone=63)
 DB_PCT_COL = HELP_COL # the share paid, a quiet helper
 DB_ON_COL = HELP_COL + 1   # 1 on the four rows of a debt that is there: the card is white only there
 DB_PAIDTOTAL = ref(7, DB_COLS["gone"])  # paid off so far, the same number as the Path tile
+DB_GREW = ref(8, DB_COLS["bar"])        # under it: a small ink note when a debt grew
 DB_LAST = DB_R0 + DB_STEP * ND - 1
 DB_FOOT = DB_LAST + 3
 
@@ -188,10 +200,11 @@ DB_RANGES = [f"B{DB_R0}:B{DB_LAST}", f"C{DB_R0}:{_L(DB_COLS['bar'] - 1)}{DB_LAST
 
 # ---- Safety net: the buffer (grid 1 to 5) beside the yearly bills (grid 6 to 12)
 SN_BUF = ref(8, 3)
-SN_BAR = f"C9:{_L(2 + BAR)}9"   # the bar shares its thin row with the header of the yearly bills
+SN_BAR = f"C9:{_L(2 + BAR)}9"   # the bar's thin row is a small gap in the yearly bills card
 SN_SHARE = helper(2)
 SN_READY = ref(12, 3)
-SN_Y0 = 10            # first yearly bill row
+SN_YEARLY_TITLE = ref(7, 38)    # "Yearly bills", in its own row at the top of its card
+SN_Y0 = 11            # first yearly bill row
 SN_COLS = [38, 50, 58, 67, 76]   # Bill, A year, Month needed, Set aside so far, Each payday
 SN_ENDS = [48, 56, 66, 74, 83]
 SN_EMPTY = ref(SN_Y0 + NY, 38)

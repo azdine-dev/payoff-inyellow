@@ -368,7 +368,7 @@ def digits(s) -> str:
 def test_path_tiles_and_progress(books):
     pa = books["nadia"][1]["Path"]
     assert digits(pa[P_TILE_OWED].value) == "$3250"
-    assert pa[P_TILE_FREE].value == "16 Jul 2027"   # no weekday on the tile: the date fits at 24 pt
+    assert pa[P_TILE_FREE].value == "Fri 16 Jul 2027"   # the whole date fits the tile at 24 pt
     assert digits(pa[P_TILE_PAID].value) == "$0"
     assert digits(pa[P_TILE_AVOID].value) == "$1167"  # 1,444.86 on minimums only, 277.93 on the plan
     assert pa[P_DEBTSPAID].value == "Debts paid 0 of 3"
@@ -409,11 +409,35 @@ def test_path_list_matches_the_engine(books):
 def test_path_rules_and_chart(books):
     pa = books["blank"][0]["Path"]
     rules = {str(r.sqref): [x for x in r.rules] for r in pa.conditional_formatting}
-    paid = rules[P_LIST]
-    assert _rgb(paid[0].dxf.fill.bgColor) == "FFE14D" and paid[0].dxf.font.strike  # paid rows: yellow, struck through
-    assert _rgb(paid[1].dxf.border.top.color) == "2F4A6D"                           # the current row: action blue
-    assert _rgb(paid[1].dxf.font.color) == "2F4A6D"                                 # and its words, for Google Sheets
+    for at in P_RANGES:
+        paid, current = rules[at][0], rules[at][1]
+        assert _rgb(paid.dxf.fill.bgColor) == "FFE14D" and paid.dxf.font.strike    # paid rows: yellow, struck through
+        # the current payday: calm and bold, no outline (Google Sheets rules draw no border), never yellow
+        assert _rgb(current.dxf.fill.bgColor) == "E6EFE8" and current.dxf.font.b
+        assert current.dxf.border is None or not (current.dxf.border.top and current.dxf.border.top.style)
     assert pa.freeze_panes is None                                                  # the tiles and charts stay reachable
+
+
+def test_actual_and_done_lines_are_normal_borders(books):
+    """Google Sheets rules can not draw a border, so the line under Actual and Done is a normal border on every row."""
+    pa = books["blank"][0]["Path"]
+    for k in (0, 1, NR - 1):
+        for c in (P_ACTUAL_COL, P_DONE_COL):
+            b = pa.cell(P_R1 + k, c).border.bottom
+            assert b.style == "medium" and _rgb(b.color) == "2F4A6D", (k, c)
+    assert not pa.cell(P_R1, P_TYPE_ENDS[0] + 1).border.bottom.style   # a gap between the two lines
+
+
+@pytest.mark.parametrize("name, want", [("nadia", ""), ("nadia-one", "Visa grew $19, so the total moved less."), ("nadia-ticked", "")])
+def test_a_note_when_a_debt_grew(books, name, want):
+    """After one payday Visa owes $19 more than at the start, so paid off so far is $6 while Store Card alone paid $25."""
+    wb = books[name][1]
+    assert (wb["Path"][P_GREW].value or "") == want
+    assert (wb["Debts"][DB_GREW].value or "") == want
+    if want:
+        assert digits(wb["Path"][P_TILE_PAID].value) == "$6"
+        cell = books[name][0]["Path"][P_GREW]
+        assert _rgb(cell.font.color) == "1F2A44" and cell.font.sz == 10   # small and ink, never red
 
 
 def test_path_has_the_doughnut_and_the_area_chart(books):
@@ -497,6 +521,15 @@ def test_a_paid_debt_says_paid_and_the_bar_is_full(books):
     assert column_index_from_string(DB_BARS.split(":")[1].rstrip("0123456789")) - DB_COLS["bar"] + 1 == BAR
 
 
+def test_the_debts_card_has_both_edges(books):
+    """The left edge rule only on the first column, the right edge only on the last: columns BA and BB are not B."""
+    rules = {str(r.sqref): r.rules for r in books["blank"][0]["Debts"].conditional_formatting}
+    for i, at in enumerate(DB_RANGES):
+        b = rules[at][-1].dxf.border
+        sides = {s for s in ("left", "right") if b is not None and getattr(b, s) is not None and getattr(b, s).style}
+        assert sides == ({"left"} if i == 0 else {"right"} if i == len(DB_RANGES) - 1 else set()), (at, sides)
+
+
 def test_a_paid_bar_is_only_yellow(books):
     """Blue and the empty colour stop at 100%, so the row rule alone colours a paid bar."""
     rules = {str(r.sqref): r.rules for r in books["blank"][0]["Debts"].conditional_formatting}
@@ -521,6 +554,14 @@ def test_a_debt_that_grows_gets_a_calm_note(books):
     assert not rows[1][7] and not rows[2][7]
     cell = books["blank"][0]["Debts"].cell(DB_R0 + 3, DB_COLS["name"])
     assert _rgb(cell.font.color) == "1F2A44"  # ink, never red
+
+
+def test_yearly_bills_title_has_its_own_row(books):
+    sn = books["blank"][0]["Safety net"]
+    title = sn[SN_YEARLY_TITLE]
+    r, _ = at(SN_YEARLY_TITLE)
+    assert title.value == "Yearly bills" and title.font.sz == 14 and title.font.b
+    assert r < at(SN_BUF)[0] and r < SN_HEAD   # above the big buffer number and the table
 
 
 def test_safety_net(books):
@@ -666,6 +707,8 @@ def test_the_same_grid_on_every_tab(books):
             if g < 12:
                 assert ws.column_dimensions[L(gend(g) + 1)].width == GUT_W, (name, g)
         assert ws.column_dimensions[L(HELP_COL)].hidden   # the quiet helpers
+        px = sum(int(((256 * ws.column_dimensions[L(c)].width + 18) / 256) * 7) for c in range(1, NCOL + 1))
+        assert 1150 <= px <= 1250, (name, px)              # about 1,200 pixels wide, like the designs
 
 
 def test_the_band_the_brand_and_the_footer(books):

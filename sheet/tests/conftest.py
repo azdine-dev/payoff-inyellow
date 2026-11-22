@@ -38,6 +38,8 @@ def books():
         build_sheet.build(os.path.join(src, f"{name}.xlsx"), s, today=DAY)
     # two paydays ticked, and the third has not come yet
     build_sheet.build(os.path.join(src, "nadia-ticked.xlsx"), scenarios.NADIA, ticks=2, today=dt.date(2026, 11, 21))
+    # one payday ticked: Visa owes more than at the start
+    build_sheet.build(os.path.join(src, "nadia-one.xlsx"), scenarios.NADIA, ticks=1, today=dt.date(2026, 11, 20))
     # four paydays went by and nothing is ticked
     build_sheet.build(os.path.join(src, "nadia-late.xlsx"), scenarios.NADIA, today=dt.date(2026, 12, 20))
     # every payday of the plan is ticked
