@@ -95,7 +95,7 @@ def test_nadia_numbers(books):
 
 def test_formula_count(books):
     n = sum(1 for _ in formulas(books["blank"][0]))
-    assert n < 40000, n
+    assert n < 50000, n
 
 
 def test_only_functions_that_work_in_both(books):
@@ -231,7 +231,7 @@ def test_inputs_are_unlocked_and_everything_else_is_locked(books):
     assert open_cells == want
     pa = wb["Path"]
     assert pa.protection.sheet
-    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked and not isinstance(c, MergedCell)} == {f"{L(c)}{P_R1 + k}" for k in range(NR) for c in (P_ACTUAL_COL, P_DONE_COL)}
+    assert {c.coordinate for row in pa.iter_rows() for c in row if not c.protection.locked and not isinstance(c, MergedCell)} == {f"{L(c)}{P_R1 + k}" for k in range(NR) for c in (P_ACTUAL_COL, P_DONE_COL)} | {W_INPUT}
     assert all(c.protection.locked for row in wb["Today"].iter_rows() for c in row)
     for name in ("Engine", "Lists"):
         assert wb[name].sheet_state == "hidden" and wb[name].protection.sheet
@@ -480,6 +480,45 @@ def test_path_has_the_doughnut_and_the_area_chart(books):
     en = books["nadia-ticked"][1]["Engine"]
     gone = en.cell(1, E_RING_COL).value
     assert gone == pytest.approx(en[E_PCT].value) and en.cell(2, E_RING_COL).value == pytest.approx(1 - gone) and en.cell(3, E_RING_COL).value == 0
+
+
+@pytest.mark.parametrize("name, want", [("nadia", "This month: $0 of $446 done"), ("nadia-one", "This month: $180 of $446 done"),
+                                        ("nadia-ticked", "This month: $446 of $446 done"), ("blank", "")])
+def test_this_month_beside_the_doughnut(books, name, want):
+    """The paydays of this calendar month: what the plan asks for, and what is ticked (Nov 6: $180, Nov 20: $266)"""
+    assert (books[name][1]["Path"][P_MONTH].value or "") == want
+
+
+def what_if_reference(add: float, from_k: int = 0):
+    return simulate(dict(scenarios.for_engine(scenarios.NADIA), adjust={k: add for k in range(from_k, 520)}))
+
+
+@pytest.mark.parametrize("name, from_k", [("nadia-whatif", 0), ("nadia-ticked-whatif", 2)])
+def test_what_if_matches_the_engine(books, name, from_k):
+    """$50 more each payday from the current payday on: engine_v2.py with that "adjust", payday by payday"""
+    wb = books[name][1]
+    en = wb["Engine"]
+    ref, plan = what_if_reference(50, from_k), simulate(scenarios.for_engine(scenarios.NADIA))
+    for r in ref["rows"]:
+        assert abs((en.cell(ER1 + r["k"], W_OWED).value or 0) - r["owed"]) < 0.005, (r["k"], en.cell(ER1 + r["k"], W_OWED).value, r["owed"])
+        assert abs((en.cell(ER1 + r["k"], W_TOBUF).value or 0) - r["buffer"]) < 0.005, r["k"]
+    assert as_date(en[E_WFREE].value) == ref["debt_free"] and en[E_WNPAY].value == ref["paydays"]
+    assert en[E_WINT].value == pytest.approx(ref["interest"], abs=0.01)
+    pa = wb["Path"]
+    months = max(round((plan["debt_free"] - ref["debt_free"]).days / 30.4375), 0)
+    saved = round(plan["interest"] - ref["interest"])
+    assert pa[W_DATE].value == this_year(ref["debt_free"])
+    assert pa[W_LINE].value == f"{months} month{'' if months == 1 else 's'} sooner · ${saved} less interest"
+    assert pa[W_LIKE].value == "Like it? Change your money on Start."
+
+
+def test_what_if_is_quiet_until_an_amount_is_typed(books):
+    pa = books["nadia"][1]["Path"]
+    assert not pa[W_DATE].value and not pa[W_LINE].value and not pa[W_LIKE].value
+    en = books["nadia"][1]["Engine"]
+    assert as_date(en[E_WFREE].value) == dt.date(2027, 7, 16) and en[E_WINT].value == pytest.approx(en[E_INTEREST].value)
+    dv = {str(d.sqref): d for d in books["blank"][0]["Path"].data_validations.dataValidation}
+    assert dv[W_INPUT].type == "decimal" and dv[W_INPUT].formula1 == "0"
 
 
 def test_path_list_shows_the_plan_and_what_was_really_paid(books):

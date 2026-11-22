@@ -35,7 +35,7 @@ BROWSERS = [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Progr
 
 def one_tab(path: str, tab: str, ticks: int, today: dt.date):
     """A Nadia file where only `tab` is visible and prints one page wide, with small margins"""
-    build_sheet.build(path, NADIA, ticks=ticks, today=today, prepare=lambda wb: only(wb, tab))
+    build_sheet.build(path, dict(NADIA, whatif=50), ticks=ticks, today=today, prepare=lambda wb: only(wb, tab))  # 50 typed in What if
 
 
 def only(wb, tab: str):

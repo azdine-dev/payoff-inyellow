@@ -40,6 +40,9 @@ def books():
     build_sheet.build(os.path.join(src, "nadia-ticked.xlsx"), scenarios.NADIA, ticks=2, today=dt.date(2026, 11, 21))
     # one payday ticked: Visa owes more than at the start
     build_sheet.build(os.path.join(src, "nadia-one.xlsx"), scenarios.NADIA, ticks=1, today=dt.date(2026, 11, 20))
+    # what if: 50 more each payday, from the start, and from the third payday on (two are ticked)
+    build_sheet.build(os.path.join(src, "nadia-whatif.xlsx"), dict(scenarios.NADIA, whatif=50), today=DAY)
+    build_sheet.build(os.path.join(src, "nadia-ticked-whatif.xlsx"), dict(scenarios.NADIA, whatif=50), ticks=2, today=dt.date(2026, 11, 21))
     # four paydays went by and nothing is ticked
     build_sheet.build(os.path.join(src, "nadia-late.xlsx"), scenarios.NADIA, today=dt.date(2026, 12, 20))
     # every payday of the plan is ticked

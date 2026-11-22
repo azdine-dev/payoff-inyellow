@@ -86,6 +86,13 @@ C_LAST = C_BAL + ND - 1
 # what the plan asks for on a payday before any Actual is typed, and whether the Actual is below the bills
 C_AVAIL0, C_Y0, C_B0, C_MOVE0, C_SHORT = C_LAST + 1, C_LAST + 2, C_LAST + 3, C_LAST + 4, C_LAST + 5
 C_XPOS = C_LAST + 6   # the debt that gets most of the extra on a payday (place), for "Mostly for" on Today
+# "What if I add more?" on Path: the same plan again, with the typed amount added from the current payday on. Only what
+# changes is worked out again; the dates and the bills due come from the plan above.
+W0 = C_XPOS + 1
+W_AVAIL, W_YEARLY, W_TOBUF, W_BUFAFTER, W_CHGPOS, W_POOL, W_INT, W_OWED = range(W0, W0 + 8)
+W_AFT = W0 + 8           # balance after interest and the bill, by debt in payoff order
+W_BAL = W_AFT + ND       # balance after the extra
+W_LAST = W_BAL + ND - 1
 
 # ---- Engine: one answer per cell, read by the tabs (column S, labels in R)
 E_NPAY = "S1"        # the payday the plan ends on (count)
@@ -122,6 +129,9 @@ E_NGREW, E_GREW = "U19", "U20"   # how many debts grew, and by how much in all
 # more answers live in column AB (labels in AA), rows 1 to 20: row 21 and below of these columns belong to the debts
 E_GREWPOS = "AB1"     # the first debt that grew (place)
 E_YCOUNT, E_YNAME = "AB2", "AB3"   # yearly bills with an amount, and the name of the first one
+E_MONTHPLAN, E_MONTHDONE = "AB4", "AB5"   # this month: what the plan asks for, and what is ticked
+E_WADD, E_WNPAY, E_WFREE, E_WINT = "AB6", "AB7", "AB8", "AB9"   # what if: the amount, paydays, the new date, interest
+E_WMONTHS, E_WPAYDAYS, E_WSAVED, E_WFITS = "AB10", "AB11", "AB12", "AB13"   # months and paydays sooner, interest saved
 
 # ---- Today: the Move card on the left (grid 1 to 8). On the right (grid 9 to 12): the focus debt, the buffer, the
 # debt-free date, and the next two paydays under "Coming up".
@@ -169,7 +179,7 @@ P_BAR_ROW, P_CAPTION_ROW = 9, 10
 P_SHARES = [helper(4 + k) for k in range(4)]                  # what each tile's bar measures, 0 to 1
 P_RING_TEXT = gcol(3)                                         # beside the doughnut
 P_GREW = ref(P_GREW_ROW, P_TILE_COLS[2])
-P_PCT, P_DEBTSPAID, P_NEXT = ref(15, P_RING_TEXT), ref(16, P_RING_TEXT), ref(17, P_RING_TEXT)
+P_PCT, P_DEBTSPAID, P_NEXT, P_MONTH = ref(15, P_RING_TEXT), ref(16, P_RING_TEXT), ref(17, P_RING_TEXT), ref(18, P_RING_TEXT)
 P_NOFIT, P_SHORT = ref(24, 3), ref(25, 3)
 P_R0 = 26             # header of the payday list
 P_R1 = 27             # payday 1
@@ -184,7 +194,11 @@ P_RANGES = [f"B{P_R1}:B{P_RN}", f"C{P_R1}:{_L(P_ACTUAL_COL - 1)}{P_RN}", f"{_L(P
             f"{_L(gend(8))}{P_R1}:{_L(gend(8))}{P_RN}"]
 P_TYPE_ENDS = (P_ENDS[6] - 1, P_ENDS[7] - 1)  # the typed cells end one cell early, so their lines never touch
 P_CURK, P_SHOW = helper(3), helper(2)       # the current payday, and the Show where to type tick
-P_FOOT = 33                                  # the footer sits in the right column: the list runs long
+# "What if I add more?": a calm card beside the payday list (grid 9 to 12), one typed field
+W_CARD_ROWS = (22, 33)
+W_INPUT = ref(27, R_C0 + 4)   # not in row 26: the list header repeats on every printed page
+W_DATE, W_LINE, W_LIKE = ref(29, R_C0), ref(31, R_C0), ref(32, R_C0)
+P_FOOT = 35                                  # the footer sits in the right column: the list runs long
 E_NEXTGONE = "U12"    # the date the next debt is gone
 E_PCT = "U13"         # share of the starting debt that is gone, 0 to 1
 NC = 19               # points of the chart (Engine columns W label, X owed, rows 1..NC)

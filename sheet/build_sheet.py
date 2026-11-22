@@ -18,6 +18,8 @@ from openpyxl.chart import AreaChart, DoughnutChart, Reference
 from openpyxl.chart.data_source import AxDataSource, StrRef
 from openpyxl.chart.series import DataPoint
 from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.chart.text import RichText
+from openpyxl.drawing.text import CharacterProperties, Paragraph, ParagraphProperties, RichTextProperties
 from openpyxl.drawing.line import LineProperties
 from openpyxl.utils import column_index_from_string, get_column_letter as L
 
@@ -279,6 +281,8 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     for key, col in (("adjust", C_ADJ), ("charges", C_CHG), ("buffer_used", C_BUFUSED)):
         for k, v in s.get(key, {}).items():
             en.cell(ER1 + int(k), col).value = v
+    if s.get("whatif"):
+        wb["Path"][W_INPUT] = s["whatif"]
     for k, v in s.get("actual", {}).items():
         wb["Path"].cell(P_R1 + int(k), P_ACTUAL_COL).value = v
     if ticks:
@@ -428,6 +432,20 @@ def build_engine(wb: Workbook):
         return f'IF({amount}>0,IF({name}="","Yearly bill",{name}&""),{yname(i + 1)})'
     stand[E_YCOUNT] = ("Yearly bills with an amount", f"=SUMPRODUCT(--({S}${L(SY_AMT)}${Y0}:${L(SY_AMT)}${YN}>0))")
     stand[E_YNAME] = ("The first one", "=" + yname(0))
+    # this month: what the plan asks for (Move as planned) and what is ticked (what was really moved)
+    month = f"(YEAR({dates})=YEAR($S$16))*(MONTH({dates})=MONTH($S$16))*({ks}<=$S$1)"
+    stand[E_MONTHPLAN] = ("This month: planned", f"=IF($S$3=0,0,SUMPRODUCT({month}*{col(C_MOVE0)}))")
+    stand[E_MONTHDONE] = ("This month: ticked", f'=IF($S$3=0,0,SUMPRODUCT({month}*({done}="{TICK}")*{col(C_MOVE)}))')
+    # what if I add more: the same plan with the typed amount from the current payday on
+    wowed = col(W_OWED)
+    stand[E_WADD] = ("What if: added each payday", f"=MAX(N(Path!{absr(W_INPUT)}),0)")
+    stand[E_WNPAY] = ("What if: paydays to the end", f"=SUMPRODUCT(--({wowed}>0.005))+1")
+    stand[E_WFITS] = ("What if: ends inside the sheet", f"=IF(INDEX({wowed},{NR})<0.005,1,0)")
+    stand[E_WFREE] = ("What if: debt-free date", f'=IF(AND($S$3=1,{absr(E_WFITS)}=1),INDEX({dates},{absr(E_WNPAY)}),"")')
+    stand[E_WINT] = ("What if: interest", f"=SUM({col(W_INT)})")
+    stand[E_WMONTHS] = ("What if: months sooner", f'=IF(AND(ISNUMBER($S$4),ISNUMBER({absr(E_WFREE)})),MAX(ROUND(($S$4-{absr(E_WFREE)})/30.4375,0),0),"")')
+    stand[E_WPAYDAYS] = ("What if: paydays sooner", f"=MAX($S$1-{absr(E_WNPAY)},0)")
+    stand[E_WSAVED] = ("What if: interest saved", f"=MAX($S$9-{absr(E_WINT)},0)")
     # a debt that grew above its start (interest beat the payments so far): the note under "Paid off so far"
     grew_row = rng(C_BAL, ROW_GREW, absrow=True)
     stand[E_NGREW] = ("Debts that grew", f"=SUMPRODUCT(--({grew_row}>0.005))")
@@ -438,7 +456,7 @@ def build_engine(wb: Workbook):
         lab = L(column_index_from_string(col_) - 1) + ref[len(col_):]   # the label sits just left of the answer
         ws[lab] = text
         ws[ref] = f
-    for ref in (E_TODAY, E_VIEWDATE, E_NEXTDATE):
+    for ref in (E_TODAY, E_VIEWDATE, E_NEXTDATE, E_WFREE):
         ws[ref].number_format = "yyyy-mm-dd"
 
     # ---- the chart: what is owed at NC moments from now to the end, so the line always fills the picture
@@ -510,6 +528,10 @@ def build_engine(wb: Workbook):
         ws.cell(ER_HEAD, 1 + j, h)
     for p in range(ND):
         ws.cell(ER_HEAD, C_DUE + p, f"Due {p + 1}"); ws.cell(ER_HEAD, C_AFT + p, f"After bill {p + 1}"); ws.cell(ER_HEAD, C_BAL + p, f"Left {p + 1}")
+    for j, h in enumerate(["What if: money", "yearly", "buffer", "buffer after", "charge goes to", "for debts", "interest", "owed"]):
+        ws.cell(ER_HEAD, W0 + j, h)
+    for p in range(ND):
+        ws.cell(ER_HEAD, W_AFT + p, f"What if: after bill {p + 1}"); ws.cell(ER_HEAD, W_BAL + p, f"What if: left {p + 1}")
     for cc, h in ((C_AVAIL0, "Money as planned"), (C_Y0, "Yearly as planned"), (C_B0, "Buffer as planned"),
                   (C_MOVE0, "Move as planned"), (C_SHORT, "Actual below bills"), (C_XPOS, "Most extra to (place)")):
         ws.cell(ER_HEAD, cc, h)
@@ -520,6 +542,10 @@ def build_engine(wb: Workbook):
     for p in range(ND):
         ws.cell(r, C_BAL + p, f"=$O${EO0 + p}")
     ws.cell(r, C_OWED, f"=SUM({rng(C_BAL, r)})")
+    ws.cell(r, W_BUFAFTER, "=$B$8")
+    for p in range(ND):
+        ws.cell(r, W_BAL + p, f"=$O${EO0 + p}")
+    ws.cell(r, W_OWED, f"=SUM({rng(W_BAL, r)})")
 
     c = lambda col, row: f"${L(col)}{row}"  # noqa: E731
     growth, rates, places = rng(C_BAL, 22, absrow=True), rng(C_BAL, 21, absrow=True), rng(C_BAL, 23, absrow=True)
@@ -542,6 +568,25 @@ def build_engine(wb: Workbook):
         ws.cell(r, C_SHORT, f"=IF(ISNUMBER({actual}),IF({actual}<{c(C_BILLS, r)}-0.005,1,0),0)")
         ws.cell(r, C_XPOS, (f"=IF({c(C_EXTRA, r)}<0.005,0,{ND + 1}-SUMPRODUCT(MAX((({rng(C_AFT, r)}-{rng(C_BAL, r)})>0.005)"
                             f"*({ND + 1}-{places}))))"))
+        # what if: the same payday with the typed amount added from the current payday on (engine_v2.py "adjust")
+        wprev = rng(W_BAL, pr)
+        ws.cell(r, W_AVAIL, f"={c(C_AVAIL, r)}+IF({c(C_K, r)}>=$S$15,{absr(E_WADD)},0)")
+        ws.cell(r, W_YEARLY, f"=MIN($B$2,MAX({c(W_AVAIL, r)},0))")
+        ws.cell(r, W_TOBUF, f"=MIN(MAX($B$9-{c(W_BUFAFTER, pr)},0),MAX({c(W_AVAIL, r)}-{c(W_YEARLY, r)},0))")
+        ws.cell(r, W_BUFAFTER, f"={c(W_BUFAFTER, pr)}+{c(W_TOBUF, r)}-N({c(C_BUFUSED, r)})")
+        wfirst = f"({ND + 1}-SUMPRODUCT(MAX(({wprev}>0.005)*({ND + 1}-{places}))))"
+        ws.cell(r, W_CHGPOS, f"=IF(N({c(C_CHG, r)})=0,0,IF({wfirst}>{ND},1,{wfirst}))")
+        ws.cell(r, W_POOL, (f"=MAX({c(W_AVAIL, r)}-{c(W_YEARLY, r)}-{c(W_TOBUF, r)},0)+SUM({rng(C_DUE, r)})"
+                            f"-(SUMPRODUCT({wprev},{growth})+N({c(C_CHG, r)})-SUM({rng(W_AFT, r)}))"))
+        ws.cell(r, W_INT, f"=SUMPRODUCT({wprev},{rates})/$B$1")
+        ws.cell(r, W_OWED, f"=SUM({rng(W_BAL, r)})")
+        for p in range(ND):
+            due, aft, bal = L(C_DUE + p), L(W_AFT + p), L(W_BAL + p)
+            pre = f"({bal}{pr}*{L(C_BAL + p)}$22+IF({c(W_CHGPOS, r)}={p + 1},N({c(C_CHG, r)}),0))"
+            ws.cell(r, W_AFT + p, f"={pre}-MIN({due}{r},{pre})")
+            before = "0" if p == 0 else f"SUM({rng(W_AFT, r, p)})"
+            x = f"MIN({aft}{r},MAX({c(W_POOL, r)}-{before},0))"
+            ws.cell(r, W_BAL + p, f"=IF({aft}{r}-{x}<0.005,0,{aft}{r}-{x})")
         ws.cell(r, C_YEARLY, f"=MIN($B$2,MAX({c(C_AVAIL, r)},0))")
         ws.cell(r, C_TOBUF, f"=MIN(MAX($B$9-{c(C_BUFAFTER, pr)},0),MAX({c(C_AVAIL, r)}-{c(C_YEARLY, r)},0))")
         ws.cell(r, C_BUFAFTER, f"={c(C_BUFAFTER, pr)}+{c(C_TOBUF, r)}-N({c(C_BUFUSED, r)})")
@@ -732,6 +777,8 @@ def build_path(wb: Workbook):
     names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
     st.hint(ws, 17, P_RING_TEXT, t1, (f'=IFERROR(IF({has}=0,"",IF({EN(E_NEXTGONEPOS)}=0,IF({EN(E_OWEDNOW)}<0.005,"Every debt is gone.",""),'
                                       f'"Next: "&INDEX({names},{EN(E_NEXTGONEPOS)})&" gone "&{dtext(EN(E_NEXTGONE))})),"")'))
+    st.hint(ws, 18, P_RING_TEXT, t1, (f'=IFERROR(IF(OR({has}=0,{EN(E_MONTHPLAN)}<0.005),"",'
+                                      f'"This month: "&{money(EN(E_MONTHDONE))}&" of "&{money(EN(E_MONTHPLAN))}&" done"),"")'))
     st.label(ws, 15, gcol(6) + 1, gend(12) - 1, "What you owe, payday by payday", gray=True,
              align=st.Alignment(horizontal="left", vertical="top"))
 
@@ -785,6 +832,23 @@ def build_path(wb: Workbook):
         else:
             st.when(ws, at, last, st.CARD, border=st.Border(bottom=st.THIN, **sides))
             st.when(ws, at, live, st.CARD, border=st.Border(bottom=None if sides else st.THIN, **sides))
+    # ---- what if I add more: one typed field, the new date, how much sooner, the interest saved
+    w0, w1 = R_C0, R_C1
+    st.grid_card(ws, W_CARD_ROWS[0], W_CARD_ROWS[1], 9, 12, st.CALM)
+    st.text(ws, 23, w0, w1, "What if I add more?", st.font(st.SECTION, bold=True))
+    st.text(ws, 24, w0, w1, "Type an amount to add each payday and see your new date.", st.font(st.HELP, color=st.GRAY), st.TOP_WRAP, r1=26)
+    st.label(ws, 27, w0, w0 + 2, "Add")
+    st.input_cell(ws, 27, w0 + 4, w0 + 11, "#,##0.00", st.RIGHT)
+    st.text(ws, 27, w0 + 13, w1, "per payday", st.font(st.BODY))
+    st.amount_only(ws, W_INPUT).error = "Type an amount of 0 or more to try, or leave it empty."
+    add, wmonths, wpaydays = EN(E_WADD), EN(E_WMONTHS), EN(E_WPAYDAYS)
+    on = f"AND({has}=1,{add}>0)"
+    st.text(ws, 29, w0, w1, f'=IFERROR(IF(AND({on},{EN(E_WFITS)}=1),{dtext(EN(E_WFREE))},""),"")', st.font(st.TILE, bold=True, title=True),
+            st.Alignment(horizontal="left", vertical="center"), r1=30)
+    sooner = (f'IF({wmonths}>=1,{wmonths}&IF({wmonths}=1," month sooner"," months sooner"),'
+              f'IF({wpaydays}>=1,{wpaydays}&IF({wpaydays}=1," payday sooner"," paydays sooner"),"The same payday"))')
+    st.hint(ws, 31, w0, w1, f'=IFERROR(IF(AND({on},{fits}=1),{sooner}&" · "&{money0(EN(E_WSAVED))}&" less interest",""),"")', wrap=False)
+    st.hint(ws, 32, w0, w1, f'=IF({on},"Like it? Change your money on Start.","")', wrap=False)
     st.footer(ws, P_FOOT, 9, 12, two_rows=True)
     return ws
 
@@ -801,7 +865,7 @@ def add_charts(wb: Workbook):
     # how far along: action blue for gone, calm for left, yellow only when everything is gone
     ring = DoughnutChart()
     ring.holeSize = 62
-    ring.height, ring.width = cm(130), cm(130)
+    ring.height, ring.width = cm(150), cm(150)
     ring.legend, ring.title = None, None
     ring.add_data(Reference(en, min_col=E_RING_COL, min_row=1, max_row=3), titles_from_data=False)
     for i, rgb in enumerate((st.ACTION, st.CALM, st.YELLOW)):
@@ -829,6 +893,9 @@ def add_charts(wb: Workbook):
     area.x_axis.delete = False
     area.x_axis.tickLblSkip = 1
     area.x_axis.axPos = "b"
+    # the month labels stay on one line
+    area.x_axis.txPr = RichText(bodyPr=RichTextProperties(wrap="none", rot=0, vert="horz"),
+                                p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties(sz=900)), endParaRPr=CharacterProperties())])
     ws.add_chart(area, ref(16, c0))
 
     for ch in (ring, area):
