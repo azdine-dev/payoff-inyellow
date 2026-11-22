@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Start</title>
+
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2F4A6D}a:hover{color:#1F2A44}
+.sheet{font-family:Inter,Arial,sans-serif;color:#1F2A44;font-size:14px}
+.gt{font-family:'Bricolage Grotesque',Inter,sans-serif;font-weight:700;letter-spacing:-0.01em}
+.card{background:#fff;border:1px solid #E2DCCD;padding:18px 20px;box-sizing:border-box}
+.calm{background:#E6EFE8;padding:18px 20px;box-sizing:border-box}
+.lbl{font-size:12px;color:#5C5A55;font-weight:600;text-transform:none}
+.help{font-size:12px;color:#5C5A55}
+.sec{font-size:16px;font-weight:700;margin:0 0 10px}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;color:#5C5A55;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #E2DCCD}
+td{padding:6px 8px;border-bottom:1px solid #E2DCCD;font-size:13px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.inp{background:#fff;border-bottom:2px solid #2F4A6D;padding:5px 8px;font-size:13px;min-height:18px}
+.tab{padding:8px 14px;font-size:12px;color:#444;border-right:1px solid #ddd}
+.tab.on{background:#fff;color:#1F2A44;font-weight:600;border-top:3px solid #D8E7DC}
+</style>
+</helmet>
+<div class="sheet" style="width:1280px;height:900px;box-sizing:border-box;background:#F8F6F0;display:flex;flex-direction:column;overflow:hidden">
+<div style="height:30px;background:#F1F3F4;border-bottom:1px solid #dadce0;display:flex;align-items:center;padding:0 14px;gap:10px;font-size:12px;color:#5f6368"><span style="font-weight:600;color:#3c4043">1 · Paycheck Payoff Planner</span><span>Google Sheets view</span></div>
+<div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#D8E7DC;padding:22px 40px 18px;display:flex;align-items:flex-end;justify-content:space-between">
+<div><div class="gt" style="font-size:48px;line-height:1">Start</div><div class="help" style="margin-top:6px;color:#3d4a40">Type here. Everything else follows.</div></div>
+<div style="text-align:right"><div class="gt" style="font-size:22px;color:#1F2A44">PaidInYellow</div><div class="help" style="color:#3d4a40">one paycheck at a time</div></div>
+</div>
+<div style="padding:24px 40px;flex:1;display:flex;flex-direction:column;gap:20px">
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px"><div style="display:flex;flex-direction:column;gap:16px"><div class="card"><div class="sec">Step 1 · Your pay</div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">Currency</div><div class="inp">$</div><div class="help">Pick your symbol.</div></div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">How often you are paid</div><div class="inp">Every 2 weeks</div><div class="help">Week, 2 weeks, twice a month or month.</div></div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">Your next payday</div><div class="inp">Fri 6 Nov 2026</div><div class="help">This sheet reads dates as MM/DD/YYYY.</div></div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="sec">Step 2 · Your debts</div><div class="help">Up to 15. All on your statement.</div></div><table><tr><th>#</th><th>Name</th><th class="num">Balance</th><th class="num">Interest %</th><th class="num">Minimum</th><th class="num">Due day</th></tr>
+<tr><td class="help">1</td><td><div class="inp">Store card</div></td><td><div class="inp num">$450</div></td><td><div class="inp num">26.99</div></td><td><div class="inp num">$30</div></td><td><div class="inp num">12</div></td></tr><tr><td class="help">2</td><td><div class="inp">Medical</div></td><td><div class="inp num">$600</div></td><td><div class="inp num">0</div></td><td><div class="inp num">$50</div></td><td><div class="inp num">3</div></td></tr><tr><td class="help">3</td><td><div class="inp">Visa</div></td><td><div class="inp num">$2,200</div></td><td><div class="inp num">22.99</div></td><td><div class="inp num">$66</div></td><td><div class="inp num">20</div></td></tr><tr><td class="help">4</td><td><div class="inp"></div></td><td><div class="inp num"></div></td><td><div class="inp num"></div></td><td><div class="inp num"></div></td><td><div class="inp num"></div></td></tr></table><div class="help" style="margin-top:6px">11 more rows below</div></div><div class="card"><div class="sec">Step 3 · Your money</div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">Money for the plan each payday</div><div class="inp">$150</div><div class="help">On top of your minimums. Even $20 matters.</div></div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">Buffer: set aside now</div><div class="inp">$200</div><div class="help">Empty is fine.</div></div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">Buffer goal</div><div class="inp">$500</div><div class="help">Kept in a separate account or envelope.</div></div><div style="display:grid;grid-template-columns:230px 170px 1fr;gap:12px;align-items:center;margin-top:8px"><div class="lbl" style="color:#1F2A44">Yearly bill</div><div class="inp">Gifts · $260</div><div class="help">December</div></div></div></div><div style="display:flex;flex-direction:column;gap:16px"><div class="calm" style="padding:24px"><div class="lbl">You can be debt-free by</div><div class="gt" style="font-size:34px;margin:6px 0"><span style="background:#FFE14D;padding:0 6px">Fri 16 Jul 2027</span></div>
+<div style="font-weight:700;margin-top:8px">First step: move $180 on Fri 6 Nov</div><div class="help" style="margin-top:8px">With minimums only: about April 2031.</div><div class="help">That is about 45 months sooner.</div>
+<div class="help" style="margin-top:14px">Next: open Today.</div></div><div class="card"><div class="sec">Options</div><div style="display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center"><div class="lbl" style="color:#1F2A44">Payoff order</div><div class="inp">PaidInYellow order</div><div class="lbl" style="color:#1F2A44">Look</div><div class="inp">Light</div><div class="lbl" style="color:#1F2A44">Show where to type</div><div class="inp" style="width:24px">✓</div></div></div></div></div>
+</div>
+<div style="padding:0 40px 14px;display:flex;justify-content:space-between" class="help"><span>A planning tool, not financial advice.</span><span>paidinyellow.com</span></div>
+</div>
+<div style="height:34px;background:#F1F3F4;border-top:1px solid #dadce0;display:flex;align-items:stretch;padding-left:40px"><span class="tab">Open me</span><span class="tab on">Start</span><span class="tab">Today</span><span class="tab">Path</span><span class="tab">Debts</span><span class="tab">Safety net</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

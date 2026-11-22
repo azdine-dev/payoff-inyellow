@@ -62,9 +62,12 @@ SY_ENDS = {SY_NAME: 20, SY_AMT: 30, SY_MONTH: 45}
 # the right column: the result box, then the options
 R_C0, R_C1 = gcol(9) + 1, gend(12) - 1        # inside a card of grid 9 to 12
 S_R_LINE1, S_R_DATE, S_R_STEP, S_R_MIN, S_R_SOONER, S_R_NEXT = (ref(r, R_C0) for r in (7, 8, 9, 10, 11, 12))
-O_LABEL, O_INPUT = R_C0, R_C1 - 2   # the tick sits at the right edge of the card
-S_ORDER = ref(18, R_C0)        # under its label: the longest choice needs the card's width
+# the options: a label and its typed cell side by side, as on the design
+O_LABEL, O_INPUT = R_C0, R_C0 + 12
+S_ORDER = ref(17, O_INPUT)
+S_LOOK = ref(20, O_INPUT)      # Light or Night
 S_SHOW = ref(21, O_INPUT)
+LOOKS = ["Light", "Night"]
 S_FOOT = 53
 
 # ---- Engine (hidden)
@@ -235,22 +238,24 @@ DB_RANGES = [f"B{DB_R0}:B{DB_LAST}", f"C{DB_R0}:{_L(DB_COLS['bar'] - 1)}{DB_LAST
              f"{_L(DB_ENDS['bar'] + 1)}{DB_R0}:{_L(DB_COLS['gone'] - 1)}{DB_LAST}", f"{_L(DB_COLS['gone'])}{DB_R0}:{_L(DB_ENDS['gone'])}{DB_LAST}"]
 # (each range starts where a merged cell starts: a merged cell takes the rules of its first cell)
 
-# ---- Safety net: the buffer (grid 1 to 5) beside the yearly bills (grid 6 to 12)
+# ---- Safety net: the buffer (grid 1 to 4) beside the yearly bills (grid 5 to 12), which have room for a bar per bill
 SN_BUF = ref(8, 3)
 SN_BAR = f"C9:{_L(2 + BAR)}9"   # the bar's thin row is a small gap in the yearly bills card
 SN_SHARE = helper(2)
-SN_READY = ref(12, 3)
-SN_YEARLY_TITLE = ref(7, 38)    # "Yearly bills", in its own row at the top of its card
+SN_READY = ref(12, 3)           # "ready" on yellow when the buffer is full, else "Full after" a date
+SN_YEARLY_TITLE = ref(7, gcol(5) + 1)    # "Yearly bills", in its own row at the top of its card
 SN_Y0 = 11            # first yearly bill row
-SN_COLS = [38, 50, 58, 67, 76]   # Bill, A year, Month needed, Set aside so far, Each payday
-SN_ENDS = [48, 56, 66, 74, 83]
-SN_EMPTY = ref(SN_Y0 + NY, 38)
+SN_COLS = [31, 41, 47, 53, 58]   # Bill, A year, Month needed, Set aside so far, Each payday
+SN_ENDS = [40, 45, 52, 57, 62]
+SN_PROG = 64                     # the progress bar of each bill: 20 cells, to the card's inside edge
+SN_PROG_BARS = [f"{_L(SN_PROG)}{SN_Y0 + i}:{_L(SN_PROG + BAR - 1)}{SN_Y0 + i}" for i in range(NY)]   # one bar per bill
+SN_EMPTY = ref(SN_Y0 + NY, 31)
 SN_HEAD = SN_Y0 - 1
 SN_FOOT = SN_Y0 + NY + 4
-YELLOW_OK |= {("Debts", r) for r in DB_RANGES} | {("Safety net", SN_READY), ("Safety net", SN_BAR)}
+YELLOW_OK |= {("Debts", r) for r in DB_RANGES} | {("Safety net", SN_READY), ("Safety net", SN_BAR)} | {("Safety net", b) for b in SN_PROG_BARS}
 
 # quiet helpers on the visible tabs, in the hidden column: the colour rules read them
-HELPERS = {("Today", T_FLAG), ("Today", T_COUNT), ("Path", P_CURK), ("Path", P_SHOW), ("Safety net", SN_SHARE)} | {("Path", s) for s in P_SHARES}
+HELPERS = {("Today", T_FLAG), ("Today", T_COUNT), ("Path", P_CURK), ("Path", P_SHOW), ("Safety net", SN_SHARE)} | {("Safety net", helper(SN_Y0 + i)) for i in range(NY)} | {("Path", s) for s in P_SHARES}
 
 # ---- the workbook
 TABS = ["Open me", "Start", "Today", "Path", "Debts", "Safety net"]   # in this order; Engine and Lists are hidden

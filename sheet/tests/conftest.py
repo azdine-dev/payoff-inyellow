@@ -29,6 +29,31 @@ def all_scenarios() -> dict[str, dict]:
     return out
 
 
+class Books(dict):
+    """name -> (formulas, values), read from disk when a test asks and only a few kept at once, so memory stays low"""
+    KEEP = 6
+
+    def __init__(self, src: str, out: str):
+        super().__init__()
+        self.src, self.out = src, out
+        self.names = [f[:-5] for f in os.listdir(src)]
+
+    def __contains__(self, name) -> bool:
+        return name in self.names
+
+    def __iter__(self):
+        return iter(self.names)
+
+    def __missing__(self, name: str):
+        if name not in self.names:
+            raise KeyError(name)
+        while len(self) >= self.KEEP:
+            del self[next(iter(dict.keys(self)))]
+        f = name + ".xlsx"
+        self[name] = (load_workbook(os.path.join(self.src, f)), load_workbook(os.path.join(self.out, f), data_only=True))
+        return dict.__getitem__(self, name)
+
+
 @pytest.fixture(scope="session")
 def books():
     """name -> (workbook with formulas, workbook with values). 'blank' is the file we sell, 'nadia-ticked' has 2 ticks."""
@@ -59,10 +84,6 @@ def books():
     build_sheet.build(os.path.join(src, "thin.xlsx"), scenarios.THIN, today=DAY)
     build_sheet.build(os.path.join(src, "nofit.xlsx"), scenarios.NOFIT, today=DAY)
     recalc.recalc_folder(src, out)
-    res = {}
-    for f in os.listdir(src):
-        name = f[:-5]
-        res[name] = (load_workbook(os.path.join(src, f)), load_workbook(os.path.join(out, f), data_only=True))
-    yield res
+    yield Books(src, out)
     shutil.rmtree(src, ignore_errors=True)
     shutil.rmtree(out, ignore_errors=True)

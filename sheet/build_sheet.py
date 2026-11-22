@@ -110,8 +110,8 @@ def pct_text(x: str) -> str:
 def build_lists(wb: Workbook):
     ws = wb.create_sheet("Lists")
     cols = {"A": CURRENCIES, "B": list(FREQ.values()), "C": list(METHOD.values()), "D": MONTHS, "E": [TICK],
-            "F": WEEKDAYS, "G": MONTHS_SHORT}
-    heads = {"A": "Currency", "B": "Pay schedule", "C": "Payoff order", "D": "Month", "E": "Done", "F": "Weekday", "G": "Month, short"}
+            "F": WEEKDAYS, "G": MONTHS_SHORT, "H": LOOKS}
+    heads = {"A": "Currency", "B": "Pay schedule", "C": "Payoff order", "D": "Month", "E": "Done", "F": "Weekday", "G": "Month, short", "H": "Look"}
     for col, values in cols.items():
         ws[f"{col}1"] = heads[col]
         for i, v in enumerate(values):
@@ -237,18 +237,25 @@ def build_start(wb: Workbook):
                                  f'&IF({EN(E_SOONER)}=1,"","s")&" sooner.",""),""),"")'))
     st.hint(ws, 12, R_C0, R_C1, f'=IF({ok},"Next: open Today.","")')
 
-    # ---- options
+    # ---- options: a label and its typed cell side by side
     st.grid_card(ws, 15, 23, 9, 12)
     st.section(ws, 16, R_C0, R_C1, "Options")
-    st.label(ws, 17, O_LABEL, R_C1, "Payoff order")
-    typed(18, R_C0, R_C1)
+    st.label(ws, 17, O_LABEL, O_INPUT - 1, "Payoff order")
+    typed(17, O_INPUT, R_C1)
     ws[S_ORDER] = METHOD["piy"]
     st.dropdown(ws, S_ORDER, "Lists!$C$2:$C$4", allow_blank=False)
-    st.hint(ws, 19, R_C0, R_C1, "PaidInYellow order: the smallest debt first, and a debt that grows before that.")
-    st.label(ws, 21, O_LABEL, O_INPUT - 2, "Show where to type")
-    typed(21, O_INPUT, O_INPUT + 2, align=st.CENTER)
+    st.hint(ws, 18, R_C0, R_C1, "PaidInYellow order: the smallest debt first, and a debt that grows before that.")
+    st.label(ws, 20, O_LABEL, O_INPUT - 1, "Look")
+    typed(20, O_INPUT, O_INPUT + 7)
+    ws[S_LOOK] = LOOKS[0]
+    st.dropdown(ws, S_LOOK, f"Lists!$H$2:$H${1 + len(LOOKS)}", allow_blank=False)
+    st.label(ws, 21, O_LABEL, O_INPUT - 1, "Show where to type")
+    typed(21, O_INPUT, O_INPUT + 1, align=st.CENTER)
     st.dropdown(ws, S_SHOW, f'"{TICK}"')
     st.hint(ws, 22, R_C0, R_C1, "Pick the tick: every cell you can type in turns sage.")
+    for r in (17, 20, 21):
+        ws.row_dimensions[r].height = 26
+    ws.row_dimensions[18].height = 30
     for r, h in ((6, 10), (13, 10), (14, 14), (15, 10), (DN + 1, 10), (34, 14), (35, 10), (YN + 1, 10)):
         ws.row_dimensions[r].height = h
     for at in inputs:
@@ -977,45 +984,60 @@ def build_debts(wb: Workbook):
 
 # ------------------------------------------------------------------------------------------------ Safety net
 def build_safety(wb: Workbook):
-    """The buffer with its bar, beside the yearly bills with what is set aside so far."""
+    """The buffer with its bar, beside the yearly bills with what is set aside so far and a bar per bill."""
     ws = wb.create_sheet("Safety net")
     st.page(ws, SN_FOOT + 1, "Safety net")
     buf, goal = EN(E_BUFNOW), EN(E_GOAL)
-    i0, i1 = gcol(1) + 1, gend(5) - 1
-    st.grid_card(ws, 6, 13, 1, 5, st.CALM)
+    i0, i1 = gcol(1) + 1, gend(4) - 1
+    st.grid_card(ws, 6, 13, 1, 4, st.CALM)
     st.label(ws, 7, i0, i1, "Surprise buffer", gray=True).alignment = st.Alignment(horizontal="left", vertical="bottom")
+    # a long goal shrinks to fit the card in Excel and LibreOffice
     st.text(ws, 8, i0, i1, f'=IFERROR({money0(buf)}&" of "&{money0(goal)},"")', st.font(36, bold=True, title=True),
-            st.Alignment(horizontal="left", vertical="bottom"))
+            st.Alignment(horizontal="left", vertical="bottom", shrink_to_fit=True))
     st.quiet(ws, SN_SHARE, f'=IF({goal}>0,MIN({buf}/{goal},1),"")')
     st.bar(ws, 9, i0, absr(SN_SHARE), rest=st.CARD, gap=st.CALM)
     note = ws.cell(10, i0, "Kept in a plain separate account or an envelope. It comes first, so a surprise stays off your cards.")
-    note.font, note.alignment = st.font(st.HELP, color=st.GRAY), st.TOP_WRAP
+    note.font, note.alignment = st.font(st.HELP, color=st.GRAY), st.Alignment(horizontal="left", vertical="center", wrap_text=True)
     ws.merge_cells(start_row=10, end_row=11, start_column=i0, end_column=i1)   # two rows: it wraps
-    st.text(ws, 12, i0, i0 + 9, f'=IF(AND({goal}>0,{buf}>={goal}-0.005),"ready","")', st.font(st.BODY, bold=True))
+    # when the plan fills it: the buffer only grows, so the paydays before that are the ones still below the goal
+    ks, after = f"Engine!${L(C_K)}${ER1}:${L(C_K)}${ERN}", f"Engine!${L(C_BUFAFTER)}${ER1}:${L(C_BUFAFTER)}${ERN}"
+    below = f'COUNTIFS({ks},"<="&{EN(E_NPAY)},{after},"<"&({goal}-0.005))'
+    full_on = f"INDEX(Engine!${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN},{below}+1)"
+    st.text(ws, 12, i0, i0 + 12, (f'=IF({goal}<=0,"",IF({buf}>={goal}-0.005,"ready",'
+                                  f'IF(AND({EN(E_HASPLAN)}=1,{below}<{EN(E_NPAY)}),"Full after "&{dtext(full_on)},"")))'),
+            st.font(st.BODY, bold=True))
     st.when(ws, SN_READY, f'{absr(SN_READY)}="ready"', st.YELLOW)  # done
 
-    y0, y1 = gcol(6), gend(12)
-    st.grid_card(ws, 6, SN_Y0 + NY + 1, 6, 12)
+    y0, y1 = gcol(5), gend(12)
+    st.grid_card(ws, 6, SN_Y0 + NY + 1, 5, 12)
     st.section(ws, 7, y0 + 1, y1 - 1, "Yearly bills").alignment = st.Alignment(horizontal="left", vertical="bottom")
     st.hint(ws, 8, y0 + 1, y1 - 1, "Bills that come once a year. A little goes aside each payday, so they never land on a card.")
-    for c, e, text, align in zip(SN_COLS, SN_ENDS, ("Bill", "A year", "Month needed", "Set aside so far", "Each payday"),
-                                 (st.LEFT, st.RIGHT, st.LEFT, st.RIGHT, st.RIGHT)):
-        st.head(ws, SN_HEAD, c, e, text, align)
+    heads = (("Bill", st.LEFT), ("A year", st.RIGHT), ("Month needed", st.LEFT), ("Set aside so far", st.RIGHT), ("Each payday", st.RIGHT))
+    for c, e, (text, align) in zip(SN_COLS, SN_ENDS, heads):
+        st.head(ws, SN_HEAD, c, e, text, align).alignment = st.Alignment(horizontal=align.horizontal, vertical="bottom", wrap_text=True)
+    st.head(ws, SN_HEAD, SN_PROG, SN_PROG + BAR - 1, "Progress").alignment = st.Alignment(horizontal="left", vertical="bottom")
+    for c in range(y0 + 1, y1):   # one hairline under the whole header
+        ws.cell(SN_HEAD, c).border = st.UNDER
     total = f"SUM(Start!${L(SY_AMT)}${Y0}:${L(SY_AMT)}${YN})"
     for i in range(NY):
         r, sr = SN_Y0 + i, Y0 + i
         amount = f"N(Start!${L(SY_AMT)}${sr})"
         nm, mo = f"Start!${L(SY_NAME)}${sr}", f"Start!${L(SY_MONTH)}${sr}"
         on = f"{amount}>0"
-        st.text(ws, r, SN_COLS[0], SN_ENDS[0], f'=IF({on},IF({nm}="","Yearly bill",{nm}&""),"")', st.font(st.BODY, bold=True))
+        saved = f"MIN({EN(E_YSAVED)}*{amount}/{total},{amount})"
+        st.text(ws, r, SN_COLS[0], SN_ENDS[0], f'=IF({on},IF({nm}="","Yearly bill",{nm}&""),"")', st.font(st.BODY, bold=True),
+                st.Alignment(horizontal="left", vertical="center", shrink_to_fit=True))   # a long name shrinks in Excel and LibreOffice
         st.text(ws, r, SN_COLS[1], SN_ENDS[1], f'=IF({on},{cell_amount(amount, cents=True)},"")', None, st.RIGHT)
         st.text(ws, r, SN_COLS[2], SN_ENDS[2], f'=IF({on},IF({mo}="","Any time",{mo}&""),"")')
-        st.text(ws, r, SN_COLS[3], SN_ENDS[3], f'=IFERROR(IF({on},{cell_amount(f"MIN({EN(E_YSAVED)}*{amount}/{total},{amount})", cents=True)},""),"")', None, st.RIGHT)
+        st.text(ws, r, SN_COLS[3], SN_ENDS[3], f'=IFERROR(IF({on},{cell_amount(saved, cents=True)},""),"")', None, st.RIGHT)
         st.text(ws, r, SN_COLS[4], SN_ENDS[4], f'=IFERROR(IF({on},{cell_amount(f"{amount}/{EN(E_PPY)}", cents=True)},""),"")', None, st.RIGHT)
-        ws.row_dimensions[r].height = 20
-    st.hint(ws, SN_Y0 + NY, SN_COLS[0], SN_ENDS[-1], f'=IF({total}>0,"Car repairs, insurance, school. Add them on Start and a little goes aside each payday.",'
-                                                       f'"No yearly bills yet. Add one on Start and a little goes aside each payday.")')
-    for r, h in ((6, 10), (7, 24), (8, 50), (9, 9), (SN_HEAD, 22), (SN_Y0 + NY, 30), (SN_Y0 + NY + 1, 10)):
+        share = helper(r)
+        st.quiet(ws, share, f'=IFERROR(IF({on},{saved}/{amount},""),"")')
+        st.bar(ws, r, SN_PROG, absr(share))
+        ws.row_dimensions[r].height = 22
+    st.hint(ws, SN_Y0 + NY, SN_COLS[0], y1 - 1, f'=IF({total}>0,"Car repairs, insurance, school. Add them on Start and a little goes aside each payday.",'
+                                                  f'"No yearly bills yet. Add one on Start and a little goes aside each payday.")')
+    for r, h in ((6, 10), (7, 24), (8, 50), (9, 9), (SN_HEAD, 30), (SN_Y0 + NY, 30), (SN_Y0 + NY + 1, 10)):
         ws.row_dimensions[r].height = h
     st.footer(ws, SN_FOOT)
     return ws

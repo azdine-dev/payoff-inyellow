@@ -204,7 +204,7 @@ def at(ref):
 def test_start_keeps_the_order_of_the_steps(books):
     """The steps in order on the left (pay, debts, money, yearly bills); the result, then the options, on the right."""
     left = [at(r) for r in (S_NEXT, f"C{D0}", S_MONEY, f"C{Y0}")]
-    right = [at(r) for r in (S_R_LINE1, S_ORDER, S_SHOW)]
+    right = [at(r) for r in (S_R_LINE1, S_ORDER, S_LOOK, S_SHOW)]
     assert [r for r, _ in left] == sorted(r for r, _ in left) and [r for r, _ in right] == sorted(r for r, _ in right)
     assert max(c for _, c in left) <= gend(8) < min(c for _, c in right)
 
@@ -215,6 +215,7 @@ def test_start_dropdowns_and_the_three_orders(books):
     dv = {str(d.sqref): d.formula1 for d in st.data_validations.dataValidation}
     assert dv[S_CUR].startswith("Lists!$A$2") and dv[S_FREQ] == "Lists!$B$2:$B$5" and dv[S_ORDER] == "Lists!$C$2:$C$4"
     assert dv[S_SHOW] == f'"{TICK}"'
+    assert dv[S_LOOK] == "Lists!$H$2:$H$3" and [li["H2"].value, li["H3"].value] == ["Light", "Night"] and st[S_LOOK].value == "Light"
     assert [li[f"C{r}"].value for r in (2, 3, 4)] == ["PaidInYellow order", "Biggest interest first", "My own order"]
     assert li["C5"].value is None  # three orders, never more
     assert st[S_ORDER].value == "PaidInYellow order"
@@ -225,7 +226,7 @@ def test_inputs_are_unlocked_and_everything_else_is_locked(books):
     st = wb["Start"]
     assert st.protection.sheet and not st.protection.password
     open_cells = {c.coordinate for row in st.iter_rows() for c in row if not c.protection.locked and not isinstance(c, MergedCell)}
-    want = {S_CUR, S_FREQ, S_NEXT, S_OTHER, S_MONEY, S_BUF, S_GOAL, S_ORDER, S_SHOW}
+    want = {S_CUR, S_FREQ, S_NEXT, S_OTHER, S_MONEY, S_BUF, S_GOAL, S_ORDER, S_LOOK, S_SHOW}
     want |= {f"{L(c)}{D0 + i}" for i in range(ND) for c in (SC_NAME, SC_BAL, SC_APR, SC_MIN, SC_DUE, SC_ORDER)}
     want |= {f"{L(c)}{Y0 + i}" for i in range(NY) for c in (SY_NAME, SY_AMT, SY_MONTH)}
     assert open_cells == want
@@ -634,18 +635,30 @@ def test_yearly_bills_title_has_its_own_row(books):
 
 def test_safety_net(books):
     sn = books["nadia"][1]["Safety net"]
-    assert digits(sn[SN_BUF].value) == "$200$500" and not sn[SN_READY].value
+    assert digits(sn[SN_BUF].value) == "$200$500" and sn[SN_READY].value == "Full after Fri 4 Dec"   # 200, 340, 480, then 500
     row = [sn.cell(SN_Y0, c).value for c in SN_COLS]
     assert [row[0], amt(row[1]), row[2], row[3] or "", amt(row[4])] == ["Gifts and holidays", 260, "December", "", 10]  # nothing set aside yet: blank
     assert all(re.search(r"[.,]00$", row[i]) for i in (1, 4))  # cents in tables
     ticked = books["nadia-ticked"][1]["Safety net"]
-    assert digits(ticked[SN_BUF].value) == "$480$500"
+    assert digits(ticked[SN_BUF].value) == "$480$500" and ticked[SN_READY].value == "Full after Fri 4 Dec"
     assert amt(ticked.cell(SN_Y0, SN_COLS[3]).value) == 20   # two paydays of 10
     done = books["nadia-done"][1]["Safety net"]
     assert digits(done[SN_BUF].value) == "$500$500" and done[SN_READY].value == "ready"
     assert amt(done.cell(SN_Y0, SN_COLS[3]).value) == 190    # 19 paydays of 10
     blank = books["blank"][1]["Safety net"]
     assert blank[SN_EMPTY].value.startswith("No yearly bills yet.")
+    assert not blank[SN_READY].value
+
+
+def test_yearly_bills_have_a_progress_bar(books):
+    """Each bill's bar reads what is set aside over what it costs: nothing yet, then 20 of 260, then full."""
+    def share(book):
+        return books[book][1]["Safety net"][helper(SN_Y0)].value
+    assert share("nadia") == pytest.approx(0)
+    assert share("nadia-ticked") == pytest.approx(20 / 260)
+    assert books["nadia"][1]["Safety net"][helper(SN_Y0 + 1)].value in (None, "")   # no second bill, no bar
+    rules = {str(r.sqref) for r in books["blank"][0]["Safety net"].conditional_formatting}
+    assert set(SN_PROG_BARS) <= rules
 
 
 # ------------------------------------------------------------------------------------------------ Open me and the style every tab shares
