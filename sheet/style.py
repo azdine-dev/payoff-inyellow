@@ -73,15 +73,16 @@ def page(ws, rows: int, title: str):
     _CARDS[ws.title] = []
 
 
-def text(ws, row: int, c0: int, c1: int, value, fnt: Font | None = None, align: Alignment | None = None):
-    """A value over cells c0 to c1 of a row, merged so it never spills or clips differently in each program."""
+def text(ws, row: int, c0: int, c1: int, value, fnt: Font | None = None, align: Alignment | None = None, r1: int | None = None):
+    """A value over cells c0 to c1 of a row (down to row r1 when given), merged so it never spills or clips
+    differently in each program."""
     cell = ws.cell(row, c0, value)
     if fnt is not None:
         cell.font = fnt
     if align is not None:
         cell.alignment = align
-    if c1 > c0:
-        ws.merge_cells(start_row=row, end_row=row, start_column=c0, end_column=c1)
+    if c1 > c0 or (r1 or row) > row:
+        ws.merge_cells(start_row=row, end_row=r1 or row, start_column=c0, end_column=c1)
     return cell
 
 

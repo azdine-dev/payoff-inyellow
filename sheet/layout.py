@@ -85,6 +85,7 @@ C_BAL = C_AFT + ND       # balance after the extra
 C_LAST = C_BAL + ND - 1
 # what the plan asks for on a payday before any Actual is typed, and whether the Actual is below the bills
 C_AVAIL0, C_Y0, C_B0, C_MOVE0, C_SHORT = C_LAST + 1, C_LAST + 2, C_LAST + 3, C_LAST + 4, C_LAST + 5
+C_XPOS = C_LAST + 6   # the debt that gets most of the extra on a payday (place), for "Mostly for" on Today
 
 # ---- Engine: one answer per cell, read by the tabs (column S, labels in R)
 E_NPAY = "S1"        # the payday the plan ends on (count)
@@ -120,21 +121,43 @@ ROW_GREW = 20         # over the C_BAL columns: how much a debt grew above its s
 E_NGREW, E_GREW = "U19", "U20"   # how many debts grew, and by how much in all
 # more answers live in column AB (labels in AA), rows 1 to 20: row 21 and below of these columns belong to the debts
 E_GREWPOS = "AB1"     # the first debt that grew (place)
+E_YCOUNT, E_YNAME = "AB2", "AB3"   # yearly bills with an amount, and the name of the first one
 
-# ---- Today: the payday card on the left (grid 1 to 8), the focus debt on the right (grid 9 to 12)
+# ---- Today: the Move card on the left (grid 1 to 8). On the right (grid 9 to 12): the focus debt, the buffer, the
+# debt-free date, and the next two paydays under "Coming up".
 T_FLAG = helper(3)    # 1 when the card is yellow (paid, or all done)
-T_COLS = (3, 28, 38)  # a line: what it is, the amount, a note
-T_ENDS = (27, 37, 55)
-T_LABEL, T_MAIN, T_SUB = ref(7, 3), ref(8, 3), ref(9, 3)
-T_HEAD = 11
-T_L0 = 12             # first line of the payday
-T_CARD = f"B6:{_L(gend(8))}{T_HEAD}"                 # the top of the card
-T_CARD_LINES = f"B{T_L0}:{_L(gend(8))}{T_L0 + NI}"    # the lines: the card ends one row after the last line
 T_COUNT = helper(4)   # how many lines this payday has
-T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = ref(8, R_C0), ref(9, R_C0), ref(10, R_C0)
-T_LATE = ref(T_L0 + NI + 2, 3)
-T_FOOT = T_L0 + NI + 4
-YELLOW_OK |= {("Today", T_CARD), ("Today", T_CARD_LINES)}
+T_FOCUS_SHARE, T_BUF_SHARE = helper(5), helper(6)   # what the two bars on the right measure, 0 to 1
+T_COLS = (3, 28, 39)  # a line: what it is, the amount, a note (a small gap before the note)
+T_ENDS = (27, 37, 55)
+T_LABEL, T_MAIN, T_SUB = ref(7, 3), ref(8, 3), ref(11, 3)   # the big Move spans rows 8 to 10
+T_LATE = T_SUB        # when paydays went by and are not ticked, the line under Move says so
+T_HEAD = 13
+T_L0 = 14             # the lines of the payday: two rows each, a thin one, then the words. The cards on the right
+                      # sit on the same rows, and their bars need a thin row.
+T_LINES_END = T_L0 + 2 * NI + 1    # one more pair: the card's bottom padding when every line is used
+
+
+def t_line(i: int) -> int:
+    """The row with the words of line i (0 based) of the payday"""
+    return T_L0 + 2 * i + 1
+
+
+T_CARD = f"B6:{_L(gend(8))}12 B{T_HEAD} {_L(gend(8))}{T_HEAD}"   # the top of the card, around the white table header
+# the lines, in ranges that never overlap: the left edge, the inside, the right edge. The card ends one pair after the
+# last line.
+T_RANGES = [f"B{T_L0}:B{T_LINES_END}", f"C{T_L0}:{_L(gend(8) - 1)}{T_LINES_END}", f"{_L(gend(8))}{T_L0}:{_L(gend(8))}{T_LINES_END}"]
+T_FOCUS_NAME, T_FOCUS_LEFT, T_FOCUS_GONE = ref(8, R_C0), ref(9, R_C0), ref(11, R_C0)
+T_FOCUS_BAR_ROW = 10
+T_BUF, T_BUF_BAR_ROW, T_BUF_NOTE = ref(16, R_C0), 18, ref(19, R_C0)
+T_FREE, T_FREE_NOTE = ref(24, R_C0), ref(27, R_C0)
+T_FREE_END = R_C0 + 17                     # the date's highlight: about as wide as the date
+T_SOON_HEAD = 33                           # Coming up: the header, then two paydays
+T_SOON_ROWS = (35, 37)
+T_SOON_COLS, T_SOON_ENDS = (R_C0, R_C0 + 8, R_C0 + 15), (R_C0 + 7, R_C0 + 13, R_C1)
+T_FOOT = T_LINES_END + 2
+T_BARS = [f"{_L(R_C0)}{r}:{_L(R_C0 + BAR - 1)}{r}" for r in (T_FOCUS_BAR_ROW, T_BUF_BAR_ROW)]   # yellow only at 100%
+YELLOW_OK |= {("Today", T_CARD), ("Today", T_FREE)} | {("Today", r) for r in T_RANGES} | {("Today", b) for b in T_BARS}
 
 # ---- Path: four tiles, the doughnut and the chart, then the payday list (grid 1 to 8)
 P_TILE_ROW = 8

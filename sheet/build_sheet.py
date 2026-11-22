@@ -421,6 +421,13 @@ def build_engine(wb: Workbook):
     upto = f"MIN($S$15,$S$1+1,{NR + 1})"
     stand[E_BUFNOW] = ("Buffer now", f"=INDEX(${L(C_BUFAFTER)}${ER_START}:${L(C_BUFAFTER)}${ERN},{upto})")
     stand[E_YSAVED] = ("Yearly bills money so far", f"=SUMPRODUCT(({ks}<{upto})*{col(C_YEARLY)})")
+    def yname(i: int) -> str:
+        if i == NY:
+            return '""'
+        amount, name = f"N({S}${L(SY_AMT)}${Y0 + i})", f"{S}${L(SY_NAME)}${Y0 + i}"
+        return f'IF({amount}>0,IF({name}="","Yearly bill",{name}&""),{yname(i + 1)})'
+    stand[E_YCOUNT] = ("Yearly bills with an amount", f"=SUMPRODUCT(--({S}${L(SY_AMT)}${Y0}:${L(SY_AMT)}${YN}>0))")
+    stand[E_YNAME] = ("The first one", "=" + yname(0))
     # a debt that grew above its start (interest beat the payments so far): the note under "Paid off so far"
     grew_row = rng(C_BAL, ROW_GREW, absrow=True)
     stand[E_NGREW] = ("Debts that grew", f"=SUMPRODUCT(--({grew_row}>0.005))")
@@ -470,7 +477,10 @@ def build_engine(wb: Workbook):
         ws.cell(ROW_XTRA, cc, f"=IF({view}=0,0,INDEX({col(C_AFT + p)},{view})-INDEX({col(cc)},{view}))")
         ws.cell(ROW_GREW, cc, f"=IF($O${EO0 + p}>0,MAX({bal}{ROW_LEFT}-$O${EO0 + p},0),0)")
     focus_name = f'IF($U$6=0,"",INDEX($K${EO0}:$K${EO0 + ND - 1},$U$6))'
-    others = [("Yearly bills", C_YEARLY, '""'), ("Buffer", C_TOBUF, '""'), (None, C_EXTRA, '""')]
+    xcol = L(C_BAL + ND + 2)
+    others = [("Yearly bills", C_YEARLY, f'IF({absr(E_YCOUNT)}=1,{absr(E_YNAME)},IF({absr(E_YCOUNT)}>1,{absr(E_YCOUNT)}&" bills",""))'),
+              ("Buffer", C_TOBUF, f'"to "&{money0("$B$9")}'),
+              (None, C_EXTRA, f'IF({xcol}{ROW_IAMOUNT}<0.005,"after bills and buffer","")')]
     for j, (text, src, note) in enumerate(others):
         cc = C_BAL + ND + j
         ws.cell(ROW_ILABEL, cc, f'="{text}"' if text else f'="Extra to "&{focus_name}')
@@ -479,7 +489,10 @@ def build_engine(wb: Workbook):
     for j in range(NI):
         cc = C_BAL + j
         before = "0" if j == 0 else f"{L(cc - 1)}{ROW_ICOUNT}"
-        ws.cell(ROW_ICOUNT, cc, f"={before}+IF({L(cc)}{ROW_IAMOUNT}>0.005,1,0)")
+        has_line = f"{L(cc)}{ROW_IAMOUNT}>0.005"
+        if j == NI - 1:   # the extra line shows whenever there is a focus debt, so its name is always there
+            has_line = f"OR({has_line},AND({view}>0,$U$6>0))"
+        ws.cell(ROW_ICOUNT, cc, f"={before}+IF({has_line},1,0)")
 
     # ---- rows above the simulation: what each debt column needs
     for p in range(ND):
@@ -498,7 +511,7 @@ def build_engine(wb: Workbook):
     for p in range(ND):
         ws.cell(ER_HEAD, C_DUE + p, f"Due {p + 1}"); ws.cell(ER_HEAD, C_AFT + p, f"After bill {p + 1}"); ws.cell(ER_HEAD, C_BAL + p, f"Left {p + 1}")
     for cc, h in ((C_AVAIL0, "Money as planned"), (C_Y0, "Yearly as planned"), (C_B0, "Buffer as planned"),
-                  (C_MOVE0, "Move as planned"), (C_SHORT, "Actual below bills")):
+                  (C_MOVE0, "Move as planned"), (C_SHORT, "Actual below bills"), (C_XPOS, "Most extra to (place)")):
         ws.cell(ER_HEAD, cc, h)
 
     # ---- the state before the first payday
@@ -527,6 +540,8 @@ def build_engine(wb: Workbook):
                              f"+{c(C_ROLL, r)},SUM({rng(C_AFT, r)}))"))
         ws.cell(r, C_AVAIL, f"={c(C_AVAIL0, r)}+IF(ISNUMBER({actual}),{actual}-{c(C_MOVE0, r)},0)")
         ws.cell(r, C_SHORT, f"=IF(ISNUMBER({actual}),IF({actual}<{c(C_BILLS, r)}-0.005,1,0),0)")
+        ws.cell(r, C_XPOS, (f"=IF({c(C_EXTRA, r)}<0.005,0,{ND + 1}-SUMPRODUCT(MAX((({rng(C_AFT, r)}-{rng(C_BAL, r)})>0.005)"
+                            f"*({ND + 1}-{places}))))"))
         ws.cell(r, C_YEARLY, f"=MIN($B$2,MAX({c(C_AVAIL, r)},0))")
         ws.cell(r, C_TOBUF, f"=MIN(MAX($B$9-{c(C_BUFAFTER, pr)},0),MAX({c(C_AVAIL, r)}-{c(C_YEARLY, r)},0))")
         ws.cell(r, C_BUFAFTER, f"={c(C_BUFAFTER, pr)}+{c(C_TOBUF, r)}-N({c(C_BUFUSED, r)})")
@@ -557,26 +572,30 @@ def build_engine(wb: Workbook):
 
 # ------------------------------------------------------------------------------------------------ Today
 def build_today(wb: Workbook):
-    """One main number: what to move this payday. It turns yellow with PAID once that payday is ticked on Path."""
+    """One main number: what to move this payday, and what it is made of. It turns yellow with PAID once that payday
+    is ticked on Path. On the right: the focus debt, the buffer, the debt-free date and the next two paydays."""
     ws = wb.create_sheet("Today")
     st.page(ws, T_FOOT + 1, "Today")
-    view, paid, done = EN(E_VIEW), EN(E_PAIDMODE), EN(E_ALLDONE)
+    view, paid, done, has, fits = EN(E_VIEW), EN(E_PAIDMODE), EN(E_ALLDONE), EN(E_HASPLAN), EN(E_FITS)
     st.quiet(ws, T_FLAG, f"=IF(OR({paid}=1,{done}=1),1,0)")
     st.quiet(ws, T_COUNT, f"={EN(E_NITEMS)}")
     c0, c1 = gcol(1), gend(8)
     i0, i1 = c0 + 1, c1 - 1
     st.grid_card(ws, 6, T_HEAD, 1, 8, st.CALM)   # the lines below follow how many there are (see the rules)
-    for r, h in ((6, 10), (7, 20), (8, 62), (9, 20), (10, 10), (T_HEAD, 22), (T_L0 + NI, 10)):
+    for r, h in ((6, 10), (7, 18), (8, 36), (9, 18), (10, 9), (11, 18), (12, 10), (T_HEAD, 22)):
         ws.row_dimensions[r].height = h
+    for r in range(T_L0, T_LINES_END + 1):   # a thin row, then the words
+        ws.row_dimensions[r].height = 9 if (r - T_L0) % 2 == 0 else 19
     st.text(ws, 7, i0, i1, (f'=IFERROR(IF({done}=1,"Every payday is ticked",IF({view}=0,"Your next payday",'
                             f'IF({paid}=1,{dtext(EN(E_VIEWDATE))}&" is paid","This payday · "&{dtext(EN(E_VIEWDATE))}))),"")'),
             st.font(st.HELP, bold=True, color=st.GRAY))
     st.text(ws, 8, i0, i1, (f'=IFERROR(IF({done}=1,"Debt-free",IF({view}=0,"Fill in Start",'
                             f'IF({paid}=1,"PAID","Move "&{money(EN(E_VIEWMOVE))}))),"")'),
-            st.font(st.BIG, bold=True, title=True), st.Alignment(horizontal="left", vertical="bottom"))
-    st.hint(ws, 9, i0, i1, (f'=IFERROR(IF({done}=1,"You did it, one paycheck at a time.",IF({view}=0,"Your payday and what to move show here.",'
-                            f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".",IF({EN(E_VIEWACTUAL)}=1,"This is the amount you typed on Path. Tick it there and it turns yellow.",'
-                            f'"When it is done, tick it on Path and this card turns yellow.")))),"")'), wrap=False)
+            st.font(st.BIG, bold=True, title=True), st.Alignment(horizontal="left", vertical="center"), r1=10)
+    st.hint(ws, 11, i0, i1, (f'=IFERROR(IF({done}=1,"You did it, one paycheck at a time.",IF({view}=0,"Your payday and what to move show here.",'
+                             f'IF({EN(E_LATE)}>=2,"A few paydays are not ticked yet. Tick them on Path.",'
+                             f'IF({paid}=1,"Next payday is "&{dtext(EN(E_NEXTDATE))}&".",IF({EN(E_VIEWACTUAL)}=1,"This is the amount you typed on Path. Tick it there and it turns yellow.",'
+                             f'"When it is done, tick it on Path and this card turns yellow."))))),"")'), wrap=False)
 
     # what it is made of: a white table inside the calm card
     st.block(ws, T_HEAD, T_HEAD, i0, i1, st.CARD)
@@ -584,34 +603,79 @@ def build_today(wb: Workbook):
         st.head(ws, T_HEAD, c, e, text, align)
     labels, amounts, counts, notes = (rng(C_BAL, r, NI, absrow=True) for r in (ROW_ILABEL, ROW_IAMOUNT, ROW_ICOUNT, ROW_INOTE))
     for i in range(NI):
-        r = T_L0 + i
+        r = t_line(i)
         m = f"MATCH({i + 1},Engine!{counts},0)"
         none = f"{i + 1}>{EN(E_NITEMS)}"
         st.text(ws, r, T_COLS[0], T_ENDS[0], f'=IFERROR(IF({none},"",INDEX(Engine!{labels},{m})),"")', st.font(st.BODY))
-        st.text(ws, r, T_COLS[1], T_ENDS[1], f'=IFERROR(IF({none},"",{money(f"INDEX(Engine!{amounts},{m})")}),"")',
+        st.text(ws, r, T_COLS[1], T_ENDS[1], f'=IFERROR(IF({none},"",{cell_amount(f"INDEX(Engine!{amounts},{m})")}),"")',
                 st.font(st.BODY, bold=True), st.RIGHT)
         st.text(ws, r, T_COLS[2], T_ENDS[2], f'=IFERROR(IF({none},"",INDEX(Engine!{notes},{m})),"")', st.font(st.HELP, color=st.GRAY))
-        ws.row_dimensions[r].height = 20
-    lines = f"{L(i0)}{T_L0}:{L(i1)}{T_L0 + NI - 1}"
-    flag, inside = f"{absr(T_FLAG)}=1", f"ROW()-{T_L0}<={absr(T_COUNT)}"
-    st.when(ws, lines, f'${L(T_COLS[0])}{T_L0}<>""', st.CARD, border=st.UNDER)   # a line with something on it is white
-    st.when(ws, T_CARD, flag, st.YELLOW)                                              # paid: the card turns yellow
-    st.when(ws, T_CARD_LINES, f"AND({inside},{flag})", st.YELLOW)
-    st.when(ws, T_CARD_LINES, inside, st.CALM)                                        # the card ends after the last line
+    idx, n, flag = f"INT((ROW()-{T_L0})/2)", absr(T_COUNT), f"{absr(T_FLAG)}=1"
+    st.when(ws, T_CARD, flag, st.YELLOW)                                                         # paid: the card turns yellow
+    st.when(ws, T_RANGES[1], f"AND({idx}<{n},MOD(ROW()-{T_L0},2)=1)", st.CARD, border=st.UNDER)   # a line: white, a hairline
+    st.when(ws, T_RANGES[1], f"{idx}<{n}", st.CARD)
+    for at in T_RANGES:                                                                          # the card ends after the last line
+        st.when(ws, at, f"AND({idx}<={n},{flag})", st.YELLOW)
+        st.when(ws, at, f"{idx}<={n}", st.CALM)
 
-    # the focus debt, on the right
+    # ---- on the right: the focus debt, the buffer, the debt-free date, the next two paydays
+    r0, r1 = R_C0, R_C1
+    tile = st.font(st.TILE, bold=True, title=True)
+    bottom = st.Alignment(horizontal="left", vertical="bottom")
     st.grid_card(ws, 6, 12, 9, 12)
-    st.label(ws, 7, R_C0, R_C1, "Focus debt", gray=True)
+    st.label(ws, 7, r0, r1, "Focus debt", gray=True)
     pos = EN(E_FOCUSPOS)
     names = f"Engine!$K${EO0}:$K${EO0 + ND - 1}"
-    st.text(ws, 8, R_C0, R_C1, f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")', st.font(st.TILE, bold=True, title=True),
-            st.Alignment(horizontal="left", vertical="bottom"))
+    st.text(ws, 8, r0, r1, f'=IFERROR(IF({pos}=0,"",INDEX({names},{pos})),"")', tile, bottom)
     left = f"INDEX(Engine!{rng(C_BAL, ROW_LEFT, absrow=True)},{pos})"
-    st.text(ws, 9, R_C0, R_C1, f'=IFERROR(IF({pos}=0,"",IF({left}<0.005,"",{money0(left)}&" left")),"")', st.font(st.BODY))
+    start = f"INDEX(Engine!$O${EO0}:$O${EO0 + ND - 1},{pos})"
+    st.text(ws, 9, r0, r1, f'=IFERROR(IF({pos}=0,"",IF({left}<0.005,"",{money0(left)}&" left")),"")', st.font(st.BODY))
+    st.quiet(ws, T_FOCUS_SHARE, f'=IF({pos}=0,"",IF({left}<0.005,1,MIN(MAX(({start}-{left})/{start},0),0.99)))')
+    st.bar(ws, T_FOCUS_BAR_ROW, r0, absr(T_FOCUS_SHARE))
     gone = f"INDEX(Engine!{rng(C_BAL, ROW_GONE, absrow=True)},{pos})"
-    st.hint(ws, 10, R_C0, R_C1, f'=IFERROR(IF({pos}=0,"",IF({gone}>0,"Gone by "&{dtext(gone)},"")),"")', wrap=False)
-    st.hint(ws, T_L0 + NI + 2, i0, i1,
-            f'=IF({EN(E_LATE)}>=2,"A few paydays are not ticked yet. Tick them on Path.","")', wrap=False)
+    st.hint(ws, 11, r0, r1, f'=IFERROR(IF({pos}=0,"",IF({gone}>0,"Gone by "&{dtext(gone)},"")),"")', wrap=False)
+
+    buf, goal = EN(E_BUFNOW), EN(E_GOAL)
+    st.grid_card(ws, 14, 20, 9, 12)
+    st.label(ws, 15, r0, r1, "Buffer", gray=True)
+    st.text(ws, 16, r0, r1, f'=IF({has}=0,"",IF({goal}>0,{money0(buf)}&" of "&{money0(goal)},{money0(buf)}))', tile, bottom, r1=17)
+    st.quiet(ws, T_BUF_SHARE, f'=IF(AND({has}=1,{goal}>0),MIN({buf}/{goal},1),"")')
+    st.bar(ws, T_BUF_BAR_ROW, r0, absr(T_BUF_SHARE))
+    after = f"INDEX(Engine!${L(C_BUFAFTER)}${ER1}:${L(C_BUFAFTER)}${ERN},{view})"
+    st.hint(ws, 19, r0, r1, (f'=IF({has}=0,"",IF(AND({goal}>0,{buf}>={goal}-0.005),"Full. It waits for a surprise.",'
+                             f'IF(AND({view}>0,{paid}=0,{after}>{buf}+0.005),{money0(after)}&" after this payday","Kept in a plain separate account.")))'),
+            wrap=False)
+
+    st.grid_card(ws, 22, 28, 9, 12)
+    st.label(ws, 23, r0, r1, "Debt-free", gray=True)
+    st.text(ws, 24, r0, T_FREE_END, f'=IF(AND({has}=1,{fits}=1),{dtext(EN(E_FREE))},"")', tile, bottom, r1=25)
+    st.when(ws, T_FREE, f'{absr(T_FREE)}<>""', st.YELLOW)   # the one key word
+    n_left = f"MAX({EN(E_NPAY)}-{EN(E_TICKED)},0)"
+    st.hint(ws, 27, r0, r1, (f'=IF({has}=0,"",IF({fits}=0,"Longer than this sheet can show.",IF({done}=1,"Every payday is ticked.",'
+                             f'{n_left}&IF({n_left}=1," payday left"," paydays left"))))'), wrap=False)
+
+    st.grid_card(ws, 30, 38, 9, 12)
+    st.text(ws, 31, r0, r1, "Coming up", st.font(st.SECTION, bold=True))
+    for c, e, text, align in zip(T_SOON_COLS, T_SOON_ENDS, ("Payday", "Move", "Mostly for"), (st.LEFT, st.RIGHT, st.LEFT)):
+        st.head(ws, T_SOON_HEAD, c, e, text, align)
+    for c in range(r0, r1 + 1):
+        ws.cell(T_SOON_HEAD, c).border = st.UNDER
+        ws.cell(T_SOON_ROWS[0], c).border = st.UNDER
+    npay = EN(E_NPAY)
+    for j, r in enumerate(T_SOON_ROWS, start=1):
+        k = f"({view}+{j})"
+        on = f"AND({view}>0,{k}<={npay})"
+        at = lambda cc: f"INDEX(Engine!${L(cc)}${ER1}:${L(cc)}${ERN},{k})"  # noqa: E731
+        x, f, b, y = at(C_EXTRA), at(C_TOBUF), at(C_BILLS), at(C_YEARLY)
+        who = f"INDEX({names},{at(C_XPOS)})"
+        # mostly for: the biggest part of that payday's move
+        mostly = (f'IF(AND({x}>0.005,{x}>={b},{x}>={f}),{who}&" "&{money(x)}&" extra",'
+                  f'IF(AND({f}>0.005,{f}>={b}),"Buffer "&{money(f)},IF({b}>0.005,"Bills "&{money(b)},"Yearly bills "&{money(y)})))')
+        end = '"The last payday of the plan."' if j == 1 else '""'
+        st.text(ws, r, T_SOON_COLS[0], T_SOON_ENDS[0], f'=IFERROR(IF({on},{dtext(at(C_DATE))},""),"")')
+        st.text(ws, r, T_SOON_COLS[1], T_SOON_ENDS[1], f'=IFERROR(IF({on},{money(at(C_MOVE))},""),"")', st.font(st.BODY, bold=True), st.RIGHT)
+        st.text(ws, r, T_SOON_COLS[2], T_SOON_ENDS[2], f'=IFERROR(IF({on},{mostly},IF(AND({view}>0,{done}=0),{end},"")),"")',
+                st.font(st.HELP, color=st.GRAY))
     st.footer(ws, T_FOOT)
     return ws
 

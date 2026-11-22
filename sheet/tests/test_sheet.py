@@ -288,10 +288,14 @@ def test_no_text_criteria_with_a_decimal_point(books):
 
 
 # ------------------------------------------------------------------------------------------------ Today
+YEARLY = ("Yearly bills", "$10", "Gifts and holidays")       # the yearly bills line names the bill
+EXTRA = ("Extra to Store Card", "", "after bills and buffer")   # the extra line always names the focus debt
+
+
 def today_lines(ws):
     out = []
     for i in range(NI):
-        label, amount, note = (ws.cell(T_L0 + i, c).value or "" for c in T_COLS)
+        label, amount, note = (ws.cell(t_line(i), c).value or "" for c in T_COLS)
         if label:
             out.append((label, amount, note))
     return out
@@ -301,12 +305,12 @@ def test_today_shows_the_next_payday_and_its_lines(books):
     td = books["nadia"][1]["Today"]
     assert td[T_LABEL].value == "This payday · Fri 6 Nov"
     assert td[T_MAIN].value == "Move $180"
-    assert today_lines(td) == [("Store Card bill", "$30", "due Thu 12 Nov"), ("Yearly bills", "$10", ""), ("Buffer", "$140", "")]
+    assert today_lines(td) == [("Store Card bill", "$30", "due Thu 12 Nov"), YEARLY, ("Buffer", "$140", "to $500"), EXTRA]
     assert td[T_FLAG].value == 0  # not yellow yet
     assert td[T_FOCUS_NAME].value == "Store Card"
     assert td[T_FOCUS_LEFT].value == "$450 left"
     assert td[T_FOCUS_GONE].value == "Gone by Fri 1 Jan 2027"
-    assert not td[T_LATE].value
+    assert td[T_LATE].value == "When it is done, tick it on Path and this card turns yellow."
 
 
 def test_today_turns_paid_when_the_payday_is_ticked(books):
@@ -316,7 +320,7 @@ def test_today_turns_paid_when_the_payday_is_ticked(books):
     assert td[T_SUB].value == "Next payday is Fri 4 Dec."
     assert td[T_FLAG].value == 1  # the card is yellow
     assert today_lines(td) == [("Medical bill", "$50", "due Thu 3 Dec"), ("Visa bill", "$66", "due Fri 20 Nov"),
-                               ("Yearly bills", "$10", ""), ("Buffer", "$140", "")]
+                               YEARLY, ("Buffer", "$140", "to $500"), EXTRA]
     # the lines add up to the move of that payday in the engine
     assert books["nadia-ticked"][1]["Engine"][E_VIEWMOVE].value == pytest.approx(266)
 
@@ -326,7 +330,7 @@ def test_today_shows_the_amount_typed_in_actual(books):
     assert td[T_MAIN].value == "Move $200"
     assert td[T_SUB].value == "This is the amount you typed on Path. Tick it there and it turns yellow."
     assert today_lines(td) == [("Medical bill", "$50", "due Thu 3 Dec"), ("Visa bill", "$66", "due Fri 20 Nov"),
-                               ("Yearly bills", "$10", ""), ("Buffer", "$74", "")]
+                               YEARLY, ("Buffer", "$74", "to $500"), EXTRA]
 
 
 def test_today_says_calmly_when_paydays_are_not_ticked(books):
@@ -341,6 +345,31 @@ def test_today_when_everything_is_done_or_nothing_is_typed(books):
     blank = books["blank"][1]["Today"]
     assert blank[T_MAIN].value == "Fill in Start" and blank[T_FLAG].value == 0
     assert today_lines(blank) == []
+
+
+def test_today_right_column(books):
+    """The focus debt, the buffer, the debt-free date and the next two paydays, after one payday (as in design/Today)."""
+    td = books["nadia-one"][1]["Today"]
+    assert td[T_MAIN].value == "Move $266"
+    assert (td[T_FOCUS_NAME].value, td[T_FOCUS_LEFT].value, td[T_FOCUS_GONE].value) == ("Store Card", "$425 left", "Gone by Fri 1 Jan 2027")
+    assert td[T_FOCUS_SHARE].value == pytest.approx(25.33 / 450, abs=0.001)
+    assert td[T_BUF].value == "$340 of $500" and td[T_BUF_NOTE].value == "$480 after this payday"
+    assert td[T_BUF_SHARE].value == pytest.approx(0.68)
+    assert td[T_FREE].value == "Fri 16 Jul 2027" and td[T_FREE_NOTE].value == "18 paydays left"
+    soon = [tuple(td.cell(r, c).value for c in T_SOON_COLS) for r in T_SOON_ROWS]
+    assert soon == [("Fri 4 Dec", "$180", "Store Card $120 extra"), ("Fri 18 Dec", "$216", "Store Card $140 extra")]
+    # the date is the one key word: yellow, and nothing else on the right is
+    rules = {str(r.sqref): r.rules for r in books["blank"][0]["Today"].conditional_formatting}
+    assert _rgb(rules[T_FREE][0].dxf.fill.bgColor) == "FFE14D"
+    blank = books["blank"][1]["Today"]
+    assert all(not blank[at].value for at in (T_FOCUS_NAME, T_BUF, T_FREE, T_FREE_NOTE)) and not blank.cell(T_SOON_ROWS[0], T_SOON_COLS[0]).value
+
+
+def test_today_coming_up_at_the_end(books):
+    done = books["nadia-done"][1]["Today"]
+    assert all(not done.cell(r, c).value for r in T_SOON_ROWS for c in T_SOON_COLS)
+    assert done[T_FREE_NOTE].value == "Every payday is ticked." and done[T_BUF].value == "$500 of $500"
+    assert done[T_BUF_NOTE].value == "Full. It waits for a surprise."
 
 
 def test_ticks_are_a_list_with_one_choice(books):
@@ -669,8 +698,9 @@ def test_tiles_and_big_numbers_are_whole(books):
         wb = books[name][1]
         for ref in (P_TILE_OWED, P_TILE_PAID, P_TILE_AVOID):
             assert not re.search(r"[.,]\d{2}$", wb["Path"][ref].value), (name, ref)
-        assert not re.search(r"[.,]\d{2}", wb["Safety net"][SN_BUF].value)
-        assert not re.search(r"[.,]\d{2}", wb["Today"][T_FOCUS_LEFT].value)
+        assert not re.search(r"[.,]\d{2}\b", wb["Safety net"][SN_BUF].value)
+        assert not re.search(r"[.,]\d{2}\b", wb["Today"][T_FOCUS_LEFT].value)
+        assert not re.search(r"[.,]\d{2}\b", wb["Today"][T_BUF].value)
 
 
 def test_typed_cells_take_only_what_makes_sense(books):
@@ -756,7 +786,7 @@ def test_typed_cells_are_white_with_an_action_line_and_labels_bold(books):
 def test_one_bar_style_everywhere(books):
     """20 narrow cells: yellow only at 100%, action blue for what is done, calm (or white on a calm card) for the rest"""
     wb = books["blank"][0]
-    bars = [("Path", b) for b in P_TILE_BARS] + [("Safety net", SN_BAR), ("Debts", DB_BARS)]
+    bars = [("Path", b) for b in P_TILE_BARS] + [("Safety net", SN_BAR), ("Debts", DB_BARS)] + [("Today", b) for b in T_BARS]
     for name, rng_ in bars:
         rules = {str(r.sqref): r.rules for r in wb[name].conditional_formatting}[rng_]
         c0, c1 = (column_index_from_string(x.rstrip("0123456789")) for x in rng_.split(":"))
