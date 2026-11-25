@@ -133,6 +133,7 @@ EDGE = [
     ('never_ends_over_520', sc(freq='Every week', debts=[debt('Card', 20000, 29.99, 200)], extra=0)),
     ('charge_on_buffer_first_payday', sc(debts=TWO, buffer_now=0, charges={'1': 75, '3': 40})),
     ('charges_after_buffer', sc(debts=TWO, buffer_now=500, charges={'2': 300, '5': 25.5})),
+    ('charge_on_the_debt_you_pick', sc(debts=TWO, buffer_now=500, charges={'3': {'0': 100}, '6': {'0': 40, '1': 25}})),
     ('my_own_order_blanks_and_ties', sc(method='My own order', debts=[
         debt('A', 900, 10, 30), debt('B', 400, 20, 20, 2), debt('C', 700, 15, 25),
         debt('D', 300, 5, 20, 1), debt('E', 500, 25, 20, 2)])),

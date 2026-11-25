@@ -93,7 +93,9 @@ def order(debts: list[dict], method: str) -> list[int]:
 def simulate(s: dict) -> dict:
     """s: freq, first_payday, second_day, money, buffer, goal, yearly (list of
     per-year amounts), debts (name, balance, apr %, min, due), method,
-    adjust/charges/buffer_used/yearly_paid: dicts payday index -> amount."""
+    adjust/charges/buffer_used/yearly_paid: dicts payday index -> amount.
+    A charge is either an amount, which goes to the first debt in order that still has a balance, or a dict
+    {debt number as entered, from 0: amount}, which goes to the debt the user picked."""
     freq, p0 = s["freq"], s["first_payday"]
     ppy = PPY[freq]
     debts = s["debts"]
@@ -120,9 +122,15 @@ def simulate(s: dict) -> dict:
         to_buf = min(max(s["goal"] - buf, 0), max(avail - to_yearly, 0))
         buf += to_buf - s.get("buffer_used", {}).get(k, 0.0)
         ysaved += to_yearly - s.get("yearly_paid", {}).get(k, 0.0)
-        # charge goes to the first debt in order that still has a balance
-        chg = s.get("charges", {}).get(k, 0.0)
-        cpos = next((j for j, b in enumerate(bal) if b > 0.005), 0)
+        # a charge goes to the debt the user picked; one with no debt picked goes to the first debt in order
+        # that still has a balance
+        chg = [0.0] * len(bal)
+        c = s.get("charges", {}).get(k, 0.0)
+        if isinstance(c, dict):
+            for i, amount in c.items():
+                chg[pos.index(int(i))] += amount
+        elif bal:
+            chg[next((j for j, b in enumerate(bal) if b > 0.005), 0)] += c
         pre, due_min, bill = [], [], []
         promo_on = [promo_apr[j] is not None and promo_end[j] is not None and d0 < promo_end[j] for j in range(len(bal))]
         rate = [promo_apr[j] / 100 if promo_on[j] else apr[j] for j in range(len(bal))]
@@ -130,7 +138,7 @@ def simulate(s: dict) -> dict:
         front = [deferred[j] and promo_on[j] and bal[j] > 0.005 for j in range(len(bal))]
         prio = sorted(range(len(bal)), key=lambda j: (not front[j], j))
         for j in range(len(bal)):
-            b = bal[j] * (1 + rate[j] / ppy) + (chg if j == cpos else 0.0)
+            b = bal[j] * (1 + rate[j] / ppy) + chg[j]
             interest_total += bal[j] * rate[j] / ppy
             if promo_on[j]:
                 back_interest[j] += bal[j] * (apr[j] - rate[j]) / ppy

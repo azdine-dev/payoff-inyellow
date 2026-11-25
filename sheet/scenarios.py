@@ -39,6 +39,9 @@ NOFIT = dict(
     debts=[dict(name="Big card", balance=50000, apr=30, min=100, due=5)],
 )
 
+# A new charge of 100 on Visa on the third payday, typed on Debts
+CHARGE = dict(NADIA, new_charges=[(3, "Visa", 100)])
+
 # The money for the plan is smaller than what the yearly bills need each payday (10)
 THIN = dict(NADIA, money=5)
 
@@ -49,6 +52,14 @@ def for_engine(s: dict) -> dict:
     """The same scenario in the shape engine_v2.simulate takes (yearly bills as plain amounts)."""
     out = dict(s)
     out["yearly"] = [y[1] if isinstance(y, (tuple, list)) else y for y in s.get("yearly", [])]
+    # new charges typed on Debts: (payday from 1, debt name, amount) -> {payday from 0: {debt as typed, from 0: amount}}
+    if s.get("new_charges"):
+        names = [d["name"] for d in s["debts"]]
+        charges: dict[int, dict[int, float]] = {}
+        for k, name, amount in out.pop("new_charges"):
+            at = charges.setdefault(k - 1, {})
+            at[names.index(name)] = at.get(names.index(name), 0) + amount
+        out["charges"] = charges
     return out
 
 

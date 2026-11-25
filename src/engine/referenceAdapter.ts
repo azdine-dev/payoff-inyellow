@@ -32,7 +32,8 @@ export interface RefInput {
   method?: 'piy' | 'avalanche' | 'custom';
   debts: RefDebt[];
   adjust?: Record<string, number>;
-  charges?: Record<string, number>;
+  /** One amount (the first debt in order with a balance), or {debt number as entered, from 0: amount} */
+  charges?: Record<string, number | Record<string, number>>;
   buffer_used?: Record<string, number>;
   yearly_paid?: Record<string, number>;
 }
@@ -102,7 +103,12 @@ export function fromReferenceInput(ref: RefInput): PlanInput {
     })),
     yearlyBills: (ref.yearly ?? []).map((perYear) => ({ perYear })),
     adjustments: byPayday(ref.adjust),
-    charges: byPayday(ref.charges),
+    charges: Object.fromEntries(
+      Object.entries(ref.charges ?? {}).map(([k, v]) => [
+        Number(k) + 1,
+        typeof v === 'number' ? v : Object.fromEntries(Object.entries(v).map(([i, amount]) => [`d${i}`, amount])),
+      ]),
+    ),
     bufferUsed: byPayday(ref.buffer_used),
     otherPayday: ref.second_day ?? null,
   };

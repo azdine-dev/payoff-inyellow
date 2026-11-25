@@ -263,7 +263,7 @@ The model, in one step per payday:
   1. Yearly bills: `sum(yearly costs) / ppy`, capped at what's available.
   2. Buffer: until it reaches the goal.
   3. Extra to debts: `rest + rollover`, where `rollover = sum(minimum due) - sum(bills paid)`. So a paid-off debt's minimum keeps rolling into the extra on the paydays its bill would have fallen. The extra goes to debts in payoff order: the focus debt gets all it can take, and any overflow goes to the next debt.
-- **New charges** go to the first debt in payoff order that still has a balance, after this payday's interest and before its bill. Buffer money used on a payday (`buffer_used`) lowers the buffer, and the plan refills it first.
+- **New charges** go to the debt the user picks (the app's "Log a new charge" and the Sheet's New charges both name one), after this payday's interest and before its bill. A charge with no debt named goes to the first debt in payoff order that still has a balance (decided by Azeddin, 22 Nov 2026). Buffer money used on a payday (`buffer_used`) lowers the buffer, and the plan refills it first.
 - **Payoff orders.** Ties always keep the order the debts were entered.
   - PaidInYellow order: debts that charge interest and whose monthly minimum is at or below their monthly interest go first (highest APR first among them), then the smallest balance first. A 0% debt never counts as growing, even with a $0 minimum.
   - Biggest interest first: highest APR first (ties: smaller balance).

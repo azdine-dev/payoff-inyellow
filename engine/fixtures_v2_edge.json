@@ -2590,6 +2590,105 @@
   }
  },
  {
+  "name": "charge_on_the_debt_you_pick",
+  "input": {
+   "freq": "biweekly",
+   "first_payday": "2026-10-23",
+   "money": 150,
+   "buffer": 500,
+   "goal": 500,
+   "yearly": [],
+   "debts": [
+    {
+     "name": "Visa",
+     "balance": 3200,
+     "apr": 22.9,
+     "min": 96,
+     "due": 1
+    },
+    {
+     "name": "Store card",
+     "balance": 640,
+     "apr": 26.99,
+     "min": 35,
+     "due": 1
+    }
+   ],
+   "charges": {
+    "2": {
+     "0": 100
+    },
+    "5": {
+     "0": 40,
+     "1": 25
+    }
+   }
+  },
+  "expect": {
+   "order": [
+    "Store card",
+    "Visa"
+   ],
+   "debt_free": "2027-07-30",
+   "paydays": 21,
+   "interest": 388.59,
+   "first_paydays": [
+    {
+     "date": "2026-10-23",
+     "bills": 131,
+     "extra": 150.0,
+     "total_move": 281.0,
+     "owed": 3593.83
+    },
+    {
+     "date": "2026-11-06",
+     "bills": 0,
+     "extra": 150.0,
+     "total_move": 150.0,
+     "owed": 3476.21
+    },
+    {
+     "date": "2026-11-20",
+     "bills": 131,
+     "extra": 150.0,
+     "total_move": 281.0,
+     "owed": 3326.32
+    },
+    {
+     "date": "2026-12-04",
+     "bills": 0,
+     "extra": 150.0,
+     "total_move": 150.0,
+     "owed": 3205.83
+    }
+   ],
+   "owed_60": [
+    3593.83,
+    3476.21,
+    3326.32,
+    3205.83,
+    3084.07,
+    2895.23,
+    2770.73,
+    2514.14,
+    2386.28,
+    2126.3,
+    1995.02,
+    1731.6,
+    1596.85,
+    1329.91,
+    1191.63,
+    921.12,
+    779.23,
+    505.1,
+    359.55,
+    212.71,
+    0.0
+   ],
+   "promo": []
+  }
+ },
+ {
   "name": "my_own_order_blanks_and_ties",
   "input": {
    "freq": "biweekly",

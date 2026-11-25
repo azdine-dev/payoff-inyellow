@@ -290,6 +290,12 @@ def fill(wb: Workbook, s: dict, ticks: int = 0, today: dt.date | None = None):
     for key, col in (("adjust", C_ADJ), ("charges", C_CHG), ("buffer_used", C_BUFUSED)):
         for k, v in s.get(key, {}).items():
             en.cell(ER1 + int(k), col).value = v
+    # new charges: (payday number from 1, debt name, amount), typed on Debts as the buyer would
+    for i, (k, debt, amount) in enumerate(s.get("new_charges", [])):
+        from engine_v2 import payday
+        db, r = wb["Debts"], DB_CH_ROWS[i]
+        db.cell(r, DB_CH_COLS["day"]).value = payday(s["freq"], s["first_payday"], k - 1, s.get("second_day"))
+        db.cell(r, DB_CH_COLS["debt"]).value, db.cell(r, DB_CH_COLS["amount"]).value = debt, amount
     if s.get("whatif"):
         wb["Path"][W_INPUT] = s["whatif"]
     for k, v in s.get("actual", {}).items():
@@ -363,6 +369,8 @@ def build_engine(wb: Workbook):
         ws.cell(r, 13, f'=IF({ok},N({src(L(SC_MIN))}),0)')
         ws.cell(r, 14, f'=IF({ok},IF(N({src(L(SC_DUE))})>0,N({src(L(SC_DUE))}),""),"")')
         ws.cell(r, 15, f'=IF({ok},N({src(L(SC_BAL))}),0)')
+        # a new charge picks its debt by name; when two debts share a name it goes to the first one typed
+        ws.cell(r, C_CKEY, f'=IF(K{r}="","",IF(IFERROR(MATCH(K{r},{S}${L(SC_NAME)}${D0}:${L(SC_NAME)}${DN},0),0)=J{r},K{r},""))')
 
     # ---- minimums only, per debt (NPER), the baseline the plan is compared with
     ws.cell(EO0 - 1, C_NPER, "Minimums only: months"); ws.cell(EO0 - 1, C_NPERINT, "Minimums only: interest")
@@ -557,15 +565,24 @@ def build_engine(wb: Workbook):
     ws.cell(r, W_OWED, f"=SUM({rng(W_BAL, r)})")
 
     c = lambda col, row: f"${L(col)}{row}"  # noqa: E731
+    ch_col = lambda key: f"Debts!${L(DB_CH_COLS[key])}${DB_CH0}:${L(DB_CH_COLS[key])}${DB_CHN}"  # noqa: E731
+    ch_days, ch_debts = ch_col("day"), ch_col("debt")
+    ch_oks = f"Debts!${L(DB_CH_OK_COL)}${DB_CH0}:${L(DB_CH_OK_COL)}${DB_CHN}"
     growth, rates, places = rng(C_BAL, 22, absrow=True), rng(C_BAL, 21, absrow=True), rng(C_BAL, 23, absrow=True)
     for t in range(NR + 1):
         r, pr = ER1 + t, ER1 + t - 1
         ws.cell(r, C_K, t + 1)
-        ws.cell(r, C_DATE, "=" + date_formula(str(t))).number_format = "yyyy-mm-dd"
+        ws.cell(r, C_DATE, "=" + date_formula(str(t))).number_format = "ddd d mmm yyyy"   # as the payday list on Debts shows it
         if t == NR:
             break  # one more date only: the end of the last payday's window
         d0, d1 = c(C_DATE, r), c(C_DATE, r + 1)
         prev = rng(C_BAL, pr)
+        # the new charges typed on Debts for this payday: all of them, and the part on the debt in place p
+        ws.cell(r, C_PICK, f"=SUMPRODUCT(({ch_days}={d0})*{ch_oks})")
+
+        def pick(p: int) -> str:
+            key = f"${L(C_CKEY)}${EO0 + p}"
+            return f'IF(OR({c(C_PICK, r)}=0,{key}=""),0,SUMPRODUCT(({ch_days}={d0})*({ch_debts}={key})*{ch_oks}))'
         # Actual follows the engine's "+/- this payday": the difference from the planned move joins this payday's money
         actual = f"Path!${L(P_ACTUAL_COL)}${P_R1 + t}"
         ws.cell(r, C_AVAIL0, f"=$B$7+N({c(C_ADJ, r)})")
@@ -586,12 +603,12 @@ def build_engine(wb: Workbook):
         wfirst = f"({ND + 1}-SUMPRODUCT(MAX(({wprev}>0.005)*({ND + 1}-{places}))))"
         ws.cell(r, W_CHGPOS, f"=IF(N({c(C_CHG, r)})=0,0,IF({wfirst}>{ND},1,{wfirst}))")
         ws.cell(r, W_POOL, (f"=MAX({c(W_AVAIL, r)}-{c(W_YEARLY, r)}-{c(W_TOBUF, r)},0)+SUM({rng(C_DUE, r)})"
-                            f"-(SUMPRODUCT({wprev},{growth})+N({c(C_CHG, r)})-SUM({rng(W_AFT, r)}))"))
+                            f"-(SUMPRODUCT({wprev},{growth})+N({c(C_CHG, r)})+{c(C_PICK, r)}-SUM({rng(W_AFT, r)}))"))
         ws.cell(r, W_INT, f"=SUMPRODUCT({wprev},{rates})/$B$1")
         ws.cell(r, W_OWED, f"=SUM({rng(W_BAL, r)})")
         for p in range(ND):
             due, aft, bal = L(C_DUE + p), L(W_AFT + p), L(W_BAL + p)
-            pre = f"({bal}{pr}*{L(C_BAL + p)}$22+IF({c(W_CHGPOS, r)}={p + 1},N({c(C_CHG, r)}),0))"
+            pre = f"({bal}{pr}*{L(C_BAL + p)}$22+IF({c(W_CHGPOS, r)}={p + 1},N({c(C_CHG, r)}),0)+{pick(p)})"
             ws.cell(r, W_AFT + p, f"={pre}-MIN({due}{r},{pre})")
             before = "0" if p == 0 else f"SUM({rng(W_AFT, r, p)})"
             x = f"MIN({aft}{r},MAX({c(W_POOL, r)}-{before},0))"
@@ -599,10 +616,10 @@ def build_engine(wb: Workbook):
         ws.cell(r, C_YEARLY, f"=MIN($B$2,MAX({c(C_AVAIL, r)},0))")
         ws.cell(r, C_TOBUF, f"=MIN(MAX($B$9-{c(C_BUFAFTER, pr)},0),MAX({c(C_AVAIL, r)}-{c(C_YEARLY, r)},0))")
         ws.cell(r, C_BUFAFTER, f"={c(C_BUFAFTER, pr)}+{c(C_TOBUF, r)}-N({c(C_BUFUSED, r)})")
-        # a new charge goes to the first debt in payoff order that still has a balance
+        # a charge typed for the tests with no debt named goes to the first debt in payoff order that still has a balance
         first = f"({ND + 1}-SUMPRODUCT(MAX(({prev}>0.005)*({ND + 1}-{places}))))"
         ws.cell(r, C_CHGPOS, f"=IF(N({c(C_CHG, r)})=0,0,IF({first}>{ND},1,{first}))")
-        ws.cell(r, C_BILLS, f"=SUMPRODUCT({prev},{growth})+N({c(C_CHG, r)})-SUM({rng(C_AFT, r)})")
+        ws.cell(r, C_BILLS, f"=SUMPRODUCT({prev},{growth})+N({c(C_CHG, r)})+{c(C_PICK, r)}-SUM({rng(C_AFT, r)})")
         ws.cell(r, C_ROLL, f"=SUM({rng(C_DUE, r)})-{c(C_BILLS, r)}")
         ws.cell(r, C_POOL, f"=MAX({c(C_AVAIL, r)}-{c(C_YEARLY, r)}-{c(C_TOBUF, r)},0)+{c(C_ROLL, r)}")
         ws.cell(r, C_EXTRA, f"=MIN({c(C_POOL, r)},SUM({rng(C_AFT, r)}))")
@@ -615,7 +632,7 @@ def build_engine(wb: Workbook):
             m0 = f"DATE(YEAR({d0}),MONTH({d0}),MIN({dd},DAY(EOMONTH({d0},0))))"
             m1 = f"DATE(YEAR({d0}),MONTH({d0})+1,MIN({dd},DAY(EOMONTH({d0},1))))"
             ws.cell(r, C_DUE + p, f'=IF(OR({mn}=0,{dd}=""),0,{mn}*(({m0}>={d0})*({m0}<{d1})+({m1}>={d0})*({m1}<{d1})))')
-            pre = f"({bal}{pr}*{bal}$22+IF({c(C_CHGPOS, r)}={p + 1},N({c(C_CHG, r)}),0))"
+            pre = f"({bal}{pr}*{bal}$22+IF({c(C_CHGPOS, r)}={p + 1},N({c(C_CHG, r)}),0)+{pick(p)})"
             ws.cell(r, C_AFT + p, f"={pre}-MIN({due}{r},{pre})")
             before = "0" if p == 0 else f"SUM({rng(C_AFT, r, p)})"
             x = f"MIN({aft}{r},MAX({c(C_POOL, r)}-{before},0))"
@@ -907,7 +924,21 @@ def add_charts(wb: Workbook):
                                 p=[Paragraph(pPr=ParagraphProperties(defRPr=CharacterProperties(sz=900)), endParaRPr=CharacterProperties())])
     ws.add_chart(area, ref(16, c0))
 
-    for ch in (ring, area):
+    # what you owe, by debt: Left now of each debt in payoff order, three shades of action blue in turn
+    owe = DoughnutChart()
+    owe.holeSize = 62
+    owe.height, owe.width = cm(150), cm(150)
+    owe.legend, owe.title = None, None
+    owe.add_data(Reference(en, min_col=C_BAL, max_col=C_BAL + ND - 1, min_row=ROW_LEFT, max_row=ROW_LEFT), from_rows=True,
+                 titles_from_data=False)
+    for i in range(ND):
+        point = DataPoint(idx=i)
+        point.graphicalProperties = GraphicalProperties(solidFill=SHADES[i % 3])
+        point.graphicalProperties.line = LineProperties(solidFill=st.CARD, w=6350)
+        owe.series[0].dPt.append(point)
+    wb["Debts"].add_chart(owe, DB_RING_AT)
+
+    for ch in (ring, area, owe):
         ch.visible_cells_only = False  # the numbers live on a hidden tab
         ch.roundedCorners = False
         ch.graphical_properties = GraphicalProperties(noFill=True)
@@ -917,8 +948,22 @@ def add_charts(wb: Workbook):
 
 
 # ------------------------------------------------------------------------------------------------ Debts
+def typed_2rows(ws, row: int, c0: int, c1: int, fmt: str | None, align):
+    """A typed cell over two rows (the rows of the debt table beside it keep their heights), with its line under both"""
+    cell = st.text(ws, row, c0, c1, None, st.font(st.BODY), st.Alignment(horizontal=align.horizontal, vertical="bottom"), r1=row + 1)
+    cell.protection = st.UNLOCKED
+    if fmt:
+        cell.number_format = fmt
+    for r in (row, row + 1):
+        for c in range(c0, c1 + 1):
+            ws.cell(r, c).fill = st.fill(st.CARD)
+            ws.cell(r, c).border = st.Border(bottom=st.TYPE_LINE) if r == row + 1 else st.Border()
+    return cell
+
+
 def build_debts(wb: Workbook):
-    """One block per debt, in payoff order, with a bar of 20 cells. A paid debt turns yellow with PAID."""
+    """The debts in payoff order, with a bar of 20 cells each; a paid debt turns yellow with PAID. On the right: what
+    you owe by debt as a doughnut, and the new charges the buyer types (a payday, a debt, an amount)."""
     ws = wb.create_sheet("Debts")
     st.page(ws, DB_FOOT + 1, "Debts")
     c0, c1 = gcol(1), gend(9)
@@ -939,6 +984,7 @@ def build_debts(wb: Workbook):
         ws.cell(DB_R0 - 1, c).border = st.UNDER
     ws.row_dimensions[DB_R0 - 1].height = 22
     left_row, gone_row = f"Engine!{rng(C_BAL, ROW_LEFT, absrow=True)}", f"Engine!{rng(C_BAL, ROW_GONE, absrow=True)}"
+    grew_row = f"Engine!{rng(C_BAL, ROW_GREW, absrow=True)}"
     gap = st.Side(style="thin", color=st.PAPER)
 
     def value(r: int, key: str, formula: str, fnt, align):
@@ -949,10 +995,11 @@ def build_debts(wb: Workbook):
     for p in range(ND):
         r, er = db_row(p), EO0 + p
         name, rate, mn, start = f"Engine!$K${er}", f"Engine!$L${er}", f"Engine!$M${er}", f"Engine!$O${er}"
-        left, gone = f"INDEX({left_row},{p + 1})", f"INDEX({gone_row},{p + 1})"
+        left, gone, grew = f"INDEX({left_row},{p + 1})", f"INDEX({gone_row},{p + 1})", f"INDEX({grew_row},{p + 1})"
         on = f'{name}<>""'
         value(r, "num", f'=IF({on},{p + 1},"")', st.font(st.HELP, color=st.GRAY), st.CENTER)
-        value(r, "name", f'=IF({on},{name},"")', st.font(st.BODY, bold=True), st.LEFT)
+        value(r, "name", f'=IF({on},{name},"")', st.font(st.BODY, bold=True),
+              st.Alignment(horizontal="left", vertical="center", shrink_to_fit=True))
         value(r, "rate", f'=IF({on},{pct_text(f"{rate}*100")},"")', st.font(st.BODY), st.RIGHT)
         value(r, "left", f'=IF({on},{cell_amount(left, cents=True)},"")', st.font(st.BODY), st.RIGHT)
         value(r, "paid", f'=IF({on},{cell_amount(f"MAX({start}-{left},0)", cents=True)},"")', st.font(st.BODY), st.RIGHT)
@@ -962,8 +1009,13 @@ def build_debts(wb: Workbook):
             st.quiet(ws, ref(r + dr, DB_ON_COL), f"=IF({on},1,0)")
         for dr in range(3):
             st.quiet(ws, ref(r + dr, DB_PCT_COL), f'=IF({on},IF({left}<0.005,1,MIN(MAX(({start}-{left})/{start},0),0.99)),"")')
-        st.text(ws, r + 3, DB_COLS["name"], DB_ENDS["gone"], (f'=IF(AND({on},{left}>0.005,{rate}>0,{mn}<={left}*{rate}/12),'
-                                                             f'"This one grows even when you pay the minimum, so it goes first.","")'),
+        # a small ink note: how much it grew since the start (a charge, or a bill that falls later), and when the
+        # minimum does not cover the interest
+        grows = f"AND({left}>0.005,{rate}>0,{mn}<={left}*{rate}/12)"
+        grew_words = f'"Grew "&IF({grew}<1,{money2(grew)},{money0(grew)})&" since you started."'
+        st.text(ws, r + 3, DB_COLS["name"], DB_ENDS["gone"],
+                (f'=IF({on},IF({grew}>=0.005,{grew_words}&IF({grows}," It grows even with the minimum, so it goes first.",""),'
+                 f'IF({grows},"This one grows even when you pay the minimum, so it goes first.","")),"")'),
                 st.font(st.HELP), st.Alignment(horizontal="left", vertical="top"))
         for dr, h in enumerate((9, 11, 9, 16)):
             ws.row_dimensions[r + dr].height = h
@@ -978,8 +1030,41 @@ def build_debts(wb: Workbook):
         if at == DB_BARS:
             st.when(ws, at, f"AND(ISNUMBER({pct}),{pct}<1,{bar_row},{pct}*{BAR}>=COLUMN()-{bar0}+0.5)", st.ACTION)
             st.when(ws, at, f"AND(ISNUMBER({pct}),{pct}<1,{bar_row})", st.CALM)
+        if at == DB_SQUARES:   # the debt's shade on the doughnut, on the rows of its numbers
+            for k, shade in enumerate(SHADES):
+                st.when(ws, at, f"AND({here}=1,MOD(ROW()-{DB_R0},{DB_STEP})<3,MOD(INT((ROW()-{DB_R0})/{DB_STEP}),3)={k})", shade)
         st.when(ws, at, last, st.CARD, border=st.Border(bottom=st.THIN, **sides))
         st.when(ws, at, f"{here}=1", st.CARD, border=st.Border(**sides) if sides else None)
+
+    # ---- what you owe, by debt: the doughnut reads Left now from the Engine (see add_charts)
+    r0, r1 = DB_R0_IN, DB_R1_IN
+    st.grid_card(ws, DB_RING_CARD[0], DB_RING_CARD[1], 10, 12)
+    st.label(ws, 7, r0, r1, "What you owe, by debt", gray=True)
+    st.hint(ws, DB_RING_NOTE, r0, r1, "One shade for each debt.", wrap=False)
+
+    # ---- new charges: the plan adds each one to its debt on that payday
+    st.grid_card(ws, DB_CH_CARD[0], DB_CH_CARD[1], 10, 12)
+    st.text(ws, DB_CH_TITLE, r0, r1, "New charges", st.font(st.SECTION, bold=True), st.Alignment(horizontal="left", vertical="bottom"),
+            r1=DB_CH_TITLE + 1)
+    st.text(ws, DB_CH_HINT, r0, r1, "Used a card? Add it here. The plan follows from that payday.",
+            st.font(st.HELP, color=st.GRAY), st.WRAP, r1=DB_CH_HINT + 2)
+    for key, text, align in (("day", "Payday", st.LEFT), ("debt", "Debt", st.LEFT), ("amount", "Amount", st.RIGHT)):
+        st.head(ws, DB_CH_HEAD, DB_CH_COLS[key], DB_CH_ENDS[key], text, align)
+    for c in range(r0, r1 + 1):
+        ws.cell(DB_CH_HEAD, c).border = st.UNDER
+    keys = f"Engine!${L(C_CKEY)}${EO0}:${L(C_CKEY)}${EO0 + ND - 1}"
+    for r in DB_CH_ROWS:
+        for key, fmt, align in (("day", "ddd d mmm", st.LEFT), ("debt", None, st.LEFT), ("amount", "#,##0.00", st.RIGHT)):
+            typed_2rows(ws, r, DB_CH_COLS[key], DB_CH_ENDS[key], fmt, align)
+        day, debt, amount = (ref(r, DB_CH_COLS[k]) for k in ("day", "debt", "amount"))
+        # what lands on a debt: a payday, a debt that is in the plan, and an amount
+        st.quiet(ws, ref(r, DB_CH_OK_COL), (f'=IF(AND(N({amount})>0,ISNUMBER({day}),{debt}<>""),'
+                                             f'IF(SUMPRODUCT(--({keys}={debt}))>0,N({amount}),0),0)'))
+    col = lambda key: f"{L(DB_CH_COLS[key])}{DB_CH0}:{L(DB_CH_COLS[key])}{DB_CHN}"  # noqa: E731
+    st.dropdown(ws, col("day"), f"Engine!${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN}")
+    st.dropdown(ws, col("debt"), f"Start!${L(SC_NAME)}${D0}:${L(SC_NAME)}${DN}")
+    st.limit(ws, col("amount"), "decimal", "0", None, "Amount", "Type the amount of the charge, like 100.")
+    st.hint(ws, DB_CH_CARD[1] - 1, r0, r1, "It goes on the debt you pick.", wrap=False)
     st.footer(ws, DB_FOOT)
     return ws
 

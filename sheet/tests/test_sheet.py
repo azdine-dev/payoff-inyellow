@@ -972,3 +972,78 @@ def test_night_lines_are_dark(books):
                         s = getattr(rule.dxf.border, side)
                         if s is not None and s.style:
                             assert night.rgb(s.color) not in light, (name, str(cf.sqref)[:30], side, night.rgb(s.color))
+
+
+# ------------------------------------------------------------------------------------------------ New charges (Part 5)
+def test_a_new_charge_goes_on_the_debt_you_pick(books):
+    """Nadia with 100 on Visa at payday 3, typed on Debts: every payday matches engine_v2.py to the cent."""
+    s = scenarios.for_engine(scenarios.CHARGE)
+    assert s["charges"] == {2: {2: 100}}
+    same_as_engine(books["nadia-charge"][1]["Engine"], s, "nadia-charge")
+    ref, before = simulate(s), simulate(scenarios.for_engine(scenarios.NADIA))
+    assert ref["rows"][2]["bal"] != before["rows"][2]["bal"]   # the charge changed the plan
+    # Visa is third in the PaidInYellow order: 100 more on it from payday 3 on
+    visa = ref["order"].index("Visa")
+    assert ref["rows"][2]["bal"][visa] == pytest.approx(before["rows"][2]["bal"][visa] + 100, abs=60)
+
+
+def test_new_charges_are_typed_cells_with_lists(books):
+    db = books["blank"][0]["Debts"]
+    assert db.protection.sheet
+    want = {ref(r, DB_CH_COLS[k]) for r in DB_CH_ROWS for k in ("day", "debt", "amount")}
+    got = {c.coordinate for row in db.iter_rows() for c in row if not c.protection.locked and not isinstance(c, MergedCell)}
+    assert got == want
+    dv = {str(d.sqref): d for d in db.data_validations.dataValidation}
+    col = lambda key: f"{L(DB_CH_COLS[key])}{DB_CH0}:{L(DB_CH_COLS[key])}{DB_CHN}"  # noqa: E731
+    assert dv[col("day")].type == "list" and dv[col("day")].formula1 == f"Engine!${L(C_DATE)}${ER1}:${L(C_DATE)}${ERN}"
+    assert dv[col("debt")].type == "list" and dv[col("debt")].formula1 == f"Start!${L(SC_NAME)}${D0}:${L(SC_NAME)}${DN}"
+    assert dv[col("amount")].type == "decimal" and dv[col("amount")].formula1 == "0"
+    typed = books["nadia-charge"][0]["Debts"]
+    assert typed.cell(DB_CH_ROWS[0], DB_CH_COLS["debt"]).value == "Visa" and typed.cell(DB_CH0, DB_CH_COLS["amount"]).value == 100
+    assert books["nadia-charge"][1]["Debts"][ref(DB_CH0, DB_CH_OK_COL)].value == 100
+
+
+def test_a_charge_on_a_name_not_in_the_plan_is_left_out(books):
+    """The helper only lets through a charge whose debt is in the plan: blank rows and blank names stay 0."""
+    vals = books["nadia-charge"][1]["Debts"]
+    assert all(vals[ref(r, DB_CH_OK_COL)].value in (0, None) for r in DB_CH_ROWS[1:])
+
+
+def test_the_debt_that_grew_says_so_under_its_name(books):
+    rows = debt_rows(books["nadia-one"][1]["Debts"])
+    assert [r[1] for r in rows] == ["Store Card", "Medical", "Visa"]
+    assert rows[2][7] == "Grew $19 since you started." and not rows[0][7] and not rows[1][7]
+    rows = debt_rows(books["nadia-charge"][1]["Debts"])
+    assert not rows[2][7]   # nothing ticked yet: no debt has grown
+
+
+def test_what_you_owe_by_debt_doughnut(books):
+    db = books["blank"][0]["Debts"]
+    rings = [ch for ch in db._charts if type(ch).__name__ == "DoughnutChart"]
+    assert len(rings) == 1
+    points = rings[0].series[0].dPt
+    assert len(points) == ND
+    fills = [p.graphicalProperties.solidFill for p in points]
+    colours = [(f if isinstance(f, str) else f.srgbClr.val if hasattr(f.srgbClr, "val") else f.srgbClr).upper() for f in fills]
+    assert colours[:3] == SHADES and set(colours) == set(SHADES)   # three shades of action blue, no yellow, no red
+    # each debt row has a small square in its shade
+    rules = LightRules(db)[DB_SQUARES]
+    assert [_rgb(r.dxf.fill.bgColor) for r in rules if r.dxf.fill is not None][1:4] == SHADES
+
+
+def test_every_debt_row_keeps_its_height(books):
+    """The doughnut and the new charges share rows with the table, so they set no heights: every debt looks the same."""
+    db = books["blank"][0]["Debts"]
+    for p in range(ND):
+        assert [db.row_dimensions[db_row(p) + dr].height for dr in range(DB_STEP)] == [9, 11, 9, 16], p
+
+
+def test_night_bars_rest_on_the_empty_bar_colour(books):
+    """In Night, the part of a bar that is not done yet is the dark empty-bar colour on every tab, Debts too."""
+    for name, at in [("Debts", DB_BARS), ("Safety net", SN_BAR), ("Today", T_BARS[0])]:
+        ws = books["blank"][0][name]
+        first = MultiCellRange(at).sorted()[0]
+        cf = next(cf for cf in ws.conditional_formatting if (first.min_row, first.min_col) in cells_of(cf.sqref))
+        nights = [r for r in cf.rules if night.is_night(r) and r.formula[0] != night.NIGHT]
+        done = next(i for i, r in enumerate(nights) if f"*{BAR}>=COLUMN()" in r.formula[0])
+        assert night.fill_of(nights[done + 1].dxf.fill) == night.N_LINE, name

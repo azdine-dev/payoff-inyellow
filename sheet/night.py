@@ -24,7 +24,7 @@ from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.utils import get_column_letter as L
 from openpyxl.worksheet.cell_range import MultiCellRange
 
-from layout import BAR, HELP_COL, NCOL, helper
+from layout import BAR, HELP_COL, NCOL, SHADES, helper
 from style import ACTION, BAND, CALM, CARD, GRAY, HELP, INK, LINE, PAPER, YELLOW, YELLOW_SOFT, font as style_font
 
 NIGHT_CELL = helper(1)            # on every tab: what Look on Start says, read by the rules of that tab
@@ -36,6 +36,7 @@ N_TEXT, N_GRAY, N_ACTION, N_ON_ACTION = "E8EDE9", "A9B4AC", "9DBBE6", "14203A"
 N_LINE = "3A4658"                 # an empty bar and a hairline on a dark card
 NIGHT_FILL = {PAPER: N_PAPER, CARD: N_CARD, CALM: N_CALM, BAND: N_BAND, ACTION: N_ACTION, LINE: N_LINE,
               YELLOW: YELLOW, YELLOW_SOFT: YELLOW_SOFT}   # yellow keeps its meaning: paid, done, the date
+NIGHT_FILL.update({shade: shade for shade in SHADES if shade not in NIGHT_FILL})   # the debts' other shades
 NIGHT_TEXT = {INK: N_TEXT, GRAY: N_GRAY, ACTION: N_ACTION, CARD: N_TEXT}
 NIGHT_SIDE = {PAPER: N_PAPER, CARD: N_CARD, CALM: N_CALM, BAND: N_BAND, LINE: N_LINE, ACTION: N_ACTION, INK: N_TEXT, GRAY: N_GRAY}
 SIDES = ("left", "right", "top", "bottom")
@@ -109,8 +110,8 @@ def _move(formula: str, origin: str, dest: str) -> str:
 
 
 def _is_bar_rest(rules: list, i: int) -> bool:
-    """The third rule of a bar (st.bar): the part that is not done yet"""
-    return i == 2 and len(rules) == 3 and f"*{BAR}>=COLUMN()" in rules[1].formula[0]
+    """The rule right after a bar's done part (st.bar, and the bars on Debts): the part that is not done yet"""
+    return i >= 1 and f"*{BAR}>=COLUMN()" in rules[i - 1].formula[0]
 
 
 def _ranges(cells: set[tuple[int, int]]) -> list[str]:
@@ -193,8 +194,11 @@ def apply(ws, look_cell: str, extra_rows: int = 40):
                         border = _night_border(d.border) or Border(left=Side(), right=Side(), top=Side(), bottom=Side())
                     else:
                         border = _night_border(static)
-                    nights.append(Rule(type="expression", formula=[f"AND({NIGHT},{f})"],
-                                       dxf=_dxf(nf, nt, d.font if d is not None else None, border)))
+                    if lf in SHADES and "MOD(INT(" in f:   # a debt's square (no text) keeps the shade of its slice
+                        dxf = DifferentialStyle(fill=PatternFill("solid", fgColor=lf, bgColor=lf), border=border)
+                    else:
+                        dxf = _dxf(nf, nt, d.font if d is not None else None, border)
+                    nights.append(Rule(type="expression", formula=[f"AND({NIGHT},{f})"], dxf=dxf))
                     lights.append(Rule(type="expression", formula=[f], dxf=d, stopIfTrue=False))
             nf, nt = night_pair(fill, font)
             base = Rule(type="expression", formula=[NIGHT], dxf=_dxf(nf, nt, None, _night_border(static)))

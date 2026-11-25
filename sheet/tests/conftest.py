@@ -83,6 +83,8 @@ def books():
     # the Night look picked on Start
     build_sheet.build(os.path.join(src, "nadia-night.xlsx"), dict(scenarios.NADIA, look="Night"), today=DAY)
     build_sheet.build(os.path.join(src, "checks.xlsx"), scenarios.CHECKS, today=DAY)
+    # a new charge of 100 on Visa on the third payday, typed on Debts
+    build_sheet.build(os.path.join(src, "nadia-charge.xlsx"), scenarios.CHARGE, today=DAY)
     build_sheet.build(os.path.join(src, "thin.xlsx"), scenarios.THIN, today=DAY)
     build_sheet.build(os.path.join(src, "nofit.xlsx"), scenarios.NOFIT, today=DAY)
     recalc.recalc_folder(src, out)

@@ -96,6 +96,8 @@ W_AVAIL, W_YEARLY, W_TOBUF, W_BUFAFTER, W_CHGPOS, W_POOL, W_INT, W_OWED = range(
 W_AFT = W0 + 8           # balance after interest and the bill, by debt in payoff order
 W_BAL = W_AFT + ND       # balance after the extra
 W_LAST = W_BAL + ND - 1
+C_CKEY = W_LAST + 1   # rows EO0 on: the name a new charge picks the debt in that place by ("" for a second debt of that name)
+C_PICK = W_LAST + 2   # each payday: the new charges typed on Debts that land on a debt
 
 # ---- Engine: one answer per cell, read by the tabs (column S, labels in R)
 E_NPAY = "S1"        # the payday the plan ends on (count)
@@ -216,14 +218,33 @@ E_SHORTK = "U16"      # the first payday whose Actual is below its bills (0 = no
 E_VIEWACTUAL = "U17"  # 1 when the payday Today shows has an Actual typed
 DB_R0 = 10            # the first debt (in payoff order). Four rows a debt: three thin rows hold the numbers (the bar
 DB_STEP = 4           # sits in the middle one, so it stays thin), the fourth holds a small note
-DB_COLS = dict(num=2, name=4, rate=13, left=18, paid=25, bar=33, gone=54)
-DB_ENDS = dict(num=3, name=12, rate=17, left=24, paid=31, bar=52, gone=63)
+# column B and the last column are the card's edges; C holds a small square in the debt's shade on the doughnut
+DB_COLS = dict(sq=3, num=4, name=6, rate=14, left=18, paid=24, bar=31, gone=52)
+DB_ENDS = dict(sq=3, num=5, name=13, rate=17, left=23, paid=29, bar=50, gone=62)
 DB_PCT_COL = HELP_COL # the share paid, a quiet helper
 DB_ON_COL = HELP_COL + 1   # 1 on the four rows of a debt that is there: the card is white only there
 DB_PAIDTOTAL = ref(7, DB_COLS["gone"])  # paid off so far, the same number as the Path tile
 DB_GREW = ref(8, DB_COLS["bar"])        # under it: a small ink note when a debt grew
 DB_LAST = DB_R0 + DB_STEP * ND - 1
 DB_FOOT = DB_LAST + 3
+# on the right (grid 10 to 12): what you owe by debt as a doughnut, then the new charges the buyer types
+DB_R0_IN, DB_R1_IN = gcol(10) + 1, gend(12) - 1
+# these rows are the debt table's rows too (four a debt: 9, 11, 9 and 16 high), so nothing here sets a row height
+DB_RING_CARD = (6, 17)   # a row of paper, then the new charges
+DB_RING_NOTE = 17
+DB_RING_AT = ref(8, DB_R0_IN + 4)
+SHADES = ["2F4A6D", "6F86A6", "B9C7D9"]   # three shades of action blue, one per debt in turn: no yellow, no red
+NCHG = 8              # new charges: a payday, a debt, an amount
+DB_CH_CARD = (19, DB_R0 + DB_STEP * 9)   # down to the row under the note
+DB_CH_TITLE, DB_CH_HINT = 20, 22   # the title over two rows, the hint over three
+DB_CH_HEAD = 25
+DB_CH0 = DB_CH_HEAD + 1
+DB_CH_ROWS = [DB_CH0 + 2 * i for i in range(NCHG)]   # two rows a charge: 20 or 25 high
+DB_CHN = DB_CH0 + 2 * NCHG - 1
+DB_CH_COLS = dict(day=DB_R0_IN, debt=DB_R0_IN + 7, amount=DB_R0_IN + 14)
+DB_CH_ENDS = dict(day=DB_R0_IN + 5, debt=DB_R0_IN + 12, amount=DB_R1_IN)
+DB_CH_OK_COL = HELP_COL + 2   # the amount of a charge that lands on a debt (0 when it can not)
+DB_CH_NOTE = ref(DB_CH_CARD[1] - 1, DB_R0_IN)
 
 
 def db_row(p: int) -> int:
@@ -234,8 +255,10 @@ DB_BARS = f"{_L(DB_COLS['bar'])}{DB_R0}:{_L(DB_ENDS['bar'])}{DB_LAST}"   # the r
 DB_ROWS = f"B{DB_R0}:{_L(DB_ENDS['gone'])}{DB_LAST}"
 # the colour rules over the debt rows, in ranges that never overlap: LibreOffice and Google Sheets use the first
 # range that has a rule for a cell, so overlapping ranges would hide the bar or the card line
-DB_RANGES = [f"B{DB_R0}:B{DB_LAST}", f"C{DB_R0}:{_L(DB_COLS['bar'] - 1)}{DB_LAST}", DB_BARS,
-             f"{_L(DB_ENDS['bar'] + 1)}{DB_R0}:{_L(DB_COLS['gone'] - 1)}{DB_LAST}", f"{_L(DB_COLS['gone'])}{DB_R0}:{_L(DB_ENDS['gone'])}{DB_LAST}"]
+DB_SQUARES = f"C{DB_R0}:C{DB_LAST}"
+DB_RANGES = [f"B{DB_R0}:B{DB_LAST}", DB_SQUARES, f"D{DB_R0}:{_L(DB_COLS['bar'] - 1)}{DB_LAST}", DB_BARS,
+             f"{_L(DB_ENDS['bar'] + 1)}{DB_R0}:{_L(DB_COLS['gone'] - 1)}{DB_LAST}", f"{_L(DB_COLS['gone'])}{DB_R0}:{_L(DB_ENDS['gone'])}{DB_LAST}",
+             f"{_L(DB_ENDS['gone'] + 1)}{DB_R0}:{_L(DB_ENDS['gone'] + 1)}{DB_LAST}"]
 # (each range starts where a merged cell starts: a merged cell takes the rules of its first cell)
 
 # ---- Safety net: the buffer (grid 1 to 4) beside the yearly bills (grid 5 to 12), which have room for a bar per bill

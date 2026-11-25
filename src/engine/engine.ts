@@ -12,12 +12,16 @@
  *   3. the rest goes to debts as extra, in payoff order. The focus debt gets it all,
  *      overflow goes to the next debt. The bills of paid-off debts roll into the extra on the paydays they
  *      would have been due.
- * New charges land on the focus debt of that payday.
+ * A new charge lands on the debt it was made on. A charge with no debt named lands on the first debt in payoff
+ * order that still has a balance.
  *
  * All amounts keep full precision. Round only for display.
  */
 import { dueCount, type Frequency, paydayISO } from './dates';
 import { pyRound, pySum } from './pymath';
+
+/** New charges on one payday: one amount (lands on the first debt in order with a balance) or an amount per debt id */
+export type Charges = number | Record<string, number>;
 
 export type { Frequency } from './dates';
 
@@ -91,8 +95,11 @@ export interface PlanInput {
   yearlyBills?: YearlyBillInput[];
   /** "+/- this payday", keyed by payday number (1 = next payday) */
   adjustments?: Record<number, number>;
-  /** New charges, keyed by payday number. They land on the first debt in payoff order that still has a balance. */
-  charges?: Record<number, number>;
+  /**
+   * New charges, keyed by payday number: an amount per debt id (the debt the charge was made on), or one amount,
+   * which lands on the first debt in payoff order that still has a balance.
+   */
+  charges?: Record<number, Charges>;
   /** Buffer money used on a payday (keyed by payday number): the buffer is lower after it and refills first. */
   bufferUsed?: Record<number, number>;
   maxPaydays?: number;
@@ -300,7 +307,7 @@ export function stepPayday(
   plan: PreparedPlan,
   state: StepState,
   planMoney: number,
-  charge = 0,
+  charge: Charges = 0,
   payday = 1,
   date = '',
   nextDate = '',
@@ -316,9 +323,11 @@ export function stepPayday(
   const toBuffer = Math.min(Math.max(state.bufferGoal - state.buffer, 0), Math.max(planMoney - funds, 0));
   const bufferAfter = state.buffer + toBuffer - bufferUsed;
 
-  // A new charge goes to the first debt in payoff order that still has a balance, after interest and before the bill
+  // A new charge goes to its debt, after interest and before the bill. One with no debt named goes to the first
+  // debt in payoff order that still has a balance.
   const chargeAt = Math.max(0, bal.findIndex((b) => b > ZERO));
-  const pre = bal.map((b, i) => b * (1 + rates[i]! / ppy) + (i === chargeAt ? charge : 0));
+  const charged = bal.map((_, i) => (typeof charge === 'number' ? (i === chargeAt ? charge : 0) : (charge[plan.ids[i]!] ?? 0)));
+  const pre = bal.map((b, i) => b * (1 + rates[i]! / ppy) + charged[i]!);
   const interest = pySum(bal.map((b, i) => (b * rates[i]!) / ppy));
 
   // The bill each debt owes on this payday, and what it can pay: never more than it owes now
@@ -372,7 +381,7 @@ export function stepPayday(
     extra,
     totalToSetAside: minimums + toBuffer + funds + extra,
     debtLeft: pySum(after),
-    charge: after.length ? charge : 0,
+    charge: after.length ? pySum(charged) : 0,
     focusId,
     extraGoesTo: extra > ZERO ? focusId : null,
     bufferFirst: !(extra > ZERO) && toBuffer > 0,
