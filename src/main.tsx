@@ -12,6 +12,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App';
 import { makeApplyUpdate, removeHostingOverlays } from './lib/restart';
 import { startBackStack } from './lib/backStack';
+import { captureSource, source } from './lib/source';
 import { startUpdateChecks } from './lib/updateCheck';
 import { pendingUpdateOnOpen, rememberPendingUpdate } from './lib/updateNotice';
 import { setApplyUpdate, updateReady } from './state/store';
@@ -36,5 +37,7 @@ if (pendingUpdateOnOpen()) updateReady.value = true;
 setApplyUpdate(makeApplyUpdate(update, () => location.reload()));
 removeHostingOverlays();
 
+// Where the buyer came from (?from=etsy from the Etsy PDF): saved, and taken out of the address bar before anything else reads it
+source.value = captureSource();
 startBackStack(); // the back button closes the sub-screen you are on
 render(<App />, document.getElementById('app')!);
