@@ -109,7 +109,8 @@ test('from Etsy: every screen, before and after unlock, has no shop link and no 
 test('not from Etsy: the buy link, the price line and the support email are as before', async ({ page }) => {
   await quickSetup(page, { unlock: false });
   const card = page.getByTestId('unlock-card');
-  await expect(card.getByRole('link', { name: 'Get the full planner' })).toBeVisible();
+  // Part 3: the button opens the product page with the buy box
+  await expect(card.getByRole('link', { name: 'Get the full planner' })).toHaveAttribute('href', 'https://paidinyellow.com/products/paycheck-payoff-system-pack-1');
   await expect(card).toContainText('One price. No subscription. No bank login.');
   await expect(card.getByRole('textbox', { name: 'Your unlock code' })).toHaveCount(0); // behind "I have a code"
   await unlockOnResult(page);

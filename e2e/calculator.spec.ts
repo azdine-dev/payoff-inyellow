@@ -20,7 +20,7 @@ test('without a code: the date and first step, nothing more, and a way to unlock
   await page.getByTestId('unlock-card').getByRole('button', { name: 'Help: What the full planner adds' }).click(); // the list sits behind the (?)
   await expect(page.getByTestId('unlock-benefits')).toContainText('Tick off every payday');
   await page.getByRole('button', { name: 'Got it' }).click();
-  await expect(page.getByRole('link', { name: 'Get the full planner' })).toHaveAttribute('href', 'https://paidinyellow.com/collections/all');
+  await expect(page.getByRole('link', { name: 'Get the full planner' })).toHaveAttribute('href', 'https://paidinyellow.com/products/paycheck-payoff-system-pack-1'); // the product page, not a list
 
   // No tracker, no tabs
   await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);
