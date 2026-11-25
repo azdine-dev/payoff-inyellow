@@ -5,6 +5,7 @@ import { STORE_URL, EMAIL_CAPTURE_URL } from '../lib/config';
 import { IS_FREE } from '../lib/edition';
 import { cleanCode, verifyCode } from '../lib/license';
 import { isEmail, submitEmail } from '../lib/leadCapture';
+import { codeRefusedText, isEtsy } from '../lib/source';
 import { saveLicense } from '../state/settingsActions';
 import { act } from '../state/store';
 import { Field, HelpTip, Note } from '../ui/controls';
@@ -18,6 +19,8 @@ export const UNLOCK_BENEFITS = [
 ];
 
 export function UnlockCard() {
+  // A buyer from Etsy already has the code (in the Open me first PDF): the code box leads, and no shop link or price shows
+  const etsy = isEtsy();
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState('');
@@ -27,7 +30,7 @@ export function UnlockCard() {
     if (r.ok) {
       await act((db, x) => saveLicense(db, x, cleanCode(code)));
     } else {
-      setMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : COPY.codeRefused);
+      setMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : codeRefusedText());
     }
   };
 
@@ -47,17 +50,29 @@ export function UnlockCard() {
           </ul>
         </HelpTip>
       </p>
-      <p class="muted small">One price. No subscription. No bank login.</p>
-      <a class="btn" href={STORE_URL} target="_blank" rel="noopener">
-        Get the full planner
-      </a>
-      {open ? (
+      {etsy ? (
         <>
-          <Field label="Your unlock code" hint="It came with your purchase. It’s checked on this device, with no internet needed.">
+          <p class="muted small">No subscription. No bank login.</p>
+          <p data-testid="code-from-pdf">{COPY.codeFromPdf}</p>
+        </>
+      ) : (
+        <>
+          <p class="muted small">One price. No subscription. No bank login.</p>
+          <a class="btn" href={STORE_URL} target="_blank" rel="noopener">
+            Get the full planner
+          </a>
+        </>
+      )}
+      {open || etsy ? (
+        <>
+          <Field
+            label="Your unlock code"
+            hint={etsy ? 'It’s checked on this device, with no internet needed.' : 'It came with your purchase. It’s checked on this device, with no internet needed.'}
+          >
             <input type="text" autoCapitalize="off" autoCorrect="off" spellcheck={false} value={code} onInput={(e) => { setCode((e.target as HTMLInputElement).value); setMsg(''); }} />
           </Field>
           {msg && <Note>{msg}</Note>}
-          <button type="button" class="btn ghost" onClick={check}>
+          <button type="button" class={etsy ? 'btn' : 'btn ghost'} onClick={check}>
             Unlock
           </button>
         </>

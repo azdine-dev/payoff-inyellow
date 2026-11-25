@@ -37,5 +37,9 @@ export const COPY = {
   codeSaved: 'Code saved. Your full planner opens when setup is done.',
   codeRefused: 'This code looks incomplete. Copy it again, or tap the button in your purchase email.',
   codeEmpty: 'Paste your unlock code first.',
+  // For buyers who came from Etsy: their code is in the PDF, and their questions go through Etsy
+  codeFromPdf: 'Enter the code from your Open me first PDF.',
+  codeRefusedEtsy: 'This code looks incomplete. Copy it again from your Open me first PDF.',
+  helpEtsy: 'Questions? Message us through Etsy.',
   extraHint: (symbol: string) => `Even ${symbol}20 matters. You can change it any time.`,
 } as const;

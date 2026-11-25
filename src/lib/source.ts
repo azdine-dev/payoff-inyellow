@@ -8,6 +8,7 @@
  * and no support email (see isEtsy and the unlock card).
  */
 import { signal } from '@preact/signals';
+import { COPY } from './copy';
 
 const KEY = 'piy.source';
 export const ETSY = 'etsy';
@@ -60,3 +61,5 @@ export function captureSource(
 /** The source for the screens. Set once at start (main.tsx). */
 export const source = signal<Source>(null);
 export const isEtsy = () => source.value === ETSY;
+/** When a code is refused: an Etsy buyer copies it from the PDF, others from the purchase email */
+export const codeRefusedText = () => (isEtsy() ? COPY.codeRefusedEtsy : COPY.codeRefused);

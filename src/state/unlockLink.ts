@@ -13,6 +13,7 @@
 import { saveCarry } from '../data/db';
 import { COPY } from '../lib/copy';
 import { cleanCode, verifyCode } from '../lib/license';
+import { codeRefusedText } from '../lib/source';
 import { joinSync, parseSyncParam, pendingJoin } from '../sync/controller';
 import { showNotice } from './notice';
 import { saveLicense } from './settingsActions';
@@ -57,7 +58,7 @@ export async function handleLaunchFragment(): Promise<void> {
     const code = cleanCode(raw);
     const result = await verifyCode(code);
     if (!result.ok) {
-      showNotice('invalid', result.reason === 'empty' ? COPY.codeEmpty : COPY.codeRefused);
+      showNotice('invalid', result.reason === 'empty' ? COPY.codeEmpty : codeRefusedText());
     } else {
       codeOk = true;
       if (data.value) {

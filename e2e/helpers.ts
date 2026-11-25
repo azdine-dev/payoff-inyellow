@@ -13,8 +13,9 @@ export async function openBufferFields(page: Page) {
 
 /** On the result screen: paste a valid unlock code (checked on the phone) so the full planner opens. */
 export async function unlockOnResult(page: Page, id = 'TEST-ORDER') {
-  await page.getByRole('button', { name: 'I have a code' }).click();
-  await page.getByRole('textbox', { name: 'Your unlock code' }).fill(await testCode(id));
+  const box = page.getByRole('textbox', { name: 'Your unlock code' });
+  if (!(await box.isVisible())) await page.getByRole('button', { name: 'I have a code' }).click(); // Etsy buyers see the box straight away
+  await box.fill(await testCode(id));
   await page.getByRole('button', { name: 'Unlock', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Start my plan' })).toBeVisible();
 }
@@ -24,8 +25,12 @@ export async function unlockOnResult(page: Page, id = 'TEST-ORDER') {
  * By default the planner is unlocked at the end. With { unlock: false } it stops at the
  * calculator result.
  */
-export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: string } = {}) {
+export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: string; each?: (page: Page) => Promise<void> } = {}) {
   await page.goto('/');
+  const each = async () => {
+    if (opts.each) await opts.each(page); // a check on every setup screen
+  };
+  await each();
   const next = page.getByRole('button', { name: /^(Continue|That’s all of them|See my plan)$/ });
   // 1 Pay (the welcome words are on top of it)
   await page.getByRole('radio', { name: 'Every 2 weeks' }).click();
@@ -45,14 +50,17 @@ export async function quickSetup(page: Page, opts: { unlock?: boolean; name?: st
     await card.getByLabel('Monthly minimum').fill(d.min);
     await card.getByLabel('Due day').fill(d.due);
   }
+  await each();
   await next.click();
   // 3 Money
   await page.getByLabel('Money for the plan each payday').fill('150');
   await openBufferFields(page);
   await page.getByLabel('Buffer now').fill('500');
+  await each();
   await next.click();
   // 4 Your date
   await expect(page.getByTestId('debt-free-date')).toBeVisible();
+  await each();
   if (opts.unlock === false) return;
   await unlockOnResult(page);
   await page.getByRole('button', { name: 'Start my plan' }).click();

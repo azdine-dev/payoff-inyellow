@@ -12,6 +12,7 @@ import { versionText } from '../lib/version';
 import { useBackLayer } from '../lib/useBackLayer';
 import { COPY } from '../lib/copy';
 import { HARDSHIP_SCRIPT_URL, SUPPORT_EMAIL, VIDEO_URL } from '../lib/config';
+import { codeRefusedText, isEtsy } from '../lib/source';
 import { cleanCode, verifyCode } from '../lib/license';
 import { CURRENCY_CHOICES, currencyFromCode, formatMoney, parseAmount, symbolFor } from '../lib/money';
 import { TEXT_SIZE_LABELS } from '../lib/appearance';
@@ -145,7 +146,7 @@ export function Settings() {
       setCode('');
       setCodeMsg('');
     } else {
-      setCodeMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : COPY.codeRefused);
+      setCodeMsg(r.reason === 'empty' ? 'Paste your unlock code first.' : codeRefusedText());
     }
   };
 
@@ -249,15 +250,22 @@ export function Settings() {
           </span>
           <span class="link small">Open</span>
         </button>
-        <a class="set-row" href={`mailto:${SUPPORT_EMAIL}`} aria-label={`Write to ${SUPPORT_EMAIL}`}>
-          <span>
-            <span class="muted small" style={{ display: 'block' }}>
-              Email support
+        {isEtsy() ? (
+          // Etsy buyers write through Etsy: no email address and no link
+          <p class="set-row" data-testid="help-etsy">
+            <span style={{ fontWeight: 600 }}>{COPY.helpEtsy}</span>
+          </p>
+        ) : (
+          <a class="set-row" href={`mailto:${SUPPORT_EMAIL}`} aria-label={`Write to ${SUPPORT_EMAIL}`}>
+            <span>
+              <span class="muted small" style={{ display: 'block' }}>
+                Email support
+              </span>
+              <span style={{ fontWeight: 600 }}>{SUPPORT_EMAIL}</span>
             </span>
-            <span style={{ fontWeight: 600 }}>{SUPPORT_EMAIL}</span>
-          </span>
-          <span class="link small">Write</span>
-        </a>
+            <span class="link small">Write</span>
+          </a>
+        )}
         {row('Unlock code', s.license ? 'Unlocked. Thank you.' : 'Not unlocked', 'code', 'Open')}
         {row('About and disclaimer', 'Privacy, and what this is', 'about', 'Open')}
         <button type="button" class="set-row" aria-label="Erase everything and start over" onClick={() => { setAlsoCode(false); setErasing(true); }}>
@@ -464,9 +472,13 @@ export function Settings() {
             </details>
           ))}
         </div>
-        <p>
-          Still stuck? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. A screenshot helps.
-        </p>
+        {isEtsy() ? (
+          <p data-testid="faq-help-etsy">Still stuck? Message us through Etsy. A screenshot helps.</p>
+        ) : (
+          <p>
+            Still stuck? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. A screenshot helps.
+          </p>
+        )}
         {VIDEO_URL && (
           <a href={VIDEO_URL} target="_blank" rel="noopener">
             {COPY.watchVideo}
@@ -523,7 +535,9 @@ export function Settings() {
           </>
         ) : (
           <>
-            <p class="muted">Your code came with your purchase. Paste it here. It’s checked on this device, with no internet needed.</p>
+            <p class="muted">
+              {isEtsy() ? COPY.codeFromPdf : 'Your code came with your purchase. Paste it here.'} It’s checked on this device, with no internet needed.
+            </p>
             <Field label="Code">
               <input type="text" autoCapitalize="off" autoCorrect="off" spellcheck={false} value={code} onInput={(e) => setCode((e.target as HTMLInputElement).value)} />
             </Field>
