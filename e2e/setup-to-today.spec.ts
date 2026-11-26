@@ -3,7 +3,7 @@
  * Uses the numbers of engine/fixtures.json "sample_every_2_weeks", so the screens must show
  * the same figures as the Google Sheet.
  */
-import { addYearlyInStep, addYearlyBills, showPaydays, tapDidIt, goTab, revealEarly } from './scenario';
+import { addYearlyInStep, addYearlyBills, showPaydays, tapDidIt, goTab, revealEarly, openExtraMoney } from './scenario';
 import { expect, test, type Page } from '@playwright/test';
 
 import { unlockOnResult, openBufferFields } from './helpers';
@@ -156,7 +156,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();
   await expect(page.getByTestId('payday-total')).toBeVisible(); // nothing is done yet, so the card
   await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 6 Nov.');  // Extra money pays off the focus debt
-  await page.getByRole('button', { name: 'I got extra money' }).click();
+  await openExtraMoney(page);
   await page.getByRole('textbox', { name: 'Extra money' }).fill('640');
   await page.getByRole('button', { name: 'Use it', exact: true }).click();
   await expect(page.getByTestId('paid-moment').getByText('PAID. One down.')).toBeVisible();

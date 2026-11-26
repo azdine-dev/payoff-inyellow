@@ -1,13 +1,13 @@
 /** The payoff order after a new debt, the last debt paid (the header changes at once), and the first payday caption. */
 import { expect, test, type Page } from '@playwright/test';
-import { runWizard, startPlan, goTab, tapDidIt, expectBrandRules, type WizardConfig } from './scenario';
+import { runWizard, startPlan, goTab, tapDidIt, expectBrandRules, type WizardConfig, openExtraMoney } from './scenario';
 import { NADIA, nadiaSetup } from './nadia';
 
 /** Nadia, but with Visa still to add */
 const TWO: WizardConfig = { ...NADIA, debts: NADIA.debts.slice(0, 2) };
 
 async function payExtra(page: Page, amount: number) {
-  await page.getByRole('button', { name: 'I got extra money' }).click();
+  await openExtraMoney(page);
   await page.getByRole('textbox', { name: 'Extra money' }).fill(String(amount));
   await page.getByRole('button', { name: 'Use it', exact: true }).click();
 }

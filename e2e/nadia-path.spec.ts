@@ -1,6 +1,6 @@
 /** Part B: Path as one illustrated journey, with the Nadia scenario (see e2e/nadia.ts). */
 import { expect, test, type Page } from '@playwright/test';
-import { expectBrandRules, goTab } from './scenario';
+import { expectBrandRules, goTab, openExtraMoney } from './scenario';
 import { nadiaSetup } from './nadia';
 
 const road = (page: Page) => page.getByTestId('road');
@@ -130,7 +130,7 @@ test.describe('Part B · Path, the Nadia scenario', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     // pay Store Card off with extra money: the share card appears, and its road flag is a PAID stamp
     await goTab(page, 'Today');
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     await page.getByRole('textbox', { name: 'Extra money' }).fill('450');
     await page.getByRole('button', { name: 'Use it', exact: true }).click();
     await page.getByRole('button', { name: /Next payday|Done/ }).click();

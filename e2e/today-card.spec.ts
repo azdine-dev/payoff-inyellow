@@ -1,7 +1,7 @@
 /** When Today shows the full card, and "Change what I paid" on the yellow card. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, showPaydays } from './scenario';
+import { expectBrandRules, goTab, showPaydays, openExtraMoney } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED); // Thu 15 Oct 2026, the first payday is Fri 23 Oct
@@ -72,7 +72,7 @@ test('"Change what I paid" goes away once something else moved the balances', as
   await expect(page.getByTestId('paid-card')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('change-paid')).toBeVisible();
-  await page.getByRole('button', { name: 'I got extra money' }).click();
+  await openExtraMoney(page);
   await page.getByRole('textbox', { name: 'Extra money' }).fill('10');
   await page.getByRole('button', { name: 'Use it', exact: true }).click();
   await expect(page.getByTestId('change-paid')).toHaveCount(0);

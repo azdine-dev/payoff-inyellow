@@ -173,3 +173,50 @@ test.describe('3 · after "Move $X": the yellow PAID card, Undo, and the flag', 
     await expect(page.getByTestId('scene-flag')).not.toHaveClass(/move-/);
   });
 });
+
+test.describe('4 · a payday with a bill: "Extra money came in?" under "I did it"', () => {
+  test('the row is in the payday card under I did it, opens the chips, and adds the money to this payday', async ({ page }) => {
+    await ahmed(page);
+    await page.clock.setFixedTime(new Date('2026-12-12T10:00:00')); // Sat 12 Dec: the Visa bill; 28 Nov has counted itself
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'I got extra money' })).toHaveCount(0); // the old floating link is gone
+    const card = page.locator('.payday-card');
+    const didIt = card.getByRole('button', { name: 'I did it · $70' });
+    const row = card.getByTestId('extra-row');
+    await expect(row).toContainText('Extra money came in?');
+    await expect(row).toContainText('See how much sooner you could be done');
+    expect((await row.boundingBox())!.y).toBeGreaterThan((await didIt.boundingBox())!.y); // under I did it
+    await expect(page.getByTestId('extra-row')).toHaveCount(1);
+
+    await row.click();
+    const sheet = page.getByRole('dialog', { name: 'Extra money' });
+    await sheet.getByRole('button', { name: '$50', exact: true }).click();
+    await expect(sheet.getByTestId('move-where')).toContainText('$50 goes to your safety net first.');
+    await expect(sheet.getByTestId('move-where')).toContainText('$50 of $500. A surprise bill stays off Visa.');
+    await expect(sheet.getByRole('button', { name: 'Pay it to one debt now' })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: 'It’s coming later' })).toBeVisible();
+    await sheet.getByRole('button', { name: 'Add $50 to this payday' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'I did it · $120' })).toBeVisible();
+    await expect(card).toContainText('Buffer');
+    await page.getByRole('button', { name: 'I did it · $120' }).click();
+    await expect(page.getByTestId('paid-total')).toHaveText('$120');
+    await expect(page.getByTestId('safety-tile')).toContainText('$50 of $500');
+    await expectBrandRules(page);
+  });
+
+  test('the two small links keep the old ways: pay one debt now, or money coming later', async ({ page }) => {
+    await ahmed(page);
+    await page.clock.setFixedTime(new Date('2026-12-12T10:00:00'));
+    await page.reload();
+    await page.getByTestId('extra-row').click();
+    await page.getByRole('dialog', { name: 'Extra money' }).getByRole('button', { name: 'It’s coming later' }).click();
+    const when = page.getByRole('group', { name: 'When' });
+    await expect(when.getByRole('button', { name: 'It’s coming later' })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+    await page.getByTestId('extra-row').click();
+    await page.getByRole('dialog', { name: 'Extra money' }).getByRole('button', { name: 'Pay it to one debt now' }).click();
+    await expect(page.getByRole('group', { name: 'When' }).getByRole('button', { name: 'I have it now' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('textbox', { name: 'Extra money' })).toBeVisible();
+  });
+});

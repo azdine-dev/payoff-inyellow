@@ -1162,6 +1162,47 @@ select {
   font-size: 0.92rem;
 }
 
+/* "Extra money came in?": one row under "I did it" (and under the countdown between paydays) */
+.extra-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.extra-plus {
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--calm);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.extra-words {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.extra-words span,
+.extra-chev {
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
 /* "Do these later" chips */
 .chips {
   display: flex;

@@ -1,7 +1,7 @@
 /** Path: a read-only preview of a future payday, undo of the latest paid payday, and "Mark it done early" for the next payday only. */
 import { expect, test, type Page } from '@playwright/test';
 import { nadiaSetup } from './nadia';
-import { expectBrandRules, goTab, showPaydays, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, showPaydays, tapDidIt, openExtraMoney } from './scenario';
 
 async function openList(page: Page, _which?: 'Upcoming' | 'Done') {
   await goTab(page, 'Path');
@@ -146,7 +146,7 @@ test.describe('the real gone date of a debt that is already paid', () => {
 
   test('a debt paid off today keeps today as its gone date, in the preview of a later day', async ({ page }) => {
     await nadiaSetup(page);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await sheet.getByRole('textbox', { name: 'Extra money' }).fill('450');
     await sheet.getByRole('button', { name: 'Use it', exact: true }).click();

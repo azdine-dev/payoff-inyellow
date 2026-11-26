@@ -3,7 +3,7 @@
  * Gifts $260 in December. Store Card 450 / 26.99% / 30 / day 12, Medical 600 / 0% / 50 / day 3, Visa 2,200 / 22.99% / 66 / day 20.
  */
 import { expect, test } from '@playwright/test';
-import { goTab, expectBrandRules } from './scenario';
+import { goTab, expectBrandRules, openExtraMoney } from './scenario';
 import { nadiaSetup } from './nadia';
 
 test.describe('Part A · Today, the Nadia scenario', () => {
@@ -36,8 +36,9 @@ test.describe('Part A · Today, the Nadia scenario', () => {
   test('4 · the focus card keeps one door for extra money, with the new date and interest saved', async ({ page }) => {
     await nadiaSetup(page);
     await expect(page.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'I got extra money' })).toHaveCount(1);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await expect(page.getByRole('button', { name: 'I got extra money' })).toHaveCount(0); // the old floating link is gone
+    await expect(page.getByTestId('extra-row')).toHaveCount(1);
+    await openExtraMoney(page);
     await page.getByRole('textbox', { name: 'Extra money' }).fill('100');
     await expect(page.getByTestId('windfall-preview')).toContainText('Debt-free');
     await expect(page.getByTestId('windfall-preview')).toContainText('less interest');

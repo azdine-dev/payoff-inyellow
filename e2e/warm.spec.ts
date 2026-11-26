@@ -1,14 +1,14 @@
 /** The four warm features, with the Nadia scenario: your scene, the balance chart, a note for this payday, short reads. */
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { expectBrandRules, goTab, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, tapDidIt, openExtraMoney } from './scenario';
 import { nadiaSetup } from './nadia';
 
 const scene = (page: Page) => page.getByTestId('scene');
 
 /** Pays down with "I got extra money" and closes the "debt paid" moment if one opens */
 async function payExtra(page: Page, amount: number) {
-  await page.getByRole('button', { name: 'I got extra money' }).click();
+  await openExtraMoney(page);
   await page.getByRole('textbox', { name: 'Extra money' }).fill(String(amount));
   await page.getByRole('button', { name: 'Use it', exact: true }).click();
   // a debt that reaches zero opens the "paid" moment: close it

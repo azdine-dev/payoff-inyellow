@@ -1,7 +1,7 @@
 /** The last change list before beta: Path tiles and details, Debts rings and History, wide screens, every number a door. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, tapDidIt, showPaydays } from './scenario';
+import { expectBrandRules, goTab, tapDidIt, showPaydays, openExtraMoney } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -93,7 +93,7 @@ test.describe('Part 4 · Debts', () => {
 
   test('a paid debt moves to the bottom, yellow, crossed out, with the PAID stamp', async ({ page }) => {
     await quickSetup(page);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     await page.getByRole('textbox', { name: 'Extra money' }).fill('640');
     await page.getByRole('button', { name: 'Use it', exact: true }).click();
     await page.getByRole('button', { name: /Next payday|Done/ }).click();
@@ -188,16 +188,16 @@ test.describe('Part 6 · every number is a door', () => {
     await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
   });
 
-  test('the focus debt card keeps one "I got extra money" link, and it is not inside the door', async ({ page }) => {
+  test('Today keeps one door for extra money ("Extra money came in?"), and it is not inside the focus debt door', async ({ page }) => {
     await quickSetup(page);
-    await expect(page.getByRole('button', { name: 'I got extra money' })).toHaveCount(1); // on Today
+    await expect(page.getByTestId('extra-row')).toHaveCount(1); // on Today
     await goTab(page, 'Path');
     const door = page.getByRole('button', { name: 'Store card, open in Debts' });
     await expect(door).toBeVisible();
     await expect(door.getByRole('button')).toHaveCount(0); // no button inside a button
     await expect(page.getByRole('button', { name: '+ Extra payment' })).toHaveCount(0);
     await goTab(page, 'Today');
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     await expect(page.getByRole('dialog', { name: 'Extra money' })).toBeVisible();
   });
 });

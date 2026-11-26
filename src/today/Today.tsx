@@ -21,7 +21,7 @@ import { editDebt } from '../state/debtActions';
 import { momentText } from '../state/milestones';
 import { dateMoveSentence } from '../state/changeNote';
 import { showNotice } from '../state/notice';
-import { activeDebts, nextPaydayISO, nextPaydayNumber, toPlanInput } from '../state/planInput';
+import { activeDebts, nextPaydayISO, nextPaydayNumber, plannedMoney, toPlanInput } from '../state/planInput';
 import type { AppData } from '../data/types';
 import { rememberCount, useCountUp } from '../ui/useCountUp';
 import { progressStats } from '../state/milestones';
@@ -107,7 +107,8 @@ export function Today() {
   const [backedUp, setBackedUp] = useState(false);
   // "Move $X" moved the debt-free day: the flag in the scene slides once
   const [flagMove, setFlagMove] = useState<FlagMove>(null);
-  const [sheet, setSheet] = useState<'amount' | 'redo' | 'windfall' | null>(null);
+  // 'extra': "Extra money came in?" (chips that add to this payday); 'windfall': pay one debt now, or money coming later
+  const [sheet, setSheet] = useState<'amount' | 'redo' | 'windfall' | 'extra' | null>(null);
   const [later, setLater] = useState(false); // "Extra money": I have it now / It's coming later
   const [sendTo, setSendTo] = useState<string | null>(null); // "Send it to": null means the focus debt
   const [input, setInput] = useState('');
@@ -205,6 +206,23 @@ export function Today() {
     data.value = res.data;
     setBusy(false);
   };
+
+  // "Extra money came in?": in the payday card it opens the chips; between paydays (no payday card) it opens pay now or later
+  const extraRow = (onOpen: () => void) =>
+    focus ? (
+      <button type="button" class="extra-row" data-testid="extra-row" aria-label="Extra money came in? See how much sooner you could be done" onClick={onOpen}>
+        <span class="extra-plus" aria-hidden="true">
+          +
+        </span>
+        <span class="extra-words">
+          <b>Extra money came in?</b>
+          <span>See how much sooner you could be done</span>
+        </span>
+        <span class="extra-chev" aria-hidden="true">
+          ›
+        </span>
+      </button>
+    ) : null;
 
   const zeroCard = (
     <section class="card calm stack zero-card" aria-labelledby="zero-title" data-testid="zero-card">
@@ -528,6 +546,7 @@ export function Today() {
           </section>
 
           {countdownMode && <CountdownCard nextDate={nextDate} onEarly={markEarly} />}
+          {countdownMode && extraRow(() => openSheet('windfall'))}
 
         </>
       )}
@@ -567,6 +586,7 @@ export function Today() {
               <>
                 {lastWasEmpty && nothingCard}
                 <CountdownCard nextDate={nextDate} onEarly={markEarly} />
+                {extraRow(() => openSheet('windfall'))}
               </>
             )
           ) : (
@@ -650,6 +670,7 @@ export function Today() {
               <button type="button" class="pc-btn" onClick={() => void apply()} disabled={busy}>
                 <CheckIcon /> {COPY.didIt} · <span class="num">{money(total)}</span>
               </button>
+              {extraRow(() => setSheet('extra'))}
               <div class="row pc-links">
                 <button type="button" class="link small" onClick={() => openSheet('amount')}>
                   {COPY.differentAmount}
@@ -708,11 +729,6 @@ export function Today() {
               <p class="muted small">Safety net</p>
               <p class="tile-val num">{bufferFull ? `${money(d.buffer.amount)} ready` : `${money(d.buffer.amount)} of ${money(s.bufferGoal)}`}</p>
             </button>
-            {focus && (
-              <button type="button" class="link small" data-testid="got-extra" onClick={() => openSheet('windfall')}>
-                I got extra money
-              </button>
-            )}
           </div>
         </>
       )}
@@ -735,7 +751,37 @@ export function Today() {
       </Sheet>
 
       <Sheet open={sheet !== null} onClose={() => setSheet(null)} title={sheet === 'amount' || sheet === 'redo' ? COPY.differentAmount : 'Extra money'}>
-        {sheet === 'amount' || sheet === 'redo' ? (
+        {sheet === 'extra' ? (
+          <>
+            <p>How much came in? See where it goes before anything changes.</p>
+            <ExtraChips
+              d={d}
+              current={r}
+              base={override ?? plannedMoney(d)}
+              focusName={focus?.debt.name ?? null}
+              action={(m) => `Add ${money(m.amount)} to this payday`}
+              onMove={(m) => {
+                setOverride(m.planMoney === s.extraPerPayday ? null : m.planMoney);
+                setSheet(null);
+              }}
+            />
+            <div class="row pc-links" style={{ marginTop: 4 }}>
+              <button type="button" class="link small" onClick={() => openSheet('windfall')}>
+                Pay it to one debt now
+              </button>
+              <button
+                type="button"
+                class="link small"
+                onClick={() => {
+                  openSheet('windfall');
+                  setLater(true);
+                }}
+              >
+                It’s coming later
+              </button>
+            </div>
+          </>
+        ) : sheet === 'amount' || sheet === 'redo' ? (
           <Field label="How much can go to the plan this payday?" hint={`Usually ${money(s.extraPerPayday)}. Your minimums stay the same, and the rest follows the same order.`}>
             <NumberInput pre={cur.symbol} value={input} onInput={setInput} label="Money for the plan this payday" />
           </Field>
@@ -783,7 +829,7 @@ export function Today() {
           </>
         )}
         {inputNote && <Note>{inputNote}</Note>}
-        {!(sheet === 'windfall' && later) && (
+        {sheet !== 'extra' && !(sheet === 'windfall' && later) && (
           <button type="button" class="btn" onClick={saveSheet}>
             {sheet === 'amount' || sheet === 'redo' ? 'Update this payday' : 'Use it'}
           </button>

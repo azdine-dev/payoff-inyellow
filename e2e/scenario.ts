@@ -197,6 +197,17 @@ export async function startPlan(page: Page) {
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
 }
 
+/**
+ * Pay extra money now, or add money coming later: "Extra money came in?" on Today. On a payday card it opens the chips
+ * first, with "Pay it to one debt now" under them; between paydays it opens that sheet directly.
+ */
+export async function openExtraMoney(page: Page) {
+  await page.getByTestId('extra-row').click();
+  await page.getByRole('dialog', { name: 'Extra money' }).waitFor();
+  const payNow = page.getByRole('button', { name: 'Pay it to one debt now' });
+  if (await payNow.isVisible()) await payNow.click();
+}
+
 /** Brand rules (document, part 15): no red, yellow is never text, nothing offering loans or transfers. */
 export async function expectBrandRules(page: Page) {
   const found = await page.evaluate(() => {

@@ -1,7 +1,7 @@
 /** Found on the live app: the freeze, the paid state, the currency in the copy, "Add another", and the small animations. */
 import { expect, test, type Page } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, revealEarly, setDay, tapDidIt, showPaydays } from './scenario';
+import { expectBrandRules, goTab, revealEarly, setDay, tapDidIt, showPaydays, openExtraMoney } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -142,7 +142,7 @@ test.describe('5 · small animations', () => {
   test('a debt paid off: the card turns yellow with the stamp, then the next one slides in', async ({ page }) => {
     await quickSetup(page);
     await revealEarly(page);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     await page.getByRole('textbox', { name: 'Extra money' }).fill('640');
     await page.getByRole('button', { name: 'Use it', exact: true }).click();
     await expect(page.getByTestId('paid-moment')).toBeVisible();

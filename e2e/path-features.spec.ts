@@ -1,7 +1,7 @@
 /** Path: Chapters, Your whole plan, and money coming later. Nadia's numbers are in design/path-features/README.md. */
 import { expect, test } from '@playwright/test';
 import { nadiaSetup } from './nadia';
-import { expectBrandRules, goTab, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, tapDidIt, openExtraMoney } from './scenario';
 
 test.describe('Chapters', () => {
   test('one card per debt with its paydays as squares, flags between them, and the house at the end', async ({ page }) => {
@@ -114,7 +114,7 @@ test.describe('Your whole plan', () => {
 test.describe('Money coming later', () => {
   test('the switch, one typed field, the new date before saving: $800 on Fri 9 Apr 2027', async ({ page }) => {
     await nadiaSetup(page);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await expect(sheet.getByRole('button', { name: 'I have it now' })).toHaveAttribute('aria-pressed', 'true');
     await sheet.getByRole('button', { name: /coming later/ }).click();
@@ -145,7 +145,7 @@ test.describe('Money coming later', () => {
 
   test('on its payday Today asks "Did it arrive?", and counts it only after Yes', async ({ page }) => {
     await nadiaSetup(page);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await sheet.getByRole('button', { name: /coming later/ }).click();
     await sheet.getByRole('textbox', { name: 'Money coming later' }).fill('800');
@@ -162,7 +162,7 @@ test.describe('Money coming later', () => {
 
   test('"Not yet" leaves the money out of this payday', async ({ page }) => {
     await nadiaSetup(page);
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await sheet.getByRole('button', { name: /coming later/ }).click();
     await sheet.getByRole('textbox', { name: 'Money coming later' }).fill('800');
@@ -180,7 +180,7 @@ test.describe('Money coming later', () => {
 
 test.describe('Coming later list in Path', () => {
   async function planLater(page: import('@playwright/test').Page) {
-    await page.getByRole('button', { name: 'I got extra money' }).click();
+    await openExtraMoney(page);
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await sheet.getByRole('button', { name: /coming later/ }).click();
     await sheet.getByRole('button', { name: 'Tax refund', exact: true }).click();

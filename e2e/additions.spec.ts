@@ -1,7 +1,7 @@
 /** Additions after testing the competitors: promo rates, "help me work it out", Worth knowing, extra money, notes, print, calendar. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
-import { expectBrandRules, goTab, tapDidIt } from './scenario';
+import { expectBrandRules, goTab, tapDidIt, openExtraMoney } from './scenario';
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(FIXED);
@@ -129,7 +129,7 @@ test.describe('4 · "I got extra money" on Today', () => {
     await goTab(page, 'Path');
     await expect(focus).toContainText('$640 left');
     await goTab(page, 'Today');
-    await page.getByTestId('got-extra').click();
+    await openExtraMoney(page);
     const sheet = page.getByRole('dialog', { name: 'Extra money' });
     await expect(sheet.getByTestId('windfall-preview')).toHaveCount(0); // nothing until an amount is typed
     await sheet.getByLabel('Extra money').fill('300');
