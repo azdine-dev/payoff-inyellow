@@ -38,6 +38,7 @@ import { DebtFreeCard } from './DebtFreeCard';
 import { pickNote } from './payNote';
 import { ExtraChips } from './ExtraChips';
 import type { ExtraMove } from '../state/extraMove';
+import type { FlagMove } from '../ui/Scene';
 import { Empty } from '../ui/Empty';
 import { comingUp, extraSummary, focusDebt, greetingWithName, mergedRows, paidFromLog } from './model';
 
@@ -104,6 +105,8 @@ export function Today() {
   // Undo lasts 10 seconds.
   const [undo, setUndo] = useState<{ before: typeof d; after: typeof d } | null>(null);
   const [backedUp, setBackedUp] = useState(false);
+  // "Move $X" moved the debt-free day: the flag in the scene slides once
+  const [flagMove, setFlagMove] = useState<FlagMove>(null);
   const [sheet, setSheet] = useState<'amount' | 'redo' | 'windfall' | null>(null);
   const [later, setLater] = useState(false); // "Extra money": I have it now / It's coming later
   const [sendTo, setSendTo] = useState<string | null>(null); // "Send it to": null means the focus debt
@@ -188,7 +191,10 @@ export function Today() {
     navigator.vibrate?.(15);
     const now = data.peek() ?? d;
     rememberBalances(now);
+    const before = plan.peek()?.debtFreeDate ?? null;
     const res = await didPayday(await getDB(), now, { planMoney: m.planMoney });
+    const after = simulatePlan(toPlanInput(res.data)).debtFreeDate;
+    setFlagMove(before && after && after !== before ? (after < before ? 'sooner' : 'later') : null);
     setUndo({ before: now, after: res.data });
     setJustPaid(paidFromLog(res.data, paydayNumber));
     setPaidIds(res.newlyPaid);
@@ -263,6 +269,7 @@ export function Today() {
     setJustPaid(null);
     setPaidIds([]);
     setChecked(new Set());
+    setFlagMove(null);
     data.value = restored;
   };
 
@@ -413,6 +420,7 @@ export function Today() {
         hasDebts={active.length > 0}
         pctGone={progressStats(d).pct}
         started={d.paydays.some((p) => p.status === 'done' && p.total > 0.004)}
+        flagMove={flagMove}
         withLine={comingLaterLine(d)?.text}
         compact={!justPaid && !paidView && !countdownMode && !emptyNow && active.length > 0 && Boolean(row)}
         onOpen={() => {

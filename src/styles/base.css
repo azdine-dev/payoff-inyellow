@@ -2147,6 +2147,40 @@ textarea {
   }
 }
 
+/* The debt-free day moved ("Move $X"): the flag slides once from where it stood, closer when it is sooner */
+.sc-flag.move-sooner {
+  animation: flag-sooner 700ms ease-out 200ms 1 both;
+}
+
+.sc-flag.move-later {
+  animation: flag-later 700ms ease-out 200ms 1 both;
+}
+
+@keyframes flag-sooner {
+  from {
+    transform: translate(14px, -6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes flag-later {
+  from {
+    transform: translate(-14px, 6px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-flag.move-sooner,
+  .sc-flag.move-later {
+    animation: none;
+  }
+}
+
 .road-sq.on {
   filter: none;
 }

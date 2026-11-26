@@ -165,7 +165,10 @@ export function Tree(props: { x: number; y: number; s?: number }) {
   );
 }
 
-export function Scene(props: { stage: SceneStage; fadeIn?: boolean; label?: string; pct?: number; started?: boolean }) {
+/** `flagMove`: the debt-free day just moved; the flag slides once from where it was (closer for sooner). No motion when reduced. */
+export type FlagMove = 'sooner' | 'later' | null;
+
+export function Scene(props: { stage: SceneStage; fadeIn?: boolean; label?: string; pct?: number; started?: boolean; flagMove?: FlagMove }) {
   const { stage, fadeIn = false } = props;
   const sun = SUN[stage];
   const filled = yellowSquares(stage, props.pct, props.started ?? true);
@@ -212,8 +215,10 @@ export function Scene(props: { stage: SceneStage; fadeIn?: boolean; label?: stri
           <path d={`M${here[0] - 4.5} ${here[1] - 21} H${here[0] + 4.5} L${here[0]} ${here[1] - 13.5} Z`} class="sc-ink-fill" />
         </g>
       )}
-      <path d="M266 66 V36" class="sc-ink" stroke-width="2" stroke-linecap="round" />
-      <path d="M266 36 Q275 38 284 42 Q275 45 266 48Z" class="sc-ink-fill" />
+      <g class={`sc-flag${props.flagMove ? ` move-${props.flagMove}` : ''}`} data-testid="scene-flag" aria-hidden="true">
+        <path d="M266 66 V36" class="sc-ink" stroke-width="2" stroke-linecap="round" />
+        <path d="M266 36 Q275 38 284 42 Q275 45 266 48Z" class="sc-ink-fill" />
+      </g>
       {stage === 5 && (
         <g aria-hidden="true">
           <circle cx="292" cy="74" r="14" class="sc-glow" />

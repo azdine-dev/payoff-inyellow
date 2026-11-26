@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { getSceneSeen, setSceneSeen } from '../lib/seen';
 import { monthsBetween, monthYear } from '../lib/today';
-import { Scene, sceneStage } from '../ui/Scene';
+import { Scene, sceneStage, type FlagMove } from '../ui/Scene';
 
 /** 19 months is "1 year" and "7 months". A zero part is left out. */
 export function countdownParts(months: number): { years: number; months: number } {
@@ -17,8 +17,8 @@ const plural = (n: number, word: string) => `${word}${n === 1 ? '' : 's'}`;
 
 /** `compact`: one slim line with no scene, for the days the payday card is up, so "I did it" fits on the first screen. */
 /** `started`: a payday has moved money (a real "I did it"). Until then no square of the scene is yellow. */
-export function DebtFreeCard(props: { today: string; debtFreeDate: string | null; hasDebts: boolean; pctGone: number; started: boolean; withLine?: string | null; compact?: boolean; onOpen: () => void }) {
-  const { today, debtFreeDate, hasDebts, pctGone, started, withLine, compact, onOpen } = props;
+export function DebtFreeCard(props: { today: string; debtFreeDate: string | null; hasDebts: boolean; pctGone: number; started: boolean; flagMove?: FlagMove; withLine?: string | null; compact?: boolean; onOpen: () => void }) {
+  const { today, debtFreeDate, hasDebts, pctGone, started, flagMove, withLine, compact, onOpen } = props;
   const stage = sceneStage(pctGone, hasDebts);
   // A stage reached for the first time fades in once. The very first open just shows the scene.
   const [fadeStage, setFadeStage] = useState<number | null>(() => {
@@ -35,7 +35,7 @@ export function DebtFreeCard(props: { today: string; debtFreeDate: string | null
   const aria = debtFreeDate ? `Debt-free in ${monthYear(debtFreeDate)}. Open your path.` : hasDebts ? 'More than 20 years. Open your path.' : 'Debt-free. Open your path.';
   return (
     <button type="button" class={`card debt-free-card${compact ? ' compact' : ''}`} data-testid="debt-free-pill" aria-label={aria} onClick={onOpen}>
-      {!compact && <Scene stage={stage} pct={pctGone} started={started} fadeIn={fadeStage === stage} />}
+      {!compact && <Scene stage={stage} pct={pctGone} started={started} flagMove={flagMove} fadeIn={fadeStage === stage} />}
       <span class="dfc-row">
         {parts && debtFreeDate ? (
           <>

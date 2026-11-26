@@ -121,3 +121,55 @@ test.describe('2 · a payday with nothing due: chips, where it goes, Move $X', (
     expect(await debtFreeDay(page)).toBe('Sat 12 May 2029');
   });
 });
+
+test.describe('3 · after "Move $X": the yellow PAID card, Undo, and the flag', () => {
+  const move50 = async (page: Page) => {
+    const card = page.getByTestId('zero-card');
+    await card.getByRole('button', { name: '$50', exact: true }).click();
+    await card.getByRole('button', { name: 'Move $50', exact: true }).click();
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+  };
+
+  test('the PAID card with Undo, one yellow square, "First square", and the flag stays when the date does not move', async ({ page }) => {
+    await ahmed(page);
+    await move50(page);
+    const paid = page.getByTestId('paid-card');
+    await expect(paid).toHaveCSS('background-color', 'rgb(255, 225, 77)');
+    await expect(page.getByTestId('paid-total')).toHaveText('$50');
+    await expect(paid).toContainText('Buffer');
+    await expect(page.getByTestId('greeting')).toHaveText('Done for this payday.');
+    await expect(page.getByTestId('pay-note')).toHaveText('First square. The hardest one is behind you.');
+    await expect(scene(page).locator('rect.sc-paid')).toHaveCount(1); // the first real square
+    await expect(page.getByTestId('scene-flag')).not.toHaveClass(/move-/); // Sat 9 Jun 2029 either way
+    await expect(page.getByTestId('safety-tile')).toContainText('$50 of $500');
+    await expectBrandRules(page);
+
+    // Undo, as on any payday: the card with nothing due is back, and nothing is yellow
+    await paid.getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByTestId('zero-card')).toBeVisible();
+    await expect(page.getByTestId('safety-tile')).toContainText('$0 of $500');
+    await expect(scene(page).locator('rect.sc-paid')).toHaveCount(0);
+
+    // moved again, it stays after a reload, like any payday
+    await move50(page);
+    await page.reload();
+    await expect(page.getByTestId('paid-card')).toBeVisible();
+    await expect(page.getByTestId('paid-total')).toHaveText('$50');
+    await expect(page.getByTestId('countdown-card')).toContainText('Next payday is Sat 12 Dec');
+  });
+
+  test('when the date moves the flag slides once; with reduced motion it does not move', async ({ page }) => {
+    await ahmed(page, { ...AHMED, bufferGoal: '0' });
+    await move50(page);
+    const flag = page.getByTestId('scene-flag');
+    await expect(flag).toHaveClass(/move-sooner/);
+    expect(await flag.evaluate((el) => getComputedStyle(el).animationName)).toBe('flag-sooner');
+    expect(await flag.evaluate((el) => getComputedStyle(el).animationIterationCount)).toBe('1');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await flag.evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+    // Undo: the flag stands still again
+    await page.getByTestId('paid-card').getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByTestId('zero-card')).toBeVisible();
+    await expect(page.getByTestId('scene-flag')).not.toHaveClass(/move-/);
+  });
+});
