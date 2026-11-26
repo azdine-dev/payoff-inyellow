@@ -174,7 +174,6 @@ export function Today() {
           </>
         )}
       </p>
-      {noteLine}
     </section>
   );
   const isPayday = nextDate === today.value;
@@ -369,6 +368,7 @@ export function Today() {
         debtFreeDate={r.debtFreeDate}
         hasDebts={active.length > 0}
         pctGone={progressStats(d).pct}
+        started={d.paydays.some((p) => p.status === 'done' && p.total > 0.004)}
         withLine={comingLaterLine(d)?.text}
         compact={!justPaid && !paidView && !countdownMode && !emptyNow && active.length > 0 && Boolean(row)}
         onOpen={() => {
@@ -426,7 +426,7 @@ export function Today() {
         </div>
       )}
 
-      {moments}
+      {!emptyNow && !lastWasEmpty && moments}
 
       {skippedNote && (
         <section class="card soft" role="status">

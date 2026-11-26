@@ -94,8 +94,8 @@ test.describe('the scene: a pin, a sun by day and a moon by night', () => {
     await nadiaSetup(page);
     await tapDidIt(page); // the scene shows once the payday card is done
     const scene = page.getByTestId('scene');
-    await expect(page.getByTestId('scene-pin')).toHaveAttribute('data-index', '2'); // two squares come pre-filled
-    await expect(scene.locator('rect.sc-paid')).toHaveCount(2);
+    await expect(page.getByTestId('scene-pin')).toHaveAttribute('data-index', '1'); // one square: the first real I did it
+    await expect(scene.locator('rect.sc-paid')).toHaveCount(1);
     await expect(scene.locator('.sc-road')).toHaveCount(1); // a real road under the squares
     await page.getByRole('button', { name: 'I got extra money' }).click();
     await page.getByRole('textbox', { name: 'Extra money' }).fill('850'); // 26%: stage 2

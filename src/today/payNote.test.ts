@@ -4,7 +4,7 @@ import type { PaydayLog } from '../data/types';
 import { pickNote } from './payNote';
 
 const words = (s: string) => s.trim().split(/\s+/).length;
-const log = (number: number, date: string, status: 'done' | 'skipped' = 'done') => ({ number, date, status }) as PaydayLog;
+const log = (number: number, date: string, status: 'done' | 'skipped' = 'done', total = 150) => ({ number, date, status, total: status === 'done' ? total : 0 }) as PaydayLog;
 const base = { paydays: [] as PaydayLog[], debts: [] as never[], payments: [] as never[], milestones: [] as never[], buffer: { history: [] as { date: string; amount: number }[] } };
 
 describe('the lines', () => {
@@ -40,8 +40,18 @@ describe('the lines', () => {
 });
 
 describe('which note shows', () => {
-  it('day one, before any payday, is the first payday note', () => {
-    expect(pickNote(base)).toEqual({ kind: 'firstPayday', text: STATE_NOTES.firstPayday });
+  it('day one, before any payday, is not "First square": no square is yellow yet', () => {
+    expect(pickNote(base)).toEqual({ kind: 'rotating', text: ROTATING_NOTES[0] });
+  });
+
+  it('"First square" comes right after the first payday that moved money, never after a $0 one', () => {
+    expect(pickNote({ ...base, paydays: [log(1, '2026-11-06')] }).kind).toBe('firstPayday');
+    // a payday with nothing to move counted itself: still no square
+    expect(pickNote({ ...base, paydays: [log(1, '2026-11-28', 'done', 0)] }).kind).toBe('rotating');
+    // then the first real one is the first square
+    expect(pickNote({ ...base, paydays: [log(1, '2026-11-28', 'done', 0), log(2, '2026-12-12')] }).kind).toBe('firstPayday');
+    // and a $0 payday after it says something else
+    expect(pickNote({ ...base, paydays: [log(1, '2026-11-28'), log(2, '2026-12-12', 'done', 0)] }).kind).toBe('rotating');
   });
 
   it('a debt just paid comes first, then halfway, then the rest', () => {

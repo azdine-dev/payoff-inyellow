@@ -98,11 +98,11 @@ test.describe('2 · balance, payday by payday', () => {
 });
 
 test.describe('3 · a note for this payday', () => {
-  test('day one: the first payday note, and it is the same after a reload', async ({ page }) => {
+  test('day one: no "First square" before a real I did it, and the same line after a reload', async ({ page }) => {
     await nadiaSetup(page);
-    await expect(page.getByTestId('pay-note')).toHaveText('First square. The hardest one is behind you.');
+    await expect(page.getByTestId('pay-note')).toHaveText('One paycheck at a time. That is all this is.');
     await page.reload();
-    await expect(page.getByTestId('pay-note')).toHaveText('First square. The hardest one is behind you.');
+    await expect(page.getByTestId('pay-note')).toHaveText('One paycheck at a time. That is all this is.');
   });
 
   test('after "I did it" the note is one line inside the PAID card', async ({ page }) => {

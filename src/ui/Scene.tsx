@@ -7,7 +7,8 @@
  *   4 Almost (75 to 99%): the flag is close, the fields turn green
  *   5 Home (100%): every square yellow, a light on at home
  * The road is a real ribbon with a dashed line, and the squares sit on it. The yellow squares follow the real share
- * paid (when `pct` is given), and a small pin shows where you are: on the next square.
+ * paid (when `pct` is given), and a small pin shows where you are: on the next square. No square is yellow until a real
+ * "I did it" (a payday that moved money): a payday with nothing to move fills nothing.
  * By day there is a sun with a soft halo and a few clouds. By night (dark mode) the same place has a crescent moon,
  * a soft glow and stars. Colors come from CSS variables (see .scene in base.css). Yellow is only used for the paid
  * squares and the lit window (the sun and the glow are a pale yellow tint). No people.
@@ -45,11 +46,15 @@ const SQUARES = SCENE_SQUARES;
 /** How many squares are yellow (paid) at each stage when the exact share is not known: the two pre-filled ones, then more */
 const YELLOW: Record<SceneStage, number> = { 1: 2, 2: 4, 3: 6, 4: 9, 5: 12 };
 
-/** How many squares are yellow: by the real share when it is known (two come pre-filled, the last one is the finish), else by stage */
-export function yellowSquares(stage: SceneStage, pct?: number): number {
+/**
+ * How many squares are yellow: by the real share when it is known (at least one after the first real "I did it", the last
+ * one is the finish), else by stage. `started` false: no payday has moved money yet, so none is yellow.
+ */
+export function yellowSquares(stage: SceneStage, pct?: number, started = true): number {
   if (stage === 5) return SQUARES.length;
+  if (!started) return 0;
   if (pct === undefined || Number.isNaN(pct)) return YELLOW[stage];
-  return Math.min(SQUARES.length - 1, Math.max(2, Math.round((Math.max(0, pct) / 100) * SQUARES.length)));
+  return Math.min(SQUARES.length - 1, Math.max(1, Math.round((Math.max(0, pct) / 100) * SQUARES.length)));
 }
 
 /** Where the sun (or the moon) is: upper left, climbing as the debt goes, away from the flag and the road */
@@ -62,7 +67,7 @@ const SUN: Record<SceneStage, { cx: number; cy: number }> = {
 };
 
 const LABELS: Record<SceneStage, string> = {
-  1: 'dawn, a road of squares with two yellow squares leading to a flag on a far hill',
+  1: 'dawn, a road of squares leading to a flag on a far hill',
   2: 'the sun rises and a small tree grows',
   3: 'halfway, the road crosses a small bridge over a stream',
   4: 'the flag is close and the fields are green',
@@ -160,10 +165,10 @@ export function Tree(props: { x: number; y: number; s?: number }) {
   );
 }
 
-export function Scene(props: { stage: SceneStage; fadeIn?: boolean; label?: string; pct?: number }) {
+export function Scene(props: { stage: SceneStage; fadeIn?: boolean; label?: string; pct?: number; started?: boolean }) {
   const { stage, fadeIn = false } = props;
   const sun = SUN[stage];
-  const filled = yellowSquares(stage, props.pct);
+  const filled = yellowSquares(stage, props.pct, props.started ?? true);
   const centers = SQUARES.map(([x, y]) => [x + 6, y + 6] as const);
   const here = filled < SQUARES.length ? centers[filled]! : null;
   const ribbon = smoothPath(centers);

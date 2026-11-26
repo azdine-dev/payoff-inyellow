@@ -41,8 +41,10 @@ export function pickNote(d: NoteData, ctx: NoteContext = {}): { kind: NoteKind; 
   if (reachedNow('pct-75')) return { kind: 'almostHome', text: STATE_NOTES.almostHome };
   if (reachedNow('pct-50')) return { kind: 'halfway', text: STATE_NOTES.halfway };
 
-  // 3 The first payday: nothing is done yet, or only the first one is
-  if (done.length <= 1 && (last === undefined || last.status === 'done')) return { kind: 'firstPayday', text: STATE_NOTES.firstPayday };
+  // 3 The first square: right after the first payday that moved money (a real "I did it"). Not before it, and a payday
+  // with nothing to move never turns a square yellow, so it never says it
+  const real = done.filter((p) => p.total > 0.004);
+  if (real.length === 1 && last !== undefined && last.number === real[0]!.number) return { kind: 'firstPayday', text: STATE_NOTES.firstPayday };
 
   // 4 The buffer was used since the last payday was done
   if (last !== undefined && d.buffer.history.some((h) => h.amount < 0 && h.date >= last.date)) return { kind: 'bufferUsed', text: STATE_NOTES.bufferUsed };

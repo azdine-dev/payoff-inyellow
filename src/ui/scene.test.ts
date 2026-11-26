@@ -3,14 +3,20 @@ import { describe, expect, it } from 'vitest';
 import { sceneStage, smoothPath, yellowSquares } from './Scene';
 
 describe('yellow squares follow the real share paid', () => {
-  it('two come pre-filled, then about one per 8% paid, never all twelve before the end', () => {
-    expect(yellowSquares(1, 0)).toBe(2);
+  it('one after the first real I did it, then about one per 8% paid, never all twelve before the end', () => {
+    expect(yellowSquares(1, 0)).toBe(1);
     expect(yellowSquares(1, 14)).toBe(2);
     expect(yellowSquares(2, 26)).toBe(3);
     expect(yellowSquares(3, 52)).toBe(6);
     expect(yellowSquares(4, 80)).toBe(10);
     expect(yellowSquares(4, 99.9)).toBe(11); // the last square is the finish
     expect(yellowSquares(5, 100)).toBe(12);
+  });
+
+  it('none before a payday has moved money, even with a share paid (an extra payment, a $0 payday)', () => {
+    expect(yellowSquares(1, 0, false)).toBe(0);
+    expect(yellowSquares(2, 30, false)).toBe(0);
+    expect(yellowSquares(5, 100, false)).toBe(12); // debt-free is all yellow
   });
 
   it('without the exact share it uses the stage', () => {
