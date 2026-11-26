@@ -139,7 +139,7 @@ export async function boot(): Promise<void> {
       }
     });
   });
-  // A payday that moves nothing ($0 to move) counts as done by itself when it comes, one after another if there are several
+  // A payday that moves nothing ($0 to move) counts as done by itself once its day has passed, one after another if there are several
   effect(() => {
     const current = data.value;
     const day = today.value;

@@ -1,7 +1,8 @@
 /**
  * A payday with nothing to move: no bill is due before the next payday, and there is no money for the buffer, the
  * yearly bills or the extra. That happens with $0 for the plan on a bill that falls every second payday. There is no
- * "Move $0" card and no "I did it" for it: the payday counts as done by itself, and Today says what comes next.
+ * "Move $0" card and no "I did it" for it. Until its day is over, Today offers to move a little anyway (chips, "Move $X");
+ * once the day has passed without that, the payday counts as done by itself and Today says what comes next.
  */
 import type { PlanResult } from '../engine';
 import { simulatePlan } from '../engine';
@@ -20,9 +21,9 @@ export function paydayIsEmpty(data: AppData, plan: PlanResult = simulatePlan(toP
   return activeDebts(data).length > 0 && plan.rows.length > 0 && paydayTotal(data, plan, 0) === 0;
 }
 
-/** The empty payday has come (today or earlier): it counts as done by itself */
+/** The empty payday has passed (yesterday or earlier): it counts as done by itself. On the day itself it can still move money. */
 export function shouldAutoCount(data: AppData, today: string): boolean {
-  return activeDebts(data).length > 0 && nextPaydayISO(data.settings) <= today && paydayIsEmpty(data);
+  return activeDebts(data).length > 0 && nextPaydayISO(data.settings) < today && paydayIsEmpty(data);
 }
 
 export interface NextMove {

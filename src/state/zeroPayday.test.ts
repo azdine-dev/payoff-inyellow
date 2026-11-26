@@ -42,12 +42,13 @@ describe('paydays that move nothing', () => {
     expect(nextMove(d, r, 0)).toEqual({ name: 'Visa', amount: 50, date: '2026-11-12' });
   });
 
-  it('after the first payday the next one is empty, and it counts itself only once its day has come', async () => {
+  it('after the first payday the next one is empty, and it counts itself only once its day has passed', async () => {
     const db = await openAppDB('zero-payday-2');
     const first = (await didPayday(db, d, {})).data;
     expect(paydayIsEmpty(first)).toBe(true); // Fri 20 Nov: nothing due before Fri 4 Dec
     expect(shouldAutoCount(first, '2026-11-19')).toBe(false);
-    expect(shouldAutoCount(first, '2026-11-20')).toBe(true);
+    expect(shouldAutoCount(first, '2026-11-20')).toBe(false); // on the day it can still move a little
+    expect(shouldAutoCount(first, '2026-11-21')).toBe(true);
     expect(shouldAutoCount(first, '2026-12-30')).toBe(true);
     const auto = (await didPayday(db, first, {})).data;
     expect(auto.paydays).toHaveLength(2);

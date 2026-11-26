@@ -36,6 +36,8 @@ import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
 import { DebtFreeCard } from './DebtFreeCard';
 import { pickNote } from './payNote';
+import { ExtraChips } from './ExtraChips';
+import type { ExtraMove } from '../state/extraMove';
 import { Empty } from '../ui/Empty';
 import { comingUp, extraSummary, focusDebt, greetingWithName, mergedRows, paidFromLog } from './model';
 
@@ -177,6 +179,48 @@ export function Today() {
     </section>
   );
   const isPayday = nextDate === today.value;
+
+  // "Move $X" on a payday with nothing due: the payday is done with that money for the plan, then the yellow PAID card
+  const moveExtra = async (m: ExtraMove) => {
+    if (busy) return;
+    const paydayNumber = nextPaydayNumber(s);
+    setBusy(true);
+    navigator.vibrate?.(15);
+    const now = data.peek() ?? d;
+    rememberBalances(now);
+    const res = await didPayday(await getDB(), now, { planMoney: m.planMoney });
+    setUndo({ before: now, after: res.data });
+    setJustPaid(paidFromLog(res.data, paydayNumber));
+    setPaidIds(res.newlyPaid);
+    freshPayday.value = paydayNumber;
+    freshPaidDebts.value = res.newlyPaid;
+    setSkippedNote(false);
+    setBackedUp(false);
+    data.value = res.data;
+    setBusy(false);
+  };
+
+  const zeroCard = (
+    <section class="card calm stack zero-card" aria-labelledby="zero-title" data-testid="zero-card">
+      <p class="label">This payday · {shortDate(nextDate)}</p>
+      <h2 id="zero-title" class="zero-title">
+        Nothing due this payday.
+      </h2>
+      <p>
+        {move && (
+          <>
+            Next: {move.name ? `${move.name} ` : ''}
+            <span class="num">{money(move.amount)}</span> on {shortDate(move.date)}.{' '}
+          </>
+        )}
+        Want to move a little anyway?
+      </p>
+      <ExtraChips d={d} current={plan.value!} focusName={focus?.debt.name ?? null} action={(m) => `Move ${money(m.amount)}`} onMove={(m) => void moveExtra(m)} busy={busy} />
+      <p class="muted small" style={{ textAlign: 'center' }}>
+        Or leave it. Nothing is needed this payday.
+      </p>
+    </section>
+  );
 
   const apply = async () => {
     if (busy) return;
@@ -509,7 +553,7 @@ export function Today() {
           {!countdownMode && !paidView && <ArrivalCard />}
 
           {emptyNow ? (
-            nothingCard
+            zeroCard
           ) : countdownMode ? (
             paidView ? null : (
               <>

@@ -34,15 +34,17 @@ test.describe('the result screen at $0 for the plan', () => {
 });
 
 test.describe('Today on a payday with nothing to move', () => {
-  test('before its day: no Move $0, no I did it, and what comes next', async ({ page }) => {
+  test('before its day: no Move $0, no I did it, what comes next, and an offer to move a little anyway', async ({ page }) => {
     await runWizard(page, ONE);
     await startPlan(page);
     await tapDidIt(page); // Fri 6 Nov: the Visa bill, $50
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await page.clock.setFixedTime(new Date('2026-11-18T10:00:00')); // 2 days before Fri 20 Nov, which moves nothing
     await page.reload();
-    const card = page.getByTestId('nothing-card');
-    await expect(card).toContainText('Nothing to move this payday. Next: Visa $50 on Sat 12 Dec.');
+    const card = page.getByTestId('zero-card');
+    await expect(card).toContainText('Nothing due this payday.');
+    await expect(card).toContainText('Next: Visa $50 on Sat 12 Dec. Want to move a little anyway?');
+    await expect(card).toContainText('Or leave it. Nothing is needed this payday.');
     await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Mark it done early' })).toHaveCount(0);
     await expect(page.getByText(/Move\s*\$0/)).toHaveCount(0);
@@ -53,12 +55,15 @@ test.describe('Today on a payday with nothing to move', () => {
     await expect(page.locator('.chapter-squares i.paid')).toHaveCount(1);
   });
 
-  test('on its day it counts itself as done, with the same words and the next bill', async ({ page }) => {
+  test('on its day it still offers to move a little; once the day has passed it counts itself as done', async ({ page }) => {
     await runWizard(page, ONE);
     await startPlan(page);
     await tapDidIt(page);
     await expect(page.getByTestId('paid-card')).toBeVisible();
     await page.clock.setFixedTime(new Date('2026-11-20T10:00:00')); // the payday that moves nothing
+    await page.reload();
+    await expect(page.getByTestId('zero-card')).toContainText('Nothing due this payday.');
+    await page.clock.setFixedTime(new Date('2026-11-21T10:00:00')); // the day after: it has counted itself
     await page.reload();
     await expect(page.getByTestId('nothing-card')).toContainText('Nothing to move this payday. Next: Visa $50 on Sat 12 Dec.');
     await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);
@@ -84,6 +89,7 @@ test.describe('Today on a payday with nothing to move', () => {
     await startPlan(page);
     await expect(page.getByRole('button', { name: 'I did it · $50' })).toBeVisible(); // Fri 6 Nov holds the Visa bill
     await expect(page.getByTestId('nothing-card')).toHaveCount(0);
+    await expect(page.getByTestId('zero-card')).toHaveCount(0);
   });
 });
 
@@ -149,11 +155,11 @@ test.describe('Path on paydays with nothing to move', () => {
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Sat 12 Dec');
   });
 
-  test('when the $0 payday comes, Today moves on by itself and Path keeps it quiet', async ({ page }) => {
+  test('when the $0 payday has passed, Today moves on by itself and Path keeps it quiet', async ({ page }) => {
     await runWizard(page, VISA);
     await startPlan(page);
-    await expect(page.getByTestId('nothing-card')).toContainText('Nothing to move this payday. Next: Visa $70 on Sat 12 Dec.');
-    await page.clock.setFixedTime(new Date('2026-11-28T10:00:00'));
+    await expect(page.getByTestId('zero-card')).toContainText('Next: Visa $70 on Sat 12 Dec.');
+    await page.clock.setFixedTime(new Date('2026-11-29T10:00:00'));
     await page.reload();
     await expect(page.getByTestId('countdown-card')).toContainText('Next payday is Sat 12 Dec');
     await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);

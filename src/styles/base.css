@@ -1106,6 +1106,62 @@ select {
   cursor: pointer;
 }
 
+/* ---------- Today: a payday with nothing due, and money on top (design/today-extra) ---------- */
+.zero-card {
+  gap: 14px;
+  background: var(--calm);
+  border-color: var(--calm);
+  border-radius: 24px;
+}
+
+.zero-card .zero-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.amount-chips .pill.chip {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 0.95rem;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+}
+
+/* The pick: the action color, never yellow (yellow means paid) */
+.amount-chips .pill.chip[aria-pressed='true'] {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--on-action);
+}
+
+.move-where {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.move-icon {
+  flex: 0 0 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--calm);
+  display: grid;
+  place-items: center;
+}
+
+.move-line {
+  display: block;
+  font-size: 0.92rem;
+}
+
 /* "Do these later" chips */
 .chips {
   display: flex;
@@ -3529,6 +3585,12 @@ textarea {
   bottom: calc(64px + env(safe-area-inset-bottom) + 14px); /* just above the tab bar */
   z-index: 2;
   box-shadow: 0 0 0 6px var(--pc-bg);
+}
+/* "Move $X" sits in its own card, under where the money goes: it stays in place */
+.pc-btn.move-btn {
+  position: static;
+  box-shadow: none;
+  margin-top: 0;
 }
 .debt-free-card.compact .dfc-month {
   align-self: center;
