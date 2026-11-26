@@ -11,7 +11,7 @@ import { changeablePayday } from '../state/actions';
 import { data, plan, previewDate, today } from '../state/store';
 import { CheckIcon } from '../ui/controls';
 import { Empty } from '../ui/Empty';
-import { buildChapters, extraNote, type Chapter, type ChapterDay } from './chaptersModel';
+import { buildChapters, extraNote, isQuiet, movesOf, type Chapter, type ChapterDay } from './chaptersModel';
 import { UndoPayday } from './UndoPayday';
 
 /** What a payday held, as small tags. Outline for what is ahead. */
@@ -111,6 +111,14 @@ export function Chapters() {
   };
 
   const dayRow = (day: ChapterDay) => {
+    // Nothing to move: one short gray line. No box, no amount, no tag, nothing to tap.
+    if (isQuiet(day)) {
+      return (
+        <li key={day.key} class="pd-quiet" data-testid="pd-quiet">
+          {shortDate(day.date)} · Nothing to move
+        </li>
+      );
+    }
     if (day.number !== undefined) {
       const p = d.paydays.find((x) => x.number === day.number)!;
       const done = p.status === 'done';
@@ -174,10 +182,12 @@ export function Chapters() {
         {model.debtFreeDate ? ` · debt-free ${fullDate(model.debtFreeDate)}` : ''}
       </p>
       {model.chapters.map((c) => {
-        const shown = c.days.slice(0, MAX_SQUARES);
-        const small = c.days.length > 8;
+        // The squares count only paydays with something to move
+        const moves = movesOf(c);
+        const shown = moves.slice(0, MAX_SQUARES);
+        const small = moves.length > 8;
         const isOpen = open.has(c.debtId);
-        const doneCount = c.days.filter((x) => x.kind === 'paid').length;
+        const doneCount = moves.filter((x) => x.kind === 'paid').length;
         return (
           <div key={c.debtId}>
             <section class={`chapter${c.here ? ' here' : ''}`} aria-label={`Chapter ${c.index}, ${c.name}`} data-testid="chapter">
@@ -191,13 +201,13 @@ export function Chapters() {
                 </span>
                 <span class="chapter-name">{c.name}</span>
                 <span class="chapter-span" data-testid="chapter-span">
-                  {c.days.length} payday{c.days.length === 1 ? '' : 's'} · {span(c, today.value)}
+                  {moves.length} payday{moves.length === 1 ? '' : 's'} with a move · {span(c, today.value)}
                 </span>
-                <span class={`chapter-squares${small ? ' small' : ''}`} role="img" aria-label={`${doneCount} of ${c.days.length} paydays done`}>
+                <span class={`chapter-squares${small ? ' small' : ''}`} role="img" aria-label={`${doneCount} of ${moves.length} paydays done`}>
                   {shown.map((x) => (
                     <i key={x.key} class={x.kind} />
                   ))}
-                  {c.days.length > shown.length && <span class="muted small">+{c.days.length - shown.length}</span>}
+                  {moves.length > shown.length && <span class="muted small">+{moves.length - shown.length}</span>}
                 </span>
                 {c.extraFrom && (
                   <span class="chapter-note">

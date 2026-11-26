@@ -49,6 +49,19 @@ export interface ChaptersModel {
 
 const ZERO = 0.005;
 
+/**
+ * A payday with nothing to move: $0 planned, or a $0 payday that counted itself as done. It is one quiet gray line in the
+ * lists and has no square: the squares count only paydays with something to move.
+ */
+export function isQuiet(day: Pick<ChapterDay, 'kind' | 'amount'>): boolean {
+  return day.kind !== 'skipped' && day.amount < ZERO;
+}
+
+/** The paydays of a chapter that move something: one square each */
+export function movesOf(c: Pick<Chapter, 'days'>): ChapterDay[] {
+  return c.days.filter((x) => !isQuiet(x));
+}
+
 export function buildChapters(d: AppData, r: PlanResult): ChaptersModel {
   const byId = new Map(d.debts.map((x) => [x.id, x]));
   const order = r.order.filter((id) => {

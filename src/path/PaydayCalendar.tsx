@@ -1,7 +1,8 @@
 /**
  * Path, "Calendar": a month grid. A dot sits under every payday and every bill due day. A paid payday is a
  * yellow filled circle. Tap a day to see its lines. Shape carries the meaning as well as color: filled dot =
- * payday, ring = bill, filled yellow circle = paid.
+ * payday, ring = bill, filled yellow circle = paid. A payday with nothing to move has a gray dot and no yellow, and
+ * tapping it shows one gray line.
  */
 import { useMemo, useState } from 'preact/hooks';
 import { addMonths, daysInMonth, parseISO, toISO } from '../engine/dates';
@@ -10,6 +11,7 @@ import type { AppData } from '../data/types';
 import { formatMoneyAuto } from '../lib/money';
 import { shortDate, weekdayIndex } from '../lib/today';
 import { changeablePayday } from '../state/actions';
+import { billsForPlanRow, totalOf } from '../state/billsDue';
 import { nextPaydayISO } from '../state/planInput';
 import { previewDate } from '../state/store';
 import { UndoPayday } from './UndoPayday';
@@ -20,7 +22,8 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEK_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-type PaydayMark = { status: 'paid' | 'skipped' | 'ahead'; index: number };
+/** quiet: nothing to move on it ($0 planned, or a $0 payday that counted itself) */
+type PaydayMark = { status: 'paid' | 'skipped' | 'ahead'; index: number; quiet: boolean };
 
 export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string }) {
   const { d, r, today } = props;
@@ -36,9 +39,9 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
   // Every payday we know of: the ones done or skipped, then the ones in the plan
   const paydays = useMemo(() => {
     const map = new Map<string, PaydayMark>();
-    for (const p of d.paydays) map.set(p.date, { status: p.status === 'done' ? 'paid' : 'skipped', index: p.number });
+    for (const p of d.paydays) map.set(p.date, { status: p.status === 'done' ? 'paid' : 'skipped', index: p.number, quiet: p.status === 'done' && p.total < 0.005 });
     r.rows.slice(0, 120).forEach((row, i) => {
-      if (!map.has(row.date)) map.set(row.date, { status: 'ahead', index: i });
+      if (!map.has(row.date)) map.set(row.date, { status: 'ahead', index: i, quiet: totalOf(billsForPlanRow(d, r, i), row) < 0.005 });
     });
     return map;
   }, [d, r]);
@@ -64,7 +67,7 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
     const bills = billsOn(iso);
     const words = [
       `${WEEK_FULL[weekdayIndex(iso)]} ${i + 1} ${MONTHS[cursor.m - 1]}`,
-      pay ? (pay.status === 'paid' ? 'payday, paid' : pay.status === 'skipped' ? 'payday, skipped' : 'payday') : '',
+      pay ? (pay.quiet ? 'payday, nothing to move' : pay.status === 'paid' ? 'payday, paid' : pay.status === 'skipped' ? 'payday, skipped' : 'payday') : '',
       bills.length ? `${bills.length === 1 ? 'bill' : 'bills'} due` : '',
     ].filter(Boolean);
     return { iso, n: i + 1, pay, bills, label: words.join(', ') };
@@ -76,7 +79,9 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
     if (!sel) return null;
     const lines: { key: string; text: string; tags: { label: string; paid?: boolean }[]; amount?: number }[] = [];
     let total: number | null = null;
-    if (sel.pay?.status === 'paid') {
+    if (sel.pay?.quiet) {
+      // the gray line stands in for the payday's lines
+    } else if (sel.pay?.status === 'paid') {
       const log = paidFromLog(d, sel.pay.index);
       for (const x of log?.rows ?? []) lines.push({ key: x.key, text: x.label, tags: [{ label: 'Paid', paid: true }], amount: x.amount });
       total = log?.total ?? null;
@@ -123,14 +128,14 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
             key={c.iso}
             type="button"
             role="gridcell"
-            class={`cal-day${c.iso === today ? ' today' : ''}${picked === c.iso ? ' picked' : ''}${c.pay?.status === 'paid' ? ' paid' : ''}${c.pay?.status === 'skipped' ? ' skipped' : ''}`}
+            class={`cal-day${c.iso === today ? ' today' : ''}${picked === c.iso ? ' picked' : ''}${c.pay?.status === 'paid' && !c.pay.quiet ? ' paid' : ''}${c.pay?.status === 'skipped' ? ' skipped' : ''}`}
             aria-label={c.label}
             aria-pressed={picked === c.iso}
-            onClick={() => (c.pay?.status === 'ahead' ? (previewDate.value = c.iso) : c.pay?.status === 'paid' && c.iso === latest ? setUndoOpen(true) : setPicked(picked === c.iso ? null : c.iso))}
+            onClick={() => (c.pay?.quiet ? setPicked(picked === c.iso ? null : c.iso) : c.pay?.status === 'ahead' ? (previewDate.value = c.iso) : c.pay?.status === 'paid' && c.iso === latest ? setUndoOpen(true) : setPicked(picked === c.iso ? null : c.iso))}
           >
             <span class="cal-num num">{c.n}</span>
             <span class="cal-dots" aria-hidden="true">
-              {c.pay && c.pay.status !== 'paid' && <i class="dot-pay" />}
+              {c.pay && (c.pay.quiet || c.pay.status !== 'paid') && <i class={c.pay.quiet ? 'dot-pay quiet' : 'dot-pay'} />}
               {c.bills.length > 0 && <i class="dot-bill" />}
             </span>
           </button>
@@ -139,9 +144,17 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
 
       {sel && shown && (
         <div class="stack cal-lines" style={{ gap: 6 }} data-testid="calendar-day" role="group" aria-label={`${shortDate(sel.iso, today)} details`}>
-          <p class="label">{shortDate(sel.iso, today)}</p>
+          {sel.pay?.quiet ? (
+            <p class="pd-quiet" data-testid="pd-quiet">
+              {shortDate(sel.iso, today)} · Nothing to move
+            </p>
+          ) : (
+            <p class="label">{shortDate(sel.iso, today)}</p>
+          )}
           {shown.lines.length === 0 ? (
+            sel.pay?.quiet ? null : (
             <Empty art="calendar" line="Nothing on this day." small />
+            )
           ) : (
             <>
               {shown.lines.map((x) => (

@@ -1344,6 +1344,20 @@ select {
   cursor: pointer;
 }
 
+/* A payday with nothing to move: one short gray line. No box, no amount, no tag. */
+.pd-quiet {
+  padding: 4px 0;
+  border-top: 1px dashed var(--line);
+  color: var(--gray);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.cal-lines .pd-quiet {
+  padding: 0;
+  border-top: none;
+}
+
 .pd-box {
   grid-area: box;
   width: 22px;
@@ -2215,6 +2229,10 @@ textarea {
 
 .cal-dots .dot-pay {
   background: var(--ink);
+}
+
+.cal-dots .dot-pay.quiet {
+  background: var(--gray);
 }
 
 .cal-dots .dot-bill {

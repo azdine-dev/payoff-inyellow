@@ -10,7 +10,7 @@ import { addComingLater, confirmArrived, moveComingLater, removeOneOff, restoreO
 import { comingLaterPlan, whatIfSummary } from '../state/whatIf';
 import { comingLaterLine } from '../state/comingLater';
 import { goneDates } from './goneDates';
-import { buildChapters, extraNote } from './chaptersModel';
+import { buildChapters, extraNote, isQuiet, movesOf } from './chaptersModel';
 import { buildWholePlan } from './wholePlanModel';
 
 const nadia: SetupValues = {
@@ -191,5 +191,40 @@ describe('the day each debt is gone', () => {
     for (let i = 0; i < 5; i++) x = (await didPayday(db, x, {})).data;
     expect(x.debts.find((y) => y.name === 'Store Card')!.status).toBe('paid');
     expect(goneDates(x, plan(x)).get(id(x, 'Store Card'))).toBe('2027-01-01');
+  });
+});
+
+describe('Chapters: paydays with nothing to move', () => {
+  // One debt, Visa $70 minimum due the 12th, every 2 weeks from Sat 28 Nov 2026, $0 for the plan
+  const visa: SetupValues = {
+    ...nadia,
+    nextPayday: '2026-11-28',
+    debts: [{ name: 'Visa', type: '', balance: 1000, apr: 20, minMonthly: 70, dueDay: 12, autopay: false, myOrder: null }],
+    bufferNow: 0,
+    extraPerPayday: 0,
+    funds: [],
+    ifThen: { day: 'Saturday', time: '20:00' },
+  };
+
+  it('rows alternate: a gray "nothing to move" payday, then the $70 bill; the squares count the $70 ones only', async () => {
+    const x = await completeSetup(await openAppDB('quiet-paydays'), visa, '2026-11-26');
+    const c = buildChapters(x, plan(x)).chapters[0]!;
+    // Sat 28 Nov $0, Sat 12 Dec $70, Sat 26 Dec $0, Sat 9 Jan $70 ... until May, when two quiet ones meet
+    expect(c.days.slice(0, 12).map((d) => [d.date, d.amount])).toEqual(
+      ['2026-11-28', '2026-12-12', '2026-12-26', '2027-01-09', '2027-01-23', '2027-02-06', '2027-02-20', '2027-03-06', '2027-03-20', '2027-04-03', '2027-04-17', '2027-05-01'].map((date, i) => [date, i % 2 ? 70 : 0]),
+    );
+    expect(c.days.slice(0, 12).map(isQuiet)).toEqual(Array.from({ length: 12 }, (_, i) => i % 2 === 0));
+    const moves = movesOf(c);
+    expect(moves.every((d) => d.amount > 0)).toBe(true);
+    expect(moves.length).toBe(c.days.filter((d) => d.amount > 0).length);
+    expect(moves.length).toBeLessThan(c.days.length);
+    expect(c.firstDate).toBe('2026-11-28'); // the header span still runs from the first payday
+  });
+
+  it('a $0 payday that counted itself stays quiet; a skipped one is not quiet', () => {
+    expect(isQuiet({ kind: 'paid', amount: 0 })).toBe(true);
+    expect(isQuiet({ kind: 'next', amount: 0 })).toBe(true);
+    expect(isQuiet({ kind: 'skipped', amount: 0 })).toBe(false);
+    expect(isQuiet({ kind: 'ahead', amount: 70 })).toBe(false);
   });
 });

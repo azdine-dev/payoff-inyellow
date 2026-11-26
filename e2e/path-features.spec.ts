@@ -14,9 +14,9 @@ test.describe('Chapters', () => {
     await expect(page.getByTestId('chapters-summary')).toHaveText('3 chapters · debt-free Fri 16 Jul 2027');
     const chapters = page.getByTestId('chapter');
     await expect(chapters).toHaveCount(3);
-    await expect(chapters.nth(0).getByTestId('chapter-span')).toHaveText('5 paydays · Fri 6 Nov to Fri 1 Jan 2027');
-    await expect(chapters.nth(1).getByTestId('chapter-span')).toHaveText('3 paydays · Fri 15 Jan to Fri 12 Feb 2027');
-    await expect(chapters.nth(2).getByTestId('chapter-span')).toHaveText('11 paydays · Fri 26 Feb to Fri 16 Jul 2027');
+    await expect(chapters.nth(0).getByTestId('chapter-span')).toHaveText('5 paydays with a move · Fri 6 Nov to Fri 1 Jan 2027');
+    await expect(chapters.nth(1).getByTestId('chapter-span')).toHaveText('3 paydays with a move · Fri 15 Jan to Fri 12 Feb 2027');
+    await expect(chapters.nth(2).getByTestId('chapter-span')).toHaveText('11 paydays with a move · Fri 26 Feb to Fri 16 Jul 2027');
     await expect(chapters.nth(0)).toContainText('Store Card');
     await expect(chapters.nth(0)).toContainText('You are here');
     await expect(chapters.nth(1)).not.toContainText('You are here');

@@ -403,7 +403,7 @@ export function Path() {
               <tr key={row.payday}>
                 <td>{row.payday}</td>
                 <td>{shortDate(row.date)}</td>
-                <td>{formatMoney(rowTotals[i]!, cur)}</td>
+                <td>{rowTotals[i]! < 0.005 ? 'Nothing to move' : formatMoney(rowTotals[i]!, cur)}</td>
                 <td>{row.extraGoesTo ? nameOf(row.extraGoesTo) : row.bufferFirst ? 'Buffer first' : ''}</td>
                 <td>{formatMoney(row.debtLeft, cur, { whole: true })}</td>
               </tr>
