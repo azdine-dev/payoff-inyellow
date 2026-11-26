@@ -100,7 +100,8 @@ test('from Etsy: every screen, before and after unlock, has no shop link and no 
     await page.getByRole('dialog').getByRole('button', { name: 'Close' }).last().click();
   }
 
-  // Still so after a reload (no query string)
+  // Still so after a reload (no query string). Closing a sheet steps history back: wait for it, or the reload races it
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.reload();
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByTestId('help-etsy')).toBeVisible();
