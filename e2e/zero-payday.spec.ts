@@ -43,8 +43,7 @@ test.describe('Today on a payday with nothing to move', () => {
     await page.reload();
     const card = page.getByTestId('zero-card');
     await expect(card).toContainText('Nothing due this payday.');
-    await expect(card).toContainText('Next: Visa $50 on Sat 12 Dec. Want to move a little anyway?');
-    await expect(card).toContainText('Or leave it. Nothing is needed this payday.');
+    await expect(card).toContainText('Next: Visa $50 on Sat 12 Dec.');
     await expect(page.getByRole('button', { name: /^I did it/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Mark it done early' })).toHaveCount(0);
     await expect(page.getByText(/Move\s*\$0/)).toHaveCount(0);

@@ -54,7 +54,7 @@ test.describe('Part 3 · Path', () => {
     await quickSetup(page);
     await goTab(page, 'Path');
     await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Store card');
-    await expect(page.getByTestId('focus-sentence')).toContainText(/\d+ paydays? left|After today/);
+    await expect(page.getByTestId('focus-sentence')).toHaveText('0% gone.'); // one short sentence: "gone by" above says when
     await expect(page.getByTestId('planned-vs-actual')).toHaveCount(0);
     await goTab(page, 'Today');
     await tapDidIt(page);

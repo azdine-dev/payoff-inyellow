@@ -30,9 +30,10 @@ test('scrolled to the end of the card, the button sits in its place under the ro
   await nadiaSetup(page);
   await page.getByRole('button', { name: 'Skip this payday' }).scrollIntoViewIfNeeded();
   const btn = (await page.getByRole('button', { name: /^I did it/ }).boundingBox())!;
-  const note = (await page.getByTestId('pay-note').boundingBox())!;
+  const lastRow = (await page.locator('.pc-rows > *').last().boundingBox())!;
   const links = (await page.getByRole('button', { name: 'Skip this payday' }).boundingBox())!;
-  expect(btn.y).toBeGreaterThanOrEqual(note.y + note.height - 1);
+  expect(btn.y).toBeGreaterThanOrEqual(lastRow.y + lastRow.height - 1);
+  await expect(page.getByTestId('pay-note')).toHaveCount(0); // the note is for the PAID card only
   expect(links.y).toBeGreaterThanOrEqual(btn.y + btn.height - 1);
 });
 

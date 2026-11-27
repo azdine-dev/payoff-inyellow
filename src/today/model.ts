@@ -234,7 +234,7 @@ export function mergedRows(row: PaydayStep, data: AppData, bills: BillsWindow): 
   const owedLine = (id: string) => {
     const step = row.debts.find((x) => x.id === id);
     const debt = debts.get(id);
-    return step && debt ? `${money(debt.balance)} now, ${money(Math.max(0, step.balanceAfter))} after this payday` : undefined;
+    return step && debt ? `${money(debt.balance)} → ${money(Math.max(0, step.balanceAfter))}` : undefined;
   };
   const rows: PayRow[] = [];
   const done = new Set<string>();

@@ -91,7 +91,7 @@ test('Safety net: buffer ready on yellow, yearly bills with ink bars, "I paid a 
   await page.getByRole('button', { name: 'Help: Surprise buffer' }).click();
   await expect(page.getByText('Kept in a plain separate account or an envelope.')).toBeVisible();
   await page.getByRole('button', { name: 'Got it' }).click();
-  await expect(page.getByRole('button', { name: 'I paid a bill' })).toBeDisabled(); // no bills yet
+  await expect(page.getByRole('button', { name: 'I paid a bill' })).toHaveCount(0); // no bills yet: only "+ Add a bill"
 
   await page.getByRole('button', { name: '+ Add a bill' }).click();
   const add = page.getByRole('dialog', { name: 'Add a yearly bill' });

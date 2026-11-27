@@ -43,7 +43,7 @@ export function MiniChart() {
       onClick={() => (tab.value = 'path')}
     >
       <span class="row" style={{ alignItems: 'baseline' }}>
-        <span class="label">Balance, payday by payday</span>
+        <span class="label">Balance</span>
         <span class="chev" aria-hidden="true">
           ›
         </span>
@@ -73,7 +73,7 @@ export function MiniChart() {
           </text>
         )}
       </svg>
-      <span data-testid="mini-line">{captionText(m, (n) => formatMoney(n, cur))}</span>
+      {captionText(m, (n) => formatMoney(n, cur)) && <span data-testid="mini-line">{captionText(m, (n) => formatMoney(n, cur))}</span>}
     </button>
   );
 }

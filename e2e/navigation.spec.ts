@@ -24,7 +24,7 @@ test('each tab opens its screen, and Path holds what Plan and Progress showed', 
   await nav(page).getByRole('button', { name: 'Path', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   // Progress side: the date and paydays left, the share paid
-  await expect(page.getByTestId('paydays-left')).toContainText(/paydays left/);
+  await expect(page.getByTestId('whole-plan-card')).toContainText(/\d+ paydays/);
   await expect(page.getByTestId('paid-so-far')).toBeVisible();
   await expect(page.getByTestId('road')).toBeVisible();
   // Plan side: the what-if and the payday list are bottom sheets, the order is one line
@@ -39,7 +39,6 @@ test('each tab opens its screen, and Path holds what Plan and Progress showed', 
   await expect(page.getByRole('heading', { name: 'Debts' })).toBeVisible();
   await nav(page).getByRole('button', { name: 'Safety net', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Safety net' })).toBeVisible();
-  await expect(page.getByText('So the next surprise bill stays off your cards.')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Surprise buffer' })).toBeVisible();
   await nav(page).getByRole('button', { name: 'Today', exact: true }).click();
   await revealEarly(page);

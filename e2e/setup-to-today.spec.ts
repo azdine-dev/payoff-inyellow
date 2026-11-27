@@ -150,7 +150,7 @@ test('missed payday, extra payment and a different amount stay calm', async ({ p
   // The payday goes by without a check
   await page.clock.setFixedTime(new Date('2026-10-26T10:00:00'));
   await page.reload();
-  await expect(page.getByText('went by. Did you do it?')).toBeVisible();
+  await expect(page.getByText(/Did you do your Fri 23 Oct\s+payday\?/)).toBeVisible();
   await shot(page, '09-missed');
   await page.getByRole('button', { name: 'I skipped it' }).click();
   await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();

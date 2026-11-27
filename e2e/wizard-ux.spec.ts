@@ -185,8 +185,8 @@ test('Path says the date and the paydays left, and they count down at "I did it"
   const { goTab, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   const line = page.getByTestId('status-line');
-  const paydays = page.getByTestId('paydays-left');
-  const left = async () => Number((await paydays.innerText()).match(/(\d+) paydays? left/)![1]);
+  const paydays = page.getByTestId('whole-plan-card'); // said once on Path: "$X to your debts · 21 paydays"
+  const left = async () => Number((await paydays.innerText()).match(/(\d+) paydays?/)![1]);
 
   await goTab(page, 'Path');
   expect(await line.innerText()).toMatch(/^Debt-free · [A-Z][a-z]{2} 20\d\d$/);
@@ -219,18 +219,18 @@ test('Path starts with nothing paid, and the paydays left count down', async ({ 
   const { goTab, tapDidIt } = await import('./scenario');
   await quickSetup(page);
   await goTab(page, 'Progress');
-  const paydays = page.getByTestId('paydays-left');
-  await expect(paydays).toContainText(/\d+ paydays left/);
+  const paydays = page.getByTestId('whole-plan-card');
+  await expect(paydays).toContainText(/\d+ paydays/);
   await expect(page.getByTestId('paid-so-far')).toHaveText('$0');
   for (const id of ['paid-so-far', 'to-go']) await expect(page.getByTestId(id)).toBeVisible();
   await expectBrandRules(page); // no red, no yellow text, no loan or transfer words
-  const before = Number((await paydays.innerText()).match(/(\d+) paydays? left/)![1]);
+  const before = Number((await paydays.innerText()).match(/(\d+) paydays?/)![1]);
 
   await goTab(page, 'Today');
   await tapDidIt(page);
   await expect(page.getByText('Fri 23 Oct is paid.')).toBeVisible();
   await goTab(page, 'Progress');
-  expect(Number((await paydays.innerText()).match(/(\d+) paydays? left/)![1])).toBe(before - 1);
+  expect(Number((await paydays.innerText()).match(/(\d+) paydays?/)![1])).toBe(before - 1);
   await expect(page.getByTestId('paid-so-far')).not.toHaveText('$0');
 });
 

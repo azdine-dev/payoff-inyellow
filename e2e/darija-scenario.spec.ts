@@ -146,7 +146,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(focus).toContainText('0% gone');
     await expect(focus).toContainText('$640 left');
     await expect(focus).toContainText('gone by Jan 2027');
-    await expect(page.getByTestId('daily-cost')).toContainText('$4.49 a day');
+    await expect(page.getByTestId('daily-cost')).toContainText('$4.49');
     await goTab(page, 'Today');
   });
 
@@ -190,7 +190,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByRole('listitem', { name: 'First extra payment, reached' })).toBeVisible();
     await goTab(page, 'Plan');
     await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Oct 2028');
-    await expect(page.getByTestId('paydays-left')).toHaveText('50 paydays left'); // 53 paydays in all (v2: bills by due date)
+    await expect(page.getByTestId('whole-plan-card')).toContainText('· 50 paydays'); // 53 paydays in all (v2: bills by due date)
   });
 
   // ---------------------------------------------------------------- part 6: payday 4, less money
@@ -212,7 +212,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expectPaidPayday(page, { date: 'Fri 4 Dec', total: 231, debtLeft: 14313.16 });
     await goTab(page, 'Plan');
     await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Oct 2028');
-    await expect(page.getByTestId('paydays-left')).toHaveText('49 paydays left'); // the date did not move
+    await expect(page.getByTestId('whole-plan-card')).toContainText('· 49 paydays'); // the date did not move
   });
 
   // ---------------------------------------------------------------- part 7: a new charge
@@ -229,7 +229,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
     await expect(page.getByTestId('to-go')).toContainText('$14,358'); // 14,313.16 + 45
     await goTab(page, 'Plan');
     await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Oct 2028');
-    await expect(page.getByTestId('paydays-left')).toHaveText('49 paydays left'); // 20 Oct 2028, one payday later
+    await expect(page.getByTestId('whole-plan-card')).toContainText('· 49 paydays'); // 20 Oct 2028, one payday later
   });
 
   // ---------------------------------------------------------------- part 8: the buffer is used
@@ -260,7 +260,7 @@ test('Sara: from setup to her first debt gone (parts 1 to 14)', async ({ page, b
   // ---------------------------------------------------------------- part 9: a payday goes by
   await test.step('Payday 6 (1 Jan) goes by: calm banner, the date moves, nothing is applied', async () => {
     await setDay(page, '2027-01-02');
-    await expect(page.getByText(/went by\. Did you do it\?/)).toBeVisible();
+    await expect(page.getByText(/Did you do your .* payday\?/)).toBeVisible();
     await page.getByRole('button', { name: 'I skipped it' }).click();
     await expect(page.getByText('Life happens. Never miss twice. Here’s your updated date.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Next payday' })).toBeVisible();
@@ -517,7 +517,7 @@ test('Case B: a debt that grows, paid twice a month (15th and last day)', async 
       await expect(page.getByRole('button', { name: `${label}, to come`, exact: true })).toBeVisible();
     }
     await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Mar 2032');
-    await expect(page.getByTestId('paydays-left')).toHaveText('131 paydays left');
+    await expect(page.getByTestId('whole-plan-card')).toContainText('· 131 paydays');
   });
 
   await test.step('First payday: the buffer comes first', async () => {
@@ -551,7 +551,7 @@ test('Case C: the well-known $8,000 at 24%', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^I did it/ })).toContainText('$240');
   await goTab(page, 'Plan');
   await expect(page.getByTestId('status-line')).toHaveText('Debt-free · Jun 2031');
-    await expect(page.getByTestId('paydays-left')).toHaveText('56 paydays left');
+    await expect(page.getByTestId('whole-plan-card')).toContainText('· 56 paydays');
   await showPaydays(page, 'Upcoming');
   await page.getByRole('button', { name: 'Sun 1 Nov, to come', exact: true }).click();
   await expect(page.getByTestId('preview-owed')).toHaveText('$7,920');

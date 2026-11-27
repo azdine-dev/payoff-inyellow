@@ -78,9 +78,9 @@ export function captionText(m: Pick<MiniChartModel, 'caption' | 'start' | 'owed'
 }
 
 export const CAPTIONS: Record<Caption, string> = {
-  dayOne: 'Day one. Your line starts here.',
+  dayOne: '',
   firstLower: 'Lower than day one.',
   lower: 'Lower than last payday.',
   same: 'The same as last payday.',
-  higher: 'A little higher than last payday. That happens.',
+  higher: 'A little higher than last payday.',
 };

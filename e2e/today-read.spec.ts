@@ -74,11 +74,11 @@ test('the next payday suggests the next read, and it shows when nothing is due t
   await expect(next).not.toHaveAttribute('data-read', '1'); // not read yet
 });
 
-test('Path keeps the whole list: See all reads', async ({ page }) => {
+test('Path keeps the whole list: one "Short reads" row', async ({ page }) => {
   await nadiaSetup(page);
   await goTab(page, 'Path');
   const card = page.getByTestId('reads-card');
-  await expect(card).toContainText('See all reads');
+  await expect(card).toHaveText('Short reads');
   await card.click();
   await expect(page.getByTestId('read-list')).toBeVisible();
   await expect(page.getByTestId('read-item')).toHaveCount(READS.length);

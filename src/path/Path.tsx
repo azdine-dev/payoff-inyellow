@@ -98,7 +98,6 @@ export function Path() {
 
   const mo = r.minimumsOnly;
   const avoided = mo.totalInterest !== null ? mo.totalInterest - r.totalInterest : null;
-  const paydaysLeft = r.paydaysToDebtFree;
 
   const laterLine = useMemo(() => comingLaterLine(d), [d]);
   const nextPayday = nextPaydayISO(s);
@@ -177,11 +176,6 @@ export function Path() {
               <p class="num" data-testid="status-line">
                 <span class="hl">Debt-free · {shortMonthYear(r.debtFreeDate)}</span>
               </p>
-              {paydaysLeft !== null && (
-                <p class="muted small num" data-testid="paydays-left">
-                  {paydaysLeft} payday{paydaysLeft === 1 ? '' : 's'} left
-                </p>
-              )}
             </div>
             {laterLine && (
               <p class="muted small" data-testid="coming-later-line">
@@ -241,7 +235,6 @@ export function Path() {
         {view === 'road' && (
           <>
             <Road model={road} finishIndex={finishIndex} freshPayday={freshPayday.value} freshPaidDebts={freshPaidDebts.value} describe={describe} />
-            {d.paydays.length === 0 && !debtFree && <p data-testid="day-one">Day one. Your first yellow square is {shortDate(nextPayday, today.value)}.</p>}
           </>
         )}
         {view === 'chapters' && <Chapters />}
@@ -323,10 +316,9 @@ export function Path() {
       <button type="button" class="card find-row" data-testid="reads-card" onClick={() => openReads('path')}>
         <span class="stack" style={{ gap: 2, textAlign: 'left' }}>
           <b>Short reads</b>
-          <span class="muted small">Ten calm reads, a minute each</span>
         </span>
-        <span class="link small" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          See all reads <ChevronRight />
+        <span class="link" style={{ display: 'inline-flex', alignItems: 'center' }} aria-hidden="true">
+          <ChevronRight />
         </span>
       </button>
 

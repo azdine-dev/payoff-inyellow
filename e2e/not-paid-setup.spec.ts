@@ -41,7 +41,7 @@ test.describe('mark a payday as not paid', () => {
     await goTab(page, 'Today');
     await expect(page.getByTestId('paid-card')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'I did it · $180' })).toBeVisible();
-    await expect(page.getByTestId('pay-note')).toHaveText('One paycheck at a time. That is all this is.'); // no square is yellow again
+    await expect(page.getByTestId('pay-note')).toHaveCount(0); // no PAID card, so no note: no square is yellow again
   });
 
   test('with two paydays done only the latest opens the sheet; the first just shows what was paid', async ({ page }) => {

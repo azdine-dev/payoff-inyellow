@@ -48,7 +48,7 @@ export function ReadCard(props: { missed: number; focusPct: number | null }) {
         <ReadIcon id={item.id} />
       </span>
       <span class="stack" style={{ gap: 0, flex: 1, textAlign: 'left' }}>
-        <span class="muted small">{isRead ? 'Read' : 'A short read for you'}</span>
+        {isRead && <span class="muted small">Read</span>}
         <b>{item.title}</b>
         <span class="muted small">{readMinutes(item)} min</span>
       </span>

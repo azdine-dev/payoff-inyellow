@@ -72,8 +72,8 @@ test.describe('2 · a payday with nothing due: chips, where it goes, Move $X', (
     const card = page.getByTestId('zero-card');
     await expect(card.getByText('This payday · Sat 28 Nov')).toBeVisible();
     await expect(card.getByRole('heading', { name: 'Nothing due this payday.' })).toBeVisible();
-    await expect(card).toContainText('Next: Visa $70 on Sat 12 Dec. Want to move a little anyway?');
-    await expect(card).toContainText('Or leave it. Nothing is needed this payday.');
+    await expect(card).toContainText('Next: Visa $70 on Sat 12 Dec.'); // one short sentence
+    await expect(card).not.toContainText('Or leave it');
     const chips = card.getByRole('group', { name: 'How much to move' });
     for (const n of ['$20', '$50', '$100', 'Other']) await expect(chips.getByRole('button', { name: n, exact: true })).toHaveAttribute('aria-pressed', 'false');
     await expect(card.getByRole('button', { name: /^Move/ })).toHaveCount(0); // nothing picked, nothing to move
@@ -184,7 +184,7 @@ test.describe('4 · a payday with a bill: "Extra money came in?" under "I did it
     const didIt = card.getByRole('button', { name: 'I did it · $70' });
     const row = card.getByTestId('extra-row');
     await expect(row).toContainText('Extra money came in?');
-    await expect(row).toContainText('See how much sooner you could be done');
+    await expect(row).toHaveText(/^\+?\s*Extra money came in\?\s*›?$/); // one line
     expect((await row.boundingBox())!.y).toBeGreaterThan((await didIt.boundingBox())!.y); // under I did it
     await expect(page.getByTestId('extra-row')).toHaveCount(1);
 

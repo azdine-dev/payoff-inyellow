@@ -1,4 +1,4 @@
-/** "Send it to" in I got extra money, "$X now, $Y after this payday" on the payday card, and the two new themes. */
+/** "Send it to" in I got extra money, "$X → $Y" on the payday card, and the two new themes. */
 import { expect, test } from '@playwright/test';
 import { nadiaSetup } from './nadia';
 import { goTab, openExtraMoney } from './scenario';
@@ -23,11 +23,12 @@ test.describe('I got extra money: Send it to', () => {
 });
 
 test.describe('the payday card', () => {
-  test('each debt row says "$X now, $Y after this payday"', async ({ page }) => {
+  test('each debt row shows "$X → $Y", and says "$X now, $Y after this payday" to a screen reader', async ({ page }) => {
     await nadiaSetup(page);
     const owed = page.getByTestId('pc-owed');
     await expect(owed.first()).toBeVisible();
-    await expect(owed.first()).toHaveText(/^\$[\d,]+(\.\d\d)? now, \$[\d,]+(\.\d\d)? after this payday$/);
+    await expect(owed.first().locator('[aria-hidden="true"]')).toHaveText(/^\$[\d,]+(\.\d\d)? → \$[\d,]+(\.\d\d)?$/);
+    await expect(owed.first().locator('.sr-only')).toHaveText(/^\$[\d,]+(\.\d\d)? now, \$[\d,]+(\.\d\d)? after this payday$/);
   });
 });
 

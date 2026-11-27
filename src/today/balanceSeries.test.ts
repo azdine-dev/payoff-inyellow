@@ -7,14 +7,14 @@ const rows = (...left: number[]) => left.map((debtLeft) => ({ debtLeft })) as ne
 const plan = (r: number[], free = '2027-07-16') => ({ rows: rows(...r), debtFreeDate: free }) as never;
 
 describe('the balance chart, one point per payday', () => {
-  it('day one: the line starts at today\'s total and goes down to zero, with the day one caption', () => {
+  it('day one: the line starts at today\'s total and goes down to zero, with no caption', () => {
     const m = miniChartModel({ paydays: [] }, plan([3000, 2000, 1000, 0]), { start: 3250, owed: 3250 });
     expect(m.line.map((p) => [p.i, p.y])).toEqual([[0, 3250], [1, 3000], [2, 2000], [3, 1000], [4, 0]]);
     expect(m.here).toEqual({ i: 0, y: 3250 });
     expect(m.paid).toEqual([]);
     expect(m.endsAtZero).toBe(true);
     expect(m.caption).toBe('dayOne');
-    expect(CAPTIONS.dayOne).toBe('Day one. Your line starts here.');
+    expect(CAPTIONS.dayOne).toBe(''); // less text: no caption on day one
   });
 
   it('after a payday: a paid point, you are on it, and the caption says it is lower', () => {

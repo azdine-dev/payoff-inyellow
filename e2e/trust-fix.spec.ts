@@ -26,15 +26,15 @@ test('"I did it" pays the bill that was shown, and a debt with no bill this payd
   expect(await owed('Store card')).toBeLessThan(storeBefore); // its bill and the extra went to it
 });
 
-test('Today says how many paydays are left on a day that is not a payday, and "After today" on a payday', async ({ page }) => {
+test('the focus card says when in "gone by" and how much in one short sentence, on a payday and between', async ({ page }) => {
   await quickSetup(page);
   await goTab(page, 'Path');
-  const sentence = page.getByTestId('focus-sentence');
-  await expect(sentence).toHaveText(/^\d+% gone\. \d+ paydays left\.$/); // 15 Oct is not a payday
-  await expect(sentence).not.toContainText('After today');
+  const focus = page.getByRole('region', { name: 'Focus debt' });
+  await expect(focus).toContainText('gone by Fri 4 Dec');
+  await expect(page.getByTestId('focus-sentence')).toHaveText(/^\d+% gone\.$/); // 15 Oct is not a payday
   await setDay(page, '2026-10-23');
   await goTab(page, 'Path');
-  await expect(page.getByTestId('focus-sentence')).toContainText('After today'); // the payday itself
+  await expect(page.getByTestId('focus-sentence')).toHaveText(/^\d+% gone\.$/); // the payday itself
 });
 
 test('whole dollars on Path balances', async ({ page }) => {

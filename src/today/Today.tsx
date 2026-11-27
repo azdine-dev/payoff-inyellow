@@ -209,13 +209,12 @@ export function Today() {
   // "Extra money came in?": in the payday card it opens the chips; between paydays (no payday card) it opens pay now or later
   const extraRow = (onOpen: () => void) =>
     focus ? (
-      <button type="button" class="extra-row" data-testid="extra-row" aria-label="Extra money came in? See how much sooner you could be done" onClick={onOpen}>
+      <button type="button" class="extra-row" data-testid="extra-row" aria-label="Extra money came in?" onClick={onOpen}>
         <span class="extra-plus" aria-hidden="true">
           +
         </span>
         <span class="extra-words">
           <b>Extra money came in?</b>
-          <span>See how much sooner you could be done</span>
         </span>
         <span class="extra-chev" aria-hidden="true">
           ›
@@ -229,19 +228,13 @@ export function Today() {
       <h2 id="zero-title" class="zero-title">
         Nothing due this payday.
       </h2>
-      <p>
-        {move && (
-          <>
-            Next: {move.name ? `${move.name} ` : ''}
-            <span class="num">{money(move.amount)}</span> on {shortDate(move.date)}.{' '}
-          </>
-        )}
-        Want to move a little anyway?
-      </p>
+      {move && (
+        <p>
+          Next: {move.name ? `${move.name} ` : ''}
+          <span class="num">{money(move.amount)}</span> on {shortDate(move.date)}.
+        </p>
+      )}
       <ExtraChips d={d} current={plan.value!} focusName={focus?.debt.name ?? null} action={(m) => `Move ${money(m.amount)}`} onMove={(m) => void moveExtra(m)} busy={busy} />
-      <p class="muted small" style={{ textAlign: 'center' }}>
-        Or leave it. Nothing is needed this payday.
-      </p>
     </section>
   );
 
@@ -416,12 +409,7 @@ export function Today() {
             <p class="date-line" role="status">
               <b>{shortDate(paidView.date)} is paid.</b>
             </p>
-          ) : (
-            <p class="date-line">
-              {weekdayName(today.value)} {dayMonth(today.value)}
-              {isPayday && active.length > 0 ? ' · payday' : ''}
-            </p>
-          )}
+          ) : null /* the greeting says when the next payday is: no date line above it */}
           <h1 class="today-h1" data-testid="greeting">
             {greeting}
           </h1>
@@ -560,7 +548,7 @@ export function Today() {
           {missed > 0 && !emptyNow && (
             <section class="card stack" style={{ gap: 4 }}>
               <p>
-                Your payday on <b>{shortDate(nextDate)}</b> went by. Did you do it?
+                Did you do your <b>{shortDate(nextDate)}</b> payday?
               </p>
               <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
                 <button type="button" class="link" onClick={skip}>
@@ -597,11 +585,8 @@ export function Today() {
                   {money(shownTotal)}
                 </span>
               </p>
-              {extra ? (
-                <p class="pc-sub" data-testid="extra-sentence">
-                  The extra <b>{money(extra.amount)}</b> goes to <span class="hl">{extra.target}</span>
-                </p>
-              ) : row.bufferFirst ? (
+              {/* The focus debt's name is highlighted in its row; the row says how much extra goes there */}
+              {!extra && row.bufferFirst ? (
                 <p class="pc-sub" data-testid="buffer-first">
                   Your buffer fills first, until {money(s.bufferGoal)}.
                 </p>
@@ -615,7 +600,7 @@ export function Today() {
                     onToggle={() => toggle(x.key)}
                     right={<span class="num pc-amount">{money(x.amount)}</span>}
                   >
-                    <span class="pc-title">{x.title}</span>
+                    <span class="pc-title">{extra && x.tags.includes('Extra') && x.title === extra.target ? <span class="hl" data-testid="extra-target">{x.title}</span> : x.title}</span>
                     <span class="pc-meta">
                       <span class="pc-tags">
                         {x.tags.map((t) => (
@@ -628,7 +613,8 @@ export function Today() {
                       <span class="pc-rowsub">{x.sub}</span>
                       {x.owed && (
                         <span class="pc-rowsub pc-owed num" data-testid="pc-owed">
-                          {x.owed}
+                          <span aria-hidden="true">{x.owed}</span>
+                          <span class="sr-only">{x.owed.replace(' → ', ' now, ')} after this payday</span>
                         </span>
                       )}
                     </span>
@@ -663,7 +649,8 @@ export function Today() {
                 </div>
               )}
 
-              {noteLine}
+              {/* A note that says what just happened (a debt paid, a skipped payday...) stays here; the rotating line is for the PAID card */}
+              {note.kind !== 'rotating' && noteLine}
               <button type="button" class="pc-btn" onClick={() => void apply()} disabled={busy}>
                 <CheckIcon /> {COPY.didIt} · <span class="num">{money(total)}</span>
               </button>
@@ -742,7 +729,7 @@ export function Today() {
       )}
 
       <p class="hand">{COPY.slogan}</p>
-      <FooterNote privacy={syncOn.value ? COPY.privacySynced : COPY.privacy} />
+      <FooterNote />
 
 
       <Sheet open={dueDebtId !== null} onClose={() => setDueDebtId(null)} title={`Due day for ${d.debts.find((x) => x.id === dueDebtId)?.name ?? ''}`}>

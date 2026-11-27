@@ -39,7 +39,7 @@ test.describe('Part B · Path, the Nadia scenario', () => {
     await expect(page.locator('[data-testid="road-sq"][data-kind="start"]')).toHaveCount(2);
     await expect(page.locator('[data-testid="road-sq"][data-kind="next"]')).toHaveCount(1);
     await expect(page.getByTestId('road-pin')).toHaveAttribute('aria-label', 'You are here, Fri 6 Nov, next payday');
-    await expect(page.getByTestId('day-one')).toHaveText('Day one. Your first yellow square is Fri 6 Nov.');
+    await expect(page.getByTestId('day-one')).toHaveCount(0); // less text: the pin already says it
     // the focus debt card is the one place for the next stop
     await expect(page.getByTestId('next-stop')).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Focus debt' })).toContainText('Store Card');
@@ -105,13 +105,12 @@ test.describe('Part B · Path, the Nadia scenario', () => {
     await expect(page.getByTestId('minimums-line')).toHaveText('With minimums only: May 2031.');
   });
 
-  test('one date line: the date and the paydays left sit side by side', async ({ page }) => {
+  test('one date line, and the paydays left are said once, on the whole plan card', async ({ page }) => {
     await nadiaSetup(page);
     await goTab(page, 'Path');
-    const a = (await page.getByTestId('status-line').boundingBox())!;
-    const b = (await page.getByTestId('paydays-left').boundingBox())!;
-    expect(Math.abs(a.y + a.height - (b.y + b.height))).toBeLessThan(12); // the same line
-    expect(b.x).toBeGreaterThan(a.x + a.width - 1);
+    await expect(page.getByTestId('status-line')).toBeVisible();
+    await expect(page.getByTestId('paydays-left')).toHaveCount(0);
+    await expect(page.getByTestId('whole-plan-card')).toContainText(/\d+ paydays/);
     await expect(page.getByTestId('look-ahead')).toBeVisible();
     await expect(page.getByRole('group', { name: 'Pay a bit more' }).or(page.getByRole('button', { name: 'More options' })).first()).toBeVisible();
   });

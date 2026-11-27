@@ -17,7 +17,7 @@ test.describe('the balance chart, payday by payday', () => {
     await expect(page.getByTestId('mini-flag')).toHaveCount(1);
     await expect(page.getByTestId('mini-here')).toHaveCount(1);
     await expect(page.getByTestId('mini-paid')).toHaveCount(0);
-    await expect(page.getByTestId('mini-line')).toHaveText('Day one. Your line starts here.');
+    await expect(page.getByTestId('mini-line')).toHaveCount(0); // less text: no caption on day one
   });
 
   test('after "I did it" the line is lower and the caption is new', async ({ page }) => {

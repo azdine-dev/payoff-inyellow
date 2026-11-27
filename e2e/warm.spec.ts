@@ -78,10 +78,10 @@ test.describe('2 · balance, payday by payday', () => {
     await nadiaSetup(page);
     await goTab(page, 'Path');
     const chart = page.getByTestId('mini-chart');
-    await expect(chart).toContainText('Balance, payday by payday');
+    await expect(chart).toContainText('Balance');
     await expect(page.getByTestId('mini-start')).toHaveText('You · $3,250');
     await expect(page.getByTestId('mini-end')).toHaveText('Jul 2027 · $0');
-    await expect(page.getByTestId('mini-line')).toHaveText('Day one. Your line starts here.');
+    await expect(page.getByTestId('mini-line')).toHaveCount(0); // less text: no caption on day one
     await expect(page.getByTestId('mini-here')).toBeVisible();
     await expect(page.getByTestId('mini-paid')).toHaveCount(0); // nothing is paid yet
   });
@@ -91,18 +91,19 @@ test.describe('2 · balance, payday by payday', () => {
     await payExtra(page, 450);
     await goTab(page, 'Path');
     await expect(page.getByTestId('mini-start')).toHaveText('You · $2,800');
-    await expect(page.getByTestId('mini-line')).toHaveText('Day one. Your line starts here.');
+    await expect(page.getByTestId('mini-line')).toHaveCount(0); // less text: no caption on day one
     await expect(page.getByTestId('mini-here')).toHaveCount(1);
     await expectBrandRules(page);
   });
 });
 
 test.describe('3 · a note for this payday', () => {
-  test('day one: no "First square" before a real I did it, and the same line after a reload', async ({ page }) => {
+  test('day one: no "First square" before a real I did it, and no filler line on the payday card, also after a reload', async ({ page }) => {
     await nadiaSetup(page);
-    await expect(page.getByTestId('pay-note')).toHaveText('One paycheck at a time. That is all this is.');
+    await expect(page.getByTestId('pay-note')).toHaveCount(0); // less text: the rotating line is for the PAID card
     await page.reload();
-    await expect(page.getByTestId('pay-note')).toHaveText('One paycheck at a time. That is all this is.');
+    await expect(page.locator('.payday-card')).toBeVisible();
+    await expect(page.getByTestId('pay-note')).toHaveCount(0);
   });
 
   test('after "I did it" the note is one line inside the PAID card', async ({ page }) => {
@@ -122,6 +123,7 @@ test.describe('3 · a note for this payday', () => {
 
   test('the note follows the copy rules on screen', async ({ page }) => {
     await nadiaSetup(page);
+    await tapDidIt(page);
     const text = await page.getByTestId('pay-note').innerText();
     expect(text.split(/\s+/).length).toBeLessThanOrEqual(12);
     expect(text).not.toMatch(/[!—–-]/);

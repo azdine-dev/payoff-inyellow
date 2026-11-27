@@ -229,10 +229,11 @@ export function HelpTip(props: { title: string; children: ComponentChildren }) {
 }
 
 /** The line under Today and the result: privacy and the disclaimer, with the "figures are estimates" part behind a (?). */
-export function FooterNote({ privacy }: { privacy: string }) {
+export function FooterNote({ privacy }: { privacy?: string }) {
   return (
     <p class="footer-note">
-      {privacy} {COPY.disclaimerShort}
+      {privacy ? `${privacy} ` : ''}
+      {COPY.disclaimerShort}
       <HelpTip title="About the figures">
         <p>{COPY.figuresNote}</p>
       </HelpTip>

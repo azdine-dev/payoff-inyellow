@@ -13,7 +13,9 @@ test('the payday card shows its parts, even a week before the payday', async ({ 
   await expect(page.getByTestId('greeting')).toHaveText('Next payday is Fri 23 Oct.');
   await expect(page.getByTestId('payday-total')).toHaveText('$185');
   await expect(page.locator('.pc-move')).toHaveText('Move'); // "Move $185", the same words as the result screen
-  await expect(page.getByTestId('extra-sentence')).toContainText('The extra $150 goes to Store card');
+  await expect(page.getByTestId('extra-sentence')).toHaveCount(0); // less text: the row says "$150 extra"
+  await expect(page.getByTestId('extra-target')).toHaveText('Store card'); // the focus debt is highlighted in its row
+  await expect(page.locator('.payday-card')).toContainText('$35 bill + $150 extra');
   await expectBrandRules(page);
   await page.getByTestId('debt-free-pill').click();
   await expect(page.getByRole('button', { name: 'Path', exact: true })).toHaveAttribute('aria-current', 'page');

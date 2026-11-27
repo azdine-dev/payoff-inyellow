@@ -65,7 +65,10 @@ export function FocusSection(props: { minimumsEnd?: string | null }) {
           </button>
           <div class="row" style={{ justifyContent: 'flex-start', gap: 0 }}>
             <p class="muted" data-testid="focus-sentence">
-              {focusSentence(focus.grown ? null : focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
+              {/* "gone by" above already says when: one short sentence */}
+              {!focus.grown && focusIdx >= 0 && goneLabel(focus.goneBy)
+                ? `${Math.floor(focus.pctGone)}% gone.`
+                : focusSentence(focus.grown ? null : focus.pctGone, focusIdx < 0 ? null : focusIdx, nextDate <= today.value)}
             </p>
             <HelpTip title="Why this one?">
               <p data-testid="focus-why">{whyFirst(s.method, growingNow.has(focus.debt.id))}</p>
@@ -81,7 +84,7 @@ export function FocusSection(props: { minimumsEnd?: string | null }) {
             <p>It is the interest your debts add each day. It drops as balances go down.</p>
           </HelpTip>
         </p>
-        <p class="tile-val num">{formatMoney(daily, cur)} a day</p>
+        <p class="tile-val num">{formatMoney(daily, cur)}</p>
         {lastMonth !== null && <p class="muted small">Last month {formatMoney(lastMonth, cur)}</p>}
       </div>
     </>

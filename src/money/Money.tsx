@@ -113,7 +113,6 @@ export function Money() {
     <main class="screen with-tabs">
       <header class="tab-head">
         <h1>Safety net</h1>
-        <p class="muted">So the next surprise bill stays off your cards.</p>
       </header>
 
       <section class="card stack" aria-labelledby="buffer-title">
@@ -145,7 +144,6 @@ export function Money() {
           I used some of it
         </button>
         <button type="button" class="set-row" data-testid="buffer-change" aria-label="Change the goal or the amount set aside" onClick={() => { setText(String(s.bufferGoal)); setText2(String(d.buffer.amount)); setMode('change'); }}>
-          <span class="muted small">Goal, amount set aside, history</span>
           <span class="link small">Change</span>
         </button>
       </section>
@@ -157,7 +155,7 @@ export function Money() {
           </p>
           {d.funds.length > 0 && <span class="muted num">{money(eachPayday, cur)} each payday</span>}
         </div>
-        {d.funds.length === 0 && <Empty art="envelope" line="No yearly bills yet. Add one and a little goes aside each payday." />}
+        {d.funds.length === 0 && <Empty art="envelope" line="No yearly bills yet." />}
         {d.funds.map((f) => (
           <button key={f.id} type="button" class="fund-row" aria-label={`${f.name}, edit`} onClick={() => openFund('edit', f.id)}>
             <span class="row">
@@ -172,15 +170,12 @@ export function Money() {
             <span class="muted small">{f.month === 'Any time' ? 'Any time' : `Needed in ${f.month}`}</span>
           </button>
         ))}
-        <div class="grid-2">
-          <button
-            type="button"
-            class="btn ghost"
-            disabled={d.funds.length === 0}
-            onClick={() => (d.funds.length === 1 ? openFund('spend', d.funds[0]!.id) : setMode('pick-fund'))}
-          >
-            I paid a bill
-          </button>
+        <div class={d.funds.length > 0 ? 'grid-2' : 'stack'}>
+          {d.funds.length > 0 && (
+            <button type="button" class="btn ghost" onClick={() => (d.funds.length === 1 ? openFund('spend', d.funds[0]!.id) : setMode('pick-fund'))}>
+              I paid a bill
+            </button>
+          )}
           <button type="button" class="btn dashed" onClick={() => { setText(''); setText2(''); setMonth('Any time'); setMode('fund-add'); }}>
             + Add a bill
           </button>
