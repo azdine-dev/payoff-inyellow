@@ -51,7 +51,7 @@ test('Path: what-if and the payday list are bottom sheets, and "Use this in my p
   await showPaydays(page);
   await page.getByRole('button', { name: 'Fri 23 Oct, to come' }).click();
   await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 23 Oct 2026');
-  await page.getByRole('button', { name: 'Back to today' }).click();
+  await page.getByRole('button', { name: 'Back to Path' }).click();
   await expect(page.getByTestId('path-preview')).toHaveCount(0);
 });
 

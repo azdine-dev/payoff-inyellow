@@ -2676,36 +2676,9 @@ textarea {
   gap: 12px;
 }
 
-.reads-head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: -20px calc(var(--gutter) * -1) 4px;
-  padding: 18px var(--gutter) 22px;
-  background: var(--calm-band);
-}
-
-.reads-head h1 {
-  font-weight: 800;
-  font-size: 1.9rem;
-  letter-spacing: -0.5px;
-}
-
 .reads-sub {
   color: var(--gray);
   font-size: 0.9rem;
-}
-
-.reads-back {
-  align-self: flex-start;
-  min-height: 44px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--action);
-  font: inherit;
-  font-size: 0.95rem;
-  cursor: pointer;
 }
 
 .read-list {
@@ -3140,16 +3113,6 @@ textarea {
   font-size: 0.85rem;
   opacity: 0.85;
 }
-.pv-band .pv-back {
-  min-height: var(--tap);
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-weight: 700;
-  cursor: pointer;
-}
 .pv-months {
   display: flex;
   gap: 8px;
@@ -3322,26 +3285,55 @@ textarea {
   font-size: 0.95rem;
 }
 
-/* ---------- Your whole plan (design/path-features/WholePlan) ---------- */
-.wp-band {
+/* ---------- Sub-screens: one sticky top bar, "‹ Path" on the left, the title in the middle ---------- */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin: calc(-1 * (env(safe-area-inset-top) + 20px)) calc(-1 * var(--gutter)) 0;
+  padding: calc(env(safe-area-inset-top) + 4px) var(--gutter) 4px;
   background: var(--calm-band);
-  margin: 0 calc(var(--gutter) * -1);
-  padding: 18px var(--gutter) 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  border-bottom: 1px solid var(--line);
 }
-.wp-back {
-  align-self: flex-start;
-  min-height: var(--tap);
+
+.top-back {
+  justify-self: start;
   display: inline-flex;
   align-items: center;
-  background: transparent;
-  border: 0;
+  gap: 4px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 8px 0 0;
+  border: none;
+  background: none;
   color: var(--action);
-  font-size: 0.875rem;
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
+
+.top-chev {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.top-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Your whole plan (design/path-features/WholePlan) ---------- */
 .wp-total {
   font-family: var(--font-head);
   font-weight: 800;
@@ -3577,9 +3569,7 @@ textarea {
 }
 
 /* every back button is at least 44 by 44 points */
-.reads-back,
-.wp-back,
-.pv-back,
+.top-back,
 .back-circle,
 .settings-back,
 .round-btn.small {

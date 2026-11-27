@@ -29,7 +29,7 @@ import { ArrivalCard, ComingLaterPanel } from './ComingLater';
 import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
-import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, settingsSheet, tab, today, updateDismissed, updateReady } from '../state/store';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, previewFrom, settingsSheet, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Checkbox, CheckIcon, Field, FooterNote, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -444,6 +444,7 @@ export function Today() {
           // the debt-free day, as a preview (read-only); without a date it just opens Path
           const last = plan.value?.rows[plan.value.rows.length - 1];
           previewDate.value = plan.value?.debtFreeDate && last ? last.date : null;
+          previewFrom.value = 'today'; // its "‹ Today" and the back button come back here
           pathView.value = 'progress';
           tab.value = 'path';
         }}

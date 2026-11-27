@@ -40,7 +40,7 @@ async function debtFreeDay(page: Page): Promise<string> {
   await goTab(page, 'Path');
   await page.getByTestId('whole-plan-card').click();
   const sub = (await page.getByTestId('wp-sub').innerText()).replace(/.* to /, '');
-  await page.getByRole('button', { name: '‹ Path' }).click();
+  await page.getByRole('button', { name: 'Back to Path' }).click();
   await goTab(page, 'Today');
   return sub;
 }

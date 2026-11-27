@@ -39,7 +39,7 @@ test.describe('preview of a future payday', () => {
     await expect(preview.getByRole('checkbox')).toHaveCount(0);
     await expect(preview.getByRole('button', { name: /I did it/ })).toHaveCount(0);
     await expectBrandRules(page);
-    await page.getByRole('button', { name: 'Back to today' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await expect(page.getByTestId('path-preview')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   });
@@ -50,7 +50,7 @@ test.describe('preview of a future payday', () => {
       await openList(page, 'Upcoming');
       await page.getByRole('button', { name: `${label}, to come` }).click();
       const n = Number(((await page.getByTestId('preview-owed').textContent()) ?? '').replace(/[^0-9]/g, ''));
-      await page.getByRole('button', { name: 'Back to today' }).click();
+      await page.getByRole('button', { name: 'Back to Path' }).click();
       return n;
     };
     const early = await owedOn('Fri 20 Nov');

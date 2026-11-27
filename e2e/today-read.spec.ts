@@ -43,7 +43,7 @@ test('tap it to read, Back comes home, and the card has a tick', async ({ page }
   await page.getByTestId('today-read').click();
   await expect(page.getByTestId('read')).toBeVisible();
   await expect(page.getByRole('heading', { name: title('smallest-first') })).toBeVisible();
-  await page.getByRole('button', { name: '‹ Today' }).click();
+  await page.getByRole('button', { name: 'Back to Today' }).click();
   await expect(page.getByRole('heading', { name: /Done for this payday|Next payday/ })).toBeVisible();
   const card = page.getByTestId('today-read');
   await expect(card).toHaveAttribute('data-read', '1');
@@ -60,7 +60,7 @@ test('the next payday suggests the next read, and it shows when nothing is due t
   // the read card is on Today before "I did it" too: wait for the paid card, so the tap lands on this payday's read
   await expect(page.getByTestId('paid-card')).toBeVisible();
   await page.getByTestId('today-read').click();
-  await page.getByRole('button', { name: '‹ Today' }).click();
+  await page.getByRole('button', { name: 'Back to Today' }).click();
   await expect(page.getByTestId('today-read')).toHaveAttribute('data-read', '1');
   // the next payday, done
   await page.clock.setFixedTime(new Date('2026-11-20T10:00:00'));
@@ -82,6 +82,6 @@ test('Path keeps the whole list: See all reads', async ({ page }) => {
   await card.click();
   await expect(page.getByTestId('read-list')).toBeVisible();
   await expect(page.getByTestId('read-item')).toHaveCount(READS.length);
-  await page.getByRole('button', { name: '‹ Path' }).click();
+  await page.getByRole('button', { name: 'Back to Path' }).click();
   await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
 });

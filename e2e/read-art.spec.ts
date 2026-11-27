@@ -20,7 +20,7 @@ test('every read picture is there, grounded, and inside the screen', async ({ pa
     const box = (await art.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(390.5);
-    await page.getByRole('button', { name: '‹ Short reads' }).click();
+    await page.getByRole('button', { name: 'Back to Short reads' }).click();
     await expect(page.getByTestId('read-list')).toBeVisible();
   }
   expect(kinds.size).toBe(10); // ten reads, ten different pictures

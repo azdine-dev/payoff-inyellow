@@ -9,6 +9,7 @@ import { formatMoney } from '../lib/money';
 import { fullDate } from '../lib/today';
 import { wholePlanOpen } from '../state/store';
 import { buildWholePlan } from './wholePlanModel';
+import { TopBar } from '../ui/TopBar';
 
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const count = (n: number) => (n <= 10 ? WORDS[n]! : String(n));
@@ -45,17 +46,12 @@ export function WholePlan(props: { d: AppData; r: PlanResult; today: string }) {
 
   return (
     <div class="stack" style={{ gap: 12 }} data-testid="whole-plan">
-      <div class="wp-band">
-        <button type="button" class="wp-back" onClick={() => (wholePlanOpen.value = false)}>
-          ‹ Path
-        </button>
-        <h1>Your whole plan</h1>
-        {w.from && w.to && (
-          <p class="muted small" data-testid="wp-sub">
-            {w.paydays} payday{w.paydays === 1 ? '' : 's'}, from {from} to {fullDate(w.to)}
-          </p>
-        )}
-      </div>
+      <TopBar back="Path" onBack={() => (wholePlanOpen.value = false)} title="Your whole plan" />
+      {w.from && w.to && (
+        <p class="muted small" data-testid="wp-sub">
+          {w.paydays} payday{w.paydays === 1 ? '' : 's'}, from {from} to {fullDate(w.to)}
+        </p>
+      )}
 
       <section class="card stack" style={{ gap: 6, borderWidth: '1.5px', borderColor: 'var(--ink)' }} aria-label="In total">
         <p class="muted small">

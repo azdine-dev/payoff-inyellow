@@ -9,7 +9,16 @@ import { formatMoney } from '../lib/money';
 import { monthsBetween, shortDate } from '../lib/today';
 import { progressStats } from '../state/milestones';
 import { goneDates } from './goneDates';
-import { previewDate } from '../state/store';
+import { previewDate, previewFrom, tab } from '../state/store';
+import { TopBar } from '../ui/TopBar';
+
+/** Close the preview and go back where it was opened: Path, or Today (its debt-free card) */
+export function closePreview() {
+  const from = previewFrom.value;
+  previewDate.value = null;
+  previewFrom.value = 'path';
+  if (from === 'today') tab.value = 'today';
+}
 import { Hills, Scene, SCENE_SQUARES, SkyBody, SkyDecor, sceneStage, smoothPath, STAGE_NAMES, Tree } from '../ui/Scene';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -101,7 +110,13 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
   const date = previewDate.value;
   const i = date ? r.rows.findIndex((x) => x.date === date) : -1;
   // The preview belongs to Path: leaving it takes it away
-  useEffect(() => () => void (previewDate.value = null), []);
+  useEffect(
+    () => () => {
+      previewDate.value = null;
+      previewFrom.value = 'path';
+    },
+    [],
+  );
   if (i < 0 || !date) return null;
 
   const row = r.rows[i]!;
@@ -128,14 +143,12 @@ export function PathPreview(props: { d: AppData; r: PlanResult; today: string })
 
   return (
     <div class="stack" style={{ gap: 12 }} data-testid="path-preview">
+      <TopBar back={previewFrom.value === 'today' ? 'Today' : 'Path'} onBack={closePreview} title="Preview" />
       <div class="pv-band" role="status" data-testid="preview-banner">
         <div>
           <b>Preview · {label}</b>
           <span>Nothing changes. Just looking ahead.</span>
         </div>
-        <button type="button" class="pv-back" onClick={() => (previewDate.value = null)}>
-          Back to today
-        </button>
       </div>
 
       <div class="stack" style={{ gap: 6 }}>

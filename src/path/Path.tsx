@@ -19,7 +19,7 @@ import { useBackLayer } from '../lib/useBackLayer';
 import { Count } from '../ui/useCountUp';
 import { Choice, ChevronRight, HelpTip, Sheet } from '../ui/controls';
 import { PaydayCalendar } from './PaydayCalendar';
-import { LookAhead, PathPreview } from './Preview';
+import { closePreview, LookAhead, PathPreview } from './Preview';
 import { Chapters } from './Chapters';
 import { FocusSection } from './FocusCard';
 import { ComingLaterList } from './ComingLaterList';
@@ -104,7 +104,7 @@ export function Path() {
   const nextPayday = nextPaydayISO(s);
   // The back button closes Whole plan and Preview, one at a time, instead of leaving the app
   useBackLayer(wholePlanOpen.value, () => (wholePlanOpen.value = false));
-  useBackLayer(previewDate.value !== null, () => (previewDate.value = null));
+  useBackLayer(previewDate.value !== null, closePreview);
   const road = useMemo(() => buildRoad(d, r, stats.start, stats.pct, today.value), [d, r]);
   const finishIndex =
     road.finishIndex === null ? null : previewRows === null ? road.finishIndex : Math.min(road.squares.length - 1, Math.max(road.firstAhead, finishIndexFor(road, previewRows)));

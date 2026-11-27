@@ -89,7 +89,7 @@ test.describe('the back button closes the sub-screen on top', () => {
     await nadiaSetup(page);
     await goTab(page, 'Path');
     await page.getByTestId('whole-plan-card').click();
-    await page.getByRole('button', { name: '‹ Path' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await expect(page.getByTestId('whole-plan')).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => history.state)).toBeNull();
     // one sheet opened and closed with its own button too
@@ -111,21 +111,21 @@ test.describe('back buttons are at least 44 x 44', () => {
     }
     await page.getByRole('button', { name: 'Road', exact: true }).click();
     await page.getByTestId('whole-plan-card').click();
-    let s = await size(page.getByRole('button', { name: '‹ Path' }));
+    let s = await size(page.getByRole('button', { name: 'Back to Path' }));
     expect(s.w).toBeGreaterThanOrEqual(44);
     expect(s.h).toBeGreaterThanOrEqual(44);
-    await page.getByRole('button', { name: '‹ Path' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await page.getByTestId('look-ahead').getByRole('button', { name: 'Look ahead to March 2027' }).click();
-    s = await size(page.getByRole('button', { name: 'Back to today' }));
+    s = await size(page.getByRole('button', { name: 'Back to Path' }));
     expect(s.w).toBeGreaterThanOrEqual(44);
     expect(s.h).toBeGreaterThanOrEqual(44);
-    await page.getByRole('button', { name: 'Back to today' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await page.getByTestId('reads-card').click();
-    s = await size(page.locator('.reads-back'));
+    s = await size(page.locator('.top-back'));
     expect(s.w).toBeGreaterThanOrEqual(44);
     expect(s.h).toBeGreaterThanOrEqual(44);
     await page.getByTestId('read-item').first().click();
-    s = await size(page.locator('.reads-back'));
+    s = await size(page.locator('.top-back'));
     expect(s.w).toBeGreaterThanOrEqual(44);
     expect(s.h).toBeGreaterThanOrEqual(44);
     await page.goBack(); // the read, then the reads

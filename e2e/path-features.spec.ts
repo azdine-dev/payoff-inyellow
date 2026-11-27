@@ -41,7 +41,7 @@ test.describe('Chapters', () => {
     await expect(page.locator('ul[aria-label="Store Card paydays"] .pd')).toHaveCount(5);
     await page.getByRole('button', { name: 'Fri 20 Nov, to come' }).click();
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 20 Nov 2026');
-    await page.getByRole('button', { name: 'Back to today' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await expect(page.getByTestId('chapters')).toBeVisible();
   });
 
@@ -103,7 +103,7 @@ test.describe('Your whole plan', () => {
     await expect(years).toContainText('2027 · 15 paydays$3,176');
     await expect(years).toContainText('Includes buffer and yearly bills, so you can plan your budget.');
     await expectBrandRules(page);
-    await page.getByRole('button', { name: '‹ Path' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await expect(page.getByTestId('whole-plan')).toHaveCount(0);
     await expect(page.getByTestId('whole-plan-card')).toBeVisible();
     // still four tabs
@@ -272,7 +272,7 @@ test.describe('Look ahead', () => {
     expect(b!.y).toBeGreaterThan(a!.y); // under the date
     await row.getByRole('button', { name: 'Look ahead to March 2027' }).click();
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 26 Mar 2027');
-    await page.getByRole('button', { name: 'Back to today' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await page.getByTestId('look-ahead').getByRole('button', { name: 'Look ahead to July 2027' }).click();
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 16 Jul 2027');
     await expect(page.getByTestId('scene')).toHaveAttribute('data-stage', '5'); // the Home scene
@@ -285,7 +285,7 @@ test.describe('Look ahead', () => {
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 16 Jul 2027');
     await expect(page.getByTestId('scene')).toHaveAttribute('data-stage', '5');
     await expect(page.getByTestId('preview-owed')).toHaveText('$0');
-    await page.getByRole('button', { name: 'Back to today' }).click();
-    await expect(page.getByTestId('look-ahead')).toBeVisible(); // back on Path
+    await page.getByRole('button', { name: 'Back to Today' }).click(); // opened from Today: back comes to Today
+    await expect(page.getByTestId('debt-free-pill')).toBeVisible();
   });
 });

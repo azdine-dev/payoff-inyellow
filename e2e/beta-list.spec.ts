@@ -177,7 +177,8 @@ test.describe('Part 6 · every number is a door', () => {
     await page.getByTestId('debt-free-pill').click();
     await expect(page.getByTestId('preview-banner')).toBeVisible(); // the debt-free day, as a preview
 
-    await page.getByRole('button', { name: 'Back to today' }).click(); // the preview closes, Path is under it; the focus debt card lives there
+    await page.getByRole('button', { name: 'Back to Today' }).click(); // opened from Today: back comes to Today
+    await goTab(page, 'Path'); // the focus debt card lives on Path
     await page.getByRole('button', { name: 'Store card, open in Debts' }).click();
     await expect(page.getByRole('heading', { name: 'Debts', exact: true })).toBeVisible();
     await expect(page.getByRole('dialog', { name: 'Store card' })).toBeVisible(); // that debt's sheet is open

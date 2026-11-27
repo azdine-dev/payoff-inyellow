@@ -11,6 +11,7 @@ import { toPlanInput } from '../state/planInput';
 import { data, plan, readsFrom, readsId, safetyIntent, tab, today } from '../state/store';
 import { CheckIcon, ChevronRight } from '../ui/controls';
 import { ReadArt, ReadIcon } from './ReadArt';
+import { TopBar } from '../ui/TopBar';
 import { suggestedRead } from './suggest';
 
 export const readMinutes = (r: Read) => Math.max(1, Math.round(readWords(r) / 200));
@@ -35,13 +36,6 @@ export function openReads(from: 'path' | 'settings') {
   window.scrollTo(0, 0);
 }
 
-function Back(props: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" class="reads-back" onClick={props.onClick}>
-      ‹ {props.label}
-    </button>
-  );
-}
 
 export function ReadsScreen() {
   const [done, setDone] = useState<string[]>(getReadIds);
@@ -66,12 +60,14 @@ export function ReadsScreen() {
     const next = READS[(i + 1) % READS.length]!;
     return (
       <main class="screen reads-screen" data-testid="read">
-        <Back
-          label={readsFrom.value === 'today' ? 'Today' : 'Short reads'}
-          onClick={() => {
+        <TopBar
+          back={readsFrom.value === 'today' ? 'Today' : 'Short reads'}
+          onBack={() => {
             readsId.value = null;
             if (readsFrom.value === 'today') tab.value = 'today'; // opened from the card on Today: Back comes home
           }}
+          title="Short read"
+          titleTag="p"
         />
         <ReadArt kind={current.art} />
         <p class="label">Short read · {minutes(current)} min</p>
@@ -112,11 +108,8 @@ export function ReadsScreen() {
   const from = readsFrom.value;
   return (
     <main class="screen reads-screen reads-list" data-testid="read-screen">
-      <header class="reads-head">
-        <Back label={FROM_LABEL[from] ?? 'Path'} onClick={() => (tab.value = from)} />
-        <h1>Short reads</h1>
-        <p class="reads-sub">One minute each. No internet needed.</p>
-      </header>
+      <TopBar back={FROM_LABEL[from] ?? 'Path'} onBack={() => (tab.value = from)} title="Short reads" />
+      <p class="reads-sub">One minute each. No internet needed.</p>
       <ul class="read-list" data-testid="read-list">
         {READS.map((r) => {
           const isRead = done.includes(r.id);

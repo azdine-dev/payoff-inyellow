@@ -63,7 +63,7 @@ test('the Today card: bills due before the next payday, and the window moves wit
   await showPaydays(page, 'Upcoming');
   await page.getByRole('button', { name: 'Fri 20 Nov, to come', exact: true }).click();
   await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 20 Nov 2026');
-  await page.getByRole('button', { name: 'Back to today' }).click();
+  await page.getByRole('button', { name: 'Back to Path' }).click();
   await showPaydays(page, 'Done');
   await page.getByRole('button', { name: 'Fri 6 Nov, paid', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Fri 6 Nov' })).toContainText(new RegExp(`You paid\\s*${near(150).source}`)); // what was set aside that payday

@@ -142,7 +142,7 @@ test.describe('4 · short reads', () => {
     await expect(page.getByTestId('read-item')).toHaveCount(10);
     await expect(page.getByTestId('read-count')).toHaveText('0 of 10 read');
     await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0); // a screen of its own
-    await page.getByRole('button', { name: '‹ Path' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
   });
 
@@ -175,7 +175,7 @@ test.describe('4 · short reads', () => {
     await page.getByTestId('read-item').first().click();
     await page.getByTestId('next-read').click();
     await expect(page.getByRole('heading', { name: 'What your buffer is for' })).toBeVisible();
-    await page.getByRole('button', { name: '‹ Short reads' }).click();
+    await page.getByRole('button', { name: 'Back to Short reads' }).click();
     await expect(page.getByTestId('read-list')).toBeVisible();
     await expect(page.getByTestId('read-count')).toHaveText('2 of 10 read');
   });
@@ -187,7 +187,7 @@ test.describe('4 · short reads', () => {
     // the app's own Back takes its history entry away with history.back(), which finishes a moment later:
     // a reload sent before that is cut off, so wait for it
     const wentBack = page.evaluate(() => new Promise<void>((done) => window.addEventListener('popstate', () => done(), { once: true })));
-    await page.getByRole('button', { name: '‹ Short reads' }).click();
+    await page.getByRole('button', { name: 'Back to Short reads' }).click();
     await wentBack;
     const check = page.getByTestId('read-item').nth(3).getByTestId('read-check');
     await expect(check).toBeVisible();
@@ -233,7 +233,7 @@ test.describe('4 · short reads', () => {
     await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByRole('button', { name: 'Open Short reads' }).click();
     await expect(page.getByTestId('read-item')).toHaveCount(10);
-    await page.getByRole('button', { name: '‹ Settings' }).click();
+    await page.getByRole('button', { name: 'Back to Settings' }).click();
     await expect(page.getByRole('heading', { name: 'Help' })).toBeVisible();
   });
 });

@@ -25,6 +25,8 @@ export const freshMilestones = signal<string[]>([]);
 export const freshPayday = signal<number | null>(null);
 /** Path, Preview: the future payday being looked at (read-only), or null */
 export const previewDate = signal<string | null>(null);
+/** Where the preview was opened: its "‹" and the back button go back there (Today's debt-free card, or Path) */
+export const previewFrom = signal<'today' | 'path'>('path');
 /** Path, Your whole plan: the detail screen is open */
 export const wholePlanOpen = signal(false);
 /** A number on another screen was tapped: Debts opens that debt's sheet when it shows */

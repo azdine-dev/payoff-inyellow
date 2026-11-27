@@ -27,8 +27,8 @@ test.describe('2 · the countdown card', () => {
     await quickSetup(page);
     await page.getByTestId('debt-free-pill').click();
     await expect(page.getByTestId('preview-banner')).toBeVisible();
-    await page.getByRole('button', { name: 'Back to today' }).click();
-    await expect(page.getByRole('heading', { name: 'Your path' })).toBeVisible();
+    await page.getByRole('button', { name: 'Back to Today' }).click(); // opened from Today: back comes to Today
+    await expect(page.getByTestId('debt-free-pill')).toBeVisible();
   });
 
   test('the road follows the dark theme', async ({ page }) => {
@@ -98,7 +98,7 @@ test.describe('4 · Path: List / Calendar', () => {
     await payday.click();
     await expect(page.getByTestId('preview-banner')).toContainText('Preview · Fri 23 Oct 2026');
     await expect(page.getByTestId('preview-debts')).toContainText('Store card');
-    await page.getByRole('button', { name: 'Back to today' }).click();
+    await page.getByRole('button', { name: 'Back to Path' }).click();
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
     const lines = page.getByTestId('calendar-day');
     // tap a bill day
