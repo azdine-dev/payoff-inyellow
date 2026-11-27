@@ -1837,6 +1837,68 @@ a.btn {
   cursor: pointer;
 }
 
+/* Find money: four groups (Cut, Sell, Earn, Lower), one line per idea and "I found $__" */
+.find-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.find-icon {
+  flex: 0 0 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--calm);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+}
+
+.find-idea {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.find-words {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.find-got {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--yellow);
+  border: 1px solid var(--on-yellow);
+  color: var(--on-yellow);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.btn.find-btn {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.find-blank {
+  display: inline-block;
+  width: 18px;
+  margin-left: 2px;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-3px);
+}
+
 .ahead-dot.reached {
   background: var(--yellow);
 }

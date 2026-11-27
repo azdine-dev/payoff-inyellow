@@ -121,12 +121,13 @@ test('Safety net: buffer ready on yellow, yearly bills with ink bars, "I paid a 
   await expect(page.getByRole('dialog', { name: 'I paid Gifts' })).toBeVisible();
 });
 
-test('Safety net: "Find your first $500" is one row that opens the checklist', async ({ page }) => {
+test('Safety net: "Find money" is one row that opens its screen', async ({ page }) => {
   await quickSetup(page);
   await goTab(page, 'Safety net');
-  await page.getByRole('button', { name: /Find your first \$500/ }).click();
-  const sheet = page.getByRole('dialog', { name: 'Find your first $500' });
-  await expect(sheet.getByTestId('find-total')).toBeVisible();
-  await expect(sheet.getByRole('checkbox').first()).toBeVisible();
+  await expect(page.getByTestId('find-card')).toContainText('Found $0 of $500');
+  await page.getByTestId('find-card').click();
+  await expect(page.getByTestId('find-total')).toHaveText('Found $0 of $500');
+  await expect(page.getByTestId('find-idea').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Back to Safety net' }).click();
   await expect(page.getByText(/Debt payments are/)).toHaveCount(0); // only when the paycheck is set
 });

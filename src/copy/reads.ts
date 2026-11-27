@@ -140,11 +140,11 @@ export const READS: Read[] = [
       'You may have more than you think. Here are ideas that work for many people.',
       'Sell three things you no longer use. Phones, tools, clothes and kitchen items sell quickly. Pause two subscriptions you can live without for a few months. Eat from the pantry and freezer for a week and keep the grocery money. Pick up a few extra hours, or one weekend shift. Ask for a refund or a price match on something you bought recently.',
       'Every dollar goes straight to the buffer, in its plain separate account or envelope. Do not mix it with the money you spend.',
-      'On the Safety net tab you will find a checklist called Find your first $500. Tick what you do, type what you think each idea is worth, and the total grows as you go. Seeing the number rise helps on the days when it feels slow.',
+      'On the Safety net tab, Find money has ideas in four groups: cut, sell, earn and lower. When one works, tap I found and type the amount. It goes to your buffer first, and the total grows as you go. Seeing the number rise helps on the days when it feels slow.',
       'You do not need to find it in one day. A hundred here and a hundred there get you to the goal, and you will notice the quiet that comes with it.',
     ],
     tagline: 'a little here, a little there',
-    action: { label: 'Find your first $500', target: 'safety:find' },
+    action: { label: 'Open Find money', target: 'safety:find' },
   },
   {
     id: 'not-surprises',

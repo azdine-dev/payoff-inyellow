@@ -29,10 +29,12 @@ export const previewDate = signal<string | null>(null);
 export const previewFrom = signal<'today' | 'path'>('path');
 /** Path, Your whole plan: the detail screen is open */
 export const wholePlanOpen = signal(false);
+/** Find money, the sub-screen of Safety net */
+export const findMoneyOpen = signal(false);
 /** A number on another screen was tapped: Debts opens that debt's sheet when it shows */
 export const openDebtId = signal<string | null>(null);
 export const freshPaidDebts = signal<string[]>([]);
-/** A short read's button asks the Safety net tab to open a sheet: a new yearly bill, or "Find your first $500" */
+/** A short read's button asks the Safety net tab to open something: a new yearly bill, or Find money */
 /** Short reads is a full screen: which read is open (null = the list), and the tab its back link returns to */
 export const readsId = signal<string | null>(null);
 export const readsFrom = signal<Tab>('path');

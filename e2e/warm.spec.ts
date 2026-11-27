@@ -209,7 +209,8 @@ test.describe('4 · short reads', () => {
     await page.getByTestId('reads-card').click();
     await page.getByTestId('read-item').nth(7).click(); // find your first $500
     await page.getByTestId('read-action').click();
-    await expect(page.getByRole('dialog', { name: /Find your first/ })).toBeVisible();
+    await expect(page.getByTestId('find-money')).toBeVisible();
+    await expect(page.getByTestId('top-bar')).toContainText('Find money');
   });
 
   test('the lender read has a script box, and the list says so', async ({ page }) => {

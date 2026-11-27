@@ -1,4 +1,4 @@
-/** Safety net tab (was Money): buffer, yearly bills, "Find your first $500", debt share of pay. */
+/** Safety net tab (was Money): buffer, yearly bills, Find money, debt share of pay. */
 import { useEffect, useState } from 'preact/hooks';
 import { COPY } from '../lib/copy';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
@@ -7,9 +7,8 @@ import { MONTH_CHOICES } from '../setup/draft';
 import {
   addFund,
   editFund,
-  findMoneyItems,
+  foundTotal,
   removeFund,
-  saveFindMoney,
   setBuffer,
   setBufferGoal,
   spendFund,
@@ -18,12 +17,14 @@ import {
 } from '../state/moneyActions';
 import { PAYDAYS_PER_YEAR } from '../engine';
 import { activeDebts } from '../state/planInput';
-import { act, data, safetyIntent, today } from '../state/store';
+import { act, data, findMoneyOpen, safetyIntent, today } from '../state/store';
+import { useBackLayer } from '../lib/useBackLayer';
+import { FindMoney } from './FindMoney';
 import { Empty } from '../ui/Empty';
 import { useCountUp } from '../ui/useCountUp';
-import { Bar, Checkbox, ChevronRight, Field, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
+import { Bar, ChevronRight, Field, HelpTip, Note, NumberInput, Sheet } from '../ui/controls';
 
-type Mode = 'use-buffer' | 'change' | 'find' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
+type Mode = 'use-buffer' | 'change' | 'pick-fund' | 'fund-add' | { fund: string; kind: 'edit' | 'spend' } | null;
 
 export function Money() {
   const d = data.value!;
@@ -41,7 +42,7 @@ export function Money() {
     const want = safetyIntent.value;
     if (!want) return;
     safetyIntent.value = null;
-    if (want === 'find') setMode('find');
+    if (want === 'find') findMoneyOpen.value = true;
     else {
       setText('');
       setText2('');
@@ -59,9 +60,8 @@ export function Money() {
   const money = formatMoneyAuto;
 
   const bufferPct = s.bufferGoal > 0 ? (d.buffer.amount / s.bufferGoal) * 100 : 100;
-  const items = findMoneyItems(d);
-  const total = items.reduce((sum, i) => sum + (i.done ? i.amount ?? 0 : 0), 0);
-  const potential = items.reduce((sum, i) => sum + (i.amount ?? 0), 0);
+  const found = foundTotal(d);
+  useBackLayer(findMoneyOpen.value, () => (findMoneyOpen.value = false));
 
   // Over a year: twelve months of minimums plus the plan money on every payday, against a year of paychecks
   const yearToDebt = activeDebts(d).reduce((sum, x) => sum + x.minMonthly * 12, 0) + s.extraPerPayday * PAYDAYS_PER_YEAR[s.frequency];
@@ -102,16 +102,12 @@ export function Money() {
     close();
   };
 
-  const toggleIdea = (key: string) =>
-    act((db, x) => saveFindMoney(db, x, items.map((i) => (i.key === key ? { ...i, done: !i.done } : i))));
-  const setIdeaAmount = (key: string, v: string) =>
-    act((db, x) => saveFindMoney(db, x, items.map((i) => (i.key === key ? { ...i, amount: parseAmount(v) } : i))));
-
-  const findTitle = `Find your first ${formatMoney(500, cur, { whole: true })}`;
   const shownBuffer = useCountUp(d.buffer.amount, 'buffer');
   const ready = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
   const perYearTotal = d.funds.reduce((sum, f) => sum + f.perYear, 0);
   const eachPayday = perYearTotal / PAYDAYS_PER_YEAR[s.frequency];
+
+  if (findMoneyOpen.value) return <FindMoney />;
 
   return (
     <main class="screen with-tabs">
@@ -191,12 +187,13 @@ export function Money() {
         </div>
       </section>
 
-      <button type="button" class="card find-row" onClick={() => setMode('find')}>
-        <span class="stack" style={{ gap: 2, textAlign: 'left' }}>
-          <b>{findTitle}</b>
-          <span class="muted small">
-            {items.length} small ideas{total > 0 ? ` · ${formatMoney(total, cur, { whole: true })} so far` : ''}
+      <button type="button" class="card find-row" data-testid="find-card" aria-label="Find money" onClick={() => { findMoneyOpen.value = true; window.scrollTo(0, 0); }}>
+        <span class="stack" style={{ gap: 6, textAlign: 'left', flex: 1 }}>
+          <b>Find money</b>
+          <span class="muted small num">
+            Found {formatMoney(found, cur, { whole: true })} of {formatMoney(s.bufferGoal, cur, { whole: true })}
           </span>
+          <Bar pct={s.bufferGoal > 0 ? (found / s.bufferGoal) * 100 : 100} label="Found money" />
         </span>
         <ChevronRight />
       </button>
@@ -206,25 +203,6 @@ export function Money() {
           Debt payments are <b class="num">{Math.round(share)}%</b> of your take-home pay.
         </p>
       )}
-
-      <Sheet open={mode === 'find'} onClose={close} title={findTitle}>
-        <div class="row">
-          <span class="muted small">Tick what you do. Type what you think each one is worth.</span>
-          <span class="num" style={{ fontWeight: 600 }} data-testid="find-total">
-            {formatMoney(total, cur, { whole: true })}
-          </span>
-        </div>
-        {items.map((i) => (
-          <div key={i.key} class="stack" style={{ gap: 2 }}>
-            <Checkbox checked={i.done} onToggle={() => toggleIdea(i.key)}>{i.label}</Checkbox>
-            <div style={{ marginLeft: 34, maxWidth: 160 }}>
-              <NumberInput pre={cur.symbol} value={i.amount === null ? '' : String(i.amount)} onInput={(v) => setIdeaAmount(i.key, v)} label={`Amount for ${i.label}`} />
-            </div>
-          </div>
-        ))}
-        <p class="num small muted">If you do all of them: {formatMoney(potential, cur, { whole: true })}</p>
-        <button type="button" class="btn" onClick={close}>Done</button>
-      </Sheet>
 
       <Sheet open={mode === 'pick-fund'} onClose={close} title="Which bill did you pay?">
         {d.funds.map((f) => (

@@ -1,4 +1,4 @@
-/** Money tab: buffer, yearly bills, "Find your first $500", paycheck. */
+/** Safety net tab: buffer, yearly bills, Find money, paycheck. */
 import { commit, newId, type PiyDB } from '../data/db';
 import type { AppData, FindMoneyItem, Fund } from '../data/types';
 
@@ -66,21 +66,72 @@ export async function spendFund(db: PiyDB, data: AppData, id: string, amount: nu
   return commit(db, data, { funds: [{ ...fund, saved: Math.max(0, fund.saved - amount), updatedAt: now }] });
 }
 
-/** "Find your first $500" ideas (CLAUDE.md §5). No borrowing ideas, ever. */
-export const FIND_MONEY_IDEAS: { key: string; label: string }[] = [
-  { key: 'sell', label: 'Sell 3 things you don’t use' },
-  { key: 'subscriptions', label: 'Pause 2 subscriptions' },
-  { key: 'pantry', label: 'Eat from the pantry for a week' },
-  { key: 'hours', label: 'Pick up extra hours or a side job' },
-  { key: 'returns', label: 'Return something you haven’t used' },
-  { key: 'bills', label: 'Call to lower a bill (phone, internet, insurance)' },
-  { key: 'giftcards', label: 'Use gift cards you forgot about' },
-  { key: 'takeout', label: 'Skip takeout for two weeks' },
+export type FindGroup = 'cut' | 'sell' | 'earn' | 'lower';
+
+/** Find money: four groups of ideas, each with a typical amount. Never loans, buy now pay later or card tricks. */
+export const FIND_GROUPS: { key: FindGroup; label: string }[] = [
+  { key: 'cut', label: 'Cut' },
+  { key: 'sell', label: 'Sell' },
+  { key: 'earn', label: 'Earn' },
+  { key: 'lower', label: 'Lower' },
 ];
 
+export const FIND_MONEY_IDEAS: { key: string; group: FindGroup; label: string; typical: number; monthly?: boolean }[] = [
+  { key: 'subscriptions', group: 'cut', label: 'Cancel one subscription', typical: 15, monthly: true },
+  { key: 'takeout', group: 'cut', label: 'Skip takeout for two weeks', typical: 60 },
+  { key: 'pantry', group: 'cut', label: 'Eat from the pantry for a week', typical: 40 },
+  { key: 'sell', group: 'sell', label: 'Sell 3 things you don’t use', typical: 100 },
+  { key: 'returns', group: 'sell', label: 'Return something unused', typical: 30 },
+  { key: 'hours', group: 'earn', label: 'Pick up a few extra hours', typical: 120 },
+  { key: 'weekend', group: 'earn', label: 'One weekend job, like pet sitting', typical: 80 },
+  { key: 'bills', group: 'lower', label: 'Call to lower your phone or internet bill', typical: 20, monthly: true },
+  { key: 'insurance', group: 'lower', label: 'Compare your car insurance', typical: 30, monthly: true },
+];
+
+/** One item per idea, with what was found for it so far */
 export function findMoneyItems(data: AppData): FindMoneyItem[] {
   const saved = data.findMoney?.items ?? [];
-  return FIND_MONEY_IDEAS.map((idea) => saved.find((s) => s.key === idea.key) ?? { ...idea, amount: null, done: false });
+  return FIND_MONEY_IDEAS.map(({ key, label }) => saved.find((s) => s.key === key) ?? { key, label, amount: null, done: false });
+}
+
+/** Money found so far: every saved idea marked found, older ideas included */
+export function foundTotal(data: AppData): number {
+  return (data.findMoney?.items ?? []).reduce((sum, i) => sum + (i.done ? i.amount ?? 0 : 0), 0);
+}
+
+/** What was found for one idea */
+export function foundFor(data: AppData, key: string): number {
+  const i = data.findMoney?.items.find((x) => x.key === key);
+  return i?.done ? i.amount ?? 0 : 0;
+}
+
+/**
+ * "I found $40": the amount goes in as extra money on the next payday (one-off money on that payday's date), so it
+ * follows the engine's order: the yearly bills' share, the buffer until its goal, then the focus debt. With no debt
+ * left there is no payday plan, so it goes straight to the buffer.
+ */
+export async function addFoundMoney(
+  db: PiyDB,
+  data: AppData,
+  key: string,
+  amount: number,
+  paydayDate: string | null,
+  today: string,
+  now = Date.now(),
+): Promise<AppData> {
+  const saved = data.findMoney?.items ?? [];
+  const idea = FIND_MONEY_IDEAS.find((x) => x.key === key);
+  const was = saved.find((x) => x.key === key) ?? { key, label: idea?.label ?? key, amount: null, done: false };
+  const item: FindMoneyItem = { ...was, amount: foundFor(data, key) + amount, done: true };
+  const items = saved.some((x) => x.key === key) ? saved.map((x) => (x.key === key ? item : x)) : [...saved, item];
+  const s = data.settings;
+  const found = { id: 'findMoney' as const, updatedAt: now, items };
+  if (paydayDate)
+    return commit(db, data, { findMoney: found, settings: { ...s, oneOffs: [...s.oneOffs, { id: newId(), date: paydayDate, amount, note: 'Found money' }], updatedAt: now } });
+  return commit(db, data, {
+    findMoney: found,
+    buffer: { ...data.buffer, amount: data.buffer.amount + amount, history: [...data.buffer.history, { date: today, amount, note: 'Found money' }], updatedAt: now },
+  });
 }
 
 export async function saveFindMoney(db: PiyDB, data: AppData, items: FindMoneyItem[], now = Date.now()): Promise<AppData> {
