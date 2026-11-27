@@ -142,10 +142,8 @@ test.describe('4 · Path: List / Calendar', () => {
 test.describe('5 · empty lists', () => {
   test('every empty list has a small picture and one warm line', async ({ page }) => {
     await quickSetup(page);
-    // Today: nothing due in the next 14 days
-    const comingEmpty = page.getByTestId('coming-up-empty');
-    await expect(comingEmpty.getByTestId('empty')).toContainText('Nothing due in the next 14 days.');
-    await expect(comingEmpty.locator('svg.empty-art')).toBeVisible();
+    // Today: nothing due in the next 14 days, so there is no Coming up at all
+    await expect(page.getByRole('region', { name: 'Coming up' })).toHaveCount(0);
     // Safety net: no yearly bills yet
     await goTab(page, 'Safety net');
     await expect(page.getByRole('region', { name: 'Yearly bills' }).getByTestId('empty')).toContainText('No yearly bills yet.');

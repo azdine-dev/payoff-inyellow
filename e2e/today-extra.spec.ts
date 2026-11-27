@@ -220,3 +220,17 @@ test.describe('4 · a payday with a bill: "Extra money came in?" under "I did it
     await expect(page.getByRole('textbox', { name: 'Extra money' })).toBeVisible();
   });
 });
+
+test.describe('5 · Coming up', () => {
+  test('hidden when nothing is due in the next 14 days, there when a bill comes close', async ({ page }) => {
+    await ahmed(page); // Thu 26 Nov: the Visa bill is on Sat 12 Dec, 16 days away
+    await expect(page.getByRole('region', { name: 'Coming up' })).toHaveCount(0);
+    await expect(page.getByText('Nothing due in the next 14 days')).toHaveCount(0);
+    await page.clock.setFixedTime(new Date('2026-12-01T10:00:00')); // 11 days before it
+    await page.reload();
+    await expect(page.getByTestId('coming-up')).toContainText('Visa');
+    // and "Do these later" still comes after it
+    const coming = (await page.getByTestId('coming-up').boundingBox())!;
+    expect((await page.getByTestId('later-card').boundingBox())!.y).toBeGreaterThan(coming.y + coming.height - 1);
+  });
+});

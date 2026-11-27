@@ -39,7 +39,6 @@ import { pickNote } from './payNote';
 import { ExtraChips } from './ExtraChips';
 import type { ExtraMove } from '../state/extraMove';
 import type { FlagMove } from '../ui/Scene';
-import { Empty } from '../ui/Empty';
 import { comingUp, extraSummary, focusDebt, greetingWithName, mergedRows, paidFromLog } from './model';
 
 interface JustPaid {
@@ -692,12 +691,7 @@ export function Today() {
 
       {active.length > 0 && (
         <>
-          {due.length === 0 && (
-            <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up-empty">
-              <p class="label">Coming up</p>
-              <Empty art="calendar" line="Nothing due in the next 14 days. Enjoy the quiet." small />
-            </section>
-          )}
+          {/* Coming up shows only when something is due in the next 14 days */}
           {due.length > 0 && (
             <section class="card stack" style={{ gap: 6 }} aria-label="Coming up" data-testid="coming-up">
               <p class="label">Coming up</p>

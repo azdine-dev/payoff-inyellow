@@ -1,4 +1,4 @@
-/** Today: the "Do these later" card sits under Coming up, never between the payday card and the read. */
+/** Today: the "Do these later" card sits under Coming up (when there is one), never between the payday card and the read. */
 import { expect, test } from '@playwright/test';
 import { FIXED, quickSetup } from './helpers';
 import { expectBrandRules, expectNoSidewaysScroll, tapDidIt } from './scenario';
@@ -11,8 +11,8 @@ test('"Do these later" comes after the read and after Coming up', async ({ page 
   await quickSetup(page);
   const y = async (id: string) => (await page.getByTestId(id).first().boundingBox())!.y;
   const later = await y('later-card');
-  const coming = await page.getByRole('region', { name: 'Coming up' }).boundingBox();
-  expect(later).toBeGreaterThan(coming!.y + coming!.height - 1);
+  // nothing is due in the next 14 days here, so there is no Coming up card above it (see today-extra for one that shows)
+  await expect(page.getByRole('region', { name: 'Coming up' })).toHaveCount(0);
   expect(later).toBeGreaterThan(await y('today-read'));
   expect(later).toBeLessThan(await y('safety-tile'));
   await expect(page.getByTestId('later-card')).toHaveCount(1);
