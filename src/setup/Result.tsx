@@ -15,7 +15,7 @@ import { isDebtFree } from '../state/debtFree';
 import { exampleMode, leaveExample } from '../state/example';
 import { toPlanInput } from '../state/planInput';
 import { setExtraPerPayday } from '../state/settingsActions';
-import { act, data, editSeed, licenseState, plan, tab, today, view } from '../state/store';
+import { act, data, editSeed, licenseState, plan, settingsFrom, tab, today, view } from '../state/store';
 import { draftFromData } from './draft';
 import { firstStep, methodReason } from '../today/model';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -69,7 +69,7 @@ export function Result() {
       <div class="setup-head">
         <SetupBar step={4} finished />
         {locked && !example && (
-          <button type="button" class="link small" onClick={() => { tab.value = 'settings'; view.value = 'app'; }}>
+          <button type="button" class="link small" onClick={() => { settingsFrom.value = 'today'; tab.value = 'settings'; view.value = 'app'; }}>
             Settings
           </button>
         )}

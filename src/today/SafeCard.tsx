@@ -6,7 +6,7 @@ import { useState } from 'preact/hooks';
 import { getSafeDismissed, setSafeDismissed } from '../lib/seen';
 import { downloadBackup } from '../state/backupActions';
 import { showNotice } from '../state/notice';
-import { data, installPrompt, isInstalled, settingsSheet, tab } from '../state/store';
+import { data, installPrompt, isInstalled, openSettings, settingsSheet, tab } from '../state/store';
 
 export function SafeCard() {
   const d = data.value;
@@ -31,7 +31,7 @@ export function SafeCard() {
                 installPrompt.value = null;
               } else {
                 settingsSheet.value = 'install';
-                tab.value = 'settings';
+                openSettings();
               }
             }}
           >

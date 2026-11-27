@@ -46,6 +46,22 @@ for (const t of TABS) {
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
     await expect(gear(page)).toHaveCount(0); // not on Settings itself
   });
+
+  test(`${t}: Settings goes back to ${t}, with "‹ ${t}" and with the Android back button`, async ({ page }) => {
+    await quickSetup(page);
+    await goTab(page, t);
+    await gear(page).click();
+    const back = page.getByTestId('top-bar').getByRole('button', { name: `Back to ${t}` });
+    await expect(back).toBeVisible();
+    await expect(page.getByTestId('top-bar').locator('.top-title')).toHaveText('Settings');
+    await back.click();
+    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: t, exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(gear(page)).toBeVisible();
+    await gear(page).click();
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await page.goBack(); // Android back
+    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: t, exact: true })).toHaveAttribute('aria-current', 'page');
+  });
 }
 
 test('in dark mode and on a laptop it is in the same place on every tab', async ({ page }) => {

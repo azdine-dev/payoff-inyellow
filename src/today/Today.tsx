@@ -29,7 +29,7 @@ import { ArrivalCard, ComingLaterPanel } from './ComingLater';
 import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
-import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, previewFrom, settingsSheet, tab, today, updateDismissed, updateReady } from '../state/store';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, previewFrom, openSettings, settingsSheet, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Checkbox, CheckIcon, Field, FooterNote, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -722,7 +722,7 @@ export function Today() {
                   class="link small"
                   onClick={() => {
                     settingsSheet.value = 'extra';
-                    tab.value = 'settings';
+                    openSettings();
                   }}
                 >
                   Add some

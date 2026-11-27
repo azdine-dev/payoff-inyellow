@@ -22,7 +22,10 @@ import { tidyName } from '../lib/text';
 import { setMethod } from '../state/planActions';
 import { nextPaydayISO } from '../state/planInput';
 import { changeSchedule, clearLicense, markBackedUp, saveLicense, setAppearance, setCurrency, setExtraPerPayday, setIfThen } from '../state/settingsActions';
-import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, licenseState, settingsSheet, tab, today, updateReady, view } from '../state/store';
+import { act, applyUpdate, data, editSeed, getDB, installPrompt, isInstalled, licenseState, settingsFrom, settingsSheet, tab, today, updateReady, view, type SettingsFrom } from '../state/store';
+import { TopBar } from '../ui/TopBar';
+
+const FROM_LABEL: Record<SettingsFrom, string> = { today: 'Today', path: 'Path', debts: 'Debts', safety: 'Safety net' };
 import { Choice, Field, Note, NumberInput, Sheet } from '../ui/controls';
 import { FAQ, INSTALL_HELP } from './faq';
 import { downloadBackup } from '../state/backupActions';
@@ -46,7 +49,8 @@ export function Settings() {
   const s = d.settings;
   const cur = s.currency;
   const [edit, setEdit] = useState<Edit>(null);
-  useBackLayer(true, () => (tab.value = 'today')); // the back button comes home to Today
+  const goBack = () => (tab.value = settingsFrom.value);
+  useBackLayer(true, goBack); // the back button returns to the tab Settings was opened from
   // The home screen card on Today opens the how-to sheet here; "Add some" under the safety net opens the money for the plan
   useEffect(() => {
     if (settingsSheet.value === 'install') {
@@ -182,12 +186,7 @@ export function Settings() {
 
   return (
     <main class="screen with-tabs">
-      <div class="row">
-        <h1>Settings</h1>
-        <button type="button" class="link settings-back" onClick={() => (tab.value = 'today')}>
-          Back to Today
-        </button>
-      </div>
+      <TopBar back={FROM_LABEL[settingsFrom.value]} onBack={goBack} title="Settings" />
 
       {updateReady.value && (
         <section class="card row" role="status">

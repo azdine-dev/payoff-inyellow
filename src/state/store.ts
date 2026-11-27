@@ -67,6 +67,15 @@ export interface InstallPrompt {
 export const installPrompt = signal<InstallPrompt | null>(null);
 /** A card on another screen asks Settings to open a sheet ("How" to add the app to the home screen) */
 /** A sheet in Settings to open when Settings opens: the home screen how-to, or the money for the plan each payday */
+/** The tab Settings was opened from: its back arrow returns there */
+export type SettingsFrom = 'today' | 'path' | 'debts' | 'safety';
+export const settingsFrom = signal<SettingsFrom>('today');
+/** Open Settings from the tab on screen (any other screen counts as Today) */
+export function openSettings(): void {
+  const t = tab.peek();
+  settingsFrom.value = t === 'path' || t === 'debts' || t === 'safety' ? t : 'today';
+  tab.value = 'settings';
+}
 export const settingsSheet = signal<'install' | 'extra' | null>(null);
 
 /** True when the app runs from the Home Screen (installed). */

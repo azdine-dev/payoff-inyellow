@@ -1,7 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { Result } from '../setup/Result';
 import { Wizard } from '../setup/Wizard';
-import { boot, findMoneyOpen, licenseState, previewDate, tab, view, wholePlanOpen, type Tab } from '../state/store';
+import { boot, findMoneyOpen, licenseState, openSettings, previewDate, tab, view, wholePlanOpen, type Tab } from '../state/store';
 import { GearIcon } from '../ui/controls';
 import { Debts } from '../debts/Debts';
 import { Path } from '../path/Path';
@@ -101,7 +101,7 @@ export function App() {
 function SettingsButton() {
   return (
     <div class="settings-anchor">
-      <button type="button" class="round-btn settings-btn" aria-label="Settings" data-testid="settings-btn" onClick={() => (tab.value = 'settings')}>
+      <button type="button" class="round-btn settings-btn" aria-label="Settings" data-testid="settings-btn" onClick={openSettings}>
         <GearIcon />
       </button>
     </div>
