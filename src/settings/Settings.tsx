@@ -47,10 +47,13 @@ export function Settings() {
   const cur = s.currency;
   const [edit, setEdit] = useState<Edit>(null);
   useBackLayer(true, () => (tab.value = 'today')); // the back button comes home to Today
-  // The home screen card on Today opens the how-to sheet here
+  // The home screen card on Today opens the how-to sheet here; "Add some" under the safety net opens the money for the plan
   useEffect(() => {
     if (settingsSheet.value === 'install') {
       setEdit('install');
+      settingsSheet.value = null;
+    } else if (settingsSheet.value === 'extra') {
+      open('extra');
       settingsSheet.value = null;
     }
   }, []);

@@ -234,3 +234,27 @@ test.describe('5 · Coming up', () => {
     expect((await page.getByTestId('later-card').boundingBox())!.y).toBeGreaterThan(coming.y + coming.height - 1);
   });
 });
+
+test.describe('6 · the safety net tile with $0 a payday', () => {
+  test('says how it fills, and "Add some" opens the money for the plan in Settings', async ({ page }) => {
+    await ahmed(page);
+    const fill = page.getByTestId('safety-fill');
+    await expect(fill).toHaveText('Fills when you add money per payday. Add some');
+    const add = fill.getByRole('button', { name: 'Add some' });
+    expect((await add.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await add.click();
+    const sheet = page.getByRole('dialog', { name: 'Money for the plan' });
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole('textbox').fill('25');
+    await sheet.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Close settings' }).or(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Today', exact: true })).first().click();
+    await expect(page.getByTestId('safety-tile')).toBeVisible();
+    await expect(page.getByTestId('safety-fill')).toHaveCount(0); // money comes in each payday now
+  });
+
+  test('not there once the buffer is full, or when there is money each payday', async ({ page }) => {
+    await ahmed(page, { ...AHMED, bufferNow: '500' });
+    await expect(page.getByTestId('safety-tile')).toContainText('$500 ready');
+    await expect(page.getByTestId('safety-fill')).toHaveCount(0);
+  });
+});

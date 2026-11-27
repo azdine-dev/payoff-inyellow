@@ -3610,6 +3610,31 @@ textarea {
 .tile-row {
   align-items: stretch;
 }
+/* Today: the safety net, full width, with one line under it when it has no money coming in */
+.safety-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.safety-card .tile-card {
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.safety-fill {
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+.safety-fill .link {
+  display: inline-flex;
+  align-items: center; /* still a 44 px tap target */
+}
+
 .tile-row > .link {
   align-self: center;
   white-space: nowrap;

@@ -29,7 +29,7 @@ import { ArrivalCard, ComingLaterPanel } from './ComingLater';
 import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
-import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, tab, today, updateDismissed, updateReady } from '../state/store';
+import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, settingsSheet, tab, today, updateDismissed, updateReady } from '../state/store';
 import { Checkbox, CheckIcon, Field, FooterNote, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
@@ -718,12 +718,28 @@ export function Today() {
           {/* small setup leftovers come after what is due, never between the payday card and the read */}
           {!justPaid && row && <LaterCard />}
 
-          <div class="tile-row">
-            <button type="button" class="card tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
+          <section class="card safety-card" aria-label="Safety net">
+            <button type="button" class="tile-card tile-btn" data-testid="safety-tile" onClick={() => (tab.value = 'safety')}>
               <p class="muted small">Safety net</p>
               <p class="tile-val num">{bufferFull ? `${money(d.buffer.amount)} ready` : `${money(d.buffer.amount)} of ${money(s.bufferGoal)}`}</p>
             </button>
-          </div>
+            {/* With $0 a payday the buffer only fills by hand: say so, and open that setting */}
+            {s.extraPerPayday <= 0 && d.buffer.amount < s.bufferGoal && (
+              <p class="safety-fill" data-testid="safety-fill">
+                Fills when you add money per payday.{' '}
+                <button
+                  type="button"
+                  class="link small"
+                  onClick={() => {
+                    settingsSheet.value = 'extra';
+                    tab.value = 'settings';
+                  }}
+                >
+                  Add some
+                </button>
+              </p>
+            )}
+          </section>
         </>
       )}
 

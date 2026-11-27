@@ -62,7 +62,8 @@ export interface InstallPrompt {
 }
 export const installPrompt = signal<InstallPrompt | null>(null);
 /** A card on another screen asks Settings to open a sheet ("How" to add the app to the home screen) */
-export const settingsSheet = signal<'install' | null>(null);
+/** A sheet in Settings to open when Settings opens: the home screen how-to, or the money for the plan each payday */
+export const settingsSheet = signal<'install' | 'extra' | null>(null);
 
 /** True when the app runs from the Home Screen (installed). */
 export function isInstalled(): boolean {
