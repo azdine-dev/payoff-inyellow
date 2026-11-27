@@ -25,7 +25,7 @@ test('four groups, one line each, a typical amount, and the top bar', async ({ p
   await expect(bar.locator('.top-title')).toHaveText('Find money');
   await expect(page.getByRole('button', { name: 'Settings', exact: true })).toHaveCount(0);
   await expect(page.locator('.find-head')).toHaveText(['Cut', 'Sell', 'Earn', 'Lower']);
-  for (const g of ['cut', 'sell', 'earn', 'lower']) await expect(page.getByTestId(`find-group-${g}`).locator('.find-icon svg[aria-hidden="true"]')).toHaveCount(1);
+  for (const g of ['cut', 'sell', 'earn', 'lower']) await expect(page.getByTestId(`find-group-${g}`).locator('.line-art[aria-hidden="true"]')).toHaveCount(1);
   await expect(page.getByTestId('find-idea').first()).toHaveText(/Cancel one subscription · about \$15 a month\s*I found \$/);
   const text = (await page.getByTestId('find-money').innerText()).toLowerCase();
   for (const bad of ['loan', 'borrow', 'credit', 'buy now', 'pay later', 'transfer']) expect(text).not.toContain(bad);

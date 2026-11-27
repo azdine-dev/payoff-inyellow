@@ -33,6 +33,7 @@ import { PrintDebts, PrintPayday } from './PrintSheets';
 import { paymentsToCsv } from '../state/paymentsCsv';
 import { countdownText, readCountdownMode, saveCountdownMode, type CountdownMode } from './countdown';
 import { COPY } from '../lib/copy';
+import { LineIllustration } from '../ui/LineArt';
 
 /** Kept for the Settings and Today links that open Path on a given view. */
 export type PathView = 'progress' | 'plan';
@@ -242,8 +243,9 @@ export function Path() {
       </section>
 
       {debtFree && (
-        <section class="card">
-          <p>You’re debt-free. Every debt is paid or archived, so there is nothing left to plan.</p>
+        <section class="card art-head" data-testid="debt-free-card">
+          <p>You’re debt-free. Every debt is paid or archived.</p>
+          <LineIllustration art="debt-free" width={84} />
         </section>
       )}
 

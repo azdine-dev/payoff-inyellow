@@ -99,7 +99,7 @@ function Motif({ kind }: { kind: ReadArtKind }) {
 
 export function ReadArt({ kind }: { kind: ReadArtKind }) {
   return (
-    <svg class="read-art" viewBox="0 0 320 150" width="100%" role="img" aria-label="An illustration for this read" focusable="false" data-kind={kind}>
+    <svg class="read-art" viewBox="0 0 320 150" width="100%" aria-hidden="true" focusable="false" data-kind={kind}>
       <rect width="320" height="150" class="sc-sky" />
       <SkyDecor />
       <path d="M0 106 Q90 80 180 100 T320 84 V150 H0Z" class="sc-hill1" />
@@ -145,7 +145,7 @@ export function ReadIcon({ id }: { id: string }) {
     'not-enough': 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6.3 6.3l3.6 3.6M17.7 6.3l-3.6 3.6M6.3 17.7l3.6-3.6M17.7 17.7l-3.6-3.6',
   };
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
       <path d={p[id] ?? p['debt-zero']} />
     </svg>
   );

@@ -112,6 +112,28 @@ describe('yellow on sage', () => {
   });
 });
 
+describe('the new parts use pairs measured above', () => {
+  const base = readFileSync('src/styles/base.css', 'utf8');
+  /** The declarations of one top-level rule, like ".top-bar { ... }" */
+  const rule = (sel: string) => {
+    const start = base.indexOf(`\n${sel} {`);
+    return start < 0 ? '' : base.slice(start, base.indexOf('}', start));
+  };
+  it('the top bar: ink title and the action link on the calm band', () => {
+    expect(rule('.top-bar')).toMatch(/background: var\(--calm-band\)/);
+    expect(rule('.top-back')).toMatch(/color: var\(--action\)/);
+  });
+  it('Find money: the found chip is text on yellow with an edge, never yellow text', () => {
+    expect(rule('.find-got')).toMatch(/background: var\(--yellow\)/);
+    expect(rule('.find-got')).toMatch(/color: var\(--on-yellow\)/);
+  });
+  it('line icons take the text color around them (ink or gray, measured above)', () => {
+    const art = readFileSync('src/ui/LineArt.tsx', 'utf8');
+    expect(art).toContain('stroke="currentColor"');
+    expect(art).not.toMatch(/stroke="#|fill="#/); // only tokens, so dark mode follows
+  });
+});
+
 describe('the new themes', () => {
   it('use the asked-for paper and tiles, and leave yellow alone', () => {
     expect(cream['paper']).toBe('#fbf5e6');

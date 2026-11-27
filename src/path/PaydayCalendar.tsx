@@ -17,6 +17,7 @@ import { previewDate } from '../state/store';
 import { UndoPayday } from './UndoPayday';
 import { billState, paidFromLog } from '../today/model';
 import { Empty } from '../ui/Empty';
+import { TypeTag } from '../ui/LineArt';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -163,9 +164,13 @@ export function PaydayCalendar(props: { d: AppData; r: PlanResult; today: string
                     {x.text}{' '}
                     <span class="pc-tags">
                       {x.tags.map((tag) => (
-                        <span key={tag.label} class={`tag${tag.paid ? ' paid' : ''}`}>
-                          {tag.label}
-                        </span>
+                        tag.paid ? (
+                          <span key={tag.label} class="tag paid">
+                            {tag.label}
+                          </span>
+                        ) : (
+                          <TypeTag key={tag.label} label={tag.label} />
+                        )
                       ))}
                     </span>
                   </span>

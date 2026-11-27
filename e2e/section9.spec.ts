@@ -23,6 +23,7 @@ test('archiving every debt gives the same debt-free state on every screen, with 
 
   await goTab(page, 'Plan');
   await expect(page.getByText('You’re debt-free. Every debt is paid or archived')).toBeVisible();
+  await expect(page.getByTestId('debt-free-card').locator('.line-art[data-art="debt-free"][aria-hidden="true"]')).toBeVisible();
   await expect(page.getByText('more than 20 years')).toHaveCount(0);
   await expect(line).toHaveText('Debt-free');
 

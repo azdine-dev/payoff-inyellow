@@ -1,5 +1,5 @@
 /**
- * Find money (Safety net): ideas in four groups, Cut, Sell, Earn and Lower, each with a typical amount. "I found $__"
+ * Find money (Safety net): ideas in four groups, Cut, Sell, Earn and Lower, each with its line picture and a typical amount. "I found $__"
  * takes one amount, and it goes in as extra money on the next payday, in the engine's order (the buffer first). The
  * total at the top counts up to the buffer goal. Never loans, buy now pay later or card tricks.
  */
@@ -7,39 +7,12 @@ import { useMemo, useState } from 'preact/hooks';
 import { formatMoney, formatMoneyAuto, parseAmount } from '../lib/money';
 import { shortDate } from '../lib/today';
 import { extraMove, whereItGoes } from '../state/extraMove';
-import { FIND_GROUPS, FIND_MONEY_IDEAS, addFoundMoney, foundFor, foundTotal, type FindGroup } from '../state/moneyActions';
+import { FIND_GROUPS, FIND_MONEY_IDEAS, addFoundMoney, foundFor, foundTotal } from '../state/moneyActions';
 import { activeDebts, nextPaydayISO } from '../state/planInput';
 import { act, data, findMoneyOpen, plan, today } from '../state/store';
 import { Bar, Field, Note, NumberInput, Sheet } from '../ui/controls';
+import { LineIllustration } from '../ui/LineArt';
 import { TopBar } from '../ui/TopBar';
-
-/** One small line icon per group, in the scene's stroke style */
-export function FindIcon({ group, size = 22 }: { group: FindGroup; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-      {group === 'cut' && (
-        <>
-          <circle cx="6" cy="7" r="2.6" />
-          <circle cx="6" cy="17" r="2.6" />
-          <path d="M8.3 8.4L20 17M8.3 15.6L20 7" />
-        </>
-      )}
-      {group === 'sell' && (
-        <>
-          <path d="M3.5 12.5V4.5a1 1 0 011-1h8l8 8a1 1 0 010 1.4l-7.6 7.6a1 1 0 01-1.4 0l-8-8z" />
-          <circle cx="8" cy="8" r="1.4" />
-        </>
-      )}
-      {group === 'earn' && (
-        <>
-          <circle cx="12" cy="12" r="8.5" />
-          <path d="M12 8v8M8 12h8" />
-        </>
-      )}
-      {group === 'lower' && <path d="M12 4v12.5M6.5 11L12 16.5 17.5 11M5 20.5h14" />}
-    </svg>
-  );
-}
 
 export function FindMoney() {
   const d = data.value!;
@@ -85,12 +58,12 @@ export function FindMoney() {
 
       {FIND_GROUPS.map((g) => (
         <section key={g.key} class="card stack find-group" aria-labelledby={`find-${g.key}`} data-testid={`find-group-${g.key}`}>
-          <h2 id={`find-${g.key}`} class="find-head">
-            <span class="find-icon">
-              <FindIcon group={g.key} />
-            </span>
-            {g.label}
-          </h2>
+          <div class="art-head">
+            <h2 id={`find-${g.key}`} class="find-head">
+              {g.label}
+            </h2>
+            <LineIllustration art={g.key} width={84} />
+          </div>
           {FIND_MONEY_IDEAS.filter((i) => i.group === g.key).map((i) => {
             const got = foundFor(d, i.key);
             return (

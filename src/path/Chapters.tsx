@@ -13,6 +13,7 @@ import { CheckIcon } from '../ui/controls';
 import { Empty } from '../ui/Empty';
 import { buildChapters, extraNote, isQuiet, movesOf, type Chapter, type ChapterDay } from './chaptersModel';
 import { UndoPayday } from './UndoPayday';
+import { TypeTag } from '../ui/LineArt';
 
 /** What a payday held, as small tags. Outline for what is ahead. */
 const TAG_KINDS = [
@@ -144,9 +145,7 @@ export function Chapters() {
           {done && (
             <div class="tags" aria-hidden="true">
               {TAG_KINDS.filter((t) => kinds.has(t.kind)).map((t) => (
-                <span key={t.kind} class="tag">
-                  {t.label}
-                </span>
+                <TypeTag key={t.kind} label={t.label} />
               ))}
             </div>
           )}
@@ -166,10 +165,10 @@ export function Chapters() {
           <span class="num pd-amt">{formatMoneyAuto(rowTotals[i]!, cur)}</span>
         </button>
         <div class="tags" aria-hidden="true">
-          {bills.due.length > 0 && <span class="tag">Bill</span>}
-          {row.extraGoesTo && <span class="tag">Extra</span>}
-          {row.toBuffer > 0.004 && <span class="tag">Buffer</span>}
-          {row.toYearlyBills > 0.004 && <span class="tag">Yearly</span>}
+          {bills.due.length > 0 && <TypeTag label="Bill" />}
+          {row.extraGoesTo && <TypeTag label="Extra" />}
+          {row.toBuffer > 0.004 && <TypeTag label="Buffer" />}
+          {row.toYearlyBills > 0.004 && <TypeTag label="Yearly" />}
         </div>
       </li>
     );

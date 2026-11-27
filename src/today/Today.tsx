@@ -40,6 +40,7 @@ import { ExtraChips } from './ExtraChips';
 import type { ExtraMove } from '../state/extraMove';
 import type { FlagMove } from '../ui/Scene';
 import { comingUp, extraSummary, focusDebt, greetingWithName, mergedRows, paidFromLog } from './model';
+import { LineIllustration, TypeTag } from '../ui/LineArt';
 
 interface JustPaid {
   date: string;
@@ -168,7 +169,7 @@ export function Today() {
       </p>
     ) : null;
   const nothingCard = (
-    <section class="card calm stack" style={{ gap: 4 }} aria-label="Nothing to move" data-testid="nothing-card">
+    <section class="card calm art-head" aria-label="Nothing to move" data-testid="nothing-card">
       <p>
         <b>Nothing to move this payday.</b>
         {move && (
@@ -179,6 +180,7 @@ export function Today() {
           </>
         )}
       </p>
+      <LineIllustration art="nothing-due" width={72} />
     </section>
   );
   const isPayday = nextDate === today.value;
@@ -224,10 +226,15 @@ export function Today() {
 
   const zeroCard = (
     <section class="card calm stack zero-card" aria-labelledby="zero-title" data-testid="zero-card">
-      <p class="label">This payday · {shortDate(nextDate)}</p>
-      <h2 id="zero-title" class="zero-title">
-        Nothing due this payday.
-      </h2>
+      <div class="art-head">
+        <div class="stack" style={{ gap: 4 }}>
+          <p class="label">This payday · {shortDate(nextDate)}</p>
+          <h2 id="zero-title" class="zero-title">
+            Nothing due this payday.
+          </h2>
+        </div>
+        <LineIllustration art="nothing-due" width={84} />
+      </div>
       {move && (
         <p>
           Next: {move.name ? `${move.name} ` : ''}
@@ -604,9 +611,7 @@ export function Today() {
                     <span class="pc-meta">
                       <span class="pc-tags">
                         {x.tags.map((t) => (
-                          <span key={t} class="tag">
-                            {t}
-                          </span>
+                          <TypeTag key={t} label={t} />
                         ))}
                         {checked.has(x.key) && <span class="tag paid">Paid</span>}
                       </span>
@@ -686,7 +691,7 @@ export function Today() {
                     {shortDate(i.date)} · {i.name}
                     {i.autopay ? ' (autopay)' : ''}{' '}
                     <span class="pc-tags">
-                      <span class="tag">Bill</span>
+                      <TypeTag label="Bill" />
                       {i.state === 'paid' && <span class="tag paid">Paid</span>}
 
                       {i.state === 'late' && <span class="tag">Not paid yet</span>}

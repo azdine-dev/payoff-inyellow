@@ -1448,6 +1448,34 @@ select {
   line-height: 1.5;
 }
 
+/* A line type tag: its small line icon, then the word (Bill, Extra, Buffer, Yearly) */
+.tag.type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.line-icon {
+  flex: 0 0 auto;
+}
+
+/* A card whose words sit next to a small line picture */
+.art-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.art-head > :first-child {
+  min-width: 0;
+}
+
+.line-art {
+  flex: 0 0 auto;
+  display: block;
+}
+
 /* Yellow only once it is paid */
 .tag.paid {
   background: var(--yellow);
@@ -1844,16 +1872,6 @@ a.btn {
   gap: 10px;
   font-size: 1.15rem;
   margin: 0;
-}
-
-.find-icon {
-  flex: 0 0 36px;
-  height: 36px;
-  border-radius: 18px;
-  background: var(--calm);
-  color: var(--ink);
-  display: grid;
-  place-items: center;
 }
 
 .find-idea {
