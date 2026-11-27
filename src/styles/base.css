@@ -547,6 +547,42 @@ select {
   font-weight: 800;
 }
 
+/* The Settings button: the same spot on all four tabs, top right of the screen column, and it stays there on scroll */
+.settings-anchor {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.settings-anchor .settings-btn {
+  pointer-events: auto;
+  margin-top: calc(env(safe-area-inset-top) + 14px);
+  box-shadow: 0 1px 6px rgb(31 42 68 / 0.12);
+}
+
+/* Room on the right of each tab's header for the Settings button */
+.today-head {
+  padding-right: calc(var(--gutter) + 56px);
+}
+
+.path-head > h1 {
+  padding-right: 56px;
+}
+
+.tab-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 56px;
+}
+
 .round-btn {
   flex: none;
   width: 48px;

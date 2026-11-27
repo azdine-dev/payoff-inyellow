@@ -30,7 +30,7 @@ import { ReadCard } from './ReadCard';
 import { SafeCard } from './SafeCard';
 import { comingLaterLine } from '../state/comingLater';
 import { act, applyUpdate, data, freshMilestones, freshPaidDebts, freshPayday, getDB, plan, previewDate, previewFrom, settingsSheet, tab, today, updateDismissed, updateReady } from '../state/store';
-import { Checkbox, CheckIcon, Field, FooterNote, GearIcon, Note, NumberInput, Sheet } from '../ui/controls';
+import { Checkbox, CheckIcon, Field, FooterNote, Note, NumberInput, Sheet } from '../ui/controls';
 import { Ring } from '../ui/Ring';
 import { NeedsHelp } from '../ui/NeedsHelp';
 import { LaterCard } from './LaterCard';
@@ -426,9 +426,6 @@ export function Today() {
             {greeting}
           </h1>
         </div>
-        <button type="button" class="round-btn" aria-label="Settings" onClick={() => (tab.value = 'settings')}>
-          <GearIcon />
-        </button>
       </header>
 
       <DebtFreeCard

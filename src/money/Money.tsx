@@ -115,8 +115,10 @@ export function Money() {
 
   return (
     <main class="screen with-tabs">
-      <h1>Safety net</h1>
-      <p class="muted">So the next surprise bill stays off your cards.</p>
+      <header class="tab-head">
+        <h1>Safety net</h1>
+        <p class="muted">So the next surprise bill stays off your cards.</p>
+      </header>
 
       <section class="card stack" aria-labelledby="buffer-title">
         <p class="label" id="buffer-title">

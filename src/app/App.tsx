@@ -1,7 +1,8 @@
 import { useEffect } from 'preact/hooks';
 import { Result } from '../setup/Result';
 import { Wizard } from '../setup/Wizard';
-import { boot, licenseState, tab, view, type Tab } from '../state/store';
+import { boot, licenseState, previewDate, tab, view, wholePlanOpen, type Tab } from '../state/store';
+import { GearIcon } from '../ui/controls';
 import { Debts } from '../debts/Debts';
 import { Path } from '../path/Path';
 import { Settings } from '../settings/Settings';
@@ -92,6 +93,21 @@ export function App() {
   );
 }
 
+/**
+ * The Settings button: one button, in the same top-right spot on all four tabs, and it stays there while the screen
+ * scrolls. (It used to be part of Today's header only, so the other tabs had none and it scrolled away with the header.)
+ * A sub-screen (Your whole plan, Preview) has its own top bar with "‹ Path" instead.
+ */
+function SettingsButton() {
+  return (
+    <div class="settings-anchor">
+      <button type="button" class="round-btn settings-btn" aria-label="Settings" data-testid="settings-btn" onClick={() => (tab.value = 'settings')}>
+        <GearIcon />
+      </button>
+    </div>
+  );
+}
+
 function Screens() {
   useEffect(() => {
     void boot().then(handleLaunchFragment).then(startSync);
@@ -145,6 +161,7 @@ function Screens() {
 
   return (
     <div class="app-shell">
+      {current !== 'settings' && !(current === 'path' && (wholePlanOpen.value || previewDate.value !== null)) && <SettingsButton />}
       {/* One tab at a time on every screen size: on a laptop, Today and Path side by side read as one screen */}
       {current === 'today' ? (
         <Today />
