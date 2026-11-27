@@ -290,8 +290,9 @@ export function Today() {
     data.value = restored;
   };
 
+  // "I skipped it" is about the one payday on screen: older missed paydays are asked one at a time, oldest first
   const skip = async () => {
-    data.value = await skipPaydays(await getDB(), d, Math.max(1, missed));
+    data.value = await skipPaydays(await getDB(), data.peek() ?? d, 1);
     setSkippedNote(true);
     setJustPaid(null);
   };
@@ -378,14 +379,14 @@ export function Today() {
   const debtFreeNow = active.length === 0;
   const plainGreeting = debtFreeNow
     ? 'Debt-free.'
-    : paidView
-      ? 'Done for this payday.'
-      : missed > 0
-        ? 'Welcome back.'
+    : missed > 0
+      ? 'Welcome back.' // more missed paydays to answer, even right after one was done
+      : paidView
+        ? 'Done for this payday.'
         : isPayday
           ? 'Hi, it’s payday.'
           : `Next payday is ${shortDate(nextDate)}.`;
-  const greeting = greetingWithName(plainGreeting, !debtFreeNow && !paidView && missed > 0 ? 'back' : !debtFreeNow && !paidView && missed === 0 && isPayday ? 'payday' : 'other', s.firstName);
+  const greeting = greetingWithName(plainGreeting, !debtFreeNow && missed > 0 ? 'back' : !debtFreeNow && !paidView && missed === 0 && isPayday ? 'payday' : 'other', s.firstName);
 
   const bufferFull = d.buffer.amount >= s.bufferGoal && s.bufferGoal > 0;
 
@@ -490,7 +491,7 @@ export function Today() {
 
       {!emptyNow && !lastWasEmpty && moments}
 
-      {skippedNote && (
+      {skippedNote && missed === 0 && (
         <section class="card soft" role="status">
           <p>{COPY.missed}</p>
           {r.debtFreeDate && (
@@ -550,13 +551,19 @@ export function Today() {
         </section>
       )}
 
-      {!justPaid && active.length > 0 && row && (
+      {/* After "I did it" on a missed payday, the next missed one is asked at once, under the PAID card */}
+      {(!justPaid || missed > 0) && active.length > 0 && row && (
         <>
           {missed > 0 && !emptyNow && (
             <section class="card stack" style={{ gap: 4 }}>
               <p>
                 Did you do your <b>{shortDate(nextDate)}</b> payday?
               </p>
+              {missed > 1 && (
+                <p class="muted small" data-testid="missed-more">
+                  {missed - 1} more after this one.
+                </p>
+              )}
               <div class="row" style={{ justifyContent: 'flex-start', gap: 20 }}>
                 <button type="button" class="link" onClick={skip}>
                   I skipped it
@@ -655,7 +662,7 @@ export function Today() {
               )}
 
               {/* A note that says what just happened (a debt paid, a skipped payday...) stays here; the rotating line is for the PAID card */}
-              {note.kind !== 'rotating' && noteLine}
+              {note.kind !== 'rotating' && !(note.kind === 'afterSkip' && skippedNote && missed === 0) && noteLine}
               <button type="button" class="pc-btn" onClick={() => void apply()} disabled={busy}>
                 <CheckIcon /> {COPY.didIt} · <span class="num">{money(total)}</span>
               </button>
